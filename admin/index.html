@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TVVC Admin - Tryout Registrations</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  
+  <!-- Font Awesome for icons including loading spinner -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --color-teal: #008080;
+      --color-teal-dark: #006666;
+      --color-coral: #ff6b6b;
+      --color-coral-dark: #e05c5c;
+      --color-dark: #121212;
+      --color-dark-surface: #1a1a1a;
+      --color-gray-100: #f5f5f5;
+      --color-gray-200: #e0e0e0;
+      --color-gray-300: #cccccc;
+      --color-gray-400: #aaaaaa;
+      --color-gray-500: #888888;
+      --color-gray-600: #666666;
+      --color-gray-700: #444444;
+      --color-gray-800: #333333;
+      --color-gray-900: #222222;
+      --color-white: #ffffff;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --spacing-2xl: 48px;
+      --spacing-3xl: 64px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--color-dark);
+      color: var(--color-white);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--spacing-xl);
+    }
+    
+    .header {
+      background-color: var(--color-dark-surface);
+      padding: var(--spacing-lg) 0;
+      border-bottom: 1px solid var(--color-gray-800);
+    }
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--color-teal);
+    }
+    
+    .logo span {
+      color: var(--color-coral);
+    }
+    
+    .admin-title {
+      font-size: 0.9rem;
+      color: var(--color-gray-400);
+      margin-left: var(--spacing-md);
+      padding-left: var(--spacing-md);
+      border-left: 1px solid var(--color-gray-700);
+    }
+    
+    .auth-section {
+      background-color: var(--color-dark-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      margin-top: var(--spacing-xl);
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+    
+    .auth-form {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    
+    .form-group {
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: var(--spacing-xs);
+      color: var(--color-gray-300);
+      font-weight: 600;
+      text-align: left;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: var(--spacing-md);
+      background-color: var(--color-gray-900);
+      border: 1px solid var(--color-gray-700);
+      border-radius: var(--radius-md);
+      color: var(--color-white);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--color-teal);
+      box-shadow: 0 0 0 2px rgba(0, 128, 128, 0.2);
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: var(--spacing-md) var(--spacing-xl);
+      background-color: var(--color-teal);
+      color: var(--color-white);
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+    .btn:hover {
+      background-color: var(--color-teal-dark);
+      transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+      background-color: var(--color-gray-700);
+    }
+    
+    .btn-secondary:hover {
+      background-color: var(--color-gray-600);
+    }
+    
+    .btn-coral {
+      background-color: var(--color-coral);
+    }
+    
+    .btn-coral:hover {
+      background-color: var(--color-coral-dark);
+    }
+    
+    .admin-panel {
+      display: none;
+    }
+    
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-xl);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--color-gray-800);
+    }
+    
+    .panel-title {
+      font-size: 1.5rem;
+      margin-bottom: 0;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-md);
+    }
+    
+    .registrations-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .registrations-table th,
+    .registrations-table td {
+      padding: var(--spacing-md);
+      text-align: left;
+      border-bottom: 1px solid var(--color-gray-800);
+    }
+    
+    .registrations-table th {
+      background-color: var(--color-gray-900);
+      color: var(--color-gray-300);
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .registrations-table tbody tr {
+      transition: background-color 0.3s ease;
+    }
+    
+    .registrations-table tbody tr:hover {
+      background-color: var(--color-gray-900);
+    }
+    
+    .table-container {
+      max-height: 600px;
+      overflow-y: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-gray-800);
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-3xl) var(--spacing-xl);
+      color: var(--color-gray-500);
+    }
+    
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: var(--spacing-lg);
+      color: var(--color-gray-700);
+    }
+    
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .stat-card {
+      background-color: var(--color-dark-surface);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+      border-left: 4px solid var(--color-teal);
+    }
+    
+    .stat-title {
+      font-size: 0.9rem;
+      color: var(--color-gray-400);
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--color-white);
+    }
+    
+    .error-message {
+      color: var(--color-coral);
+      margin-top: var(--spacing-xs);
+      font-size: 0.9rem;
+      text-align: left;
+    }
+    
+    .success-message {
+      background-color: rgba(0, 128, 128, 0.1);
+      color: var(--color-teal);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+    }
+    
+    .success-message i {
+      margin-right: var(--spacing-sm);
+    }
+    
+    .footer {
+      margin-top: var(--spacing-3xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--color-gray-800);
+      color: var(--color-gray-500);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    
+    /* Status badges */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .status-pending {
+      background-color: rgba(255, 152, 0, 0.2);
+      color: #ff9800;
+    }
+    
+    .status-confirmed {
+      background-color: rgba(33, 150, 243, 0.2);
+      color: #2196f3;
+    }
+    
+    .status-paid {
+      background-color: rgba(0, 128, 128, 0.2);
+      color: var(--color-teal);
+    }
+    
+    .status-completed {
+      background-color: rgba(76, 175, 80, 0.2);
+      color: #4caf50;
+    }
+    
+    .status-cancelled {
+      background-color: rgba(244, 67, 54, 0.2);
+      color: #f44336;
+    }
+    
+    /* Action buttons */
+    .action-btn {
+      background: none;
+      border: none;
+      color: var(--color-gray-400);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+      transition: all 0.3s ease;
+      margin-right: 8px;
+    }
+    
+    .action-btn:hover {
+      color: var(--color-white);
+      transform: translateY(-2px);
+    }
+    
+    .view-btn:hover {
+      color: var(--color-teal);
+    }
+    
+    .delete-btn:hover {
+      color: var(--color-coral);
+    }
+    
+    /* Details modal styles */
+    .details-item {
+      margin-bottom: 12px;
+    }
+    
+    .details-label {
+      font-weight: 600;
+      color: var(--color-gray-300);
+      margin-right: 8px;
+      display: inline-block;
+      min-width: 120px;
+    }
+    
+    .details-value {
+      color: var(--color-white);
+    }
+    
+    .close-modal:hover {
+      color: var(--color-white);
+      transform: rotate(90deg);
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+    }
+    
+    .fa-spinner {
+      font-size: 3rem;
+      color: var(--color-teal);
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: var(--spacing-lg);
+      }
+      
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .admin-title {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        margin-top: var(--spacing-xs);
+      }
+      
+      .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .action-buttons {
+        margin-top: var(--spacing-md);
+      }
+      
+      .stats-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-content">
+      <div style="display: flex; align-items: center;">
+        <div class="logo">TVVC<span>.</span></div>
+        <div class="admin-title">Admin Dashboard</div>
+      </div>
+      <div id="auth-status">
+        <button id="logout-btn" class="btn btn-secondary" style="display: none;">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </header>
+  
+  <main class="container">
+    <section id="auth-section" class="auth-section">
+      <h2>Admin Login</h2>
+      <p style="margin-bottom: var(--spacing-lg); color: var(--color-gray-400);">
+        Please enter your password to access the tryout registration data.
+      </p>
+      
+      <form id="auth-form" class="auth-form">
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" id="password" class="form-input" required>
+          <div id="auth-error" class="error-message" style="display: none;"></div>
+        </div>
+        
+        <button type="submit" class="btn" style="width: 100%;">
+          <i class="fas fa-lock"></i> Login
+        </button>
+      </form>
+    </section>
+    
+    <section id="admin-panel" class="admin-panel">
+      <div id="success-message" class="success-message" style="display: none;">
+        <i class="fas fa-check-circle"></i>
+        <span id="success-text">Operation completed successfully!</span>
+      </div>
+      
+      <div class="panel-header">
+        <h2 class="panel-title">Tryout Registrations</h2>
+        
+        <div class="action-buttons">
+          <button id="export-csv-btn" class="btn">
+            <i class="fas fa-file-csv"></i> Export CSV
+          </button>
+          <button id="clear-data-btn" class="btn btn-secondary">
+            <i class="fas fa-trash"></i> Clear Data
+          </button>
+        </div>
+      </div>
+      
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-title">Total Registrations</div>
+          <div id="total-registrations" class="stat-value">0</div>
+        </div>
+        
+        <div class="stat-card" style="border-left-color: var(--color-coral);">
+          <div class="stat-title">Age Groups</div>
+          <div id="age-groups" class="stat-value">0</div>
+        </div>
+        
+        <div class="stat-card" style="border-left-color: #9c27b0;">
+          <div class="stat-title">Latest Registration</div>
+          <div id="latest-registration" class="stat-value">-</div>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table class="registrations-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Player Name</th>
+              <th>Birth Date</th>
+              <th>Age Group</th>
+              <th>Position</th>
+              <th>Parent Email</th>
+              <th>Parent Phone</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="registrations-table-body">
+            <!-- Table rows will be added dynamically -->
+          </tbody>
+        </table>
+        
+        <div id="empty-state" class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <h3>No Registrations Yet</h3>
+          <p>When players register for tryouts, they will appear here.</p>
+        </div>
+        
+        <div id="loading-spinner" class="loading-spinner" style="display: none; text-align: center; padding: 40px;">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p style="margin-top: 20px; color: var(--color-gray-400);">Loading registrations...</p>
+        </div>
+      </div>
+      
+      <!-- Registration Details Modal -->
+      <div id="details-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 1000; overflow-y: auto;">
+        <div class="modal-content" style="background-color: var(--color-dark-surface); margin: 50px auto; padding: 30px; border-radius: var(--radius-lg); max-width: 800px; box-shadow: var(--shadow-lg); position: relative; max-height: 80vh; overflow-y: auto;">
+          <span class="close-modal" style="position: absolute; top: 20px; right: 20px; font-size: 1.5rem; cursor: pointer; color: var(--color-gray-400); transition: all 0.3s ease;">&times;</span>
+          
+          <h2 id="modal-title" style="margin-bottom: 20px; color: var(--color-white); border-bottom: 1px solid var(--color-gray-800); padding-bottom: 15px;">Registration Details</h2>
+          
+          <div class="details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="details-section">
+              <h3 style="color: var(--color-coral); font-size: 1.2rem; margin-bottom: 15px;">Player Information</h3>
+              <div class="details-item">
+                <span class="details-label">Full Name:</span>
+                <span id="detail-player-name" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Birth Date:</span>
+                <span id="detail-birth-date" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Age Group:</span>
+                <span id="detail-age-group" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Grade:</span>
+                <span id="detail-grade" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">School:</span>
+                <span id="detail-school" class="details-value"></span>
+              </div>
+            </div>
+            
+            <div class="details-section">
+              <h3 style="color: var(--color-teal); font-size: 1.2rem; margin-bottom: 15px;">Volleyball Experience</h3>
+              <div class="details-item">
+                <span class="details-label">Primary Position:</span>
+                <span id="detail-position" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Secondary Position:</span>
+                <span id="detail-secondary-position" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Experience Level:</span>
+                <span id="detail-experience" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Previous Club:</span>
+                <span id="detail-previous-club" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Tryout Session:</span>
+                <span id="detail-tryout-session" class="details-value"></span>
+              </div>
+            </div>
+            
+            <div class="details-section" style="grid-column: span 2;">
+              <h3 style="color: #9c27b0; font-size: 1.2rem; margin-bottom: 15px;">Parent/Guardian Information</h3>
+              <div class="details-item">
+                <span class="details-label">Name:</span>
+                <span id="detail-parent-name" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Email:</span>
+                <span id="detail-parent-email" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Phone:</span>
+                <span id="detail-parent-phone" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Address:</span>
+                <span id="detail-parent-address" class="details-value"></span>
+              </div>
+            </div>
+            
+            <div class="details-section" style="grid-column: span 2;">
+              <h3 style="color: var(--color-gray-300); font-size: 1.2rem; margin-bottom: 15px;">Registration Details</h3>
+              <div class="details-item">
+                <span class="details-label">Registration Date:</span>
+                <span id="detail-registration-date" class="details-value"></span>
+              </div>
+              <div class="details-item">
+                <span class="details-label">Status:</span>
+                <span id="detail-status" class="details-value"></span>
+              </div>
+              <div class="details-item" style="margin-top: 20px;">
+                <label for="status-select" class="details-label">Update Status:</label>
+                <select id="status-select" class="form-input" style="width: auto; margin-right: 10px; display: inline-block;">
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="paid">Paid</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <button id="update-status-btn" class="btn btn-coral" style="display: inline-block;">Update Status</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="modal-actions" style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid var(--color-gray-800); padding-top: 20px;">
+            <button id="delete-registration-btn" class="btn btn-secondary">
+              <i class="fas fa-trash"></i> Delete Registration
+            </button>
+            <button id="close-modal-btn" class="btn">
+              <i class="fas fa-times"></i> Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <footer class="footer container">
+    <p>&copy; 2025 Tualatin Valley Volleyball Club. All rights reserved.</p>
+  </footer>
+  
+  <script src="firebase-admin.js"></script>
+  <script>
+    // Admin password - change this to your desired password
+    const ADMIN_PASSWORD = 'tvvcadmin2024';
+    
+    // DOM Elements
+    const authSection = document.getElementById('auth-section');
+    const authForm = document.getElementById('auth-form');
+    const authError = document.getElementById('auth-error');
+    const adminPanel = document.getElementById('admin-panel');
+    const logoutBtn = document.getElementById('logout-btn');
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+    const clearDataBtn = document.getElementById('clear-data-btn');
+    const registrationsTableBody = document.getElementById('registrations-table-body');
+    const emptyState = document.getElementById('empty-state');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const totalRegistrationsEl = document.getElementById('total-registrations');
+    const ageGroupsEl = document.getElementById('age-groups');
+    const latestRegistrationEl = document.getElementById('latest-registration');
+    const successMessage = document.getElementById('success-message');
+    const successText = document.getElementById('success-text');
+    const detailsModal = document.getElementById('details-modal');
+    
+    // Current registrations data
+    let currentRegistrations = [];
+    let currentRegistrationId = null;
+    
+    // Functions for showing/hiding loading state
+    function showLoading(element) {
+      if (element) {
+        element.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p style="margin-top: 15px; color: var(--color-gray-400);">Loading...</p></div>';
+      }
+    }
+    
+    function hideLoading(element) {
+      if (element) {
+        element.innerHTML = '';
+      }
+    }
+    
+    // Check if user is already authenticated
+    function checkAuth() {
+      const isAuthenticated = localStorage.getItem('tvvc_admin_auth') === 'true';
+      
+      // Clear any previous error messages
+      authError.style.display = 'none';
+      
+      if (isAuthenticated) {
+        showAdminPanel();
+      } else {
+        showAuthForm();
+      }
+    }
+    
+    // Show the authentication form
+    function showAuthForm() {
+      authSection.style.display = 'block';
+      adminPanel.style.display = 'none';
+      logoutBtn.style.display = 'none';
+    }
+    
+    // Show the admin panel
+    function showAdminPanel() {
+      authSection.style.display = 'none';
+      adminPanel.style.display = 'block';
+      logoutBtn.style.display = 'inline-block';
+      
+      // Load registrations data
+      loadRegistrations();
+    }
+    
+    // Handle authentication form submission
+    authForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const password = document.getElementById('password').value;
+      
+      console.log("Login attempt with password:", password);
+      
+      if (password === ADMIN_PASSWORD) {
+        console.log("Password correct, authenticating...");
+        // Set authentication in localStorage
+        localStorage.setItem('tvvc_admin_auth', 'true');
+        
+        // Show admin panel
+        showAdminPanel();
+        
+        // Clear password field
+        document.getElementById('password').value = '';
+        authError.style.display = 'none';
+      } else {
+        console.log("Password incorrect");
+        // Show error message
+        authError.textContent = 'Incorrect password. Please try again. The password is: tvvcadmin2024';
+        authError.style.display = 'block';
+      }
+    });
+    
+    // Handle logout
+    logoutBtn.addEventListener('click', function() {
+      // Clear authentication from localStorage
+      localStorage.removeItem('tvvc_admin_auth');
+      
+      // Show auth form
+      showAuthForm();
+    });
+    
+    // Load registrations from Firestore
+    async function loadRegistrations() {
+      // Show loading spinner
+      emptyState.style.display = 'none';
+      registrationsTableBody.innerHTML = '';
+      loadingSpinner.style.display = 'flex';
+      
+      try {
+        // Fetch registrations from Firestore
+        currentRegistrations = await fetchRegistrations();
+        
+        // Update stats
+        updateStats(currentRegistrations);
+        
+        // Clear table body
+        registrationsTableBody.innerHTML = '';
+        
+        // Check if there are any registrations
+        if (currentRegistrations.length === 0) {
+          // Show empty state
+          emptyState.style.display = 'block';
+          loadingSpinner.style.display = 'none';
+          return;
+        }
+        
+        // Hide empty state
+        emptyState.style.display = 'none';
+        
+        // Add registrations to table
+        currentRegistrations.forEach(registration => {
+          const row = document.createElement('tr');
+          
+          // Format date
+          const date = new Date(registration.timestamp);
+          const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+          
+          // Create status badge
+          const statusClass = `status-${registration.status.toLowerCase()}`;
+          const statusBadge = `<span class="status-badge ${statusClass}">${registration.status}</span>`;
+          
+          row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${registration.playerName}</td>
+            <td>${registration.birthDate}</td>
+            <td>${registration.ageGroup}</td>
+            <td>${registration.position}</td>
+            <td>${registration.parentEmail}</td>
+            <td>${registration.parentPhone}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <button class="action-btn view-btn" data-id="${registration.id}" title="View Details">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="action-btn delete-btn" data-id="${registration.id}" title="Delete Registration">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          `;
+          
+          registrationsTableBody.appendChild(row);
+        });
+        
+        // Add event listeners to action buttons
+        addActionButtonListeners();
+      } catch (error) {
+        console.error('Error loading registrations:', error);
+        showSuccessMessage('Error loading registrations. Please try again.', 'error');
+      } finally {
+        // Hide loading spinner
+        loadingSpinner.style.display = 'none';
+        spinner.stop();
+      }
+    }
+    
+    // Add event listeners to action buttons
+    function addActionButtonListeners() {
+      // View buttons
+      document.querySelectorAll('.view-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          openDetailsModal(id);
+        });
+      });
+      
+      // Delete buttons
+      document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          if (confirm('Are you sure you want to delete this registration? This cannot be undone.')) {
+            deleteRegistrationById(id);
+          }
+        });
+      });
+    }
+    
+    // Open details modal
+    function openDetailsModal(id) {
+      // Find registration by ID
+      const registration = currentRegistrations.find(reg => reg.id === id);
+      
+      if (!registration) {
+        showSuccessMessage('Registration not found.', 'error');
+        return;
+      }
+      
+      // Store current registration ID
+      currentRegistrationId = id;
+      
+      // Set modal title
+      document.getElementById('modal-title').textContent = `Registration Details: ${registration.playerName}`;
+      
+      // Fill in details
+      document.getElementById('detail-player-name').textContent = registration.playerName;
+      document.getElementById('detail-birth-date').textContent = registration.birthDate;
+      document.getElementById('detail-age-group').textContent = registration.ageGroup;
+      document.getElementById('detail-grade').textContent = registration.grade;
+      document.getElementById('detail-school').textContent = registration.school;
+      
+      document.getElementById('detail-position').textContent = registration.position;
+      document.getElementById('detail-secondary-position').textContent = registration.secondaryPosition || 'None';
+      document.getElementById('detail-experience').textContent = registration.experienceLevel || 'Not specified';
+      document.getElementById('detail-previous-club').textContent = registration.previousClub || 'None';
+      document.getElementById('detail-tryout-session').textContent = registration.tryoutSession || 'Not specified';
+      
+      document.getElementById('detail-parent-name').textContent = registration.parentName;
+      document.getElementById('detail-parent-email').textContent = registration.parentEmail;
+      document.getElementById('detail-parent-phone').textContent = registration.parentPhone;
+      document.getElementById('detail-parent-address').textContent = registration.parentAddress;
+      
+      // Format date
+      const date = new Date(registration.timestamp);
+      document.getElementById('detail-registration-date').textContent = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+      
+      // Set status
+      document.getElementById('detail-status').textContent = registration.status;
+      document.getElementById('status-select').value = registration.status.toLowerCase();
+      
+      // Show modal
+      detailsModal.style.display = 'block';
+    }
+    
+    // Close details modal
+    function closeDetailsModal() {
+      detailsModal.style.display = 'none';
+      currentRegistrationId = null;
+    }
+    
+    // Delete registration by ID
+    async function deleteRegistrationById(id) {
+      // Show loading spinner
+      loadingSpinner.style.display = 'flex';
+      spinner.spin(document.getElementById('spinner-container'));
+      
+      try {
+        // Delete registration from Firestore
+        const success = await deleteRegistration(id);
+        
+        if (success) {
+          // Reload registrations
+          await loadRegistrations();
+          
+          // Show success message
+          showSuccessMessage('Registration deleted successfully.');
+          
+          // Close modal if open
+          if (currentRegistrationId === id) {
+            closeDetailsModal();
+          }
+        } else {
+          showSuccessMessage('Error deleting registration. Please try again.', 'error');
+        }
+      } catch (error) {
+        console.error('Error deleting registration:', error);
+        showSuccessMessage('Error deleting registration. Please try again.', 'error');
+      } finally {
+        // Hide loading spinner
+        loadingSpinner.style.display = 'none';
+        spinner.stop();
+      }
+    }
+    
+    // Update registration status
+    async function updateRegistrationStatusById(id, status) {
+      // Show loading spinner
+      loadingSpinner.style.display = 'flex';
+      spinner.spin(document.getElementById('spinner-container'));
+      
+      try {
+        // Update status in Firestore
+        const success = await updateRegistrationStatus(id, status);
+        
+        if (success) {
+          // Reload registrations
+          await loadRegistrations();
+          
+          // Show success message
+          showSuccessMessage('Registration status updated successfully.');
+          
+          // Close modal
+          closeDetailsModal();
+        } else {
+          showSuccessMessage('Error updating registration status. Please try again.', 'error');
+        }
+      } catch (error) {
+        console.error('Error updating registration status:', error);
+        showSuccessMessage('Error updating registration status. Please try again.', 'error');
+      } finally {
+        // Hide loading spinner
+        loadingSpinner.style.display = 'none';
+        spinner.stop();
+      }
+    }
+    
+    // Update statistics
+    function updateStats(registrations) {
+      // Total registrations
+      totalRegistrationsEl.textContent = registrations.length;
+      
+      // Age groups
+      const ageGroups = new Set();
+      registrations.forEach(registration => {
+        if (registration.ageGroup) {
+          ageGroups.add(registration.ageGroup);
+        }
+      });
+      ageGroupsEl.textContent = ageGroups.size;
+      
+      // Latest registration
+      if (registrations.length > 0) {
+        // Sort by date
+        const sortedRegistrations = [...registrations].sort((a, b) => 
+          new Date(b.timestamp) - new Date(a.timestamp)
+        );
+        
+        // Get latest date
+        const latestDate = new Date(sortedRegistrations[0].timestamp);
+        const now = new Date();
+        const diffTime = Math.abs(now - latestDate);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) {
+          latestRegistrationEl.textContent = 'Today';
+        } else if (diffDays === 1) {
+          latestRegistrationEl.textContent = 'Yesterday';
+        } else {
+          latestRegistrationEl.textContent = `${diffDays} days ago`;
+        }
+      } else {
+        latestRegistrationEl.textContent = '-';
+      }
+    }
+    
+    // Export registrations as CSV
+    exportCsvBtn.addEventListener('click', async function() {
+      if (currentRegistrations.length === 0) {
+        showSuccessMessage('No registrations to export.', 'warning');
+        return;
+      }
+      
+      // CSV Headers
+      const headers = [
+        'Registration Date',
+        'Player Name',
+        'Birth Date',
+        'Age Group',
+        'Grade',
+        'School',
+        'Primary Position',
+        'Secondary Position',
+        'Experience Level',
+        'Previous Club',
+        'Tryout Session',
+        'Parent Name',
+        'Parent Email',
+        'Parent Phone',
+        'Parent Address',
+        'Status'
+      ];
+      
+      // Create CSV content
+      let csvContent = headers.join(',') + '\n';
+      
+      // Add registrations to CSV
+      currentRegistrations.forEach(registration => {
+        const formattedDate = new Date(registration.timestamp).toLocaleString();
+        
+        const row = [
+          `"${formattedDate}"`,
+          `"${(registration.playerName || '').replace(/"/g, '""')}"`,
+          `"${(registration.birthDate || '').replace(/"/g, '""')}"`,
+          `"${(registration.ageGroup || '').replace(/"/g, '""')}"`,
+          `"${(registration.grade || '').replace(/"/g, '""')}"`,
+          `"${(registration.school || '').replace(/"/g, '""')}"`,
+          `"${(registration.position || '').replace(/"/g, '""')}"`,
+          `"${(registration.secondaryPosition || '').replace(/"/g, '""')}"`,
+          `"${(registration.experienceLevel || '').replace(/"/g, '""')}"`,
+          `"${(registration.previousClub || '').replace(/"/g, '""')}"`,
+          `"${(registration.tryoutSession || '').replace(/"/g, '""')}"`,
+          `"${(registration.parentName || '').replace(/"/g, '""')}"`,
+          `"${(registration.parentEmail || '').replace(/"/g, '""')}"`,
+          `"${(registration.parentPhone || '').replace(/"/g, '""')}"`,
+          `"${(registration.parentAddress || '').replace(/"/g, '""')}"`,
+          `"${(registration.status || '').replace(/"/g, '""')}"`
+        ];
+        
+        csvContent += row.join(',') + '\n';
+      });
+      
+      // Create download link
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      // Set link attributes
+      link.setAttribute('href', url);
+      link.setAttribute('download', `tvvc-tryout-registrations-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.display = 'none';
+      
+      // Add link to document
+      document.body.appendChild(link);
+      
+      // Click link to download
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      
+      // Show success message
+      showSuccessMessage('Registrations exported successfully!');
+    });
+    
+    // Clear all registrations data
+    clearDataBtn.addEventListener('click', async function() {
+      if (confirm('Are you sure you want to clear ALL registration data? This action CANNOT be undone.')) {
+        if (confirm('This will permanently delete ALL tryout registrations. Type "DELETE" to confirm.')) {
+          const confirmText = prompt('Type "DELETE" to confirm deletion of all registrations:');
+          
+          if (confirmText === 'DELETE') {
+            // Show loading spinner
+            loadingSpinner.style.display = 'flex';
+            spinner.spin(document.getElementById('spinner-container'));
+            
+            try {
+              // Clear all registrations from Firestore
+              const success = await clearAllRegistrations();
+              
+              if (success) {
+                // Reload registrations
+                await loadRegistrations();
+                
+                // Show success message
+                showSuccessMessage('All registration data has been cleared.');
+              } else {
+                showSuccessMessage('Error clearing registration data. Please try again.', 'error');
+              }
+            } catch (error) {
+              console.error('Error clearing registrations:', error);
+              showSuccessMessage('Error clearing registration data. Please try again.', 'error');
+            } finally {
+              // Hide loading spinner
+              loadingSpinner.style.display = 'none';
+              spinner.stop();
+            }
+          } else {
+            showSuccessMessage('Deletion cancelled.', 'warning');
+          }
+        }
+      }
+    });
+    
+    // Show success message
+    function showSuccessMessage(message, type = 'success') {
+      successText.textContent = message;
+      
+      if (type === 'warning') {
+        successMessage.style.backgroundColor = 'rgba(255, 152, 0, 0.1)';
+        successMessage.style.color = '#ff9800';
+      } else if (type === 'error') {
+        successMessage.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
+        successMessage.style.color = '#f44336';
+      } else {
+        successMessage.style.backgroundColor = 'rgba(0, 128, 128, 0.1)';
+        successMessage.style.color = 'var(--color-teal)';
+      }
+      
+      successMessage.style.display = 'flex';
+      
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        successMessage.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Modal event listeners
+    document.querySelector('.close-modal').addEventListener('click', closeDetailsModal);
+    document.getElementById('close-modal-btn').addEventListener('click', closeDetailsModal);
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+      if (event.target === detailsModal) {
+        closeDetailsModal();
+      }
+    });
+    
+    // Update status button
+    document.getElementById('update-status-btn').addEventListener('click', function() {
+      if (currentRegistrationId) {
+        const status = document.getElementById('status-select').value;
+        updateRegistrationStatusById(currentRegistrationId, status);
+      }
+    });
+    
+    // Delete registration button in modal
+    document.getElementById('delete-registration-btn').addEventListener('click', function() {
+      if (currentRegistrationId) {
+        if (confirm('Are you sure you want to delete this registration? This cannot be undone.')) {
+          deleteRegistrationById(currentRegistrationId);
+        }
+      }
+    });
+    
+    // Initialize
+    checkAuth();
+  </script>
+</body>
+</html>

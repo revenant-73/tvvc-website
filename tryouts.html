@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic Meta Tags -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Tryout Registration - Tualatin Valley Volleyball Club</title>
+  <meta name="description" content="Register for Tualatin Valley Volleyball Club tryouts. Complete our online form to secure your spot for the upcoming season.">
+  <meta name="keywords" content="volleyball tryouts, volleyball registration, TVVC tryouts, Portland volleyball tryouts, youth volleyball registration">
+  <meta name="author" content="Tualatin Valley Volleyball Club">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://www.tualatinvalleyvb.com/tryouts.html">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.tualatinvalleyvb.com/tryouts.html">
+  <meta property="og:title" content="Tryout Registration - Tualatin Valley Volleyball Club">
+  <meta property="og:description" content="Register for TVVC tryouts and secure your spot for the upcoming season.">
+  <meta property="og:image" content="https://www.tualatinvalleyvb.com/assets/images/tvvc-social-share.jpg">
+  <meta property="og:image:alt" content="Tualatin Valley Volleyball Club logo and players">
+  <meta property="og:site_name" content="Tualatin Valley Volleyball Club">
+  <meta property="og:locale" content="en_US">
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://www.tualatinvalleyvb.com/tryouts.html">
+  <meta name="twitter:title" content="Tryout Registration - Tualatin Valley Volleyball Club">
+  <meta name="twitter:description" content="Register for TVVC tryouts and secure your spot for the upcoming season.">
+  <meta name="twitter:image" content="https://www.tualatinvalleyvb.com/assets/images/tvvc-social-share.jpg">
+  <meta name="twitter:image:alt" content="Tualatin Valley Volleyball Club logo and players">
+  
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+  <link rel="manifest" href="assets/favicon/site.webmanifest">
+  <link rel="mask-icon" href="assets/favicon/safari-pinned-tab.svg" color="#008080">
+  <meta name="msapplication-TileColor" content="#008080">
+  <meta name="theme-color" content="#121212">
+  
+  <!-- Fonts - optimized loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet"></noscript>
+  
+  <!-- Font Awesome Icons - with preload for performance -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+  
+  <!-- Custom CSS - Minified for performance -->
+  <link rel="stylesheet" href="assets/site-styles.min.css">
+  
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import the functions you need from the SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    
+    // Your Firebase configuration will be used in the script below
+    window.initFirebase = async function() {
+      // Firebase config and initialization happens in the script below
+    };
+  </script>
+  
+  <style>
+    /* Animation for page loader */
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 0.6; }
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    /* Page-specific styles */
+    .tryout-header {
+      background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                  url('assets/images/volleyball-court.jpg') no-repeat center center;
+      background-size: cover;
+      padding: 120px 0 80px;
+      text-align: center;
+      color: white;
+      position: relative;
+    }
+    
+    .tryout-header h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    .tryout-header p {
+      font-size: 1.2rem;
+      max-width: 800px;
+      margin: 0 auto;
+      text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    }
+    
+    .form-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px;
+      background: var(--color-dark-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .form-section {
+      margin-bottom: 30px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .form-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .form-section-title {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      color: var(--color-coral);
+    }
+    
+    .form-section-title i {
+      margin-right: 10px;
+      background: rgba(255, 107, 107, 0.1);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-container {
+        padding: 24px;
+      }
+      
+      .form-section-title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .form-section-title i {
+        margin-right: 0;
+      }
+      
+      .form-input,
+      .form-textarea,
+      select.form-input {
+        padding: 14px;
+        font-size: 16px; /* Prevents iOS zoom on focus */
+        min-height: 50px; /* Larger touch target */
+      }
+      
+      .btn {
+        padding: 14px 20px;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .tryout-header h1 {
+        font-size: 2.2rem;
+      }
+      
+      .tryout-header p {
+        font-size: 1rem;
+      }
+    }
+    
+    .form-note {
+      background: rgba(0, 128, 128, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid var(--color-teal);
+      margin: 20px 0;
+    }
+    
+    .form-success {
+      background: rgba(76, 175, 80, 0.1);
+      color: #4CAF50;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+    
+    .form-error {
+      background: rgba(244, 67, 54, 0.1);
+      color: #F44336;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+    
+    .back-to-home {
+      display: inline-flex;
+      align-items: center;
+      color: var(--color-teal);
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 30px;
+      transition: all 0.3s ease;
+    }
+    
+    .back-to-home:hover {
+      color: var(--color-coral);
+      transform: translateX(-5px);
+    }
+    
+    .back-to-home i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Page Loader -->
+  <div id="page-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #121212; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease, visibility 0.5s ease;">
+    <div style="text-align: center;">
+      <div style="width: 80px; height: 80px; position: relative; margin: 0 auto 20px;">
+        <div style="position: absolute; width: 100%; height: 100%; border: 4px solid rgba(0, 128, 128, 0.2); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite;"></div>
+        <div style="position: absolute; width: 100%; height: 100%; border: 4px solid transparent; border-top-color: var(--color-teal); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      </div>
+      <h2 style="color: white; font-family: 'Outfit', sans-serif; letter-spacing: 2px; font-size: 1.5rem; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">TVVC</h2>
+    </div>
+  </div>
+  
+  <script>
+    // Hide loader when page is loaded
+    window.addEventListener('load', function() {
+      const loader = document.getElementById('page-loader');
+      loader.style.opacity = '0';
+      loader.style.visibility = 'hidden';
+    });
+  </script>
+  
+  <!-- Header - Now with sticky positioning -->
+  <header class="site-header" style="position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(18, 18, 18, 0.9); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); transition: all 0.3s ease;">
+    <div class="container header-container">
+      <a href="index.html" class="logo" style="background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        <span>TVVC</span>
+      </a>
+      
+      <button class="mobile-menu-toggle" aria-expanded="false" aria-controls="main-nav">
+        <i class="fas fa-bars menu-icon"></i>
+        <i class="fas fa-times close-icon" style="display: none;"></i>
+        <span class="sr-only">Menu</span>
+      </button>
+      
+      <nav class="main-nav" id="main-nav">
+        <ul>
+          <li><a href="index.html#about" class="nav-link">About</a></li>
+          <li><a href="index.html#teams" class="nav-link">Teams</a></li>
+          <li><a href="index.html#tryouts" class="nav-link active">Tryouts</a></li>
+          <li><a href="index.html#sand" class="nav-link">Sand</a></li>
+          <li><a href="index.html#training-sessions" class="nav-link">Group Training</a></li>
+          <li><a href="index.html#newsletter" class="nav-link newsletter-btn" style="background-color: #FF6B6B; color: white; padding: 8px 16px; border-radius: 20px; margin-left: 10px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#FF8585'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(255, 107, 107, 0.3)';" onmouseout="this.style.backgroundColor='#FF6B6B'; this.style.transform='translateY(0)'; this.style.boxShadow='none';"><i class="fas fa-paper-plane" style="margin-right: 5px;"></i>Newsletter</a></li>
+          <li><a href="index.html#contact" class="nav-link contact-btn" style="background-color: var(--color-teal); color: white; padding: 8px 16px; border-radius: 20px; margin-left: 10px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='var(--color-coral)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.backgroundColor='var(--color-teal)'; this.style.transform='translateY(0)'"><i class="fas fa-envelope" style="margin-right: 5px;"></i>Contact Us</a></li>
+          <li><a href="https://billing.stripe.com/p/login/5kA3fT1ap2zEel23cc" target="_blank" class="nav-link billing-btn" style="background-color: #635BFF; color: white; padding: 8px 16px; border-radius: 20px; margin-left: 10px; transition: all 0.3s ease; display: flex; align-items: center;" onmouseover="this.style.backgroundColor='#8780FF'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(99, 91, 255, 0.3)';" onmouseout="this.style.backgroundColor='#635BFF'; this.style.transform='translateY(0)'; this.style.boxShadow='none';"><i class="fas fa-credit-card" style="margin-right: 5px;"></i>My Account</a></li>
+        </ul>
+      </nav>
+      
+      <div class="menu-overlay"></div>
+    </div>
+  </header>
+  
+  <!-- Tryout Header -->
+  <section class="tryout-header">
+    <div class="container">
+      <h1>Tryout Registration</h1>
+      <p>Pre-register for the upcoming season tryouts to secure your spot and receive priority check-in on the day of tryouts.</p>
+    </div>
+  </section>
+  
+  <!-- Main Content -->
+  <main class="section">
+    <div class="container">
+      <a href="index.html#tryouts" class="back-to-home">
+        <i class="fas fa-arrow-left"></i> Back to Tryout Information
+      </a>
+      
+      <div class="form-container">
+        <div id="form-success" class="form-success">
+          <i class="fas fa-check-circle" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
+          <h3>Registration Successful!</h3>
+          <p>Your information has been submitted. Please check your email for confirmation details.</p>
+          <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 15px;">
+            <a href="https://buy.stripe.com/00geWkabwdpM7pCbJ2" class="btn" style="
+              background: linear-gradient(135deg, var(--color-coral), var(--color-coral-glow));
+              color: white;
+              font-size: 1.2rem;
+              font-weight: 700;
+              padding: 16px 32px;
+              border-radius: var(--radius-md);
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+              transition: all 0.3s ease;
+              text-align: center;
+            ">
+              <i class="fas fa-credit-card" style="margin-right: 10px;"></i> Continue to Payment Screen
+            </a>
+            <button id="register-another" class="btn" style="
+              background: var(--color-teal);
+              font-size: 1rem;
+              padding: 12px 24px;
+            ">
+              <i class="fas fa-user-plus" style="margin-right: 8px;"></i> Register Another Player
+            </button>
+          </div>
+        </div>
+        
+        <div id="form-error" class="form-error">
+          <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
+          <h3>Registration Error</h3>
+          <p>There was a problem submitting your registration. Please try again or contact us for assistance.</p>
+          <button id="try-again" class="btn" style="background: var(--color-coral); margin-top: 20px;">
+            <i class="fas fa-redo"></i> Try Again
+          </button>
+        </div>
+        
+        <form id="tryout-registration-form" style="display: block;">
+          <div class="form-section">
+            <div class="form-section-title">
+              <i class="fas fa-user"></i>
+              <h3>Player Information</h3>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="player-first-name" class="form-label">First Name</label>
+                <input type="text" id="player-first-name" name="playerFirstName" class="form-input" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="player-last-name" class="form-label">Last Name</label>
+                <input type="text" id="player-last-name" name="playerLastName" class="form-input" required>
+              </div>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="birth-date" class="form-label">Birth Date</label>
+                <input type="date" id="birth-date" name="birthDate" class="form-input" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="grade" class="form-label">Current Grade</label>
+                <select id="grade" name="grade" class="form-input" required>
+                  <option value="">Select Grade</option>
+                  <option value="6">6th Grade</option>
+                  <option value="7">7th Grade</option>
+                  <option value="8">8th Grade</option>
+                  <option value="9">9th Grade</option>
+                  <option value="10">10th Grade</option>
+                  <option value="11">11th Grade</option>
+                  <option value="12">12th Grade</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="age-group" class="form-label">Age Group</label>
+                <select id="age-group" name="ageGroup" class="form-input" required>
+                  <option value="">Select Age Group</option>
+                  <option value="12u">12U</option>
+                  <option value="13u">13U</option>
+                  <option value="14u">14U</option>
+                  <option value="15u">15U</option>
+                  <option value="16u">16U</option>
+                  <option value="17u">17U</option>
+                  <option value="18u">18U</option>
+                </select>
+                <small style="display: block; margin-top: 5px; font-size: 0.8rem; color: #aaa;">Based on player's age on July 31, 2026</small>
+              </div>
+              
+              <div class="form-group">
+                <label for="school" class="form-label">School</label>
+                <input type="text" id="school" name="school" class="form-input" required>
+              </div>
+            </div>
+            
+            <div class="form-note">
+              <p><strong>Age Group Guide:</strong> Age groups are determined by how old a player will be on July 31, 2026. We recommend players try to play with their school grade when possible.</p>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <div class="form-section-title">
+              <i class="fas fa-volleyball-ball"></i>
+              <h3>Volleyball Experience</h3>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="position" class="form-label">Primary Position</label>
+                <select id="position" name="position" class="form-input" required>
+                  <option value="">Select Position</option>
+                  <option value="setter">Setter</option>
+                  <option value="outside">Outside Hitter</option>
+                  <option value="middle">Middle Blocker</option>
+                  <option value="opposite">Opposite/Right Side</option>
+                  <option value="libero">Libero/Defensive Specialist</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="secondary-position" class="form-label">Secondary Position (optional)</label>
+                <select id="secondary-position" name="secondaryPosition" class="form-input">
+                  <option value="">Select Position</option>
+                  <option value="setter">Setter</option>
+                  <option value="outside">Outside Hitter</option>
+                  <option value="middle">Middle Blocker</option>
+                  <option value="opposite">Opposite/Right Side</option>
+                  <option value="libero">Libero/Defensive Specialist</option>
+                  <option value="none">None</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="experience" class="form-label">Volleyball Experience</label>
+              <select id="experience" name="experience" class="form-input" required>
+                <option value="">Select Experience Level</option>
+                <option value="beginner">Beginner (0-1 years)</option>
+                <option value="intermediate">Intermediate (2-3 years)</option>
+                <option value="advanced">Advanced (4+ years)</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="previous-club" class="form-label">Previous Club (if any)</label>
+              <input type="text" id="previous-club" name="previousClub" class="form-input">
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <div class="form-section-title">
+              <i class="fas fa-users"></i>
+              <h3>Parent/Guardian Information</h3>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="parent-name" class="form-label">Parent/Guardian Name</label>
+                <input type="text" id="parent-name" name="parentName" class="form-input" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="relationship" class="form-label">Relationship to Player</label>
+                <select id="relationship" name="relationship" class="form-input" required>
+                  <option value="">Select Relationship</option>
+                  <option value="mother">Mother</option>
+                  <option value="father">Father</option>
+                  <option value="guardian">Legal Guardian</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="parent-email" class="form-label">Email</label>
+                <input type="email" id="parent-email" name="parentEmail" class="form-input" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="parent-phone" class="form-label">Phone</label>
+                <input type="tel" id="parent-phone" name="parentPhone" class="form-input" required>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="address" class="form-label">Address</label>
+              <input type="text" id="address" name="address" class="form-input" required>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="city" class="form-label">City</label>
+                <input type="text" id="city" name="city" class="form-input" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="zip" class="form-label">ZIP Code</label>
+                <input type="text" id="zip" name="zip" class="form-input" required>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <div class="form-section-title">
+              <i class="fas fa-calendar-alt"></i>
+              <h3>Tryout Session</h3>
+            </div>
+            
+            <div class="form-group">
+              <label for="tryout-date" class="form-label">Select Tryout Date</label>
+              <select id="tryout-date" name="tryoutDate" class="form-input" required>
+                <option value="">Select Date</option>
+                <option value="nov-9-12u-14u">November 9, 2025 | 5:00-7:00 PM (12U-14U)</option>
+                <option value="nov-16-15u-16u">November 16, 2025 | 4:00-6:00 PM (15U-16U)</option>
+                <option value="nov-16-17u-18u">November 16, 2025 | 6:30-8:30 PM (17U-18U)</option>
+              </select>
+            </div>
+            
+            <div class="form-note">
+              <p><strong>Location:</strong> Century High School, 2000 SE Century Blvd, Hillsboro, OR 97123</p>
+              <p><strong>What to Bring:</strong> USAV membership, athletic attire, volleyball shoes, water bottle, and small towel.</p>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <div class="form-section-title">
+              <i class="fas fa-check-circle"></i>
+              <h3>Confirmation</h3>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-checkbox">
+                <input type="checkbox" name="termsAgreed" required>
+                <span>I understand that completing this form does not guarantee a spot on a team. All players must attend tryouts and be evaluated by the coaching staff.</span>
+              </label>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-checkbox">
+                <input type="checkbox" name="emailConsent">
+                <span>I would like to receive updates about TVVC programs, events, and news via email.</span>
+              </label>
+            </div>
+            
+            <button type="submit" class="btn" style="
+              width: 100%;
+              background: linear-gradient(135deg, var(--color-coral), var(--color-coral-glow));
+              font-size: 1.1rem;
+              font-weight: 700;
+              padding: 15px;
+              margin-top: 20px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            ">
+              <i class="fas fa-paper-plane"></i> Submit Registration
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="site-footer" style="background-color: #121212; color: white; padding: 4rem 0 2rem; position: relative; overflow: hidden;">
+    <!-- Subtle dot pattern -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data:image/svg+xml,%3Csvg width%3D%2230%22 height%3D%2230%22 viewBox%3D%220 0 30 30%22 xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg fill%3D%22%23ffffff%22 fill-opacity%3D%220.02%22 fill-rule%3D%22evenodd%22%3E%3Ccircle cx%3D%2215%22 cy%3D%2215%22 r%3D%221%22%3E%3C%2Fcircle%3E%3C%2Fg%3E%3C%2Fsvg%3E'); pointer-events: none;"></div>
+    
+    <!-- Top border accent -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(to right, #ff5c5c, #ff8585, #ff5c5c); background-size: 200% 100%; animation: gradientShift 3s ease infinite;"></div>
+    
+    <div class="container" style="max-width: 1400px; width: 100%; margin: 0 auto; padding: 0 2rem;">
+      <div style="display: flex; flex-wrap: wrap; gap: 3rem; justify-content: space-between; margin-bottom: 3rem;">
+        <div style="flex: 1; min-width: 250px;">
+          <a href="index.html" style="text-decoration: none; font-size: 2rem; font-weight: bold; font-family: 'Montserrat', sans-serif; display: inline-block; position: relative; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;" onmouseover="this.querySelector('.logo-underline').style.transform='scaleX(1)';" onmouseout="this.querySelector('.logo-underline').style.transform='scaleX(0)';">
+            <span>TVVC</span>
+            <span class="logo-underline" style="position: absolute; bottom: -3px; left: 0; width: 100%; height: 2px; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease;"></span>
+          </a>
+          <p style="margin-top: 1rem; color: rgba(255, 255, 255, 0.7); line-height: 1.6;">Locally grown. Athlete-first. Volleyball with heart since 2024.</p>
+          
+          <!-- Social Media Links -->
+          <div style="display: flex; gap: 15px; margin-top: 20px;">
+            <a href="https://instagram.com" target="_blank" aria-label="Follow us on Instagram" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#E1306C'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(225, 48, 108, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://facebook.com" target="_blank" aria-label="Follow us on Facebook" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#4267B2'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(66, 103, 178, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Follow us on Twitter" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#1DA1F2'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(29, 161, 242, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://youtube.com" target="_blank" aria-label="Subscribe to our YouTube channel" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#FF0000'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(255, 0, 0, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-youtube"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div style="flex: 1; min-width: 250px;">
+          <h4 style="font-size: 1.2rem; margin-bottom: 1.2rem; color: white; font-weight: 600;">Contact Us</h4>
+          <p style="margin-bottom: 0.8rem;">
+            <i class="fas fa-phone" style="color: #ff5c5c; margin-right: 10px;"></i> 
+            <a href="tel:5033890760" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#ff5c5c'; this.style.borderBottomColor='#ff5c5c';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">(503) 389-0760</a>
+          </p>
+          <p style="margin-bottom: 0.8rem;">
+            <i class="fas fa-envelope" style="color: #ff5c5c; margin-right: 10px;"></i> 
+            <a href="mailto:info@tualatinvalleyvb.com" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#ff5c5c'; this.style.borderBottomColor='#ff5c5c';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">info@tualatinvalleyvb.com</a>
+          </p>
+          <p style="margin-bottom: 0.8rem;">
+            <i class="fas fa-calendar-alt" style="color: #33CCCC; margin-right: 10px;"></i> 
+            <a href="https://calendly.com/tvvc/group-training" target="_blank" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#33CCCC'; this.style.borderBottomColor='#33CCCC';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">Book Group Training</a>
+          </p>
+          <p>
+            <i class="fas fa-volleyball-ball" style="color: #FFB84D; margin-right: 10px;"></i> 
+            <a href="https://calendly.com/tvvc/tvvc-sand-training-blocks" target="_blank" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#FFB84D'; this.style.borderBottomColor='#FFB84D';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">Book TVVC SAND Training</a>
+          </p>
+        </div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+        <div>
+          <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">&copy; 2025 Tualatin Valley Volleyball Club. All rights reserved.</p>
+          <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="privacy-policy.html" style="display: inline-block; padding: 5px 15px; background-color: #1c1c1c; color: #ff5c5c; border: 1px solid #ff5c5c; border-radius: 4px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; position: relative; z-index: 10;" onmouseover="this.style.backgroundColor='#ff5c5c'; this.style.color='white';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.color='#ff5c5c';">
+              <i class="fas fa-shield-alt" style="margin-right: 5px;"></i>Privacy Policy
+            </a>
+            <a href="coach-ed.html" style="display: inline-block; padding: 5px 15px; background-color: #1c1c1c; color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; position: relative; z-index: 10;" onmouseover="this.style.backgroundColor='var(--color-teal)'; this.style.color='white'; this.style.borderColor='var(--color-teal)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.color='rgba(255, 255, 255, 0.5)'; this.style.borderColor='rgba(255, 255, 255, 0.1)';">
+              <i class="fas fa-chalkboard-teacher" style="margin-right: 5px;"></i>Coaches
+            </a>
+            <a href="admin/index.html" style="display: inline-block; padding: 5px 15px; background-color: #1c1c1c; color: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; position: relative; z-index: 10;" onmouseover="this.style.backgroundColor='#333'; this.style.color='white'; this.style.borderColor='#444';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.color='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.1)';">
+              <i class="fas fa-lock" style="margin-right: 5px;"></i>Admin
+            </a>
+          </div>
+        </div>
+        <a href="#" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" aria-label="Back to top" onmouseover="this.style.backgroundColor='#ff5c5c'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(255, 92, 92, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+          <i class="fas fa-chevron-up"></i>
+        </a>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Back to top button -->
+  <a href="#" class="back-to-top" id="back-to-top" aria-label="Back to top" style="background-color: #ff5c5c; box-shadow: 0 4px 12px rgba(255, 92, 92, 0.3);">
+    <i class="fas fa-chevron-up"></i>
+  </a>
+  
+  <!-- Firebase Configuration and Form Submission Script -->
+  <script type="module">
+    // Import the functions you need from the SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDmsZlmti2s_-tnmfzu2dl3JXHc-O_MFIo",
+      authDomain: "tvvc-website.firebaseapp.com",
+      projectId: "tvvc-website",
+      storageBucket: "tvvc-website.firebasestorage.app",
+      messagingSenderId: "235626883938",
+      appId: "1:235626883938:web:109885d0682b9080bd1a3b"
+    };
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // Form submission handler
+    document.getElementById('tryout-registration-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      try {
+        // Get form values
+        const formData = {
+          playerInfo: {
+            firstName: document.getElementById('player-first-name').value,
+            lastName: document.getElementById('player-last-name').value,
+            birthDate: document.getElementById('birth-date').value,
+            grade: document.getElementById('grade').value,
+            ageGroup: document.getElementById('age-group').value,
+            school: document.getElementById('school').value
+          },
+          volleyballExperience: {
+            primaryPosition: document.getElementById('position').value,
+            secondaryPosition: document.getElementById('secondary-position').value || 'none',
+            experienceLevel: document.getElementById('experience').value,
+            previousClub: document.getElementById('previous-club').value || 'None'
+          },
+          guardianInfo: {
+            name: document.getElementById('parent-name').value,
+            relationship: document.getElementById('relationship').value,
+            email: document.getElementById('parent-email').value,
+            phone: document.getElementById('parent-phone').value,
+            address: document.getElementById('address').value,
+            city: document.getElementById('city').value,
+            zip: document.getElementById('zip').value
+          },
+          tryoutSession: document.getElementById('tryout-date').value,
+          termsAgreed: document.querySelector('input[name="termsAgreed"]').checked,
+          emailConsent: document.querySelector('input[name="emailConsent"]').checked,
+          registrationDate: serverTimestamp(),
+          status: 'pending' // For admin tracking
+        };
+        
+        // Save to Firestore
+        const docRef = await addDoc(collection(db, 'tryoutRegistrations'), formData);
+        console.log('Registration saved with ID: ', docRef.id);
+        
+        // Show success message
+        document.getElementById('tryout-registration-form').style.display = 'none';
+        document.getElementById('form-success').style.display = 'block';
+        
+        // Scroll to success message
+        document.getElementById('form-success').scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
+        console.error('Error adding registration: ', error);
+        document.getElementById('form-error').style.display = 'block';
+        
+        // Scroll to error message
+        document.getElementById('form-error').scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+    
+    // Register another player button
+    document.getElementById('register-another').addEventListener('click', function() {
+      document.getElementById('tryout-registration-form').reset();
+      document.getElementById('form-success').style.display = 'none';
+      document.getElementById('tryout-registration-form').style.display = 'block';
+    });
+    
+    // Try again button
+    document.getElementById('try-again').addEventListener('click', function() {
+      document.getElementById('form-error').style.display = 'none';
+    });
+  </script>
+  
+  <!-- Site Navigation Script -->
+  <script>
+    // Mobile menu toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const menuToggle = document.querySelector('.mobile-menu-toggle');
+      const menuIcon = document.querySelector('.menu-icon');
+      const closeIcon = document.querySelector('.close-icon');
+      const mainNav = document.getElementById('main-nav');
+      const menuOverlay = document.querySelector('.menu-overlay');
+      
+      if (menuToggle) {
+        menuToggle.addEventListener('click', function() {
+          document.body.classList.toggle('menu-open');
+          mainNav.classList.toggle('active');
+          menuOverlay.classList.toggle('active');
+          
+          // Toggle aria-expanded attribute
+          const expanded = menuToggle.getAttribute('aria-expanded') === 'true' || false;
+          menuToggle.setAttribute('aria-expanded', !expanded);
+          
+          // Toggle icons
+          if (menuIcon && closeIcon) {
+            if (menuIcon.style.display === 'none') {
+              menuIcon.style.display = 'inline-block';
+              closeIcon.style.display = 'none';
+            } else {
+              menuIcon.style.display = 'none';
+              closeIcon.style.display = 'inline-block';
+            }
+          }
+        });
+      }
+      
+      // Close mobile menu when clicking on a link
+      const navLinks = document.querySelectorAll('.nav-link');
+      navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          document.body.classList.remove('menu-open');
+          if (mainNav) mainNav.classList.remove('active');
+          if (menuOverlay) menuOverlay.classList.remove('active');
+          
+          // Reset icons
+          if (menuIcon && closeIcon) {
+            menuIcon.style.display = 'inline-block';
+            closeIcon.style.display = 'none';
+          }
+          
+          // Reset aria-expanded
+          if (menuToggle) {
+            menuToggle.setAttribute('aria-expanded', 'false');
+          }
+        });
+      });
+      
+      // Close menu when clicking on overlay
+      if (menuOverlay) {
+        menuOverlay.addEventListener('click', function() {
+          document.body.classList.remove('menu-open');
+          mainNav.classList.remove('active');
+          menuOverlay.classList.remove('active');
+          
+          // Reset icons
+          if (menuIcon && closeIcon) {
+            menuIcon.style.display = 'inline-block';
+            closeIcon.style.display = 'none';
+          }
+          
+          // Reset aria-expanded
+          if (menuToggle) {
+            menuToggle.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+      
+      // Back to top button functionality
+      const backToTopButton = document.querySelector('.back-to-top');
+      const backToTopFooterButton = document.querySelector('.back-to-top-footer');
+      
+      function handleScroll() {
+        if (window.scrollY > 300) {
+          if (backToTopButton) backToTopButton.classList.add('visible');
+        } else {
+          if (backToTopButton) backToTopButton.classList.remove('visible');
+        }
+      }
+      
+      window.addEventListener('scroll', handleScroll);
+      
+      if (backToTopButton) {
+        backToTopButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+      
+      if (backToTopFooterButton) {
+        backToTopFooterButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+    });
+  </script>
+</body>
+</html>

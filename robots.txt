@@ -1,0 +1,11 @@
+# robots.txt for Tualatin Valley Volleyball Club
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://www.tualatinvalleyvb.com/sitemap.xml
+
+# Disallow admin areas
+Disallow: /admin/
+Disallow: /wp-admin/
+Disallow: /wp-login.php

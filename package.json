@@ -1,0 +1,20 @@
+{
+  "name": "tvvc-website",
+  "version": "1.0.0",
+  "description": "TVVC Website",
+  "scripts": {
+    "dev": "netlify dev",
+    "minify-js": "node minify-js.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "terser": "^5.19.2"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.10.1"
+  },
+  "main": "check-file-sizes.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

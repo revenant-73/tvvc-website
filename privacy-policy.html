@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic Meta Tags -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Privacy Policy - TVVC</title>
+  <meta name="description" content="Tualatin Valley Volleyball Club's Privacy Policy - Learn how we collect, use, and protect your personal information.">
+  <meta name="author" content="Tualatin Valley Volleyball Club">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://www.tualatinvalleyvb.com/privacy-policy.html">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.tualatinvalleyvb.com/privacy-policy.html">
+  <meta property="og:title" content="Privacy Policy - TVVC">
+  <meta property="og:description" content="Tualatin Valley Volleyball Club's Privacy Policy - Learn how we collect, use, and protect your personal information.">
+  <meta property="og:image" content="https://www.tualatinvalleyvb.com/assets/images/tvvc-social-share.jpg">
+  <meta property="og:image:alt" content="Tualatin Valley Volleyball Club logo and players">
+  <meta property="og:site_name" content="Tualatin Valley Volleyball Club">
+  <meta property="og:locale" content="en_US">
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://www.tualatinvalleyvb.com/privacy-policy.html">
+  <meta name="twitter:title" content="Privacy Policy - TVVC">
+  <meta name="twitter:description" content="Tualatin Valley Volleyball Club's Privacy Policy - Learn how we collect, use, and protect your personal information.">
+  <meta name="twitter:image" content="https://www.tualatinvalleyvb.com/assets/images/tvvc-social-share.jpg">
+  <meta name="twitter:image:alt" content="Tualatin Valley Volleyball Club logo and players">
+  
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+  <link rel="manifest" href="/assets/favicon/site.webmanifest">
+  <link rel="mask-icon" href="/assets/favicon/safari-pinned-tab.svg" color="#008080">
+  <meta name="msapplication-TileColor" content="#008080">
+  <meta name="theme-color" content="#121212">
+  
+  <!-- Fonts - optimized loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet"></noscript>
+  
+  <!-- Font Awesome Icons - with preload for performance -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+  
+  <!-- Custom CSS - Minified for performance -->
+  <link rel="stylesheet" href="assets/site-styles.min.css">
+  
+  <style>
+    /* RGB color variables for animations */
+    :root {
+      --color-teal-rgb: 0, 128, 128;
+      --color-coral-rgb: 255, 107, 107;
+    }
+    
+    /* Additional styles for one-page layout */
+    html {
+      scroll-padding-top: 80px; /* Ensures scrolling targets account for fixed header */
+    }
+    
+    .section-divider {
+      height: 4px;
+      width: 100px;
+      background-color: var(--color-coral);
+      margin: var(--spacing-xl) auto;
+      border-radius: var(--radius-full);
+    }
+    
+    /* Smooth scroll behavior */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Active nav item styling */
+    .main-nav a.active {
+      background-color: var(--color-coral);
+      color: var(--color-white);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .main-nav a.active:hover {
+      background-color: var(--color-coral-glow);
+      transform: translateY(-1px);
+    }
+    
+    /* Back to top button */
+    .back-to-top {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: var(--color-coral);
+      color: var(--color-white);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 99;
+    }
+    
+    .back-to-top.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .back-to-top:hover {
+      background-color: var(--color-coral-glow);
+      transform: translateY(-3px);
+    }
+    
+    /* Gradient animation for border accents */
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Page Loader -->
+  <div id="page-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #121212; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease, visibility 0.5s ease;">
+    <div style="text-align: center;">
+      <div style="width: 80px; height: 80px; position: relative; margin: 0 auto 20px;">
+        <div style="position: absolute; width: 100%; height: 100%; border: 4px solid rgba(0, 128, 128, 0.2); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite;"></div>
+        <div style="position: absolute; width: 100%; height: 100%; border: 4px solid transparent; border-top-color: var(--color-teal); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      </div>
+      <h2 style="color: white; font-family: 'Outfit', sans-serif; letter-spacing: 2px; font-size: 1.5rem; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">TVVC</h2>
+    </div>
+  </div>
+  
+  <script>
+    // Hide loader when page is loaded
+    window.addEventListener('load', function() {
+      const loader = document.getElementById('page-loader');
+      loader.style.opacity = '0';
+      loader.style.visibility = 'hidden';
+    });
+  </script>
+  
+  <!-- Header - Now with sticky positioning -->
+  <header class="site-header" style="position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(18, 18, 18, 0.9); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); transition: all 0.3s ease;">
+    <div class="container header-container">
+      <a href="index.html" class="logo" style="background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+        <span>TVVC</span>
+      </a>
+      
+      <button class="mobile-menu-toggle" aria-expanded="false" aria-controls="main-nav">
+        <i class="fas fa-bars menu-icon"></i>
+        <i class="fas fa-times close-icon" style="display: none;"></i>
+        <span class="sr-only">Menu</span>
+      </button>
+      
+      <nav class="main-nav" id="main-nav">
+        <ul>
+          <li><a href="index.html#about" class="nav-link">About</a></li>
+          <li><a href="index.html#teams" class="nav-link">Teams</a></li>
+          <li><a href="index.html#tryouts" class="nav-link">Tryouts</a></li>
+          <li><a href="index.html#sand" class="nav-link">Sand</a></li>
+          <li><a href="index.html#training-sessions" class="nav-link">Group Training</a></li>
+          <li><a href="index.html#contact" class="nav-link contact-btn" style="background-color: var(--color-teal); color: white; padding: 8px 16px; border-radius: 20px; margin-left: 10px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='var(--color-coral)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.backgroundColor='var(--color-teal)'; this.style.transform='translateY(0)'"><i class="fas fa-envelope" style="margin-right: 5px;"></i>Contact Us</a></li>
+          <li><a href="https://billing.stripe.com/p/login/5kA3fT1ap2zEel23cc" target="_blank" class="nav-link billing-btn" style="background-color: #635BFF; color: white; padding: 8px 16px; border-radius: 20px; margin-left: 10px; transition: all 0.3s ease; display: flex; align-items: center;" onmouseover="this.style.backgroundColor='#8780FF'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(99, 91, 255, 0.3)';" onmouseout="this.style.backgroundColor='#635BFF'; this.style.transform='translateY(0)'; this.style.boxShadow='none';"><i class="fas fa-credit-card" style="margin-right: 5px;"></i>My Account</a></li>
+        </ul>
+      </nav>
+      
+      <div class="menu-overlay"></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <div class="section-title">
+          <h1>Privacy Policy</h1>
+          <p class="text-center">Effective date: April 1, 2025 | Last updated: April 23, 2025</p>
+        </div>
+        
+        <div class="privacy-content card">
+          <div class="card-content">
+            <h2>1. Who we are</h2>
+            <p>Tualatin Valley Volleyball Club ("TVVC," "we," "our," "us") provides youth volleyball training, teams, and events. Our primary website is <a href="https://tualatinvalleyvb.com" target="_blank">https://tualatinvalleyvb.com</a>.</p>
+            
+            <h2>2. Information we collect</h2>
+            <ul>
+              <li><strong>Identity data:</strong> parent or guardian name, athlete name, date of birth.</li>
+              <li><strong>Contact data:</strong> email address, phone number, mailing address.</li>
+              <li><strong>Payment data:</strong> Stripe customer ID, last four digits of the card, transaction amounts, refunds.</li>
+              <li><strong>Technical data:</strong> IP address, browser type, device information, and cookies.</li>
+              <li><strong>Usage data:</strong> pages visited, links clicked, time spent on pages, basic analytics.</li>
+            </ul>
+            <p>We collect this information when you create an account, register for programs, complete a payment, submit forms, or browse our website.</p>
+            
+            <h2>3. How we use your information</h2>
+            <ul>
+              <li>To process payments, issue refunds, and send receipts.</li>
+              <li>To display your current balance and payment history in the parent portal or in email statements.</li>
+              <li>To communicate schedules, club updates, policy changes, and promotional offers (marketing emails are always optional).</li>
+              <li>To improve website functionality, security, and user experience.</li>
+              <li>To comply with legal, tax, and accounting obligations.</li>
+            </ul>
+            <p>Our legal bases under the GDPR are contract performance, legitimate interest, consent (for marketing), and compliance with legal obligations.</p>
+            
+            <h2>4. Sharing and disclosure</h2>
+            <ul>
+              <li>Stripe processes all card payments; full card numbers never touch our servers.</li>
+              <li>Email and SMS providers (for example, MailerLite or Textbelt) deliver receipts and notifications.</li>
+              <li>Government or regulatory authorities if required to satisfy a law, regulation, or legal process.</li>
+              <li>We do not sell or rent your personal data to anyone.</li>
+            </ul>
+            
+            <h2>5. Cookies and tracking</h2>
+            <p>We use essential cookies for site security and for Stripe checkout to function. Optional analytics cookies (for example, Plausible) help us understand traffic patterns. You can disable non-essential cookies in your browser settings at any time.</p>
+            
+            <h2>6. Data security</h2>
+            <ul>
+              <li>All data is transmitted over HTTPS/TLS encryption.</li>
+              <li>Stripe is PCI-DSS Level 1 certified; we store only the minimal payment references (never full card numbers).</li>
+              <li>Access to personal data inside TVVC is restricted to staff who need it to perform their role.</li>
+              <li>We review site code and third-party integrations periodically for security vulnerabilities.</li>
+            </ul>
+            
+            <h2>7. Data retention</h2>
+            <p>We keep account and transaction records for as long as you remain a customer and for up to seven (7) years afterward, to meet tax and accounting requirements.</p>
+            
+            <h2>8. Your rights</h2>
+            <p>Depending on your location, you may have the right to access, correct, delete, or restrict your personal data and to object to certain processing activities. To exercise these rights, email us at <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a> (placeholder address).</p>
+            
+            <h2>9. Children's privacy</h2>
+            <p>TVVC's services are directed at athletes under 18 but require a parent or legal guardian to create and manage all accounts and payments. We do not knowingly collect personal data from children without parental consent.</p>
+            
+            <h2>10. Changes to this policy</h2>
+            <p>We may update this Privacy Policy from time to time. When we make significant changes, we will post the new version on this page and update the "Last updated" date above. Material changes will also be announced via email.</p>
+            
+            <h2>11. Contact us</h2>
+            <div class="contact-info">
+              <p><strong>TVVC Privacy Officer</strong></p>
+              <p>Email: <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a></p>
+              <p>Mail: 27170 NW Dorland Rd, North Plains, OR 97133, USA</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer style="background-color: #121212; position: relative; overflow: hidden; padding: 4rem 0; color: white; width: 100%; max-width: 100%;">
+    <!-- Subtle dot pattern -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data:image/svg+xml,%3Csvg width%3D%2230%22 height%3D%2230%22 viewBox%3D%220 0 30 30%22 xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg fill%3D%22%23ffffff%22 fill-opacity%3D%220.02%22 fill-rule%3D%22evenodd%22%3E%3Ccircle cx%3D%2215%22 cy%3D%2215%22 r%3D%221%22%3E%3C%2Fcircle%3E%3C%2Fg%3E%3C%2Fsvg%3E'); pointer-events: none;"></div>
+    
+    <!-- Top border accent -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(to right, #ff5c5c, #ff8585, #ff5c5c); background-size: 200% 100%; animation: gradientShift 3s ease infinite;"></div>
+    
+    <div class="container" style="max-width: 1400px; width: 100%; margin: 0 auto; padding: 0 2rem;">
+      <div style="display: flex; flex-wrap: wrap; gap: 3rem; justify-content: space-between; margin-bottom: 3rem;">
+        <div style="flex: 1; min-width: 250px;">
+          <a href="index.html" style="text-decoration: none; font-size: 2rem; font-weight: bold; font-family: 'Montserrat', sans-serif; display: inline-block; position: relative; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;" onmouseover="this.querySelector('.logo-underline').style.transform='scaleX(1)';" onmouseout="this.querySelector('.logo-underline').style.transform='scaleX(0)';">
+            <span>TVVC</span>
+            <span class="logo-underline" style="position: absolute; bottom: -3px; left: 0; width: 100%; height: 2px; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease;"></span>
+          </a>
+          <p style="margin-top: 1rem; color: rgba(255, 255, 255, 0.7); line-height: 1.6;">Locally grown. Athlete-first. Volleyball with heart since 2024.</p>
+          
+          <!-- Social Media Links -->
+          <div style="display: flex; gap: 15px; margin-top: 20px;">
+            <a href="https://instagram.com" target="_blank" aria-label="Follow us on Instagram" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#E1306C'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(225, 48, 108, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://facebook.com" target="_blank" aria-label="Follow us on Facebook" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#4267B2'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(66, 103, 178, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Follow us on Twitter" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#1DA1F2'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(29, 161, 242, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://youtube.com" target="_blank" aria-label="Subscribe to our YouTube channel" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#FF0000'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(255, 0, 0, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-youtube"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div style="flex: 1; min-width: 250px;">
+          <h4 style="font-size: 1.2rem; margin-bottom: 1.2rem; color: white; font-weight: 600;">Contact Us</h4>
+          <p style="margin-bottom: 0.8rem;">
+            <i class="fas fa-phone" style="color: #ff5c5c; margin-right: 10px;"></i> 
+            <a href="tel:5033890760" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#ff5c5c'; this.style.borderBottomColor='#ff5c5c';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">(503) 389-0760</a>
+          </p>
+          <p style="margin-bottom: 0.8rem;">
+            <i class="fas fa-envelope" style="color: #ff5c5c; margin-right: 10px;"></i> 
+            <a href="mailto:info@tualatinvalleyvb.com" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#ff5c5c'; this.style.borderBottomColor='#ff5c5c';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">info@tualatinvalleyvb.com</a>
+          </p>
+          <p style="margin-bottom: 0.8rem;">
+            <i class="fas fa-calendar-alt" style="color: #33CCCC; margin-right: 10px;"></i> 
+            <a href="https://calendly.com/tvvc/group-training" target="_blank" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#33CCCC'; this.style.borderBottomColor='#33CCCC';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">Book Group Training</a>
+          </p>
+          <p>
+            <i class="fas fa-volleyball-ball" style="color: #FFB84D; margin-right: 10px;"></i> 
+            <a href="https://calendly.com/tvvc/tvvc-sand-training-blocks" target="_blank" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#FFB84D'; this.style.borderBottomColor='#FFB84D';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">Book TVVC SAND Training</a>
+          </p>
+        </div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+        <div>
+          <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">&copy; 2025 Tualatin Valley Volleyball Club. All rights reserved.</p>
+          <div style="margin-top: 10px;">
+            <a href="privacy-policy.html" style="display: inline-block; padding: 5px 15px; background-color: #1c1c1c; color: #ff5c5c; border: 1px solid #ff5c5c; border-radius: 4px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; position: relative; z-index: 10;" onmouseover="this.style.backgroundColor='#ff5c5c'; this.style.color='white';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.color='#ff5c5c';">
+              <i class="fas fa-shield-alt" style="margin-right: 5px;"></i>Privacy Policy
+            </a>
+          </div>
+        </div>
+        <a href="#" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" aria-label="Back to top" onmouseover="this.style.backgroundColor='#ff5c5c'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(255, 92, 92, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+          <i class="fas fa-chevron-up"></i>
+        </a>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Back to top button -->
+  <a href="#" class="back-to-top" id="back-to-top" aria-label="Back to top" style="background-color: #ff5c5c; box-shadow: 0 4px 12px rgba(255, 92, 92, 0.3);">
+    <i class="fas fa-chevron-up"></i>
+  </a>
+  
+  <!-- Cookie Consent Banner -->
+  <div id="cookie-consent" style="position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(18, 18, 18, 0.95); padding: 15px; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); z-index: 999; display: none; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+      <div style="flex: 1; min-width: 280px;">
+        <p style="margin: 0; color: white; font-size: 0.9rem;">We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies. <a href="#" style="color: var(--color-coral); text-decoration: underline;">Learn more</a></p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button id="cookie-decline" style="background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease;">Decline</button>
+        <button id="cookie-accept" style="background-color: var(--color-coral); border: none; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease;">Accept All</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Custom JavaScript -->
+  <script src="assets/site-main.js"></script>
+  
+  <!-- Cookie Consent JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const cookieConsent = document.getElementById('cookie-consent');
+      const acceptButton = document.getElementById('cookie-accept');
+      const declineButton = document.getElementById('cookie-decline');
+      
+      // Check if user has already made a choice
+      if (!localStorage.getItem('cookieConsent')) {
+        // Show the banner with a slight delay
+        setTimeout(() => {
+          cookieConsent.style.display = 'block';
+        }, 1500);
+      }
+      
+      // Handle accept button click
+      acceptButton.addEventListener('click', () => {
+        localStorage.setItem('cookieConsent', 'accepted');
+        cookieConsent.style.opacity = '0';
+        setTimeout(() => {
+          cookieConsent.style.display = 'none';
+        }, 300);
+      });
+      
+      // Handle decline button click
+      declineButton.addEventListener('click', () => {
+        localStorage.setItem('cookieConsent', 'declined');
+        cookieConsent.style.opacity = '0';
+        setTimeout(() => {
+          cookieConsent.style.display = 'none';
+        }, 300);
+      });
+    });
+  </script>
+  
+  <!-- Additional JavaScript for one-page site -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Show/hide back to top button
+      const backToTopButton = document.getElementById('back-to-top');
+      
+      function toggleBackToTopButton() {
+        if (window.scrollY > 300) {
+          backToTopButton.classList.add('visible');
+        } else {
+          backToTopButton.classList.remove('visible');
+        }
+      }
+      
+      // Event listeners
+      window.addEventListener('scroll', toggleBackToTopButton);
+      
+      // Initialize
+      toggleBackToTopButton();
+    });
+  </script>
+</body>
+</html>

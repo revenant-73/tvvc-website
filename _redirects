@@ -1,0 +1,5 @@
+# Redirect API calls
+/api/*  /.netlify/functions/:splat  200
+
+# Handle 404 errors
+/*  /index.html  404

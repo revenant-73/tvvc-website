@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic Meta Tags -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Coach Education Portal - TVVC</title>
+  <meta name="description" content="Tualatin Valley Volleyball Club's Coach Education Portal - Resources, training materials, and development tools for our coaching staff.">
+  <meta name="author" content="Tualatin Valley Volleyball Club">
+  <meta name="robots" content="noindex, nofollow"> <!-- Hide from search engines until ready -->
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://www.tualatinvalleyvb.com/coach-ed.html">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.tualatinvalleyvb.com/coach-ed.html">
+  <meta property="og:title" content="Coach Education Portal - TVVC">
+  <meta property="og:description" content="Tualatin Valley Volleyball Club's Coach Education Portal - Resources, training materials, and development tools for our coaching staff.">
+  <meta property="og:image" content="https://www.tualatinvalleyvb.com/assets/images/tvvc-social-share.jpg">
+  <meta property="og:image:alt" content="Tualatin Valley Volleyball Club logo and players">
+  <meta property="og:site_name" content="Tualatin Valley Volleyball Club">
+  <meta property="og:locale" content="en_US">
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://www.tualatinvalleyvb.com/coach-ed.html">
+  <meta name="twitter:title" content="Coach Education Portal - TVVC">
+  <meta name="twitter:description" content="Tualatin Valley Volleyball Club's Coach Education Portal - Resources, training materials, and development tools for our coaching staff.">
+  <meta name="twitter:image" content="https://www.tualatinvalleyvb.com/assets/images/tvvc-social-share.jpg">
+  <meta name="twitter:image:alt" content="Tualatin Valley Volleyball Club logo and players">
+  
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+  <link rel="manifest" href="/assets/favicon/site.webmanifest">
+  <link rel="mask-icon" href="/assets/favicon/safari-pinned-tab.svg" color="#008080">
+  <meta name="msapplication-TileColor" content="#008080">
+  <meta name="theme-color" content="#121212">
+  
+  <!-- Fonts - optimized loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet"></noscript>
+  
+  <!-- Font Awesome Icons - with preload for performance -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+  
+  <!-- Custom CSS - Minified for performance -->
+  <link rel="stylesheet" href="assets/site-styles.min.css">
+  
+  <style>
+    /* RGB color variables for animations */
+    :root {
+      --color-teal-rgb: 0, 128, 128;
+      --color-coral-rgb: 255, 107, 107;
+    }
+    
+    /* Additional styles for coach portal */
+    html {
+      scroll-padding-top: 80px; /* Ensures scrolling targets account for fixed header */
+      scroll-behavior: smooth;
+    }
+    
+    .section-divider {
+      height: 4px;
+      width: 100px;
+      background-color: var(--color-coral);
+      margin: var(--spacing-xl) auto;
+      border-radius: var(--radius-full);
+    }
+    
+    /* Resource card styling */
+    .resource-card {
+      background-color: rgba(30, 30, 30, 0.7);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--color-teal);
+      transition: all 0.3s ease;
+    }
+    
+    .resource-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      border-left-color: var(--color-coral);
+    }
+    
+    .resource-card h3 {
+      color: var(--color-white);
+      margin-top: 0;
+    }
+    
+    .resource-card p {
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 15px;
+    }
+    
+    .resource-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--color-teal);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    
+    .resource-link:hover {
+      color: var(--color-coral);
+    }
+    
+    .resource-link i {
+      margin-left: 5px;
+    }
+    
+    /* Category tabs */
+    .category-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    
+    .category-tab {
+      padding: 8px 16px;
+      background-color: rgba(30, 30, 30, 0.7);
+      border-radius: 20px;
+      color: var(--color-white);
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-height: 44px;
+      min-width: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    @media (max-width: 768px) {
+      .category-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .category-tab {
+        padding: 10px 16px;
+        min-height: 48px;
+      }
+      
+      .resource-card {
+        padding: 16px;
+      }
+    }
+    
+    .category-tab:hover, .category-tab.active {
+      background-color: var(--color-teal);
+    }
+    
+    .category-tab.active {
+      background-color: var(--color-coral);
+    }
+    
+    /* Password protection notice */
+    .password-notice {
+      background-color: rgba(255, 107, 107, 0.1);
+      border-left: 4px solid var(--color-coral);
+      padding: 15px;
+      margin-bottom: 30px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Page Loader -->
+  <div id="page-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #121212; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease, visibility 0.5s ease;">
+    <div style="text-align: center;">
+      <div style="width: 80px; height: 80px; position: relative; margin: 0 auto 20px;">
+        <div style="position: absolute; width: 100%; height: 100%; border: 4px solid rgba(0, 128, 128, 0.2); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite;"></div>
+        <div style="position: absolute; width: 100%; height: 100%; border: 4px solid transparent; border-top-color: var(--color-teal); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      </div>
+      <h2 style="color: white; font-family: 'Outfit', sans-serif; letter-spacing: 2px; font-size: 1.5rem; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">TVVC</h2>
+    </div>
+  </div>
+  
+  <script>
+    // Hide loader when page is loaded
+    window.addEventListener('load', function() {
+      const loader = document.getElementById('page-loader');
+      loader.style.opacity = '0';
+      loader.style.visibility = 'hidden';
+    });
+  </script>
+  
+  <!-- Header - Now with sticky positioning -->
+  <header class="site-header" style="position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(18, 18, 18, 0.9); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); transition: all 0.3s ease;">
+    <div class="container header-container">
+      <a href="index.html" class="logo" style="background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        <span>TVVC</span>
+      </a>
+      
+      <button class="mobile-menu-toggle" aria-expanded="false" aria-controls="main-nav">
+        <i class="fas fa-bars menu-icon"></i>
+        <i class="fas fa-times close-icon" style="display: none;"></i>
+        <span class="sr-only">Menu</span>
+      </button>
+      
+      <nav class="main-nav" id="main-nav">
+        <ul>
+          <li><a href="index.html#about" class="nav-link">About</a></li>
+          <li><a href="index.html#teams" class="nav-link">Teams</a></li>
+          <li><a href="index.html#tryouts" class="nav-link">Tryouts</a></li>
+          <li><a href="index.html#sand" class="nav-link">Sand</a></li>
+          <li><a href="index.html#training-sessions" class="nav-link">Group Training</a></li>
+          <li><a href="index.html#contact" class="nav-link contact-btn" style="background-color: var(--color-teal); color: white; padding: 8px 16px; border-radius: 20px; margin-left: 10px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='var(--color-coral)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.backgroundColor='var(--color-teal)'; this.style.transform='translateY(0)'"><i class="fas fa-envelope" style="margin-right: 5px;"></i>Contact Us</a></li>
+          <li><a href="https://billing.stripe.com/p/login/5kA3fT1ap2zEel23cc" target="_blank" class="nav-link billing-btn" style="background-color: #635BFF; color: white; padding: 8px 16px; border-radius: 20px; margin-left: 10px; transition: all 0.3s ease; display: flex; align-items: center;" onmouseover="this.style.backgroundColor='#8780FF'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(99, 91, 255, 0.3)';" onmouseout="this.style.backgroundColor='#635BFF'; this.style.transform='translateY(0)'; this.style.boxShadow='none';"><i class="fas fa-credit-card" style="margin-right: 5px;"></i>My Account</a></li>
+        </ul>
+      </nav>
+      
+      <div class="menu-overlay"></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <!-- Login Screen (shown by default) -->
+        <div id="login-screen" class="animate-fadeIn">
+          <div class="section-title">
+            <h1>Coach Education Portal</h1>
+            <p class="text-center">Resources, training materials, and development tools for TVVC coaches</p>
+          </div>
+          
+          <div style="max-width: 500px; margin: 3rem auto; background-color: rgba(30, 30, 30, 0.7); padding: 2rem; border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border-left: 4px solid var(--color-teal);">
+            <div style="text-align: center; margin-bottom: 2rem;">
+              <i class="fas fa-lock" style="font-size: 3rem; color: var(--color-coral); margin-bottom: 1rem; display: block;"></i>
+              <h2 style="margin-bottom: 1rem; color: white;">Coaches Only Area</h2>
+              <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 1.5rem;">This area is restricted to TVVC coaching staff. Please enter the password to access coaching resources.</p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+              <label for="password-input" style="display: block; margin-bottom: 0.5rem; color: white;">Password</label>
+              <input type="password" id="password-input" style="width: 100%; padding: 14px; background-color: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: white; font-size: 16px; min-height: 50px;" placeholder="Enter coach password">
+              <p id="password-error" style="color: var(--color-coral); margin-top: 0.5rem; display: none;"><i class="fas fa-exclamation-circle" style="margin-right: 5px;"></i> Incorrect password. Please try again or contact the club director.</p>
+            </div>
+            
+            <button id="login-button" style="width: 100%; padding: 14px; background-color: var(--color-teal); color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; min-height: 50px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.backgroundColor='var(--color-coral)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.backgroundColor='var(--color-teal)'; this.style.transform='translateY(0)'">
+              <i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i> Access Resources
+            </button>
+            
+            <div style="margin-top: 2rem; text-align: center; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+              <p style="color: rgba(255, 255, 255, 0.6); margin-bottom: 1rem;">Interested in joining our coaching staff?</p>
+              <a href="index.html#contact" style="display: inline-block; padding: 0.5rem 1rem; background-color: rgba(255, 255, 255, 0.1); color: white; text-decoration: none; border-radius: 20px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='var(--color-coral)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.backgroundColor='rgba(255, 255, 255, 0.1)'; this.style.transform='translateY(0)'">
+                <i class="fas fa-envelope" style="margin-right: 5px;"></i> Contact Us About Coaching
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Content Screen (hidden by default) -->
+        <div id="content-screen" style="display: none;">
+          <div class="section-title">
+            <h1>Coach Education Portal</h1>
+            <p class="text-center">Resources, training materials, and development tools for TVVC coaches</p>
+          </div>
+          
+          <div class="password-notice">
+            <p><i class="fas fa-lock" style="margin-right: 8px;"></i> <strong>Note:</strong> These resources are for TVVC coaches only. Please do not share this password.</p>
+          </div>
+          
+          <div class="category-tabs">
+            <button class="category-tab active" data-category="all">All Resources</button>
+            <button class="category-tab" data-category="practice">Practice Planning</button>
+            <button class="category-tab" data-category="drills">Drills & Activities</button>
+            <button class="category-tab" data-category="video">Video Analysis</button>
+            <button class="category-tab" data-category="mental">Mental Training</button>
+            <button class="category-tab" data-category="admin">Administrative</button>
+          </div>
+          
+          <div class="resources-container">
+          <!-- Practice Planning Resources -->
+          <div class="resource-card" data-categories="practice">
+            <h3>Practice Planning Templates</h3>
+            <p>Customizable templates for planning effective practices at different age levels.</p>
+            <a href="#" class="resource-link">Download Templates <i class="fas fa-download"></i></a>
+          </div>
+          
+          <div class="resource-card" data-categories="practice">
+            <h3>Season Planning Guide</h3>
+            <p>Long-term planning resources to develop skills progressively throughout the season.</p>
+            <a href="#" class="resource-link">View Guide <i class="fas fa-arrow-right"></i></a>
+          </div>
+          
+          <!-- Drills & Activities -->
+          <div class="resource-card" data-categories="drills">
+            <h3>Drill Database</h3>
+            <p>Searchable collection of volleyball drills organized by skill, age level, and complexity.</p>
+            <a href="#" class="resource-link">Browse Drills <i class="fas fa-search"></i></a>
+          </div>
+          
+          <div class="resource-card" data-categories="drills">
+            <h3>Small-Sided Games</h3>
+            <p>Modified volleyball games that maximize touches and skill development.</p>
+            <a href="#" class="resource-link">View Games <i class="fas fa-volleyball-ball"></i></a>
+          </div>
+          
+          <!-- Video Analysis -->
+          <div class="resource-card" data-categories="video">
+            <h3>Technique Breakdown Videos</h3>
+            <p>Detailed analysis of proper volleyball techniques with coaching cues.</p>
+            <a href="#" class="resource-link">Watch Videos <i class="fas fa-play-circle"></i></a>
+          </div>
+          
+          <div class="resource-card" data-categories="video">
+            <h3>Match Analysis Guide</h3>
+            <p>How to effectively analyze match footage and provide actionable feedback.</p>
+            <a href="#" class="resource-link">Read Guide <i class="fas fa-file-alt"></i></a>
+          </div>
+          
+          <!-- Mental Training -->
+          <div class="resource-card" data-categories="mental">
+            <h3>Team Building Activities</h3>
+            <p>Activities to build team chemistry, trust, and communication.</p>
+            <a href="#" class="resource-link">View Activities <i class="fas fa-users"></i></a>
+          </div>
+          
+          <div class="resource-card" data-categories="mental">
+            <h3>Competitive Adaptability Season Guide</h3>
+            <p>Built for coaches who want mentally flexible, game‑ready athletes—without running a separate mental‑toughness program.</p>
+            <a href="https://docs.google.com/document/d/1kNCMH23lAI5cbC2ZKxW0ItNvwYcw98BBXl6kzuB3OkI/edit?usp=sharing" target="_blank" class="resource-link">View Guide <i class="fas fa-brain"></i></a>
+          </div>
+          
+          <!-- Administrative -->
+          <div class="resource-card" data-categories="admin">
+            <h3>Parent Communication Templates</h3>
+            <p>Email templates for common parent communications throughout the season.</p>
+            <a href="#" class="resource-link">Download Templates <i class="fas fa-envelope"></i></a>
+          </div>
+          
+          <div class="resource-card" data-categories="admin">
+            <h3>Tournament Checklist</h3>
+            <p>Comprehensive checklist for before, during, and after tournaments.</p>
+            <a href="#" class="resource-link">Download Checklist <i class="fas fa-clipboard-check"></i></a>
+          </div>
+        </div>
+        
+        <div class="section-divider"></div>
+        
+        <div class="upcoming-section">
+          <h2>Upcoming Coach Development</h2>
+          <div class="resource-card">
+            <h3>Monthly Coach Webinar</h3>
+            <p>Join us for our next online coach development session.</p>
+            <p><strong>Date:</strong> TBD</p>
+            <p><strong>Topic:</strong> Advanced Offensive Systems</p>
+            <a href="#" class="resource-link">Register <i class="fas fa-calendar-plus"></i></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer style="background-color: #121212; position: relative; overflow: hidden; padding: 4rem 0; color: white; width: 100%; max-width: 100%;">
+    <!-- Subtle dot pattern -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data:image/svg+xml,%3Csvg width=\"30\" height=\"30\" viewBox=\"0 0 30 30\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.02\" fill-rule=\"evenodd\"%3E%3Ccircle cx=\"15\" cy=\"15\" r=\"1\"%3E%3C/circle%3E%3C/g%3E%3C/svg%3E'); pointer-events: none;"></div>
+    
+    <!-- Top border accent -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(to right, #ff5c5c, #ff8585, #ff5c5c); background-size: 200% 100%; animation: gradientShift 3s ease infinite;"></div>
+    
+    <div class="container" style="max-width: 1400px; width: 100%; margin: 0 auto; padding: 0 2rem;">
+      <div style="display: flex; flex-wrap: wrap; gap: 3rem; justify-content: space-between; margin-bottom: 3rem;">
+        <div style="flex: 1; min-width: 250px;">
+          <a href="index.html" style="text-decoration: none; font-size: 2rem; font-weight: bold; font-family: 'Montserrat', sans-serif; display: inline-block; position: relative; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;" onmouseover="this.querySelector('.logo-underline').style.transform='scaleX(1)';" onmouseout="this.querySelector('.logo-underline').style.transform='scaleX(0)';">
+            <span>TVVC</span>
+            <span class="logo-underline" style="position: absolute; bottom: -3px; left: 0; width: 100%; height: 2px; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease;"></span>
+          </a>
+          <p style="margin-top: 1rem; color: rgba(255, 255, 255, 0.7); line-height: 1.6;">Locally grown. Athlete-first. Volleyball with heart since 2024.</p>
+          
+          <!-- Social Media Links -->
+          <div style="display: flex; gap: 15px; margin-top: 20px;">
+            <a href="https://instagram.com" target="_blank" aria-label="Follow us on Instagram" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#E1306C'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(225, 48, 108, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://facebook.com" target="_blank" aria-label="Follow us on Facebook" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#4267B2'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(66, 103, 178, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Follow us on Twitter" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#1DA1F2'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(29, 161, 242, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://youtube.com" target="_blank" aria-label="Follow us on YouTube" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#FF0000'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(255, 0, 0, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fab fa-youtube"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div style="flex: 1; min-width: 250px;">
+          <h4 style="font-size: 1.2rem; margin-bottom: 1.2rem; color: white; font-weight: 600;">Contact Us</h4>
+          <p style="margin-bottom: 0.8rem;">
+            <i class="fas fa-phone" style="color: #ff5c5c; margin-right: 10px;"></i> 
+            <a href="tel:5033890760" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#ff5c5c'; this.style.borderBottomColor='#ff5c5c';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">(503) 389-0760</a>
+          </p>
+          <p style="margin-bottom: 0.8rem;">
+            <i class="fas fa-envelope" style="color: #ff5c5c; margin-right: 10px;"></i> 
+            <a href="mailto:info@tualatinvalleyvb.com" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#ff5c5c'; this.style.borderBottomColor='#ff5c5c';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">info@tualatinvalleyvb.com</a>
+          </p>
+          <p style="margin-bottom: 0.8rem;">
+            <i class="fas fa-calendar-alt" style="color: #33CCCC; margin-right: 10px;"></i> 
+            <a href="https://calendly.com/tvvc/group-training" target="_blank" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#33CCCC'; this.style.borderBottomColor='#33CCCC';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">Book Group Training</a>
+          </p>
+          <p>
+            <i class="fas fa-volleyball-ball" style="color: #FFB84D; margin-right: 10px;"></i> 
+            <a href="https://calendly.com/tvvc/tvvc-sand-training-blocks" target="_blank" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#FFB84D'; this.style.borderBottomColor='#FFB84D';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">Book TVVC SAND Training</a>
+          </p>
+        </div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+        <div>
+          <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">&copy; 2025 Tualatin Valley Volleyball Club. All rights reserved.</p>
+          <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="privacy-policy.html" style="display: inline-block; padding: 5px 15px; background-color: #1c1c1c; color: #ff5c5c; border: 1px solid #ff5c5c; border-radius: 4px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; position: relative; z-index: 10;" onmouseover="this.style.backgroundColor='#ff5c5c'; this.style.color='white';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.color='#ff5c5c';">
+              <i class="fas fa-shield-alt" style="margin-right: 5px;"></i>Privacy Policy
+            </a>
+            <a href="coach-ed.html" style="display: inline-block; padding: 5px 15px; background-color: #1c1c1c; color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; position: relative; z-index: 10;" onmouseover="this.style.backgroundColor='var(--color-teal)'; this.style.color='white'; this.style.borderColor='var(--color-teal)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.color='rgba(255, 255, 255, 0.5)'; this.style.borderColor='rgba(255, 255, 255, 0.1)';">
+              <i class="fas fa-chalkboard-teacher" style="margin-right: 5px;"></i>Coaches
+            </a>
+          </div>
+        </div>
+        <a href="#" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" aria-label="Back to top" onmouseover="this.style.backgroundColor='#ff5c5c'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(255, 92, 92, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+          <i class="fas fa-chevron-up"></i>
+        </a>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Back to top button -->
+  <a href="#" class="back-to-top" id="back-to-top" aria-label="Back to top" style="background-color: #ff5c5c; box-shadow: 0 4px 12px rgba(255, 92, 92, 0.3);">
+    <i class="fas fa-chevron-up"></i>
+  </a>
+
+  <!-- Simple JavaScript for category filtering -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Mobile menu toggle
+      const menuToggle = document.querySelector('.mobile-menu-toggle');
+      const mainNav = document.querySelector('.main-nav');
+      const menuOverlay = document.querySelector('.menu-overlay');
+      const menuIcon = document.querySelector('.menu-icon');
+      const closeIcon = document.querySelector('.close-icon');
+      
+      if (menuToggle) {
+        menuToggle.addEventListener('click', function() {
+          mainNav.classList.toggle('active');
+          menuOverlay.classList.toggle('active');
+          
+          if (mainNav.classList.contains('active')) {
+            menuToggle.setAttribute('aria-expanded', 'true');
+            menuIcon.style.display = 'none';
+            closeIcon.style.display = 'inline-block';
+            document.body.style.overflow = 'hidden';
+          } else {
+            menuToggle.setAttribute('aria-expanded', 'false');
+            menuIcon.style.display = 'inline-block';
+            closeIcon.style.display = 'none';
+            document.body.style.overflow = '';
+          }
+        });
+      }
+      
+      if (menuOverlay) {
+        menuOverlay.addEventListener('click', function() {
+          mainNav.classList.remove('active');
+          menuOverlay.classList.remove('active');
+          menuToggle.setAttribute('aria-expanded', 'false');
+          menuIcon.style.display = 'inline-block';
+          closeIcon.style.display = 'none';
+          document.body.style.overflow = '';
+        });
+      }
+      
+      // Category filtering
+      const categoryTabs = document.querySelectorAll('.category-tab');
+      const resourceCards = document.querySelectorAll('.resource-card');
+      
+      categoryTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Update active tab
+          categoryTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          const category = tab.dataset.category;
+          
+          // Filter resources
+          resourceCards.forEach(card => {
+            if (category === 'all' || card.dataset.categories.includes(category)) {
+              card.style.display = 'block';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        });
+      });
+      
+      // Back to top button
+      const backToTopButton = document.querySelector('.back-to-top');
+      
+      window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+          backToTopButton.classList.add('visible');
+        } else {
+          backToTopButton.classList.remove('visible');
+        }
+      });
+      
+      // Password protection functionality
+      const loginScreen = document.getElementById('login-screen');
+      const contentScreen = document.getElementById('content-screen');
+      const passwordInput = document.getElementById('password-input');
+      const loginButton = document.getElementById('login-button');
+      const passwordError = document.getElementById('password-error');
+      
+      // Check if user has already authenticated in this session
+      const isAuthenticated = sessionStorage.getItem('tvvcCoachAuth');
+      if (isAuthenticated === 'true') {
+        loginScreen.style.display = 'none';
+        contentScreen.style.display = 'block';
+      }
+      
+      // Password validation function
+      function validatePassword() {
+        const password = passwordInput.value.trim();
+        // Set the password here - you can change this to any password you want
+        const correctPassword = 'tvvc2025coach';
+        
+        if (password === correctPassword) {
+          // Store authentication in session storage
+          sessionStorage.setItem('tvvcCoachAuth', 'true');
+          
+          // Hide login screen, show content
+          loginScreen.style.display = 'none';
+          contentScreen.style.display = 'block';
+          
+          // Scroll to top
+          window.scrollTo(0, 0);
+        } else {
+          // Show error message
+          passwordError.style.display = 'block';
+          passwordInput.style.borderColor = 'var(--color-coral)';
+          
+          // Shake animation for error feedback
+          loginButton.style.animation = 'shake 0.5s ease';
+          setTimeout(() => {
+            loginButton.style.animation = '';
+          }, 500);
+        }
+      }
+      
+      // Add event listeners
+      loginButton.addEventListener('click', validatePassword);
+      
+      // Allow Enter key to submit
+      passwordInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          validatePassword();
+        }
+      });
+      
+      // Clear error on input focus
+      passwordInput.addEventListener('focus', function() {
+        passwordError.style.display = 'none';
+        passwordInput.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+      });
+    });
+  </script>
+  
+  <!-- Add shake animation for password error -->
+  <style>
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+  </style>
+</body>
+</html>

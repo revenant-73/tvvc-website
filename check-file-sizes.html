@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS File Size Comparison</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .result {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    .savings {
+      font-weight: bold;
+      color: #008800;
+    }
+  </style>
+</head>
+<body>
+  <h1>CSS File Size Comparison</h1>
+  <p>This page compares the file sizes of the original and minified CSS files.</p>
+  
+  <div class="result" id="result">Loading file size information...</div>
+  
+  <script>
+    async function checkFileSizes() {
+      try {
+        // Fetch the original CSS file
+        const originalResponse = await fetch('assets/site-styles.css');
+        const originalText = await originalResponse.text();
+        const originalSize = new Blob([originalText]).size;
+        
+        // Fetch the minified CSS file
+        const minifiedResponse = await fetch('assets/site-styles.min.css');
+        const minifiedText = await minifiedResponse.text();
+        const minifiedSize = new Blob([minifiedText]).size;
+        
+        // Calculate savings
+        const savings = originalSize - minifiedSize;
+        const savingsPercentage = (savings / originalSize * 100).toFixed(2);
+        
+        // Display results
+        document.getElementById('result').innerHTML = `
+          <p><strong>Original CSS:</strong> ${(originalSize / 1024).toFixed(2)} KB</p>
+          <p><strong>Minified CSS:</strong> ${(minifiedSize / 1024).toFixed(2)} KB</p>
+          <p class="savings">Savings: ${(savings / 1024).toFixed(2)} KB (${savingsPercentage}%)</p>
+        `;
+      } catch (err) {
+        document.getElementById('result').innerHTML = `<p>Error checking file sizes: ${err.message}</p>`;
+      }
+    }
+    
+    // Run the check when the page loads
+    window.addEventListener('DOMContentLoaded', checkFileSizes);
+  </script>
+</body>
+</html>

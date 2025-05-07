@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Admin Authentication</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+    }
+    button {
+      background-color: #008080;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #006666;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e6f7f7;
+      border-radius: 4px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Reset Admin Authentication</h1>
+  <p>If you're having trouble logging into the admin panel, click the button below to reset your authentication status.</p>
+  
+  <button id="resetBtn">Reset Authentication</button>
+  
+  <div id="result" class="result"></div>
+  
+  <script>
+    document.getElementById('resetBtn').addEventListener('click', function() {
+      // Clear the authentication from localStorage
+      localStorage.removeItem('tvvc_admin_auth');
+      
+      // Display success message
+      const resultDiv = document.getElementById('result');
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = 'Authentication has been reset. You can now go back to the <a href="index.html">admin login page</a> and try again with the password: <strong>tvvcadmin</strong>';
+    });
+  </script>
+</body>
+</html>
