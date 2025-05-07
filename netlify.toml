@@ -1,0 +1,25 @@
+[build]
+  publish = "/"
+  command = ""  # Leave empty if no build step is needed
+
+# Production context: all deploys from the main branch 
+# will inherit these settings
+[context.production]
+  # Environment variables for production
+  # environment = { NODE_VERSION = "16" }  # Uncomment if needed
+
+# Deploy Preview context: all deploys generated from a pull/merge request
+[context.deploy-preview]
+  # Environment variables for deploy previews
+  # environment = { NODE_VERSION = "16" }  # Uncomment if needed
+
+# Branch Deploy context: all deploys that are not from a pull/merge request
+# or from the production branch will inherit these settings
+[context.branch-deploy]
+  # Environment variables for branch deploys
+  # environment = { NODE_VERSION = "16" }  # Uncomment if needed
+
+# Redirects and headers are NGINX-style
+# For more information see: https://docs.netlify.com/routing/redirects/
+
+# Redirect rule defined in _redirects file
