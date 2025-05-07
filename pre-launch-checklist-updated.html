@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TVVC Website Pre-Launch Checklist (Updated)</title>
+  <style>
+    :root {
+      --color-teal: #008080;
+      --color-coral: #ff6b6b;
+      --color-dark: #121212;
+      --color-darker: #0a0a0a;
+      --color-light: #f8f9fa;
+      --color-gray: #6c757d;
+      --color-success: #28a745;
+      --color-warning: #ffc107;
+      --spacing-sm: 0.5rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --radius-sm: 0.25rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-full: 9999px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      --font-display: 'Outfit', var(--font-sans);
+    }
+
+    body {
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      color: var(--color-light);
+      background-color: var(--color-dark);
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: var(--spacing-lg);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+      padding-bottom: var(--spacing-lg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      color: var(--color-teal);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    h2 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--color-coral);
+      margin-top: var(--spacing-xl);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .progress-container {
+      margin-bottom: var(--spacing-xl);
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-full);
+      height: 10px;
+      position: relative;
+    }
+
+    .progress-bar {
+      background-color: var(--color-teal);
+      height: 100%;
+      border-radius: var(--radius-full);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      text-align: center;
+      margin-top: var(--spacing-sm);
+      font-weight: 600;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist-item {
+      background-color: rgba(255, 255, 255, 0.05);
+      margin-bottom: var(--spacing-md);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: flex-start;
+      transition: background-color 0.2s ease;
+    }
+
+    .checklist-item:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .checklist-item.completed {
+      background-color: rgba(40, 167, 69, 0.1);
+      border-left: 4px solid var(--color-success);
+    }
+
+    .checklist-item.completed .task-title {
+      text-decoration: line-through;
+      color: var(--color-gray);
+    }
+
+    .checkbox {
+      margin-right: var(--spacing-md);
+      margin-top: 0.25rem;
+      -webkit-appearance: none;
+      appearance: none;
+      background-color: rgba(255, 255, 255, 0.1);
+      width: 20px;
+      height: 20px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .checkbox:checked {
+      background-color: var(--color-success);
+    }
+
+    .checkbox:checked::after {
+      content: "✓";
+      font-size: 14px;
+      color: white;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .task-content {
+      flex: 1;
+    }
+
+    .task-title {
+      font-weight: 600;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .task-description {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .priority {
+      font-size: 0.8rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-full);
+      margin-left: var(--spacing-sm);
+      font-weight: 600;
+    }
+
+    .priority-high {
+      background-color: rgba(220, 53, 69, 0.2);
+      color: #ff6b6b;
+    }
+
+    .priority-medium {
+      background-color: rgba(255, 193, 7, 0.2);
+      color: #ffc107;
+    }
+
+    .priority-low {
+      background-color: rgba(23, 162, 184, 0.2);
+      color: #17a2b8;
+    }
+
+    .save-button {
+      display: block;
+      margin: var(--spacing-xl) auto;
+      background-color: var(--color-teal);
+      color: white;
+      border: none;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .save-button:hover {
+      background-color: #006666;
+    }
+
+    .completion-message {
+      text-align: center;
+      background-color: rgba(40, 167, 69, 0.1);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      margin-top: var(--spacing-xl);
+      display: none;
+    }
+
+    .completion-message h3 {
+      color: var(--color-success);
+      margin-top: 0;
+    }
+    
+    .helper-tag {
+      display: inline-block;
+      margin-top: var(--spacing-sm);
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+    }
+    
+    strong.helper-tag:first-child {
+      margin-right: var(--spacing-sm);
+    }
+    
+    .helper-tag[class*="✅"] {
+      background-color: rgba(40, 167, 69, 0.1);
+      color: var(--color-success);
+    }
+    
+    .helper-tag[class*="❌"] {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--color-gray);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: var(--spacing-md);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>TVVC Website Pre-Launch Checklist (Updated)</h1>
+      <p>Track your progress as you prepare to launch www.tualatinvalleyvb.com via Netlify</p>
+      
+      <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="progress-text" id="progress-text">0% Complete</div>
+    </header>
+
+    <h2>Domain & DNS Configuration</h2>
+    <ul class="checklist" id="checklist">
+      <li class="checklist-item" data-category="domain">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Configure Custom Domain in Netlify <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Add tualatinvalleyvb.com as a custom domain in your Netlify site settings.
+            <p><strong class="helper-tag">❌ External task:</strong> Log into Netlify dashboard → Site settings → Domain management → Add custom domain</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="domain">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Update DNS Records <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Update your domain's DNS records to point to Netlify's servers. You'll need to either use Netlify DNS or configure your current DNS provider.
+            <p><strong class="helper-tag">❌ External task:</strong> Follow Netlify's instructions for your specific DNS provider to set up the correct records.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="domain">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Enable HTTPS <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Ensure HTTPS is enabled for your site. Netlify provides free SSL certificates through Let's Encrypt.
+            <p><strong class="helper-tag">❌ External task:</strong> In Netlify dashboard → Site settings → Domain management → HTTPS → Verify configuration</p>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <h2>Netlify Configuration</h2>
+    <ul class="checklist">
+      <li class="checklist-item" data-category="netlify">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Verify Netlify.toml Configuration <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            Ensure your netlify.toml file is properly configured for your site's needs.
+            <p><strong class="helper-tag">✅ Already done:</strong> Basic netlify.toml file has been created and pushed to GitHub.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="netlify">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Configure Redirects <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            Verify that your _redirects file is properly configured for Netlify.
+            <p><strong class="helper-tag">✅ Already done:</strong> Basic _redirects file is already in place with API forwarding and 404 handling.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="netlify">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Set Up Environment Variables <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            If your site uses environment variables (e.g., for Firebase), configure them in Netlify.
+            <p><strong class="helper-tag">❌ External task:</strong> In Netlify dashboard → Site settings → Build & deploy → Environment → Environment variables</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="netlify">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Configure Deploy Notifications <span class="priority priority-low">Low Priority</span></div>
+          <div class="task-description">
+            Set up notifications for successful/failed deployments via email or Slack.
+            <p><strong class="helper-tag">❌ External task:</strong> In Netlify dashboard → Site settings → Build & deploy → Deploy notifications</p>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <h2>Git & Continuous Deployment</h2>
+    <ul class="checklist">
+      <li class="checklist-item" data-category="git">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Verify GitHub Connection <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Ensure Netlify is properly connected to your GitHub repository and set to deploy the main branch.
+            <p><strong class="helper-tag">❌ External task:</strong> In Netlify dashboard → Site settings → Build & deploy → Continuous Deployment</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="git">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Test Continuous Deployment <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            Make a small change to your site, commit and push to GitHub, and verify that Netlify automatically deploys the changes.
+            <p><strong class="helper-tag">✅ Can help:</strong> I can help you make a small test change to verify the deployment process.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="git">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Set Up Branch Previews <span class="priority priority-low">Low Priority</span></div>
+          <div class="task-description">
+            Configure Netlify to create preview deployments for pull requests and branches.
+            <p><strong class="helper-tag">❌ External task:</strong> In Netlify dashboard → Site settings → Build & deploy → Continuous Deployment → Deploy contexts</p>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <h2>Content and SEO</h2>
+    <ul class="checklist">
+      <li class="checklist-item" data-category="seo">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Update Sitemap <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Expand your sitemap.xml to include all pages on your site. Currently, it only includes the homepage.
+            <p><strong class="helper-tag">✅ Can help:</strong> I can update your sitemap.xml file to include all your HTML pages.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="seo">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Submit Sitemap to Search Engines <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            After your site is live, submit your sitemap to Google Search Console and Bing Webmaster Tools.
+            <p><strong class="helper-tag">❌ External task:</strong> You'll need to do this manually after the site is live.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="seo">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Enable reCAPTCHA <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            You have reCAPTCHA commented out in your HTML. For a live site with forms, you should enable this to prevent spam.
+            <p><strong class="helper-tag">✅ Can help:</strong> I can uncomment and properly configure the reCAPTCHA code in your HTML files.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="seo">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Set Up Google Analytics <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            Consider adding Google Analytics to track site traffic and user behavior.
+            <p><strong class="helper-tag">✅ Can help:</strong> I can add the Google Analytics tracking code to your site if you provide your tracking ID.</p>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <h2>Technical Improvements</h2>
+    <ul class="checklist">
+      <li class="checklist-item" data-category="technical">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Secure Firebase Configuration <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Your Firebase API keys are exposed in the client-side code. While this is common practice, ensure you have proper security rules set up in Firebase to prevent unauthorized access.
+            <p><strong class="helper-tag">❌ External task:</strong> You'll need to log into your Firebase console to set up proper security rules.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="technical">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Remove Test Files <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            There are several test files in your repository that should be removed before going live (firebase-test-2.html, check-file-sizes.html, etc.).
+            <p><strong class="helper-tag">✅ Can help:</strong> I can identify and help you remove test files from your repository.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="technical">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Remove Debug Code <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Remove console.log statements and test functions from your JavaScript files.
+            <p><strong class="helper-tag">✅ Can help:</strong> I can clean up debug code from your JavaScript files.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="technical">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Check for Broken Links <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Ensure all internal links point to valid pages.
+            <p><strong class="helper-tag">✅ Can help:</strong> I can scan your HTML files for internal links and verify they point to existing files.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="technical">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Test Mobile Responsiveness <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Confirm that your site works well on mobile devices.
+            <p><strong class="helper-tag">❌ External task:</strong> You'll need to test this manually on various devices or using browser dev tools.</p>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <h2>Performance Optimization</h2>
+    <ul class="checklist">
+      <li class="checklist-item" data-category="performance">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Minify JavaScript and CSS <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            Ensure all JavaScript and CSS files are minified for production.
+            <p><strong class="helper-tag">✅ Can help:</strong> I can help you minify any remaining unminified JS and CSS files.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="performance">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Optimize Images <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            Compress and optimize images to improve page load times.
+            <p><strong class="helper-tag">❌ External task:</strong> You'll need to use an image optimization tool or service.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="performance">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Enable Netlify Asset Optimization <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            Configure Netlify's built-in asset optimization for CSS, JS, and images.
+            <p><strong class="helper-tag">❌ External task:</strong> In Netlify dashboard → Site settings → Build & deploy → Asset optimization</p>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <h2>Final Checks</h2>
+    <ul class="checklist">
+      <li class="checklist-item" data-category="final">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Cross-Browser Testing <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Test your site in multiple browsers (Chrome, Firefox, Safari, Edge) to ensure compatibility.
+            <p><strong class="helper-tag">❌ External task:</strong> You'll need to manually test in different browsers.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="final">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Verify Forms Functionality <span class="priority priority-high">High Priority</span></div>
+          <div class="task-description">
+            Test all forms to ensure they submit correctly and that you receive the submissions.
+            <p><strong class="helper-tag">❌ External task:</strong> You'll need to manually test each form on your site.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="final">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Check Loading Speed <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            Use tools like Google PageSpeed Insights to check your site's loading performance.
+            <p><strong class="helper-tag">❌ External task:</strong> Visit PageSpeed Insights and enter your site URL after it's deployed.</p>
+          </div>
+        </div>
+      </li>
+      <li class="checklist-item" data-category="final">
+        <input type="checkbox" class="checkbox">
+        <div class="task-content">
+          <div class="task-title">Create Backup <span class="priority priority-medium">Medium Priority</span></div>
+          <div class="task-description">
+            Create a backup branch in your Git repository before making any major changes.
+            <p><strong class="helper-tag">✅ Can help:</strong> I can help you create a backup branch in your GitHub repository.</p>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <button class="save-button" id="save-button">Save Progress</button>
+
+    <div class="completion-message" id="completion-message">
+      <h3>🎉 Congratulations!</h3>
+      <p>You've completed all the pre-launch tasks. Your website is ready to go live!</p>
+    </div>
+
+    <footer>
+      <p>TVVC Website Pre-Launch Checklist | Updated for Netlify & Git Deployment | Last Updated: June 2024</p>
+    </footer>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const checkboxes = document.querySelectorAll('.checkbox');
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-text');
+      const saveButton = document.getElementById('save-button');
+      const completionMessage = document.getElementById('completion-message');
+      
+      // Load saved progress from localStorage
+      loadProgress();
+      
+      // Update progress when checkboxes are clicked
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          const listItem = this.closest('.checklist-item');
+          
+          if (this.checked) {
+            listItem.classList.add('completed');
+          } else {
+            listItem.classList.remove('completed');
+          }
+          
+          updateProgress();
+        });
+      });
+      
+      // Save progress to localStorage
+      saveButton.addEventListener('click', function() {
+        saveProgress();
+        alert('Progress saved successfully!');
+      });
+      
+      function updateProgress() {
+        const total = checkboxes.length;
+        const completed = document.querySelectorAll('.checkbox:checked').length;
+        const percentage = Math.round((completed / total) * 100);
+        
+        progressBar.style.width = percentage + '%';
+        progressText.textContent = percentage + '% Complete';
+        
+        if (percentage === 100) {
+          completionMessage.style.display = 'block';
+        } else {
+          completionMessage.style.display = 'none';
+        }
+      }
+      
+      function saveProgress() {
+        const checkedItems = [];
+        
+        checkboxes.forEach((checkbox, index) => {
+          if (checkbox.checked) {
+            checkedItems.push(index);
+          }
+        });
+        
+        localStorage.setItem('tvvcChecklist', JSON.stringify(checkedItems));
+      }
+      
+      function loadProgress() {
+        const savedProgress = localStorage.getItem('tvvcChecklist');
+        
+        if (savedProgress) {
+          const checkedItems = JSON.parse(savedProgress);
+          
+          checkedItems.forEach(index => {
+            if (checkboxes[index]) {
+              checkboxes[index].checked = true;
+              checkboxes[index].closest('.checklist-item').classList.add('completed');
+            }
+          });
+          
+          updateProgress();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
