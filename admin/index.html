@@ -10,9 +10,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
   
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    
+    // Make Firebase services available globally
+    window.initFirebase = () => {
+      const firebaseConfig = {
+        apiKey: "AIzaSyDmsZlmti2s_-tnmfzu2dl3JXHc-O_MFIo",
+        authDomain: "tvvc-website.firebaseapp.com",
+        projectId: "tvvc-website",
+        storageBucket: "tvvc-website.firebasestorage.app",
+        messagingSenderId: "235626883938",
+        appId: "1:235626883938:web:109885d0682b9080bd1a3b"
+      };
+      
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+      
+      window.db = db;
+      window.auth = auth;
+      
+      return { app, db, auth };
+    };
+  </script>
   
   <!-- Font Awesome for icons including loading spinner -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -471,19 +494,29 @@
     <section id="auth-section" class="auth-section">
       <h2>Admin Login</h2>
       <p style="margin-bottom: var(--spacing-lg); color: var(--color-gray-400);">
-        Please enter your password to access the tryout registration data.
+        Please enter your email and password to access the admin dashboard.
       </p>
       
       <form id="auth-form" class="auth-form">
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" id="email" class="form-input" required>
+        </div>
+        
         <div class="form-group">
           <label for="password" class="form-label">Password</label>
           <input type="password" id="password" class="form-input" required>
           <div id="auth-error" class="error-message" style="display: none;"></div>
         </div>
         
-        <button type="submit" class="btn" style="width: 100%;">
-          <i class="fas fa-lock"></i> Login
+        <button type="submit" id="login-btn" class="btn" style="width: 100%;">
+          <i class="fas fa-lock"></i> <span id="login-text">Login</span>
+          <span id="login-spinner" style="display: none;"><i class="fas fa-spinner fa-spin"></i></span>
         </button>
+        
+        <div style="margin-top: var(--spacing-md); text-align: right;">
+          <a href="#" id="forgot-password" style="color: var(--color-teal); font-size: 0.9rem;">Forgot password?</a>
+        </div>
       </form>
     </section>
     
@@ -674,10 +707,15 @@
     <p>&copy; 2025 Tualatin Valley Volleyball Club. All rights reserved.</p>
   </footer>
   
-  <script src="firebase-admin.js"></script>
-  <script>
-    // Admin password - change this to your desired password
-    const ADMIN_PASSWORD = 'tvvcadmin2024';
+  <script type="module" src="firebase-admin.js"></script>
+  <script type="module" src="auth.js"></script>
+  <script type="module">
+    import {
+      fetchRegistrations,
+      deleteRegistration,
+      updateRegistrationStatus,
+      clearAllRegistrations
+    } from './firebase-admin.js';
     
     // DOM Elements
     const authSection = document.getElementById('auth-section');

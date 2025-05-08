@@ -56,15 +56,14 @@
   
   <!-- Firebase SDK -->
   <script type="module">
-    // Import the functions you need from the SDKs
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-    
-    // Your Firebase configuration will be used in the script below
+    // Firebase configuration will be used in the external script
     window.initFirebase = async function() {
-      // Firebase config and initialization happens in the script below
+      // Firebase initialization happens in the external script
     };
   </script>
+  
+  <!-- Form validation script -->
+  <script src="assets/js/form-validation.js" defer></script>
   
   <style>
     /* Animation for page loader */
@@ -83,6 +82,40 @@
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
+    }
+    
+    /* Form validation styles */
+    .validation-error {
+      color: #ff4d4d;
+      font-size: 0.8rem;
+      margin-top: 5px;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    input:invalid, select:invalid, textarea:invalid {
+      border-color: rgba(255, 77, 77, 0.5);
+    }
+    
+    /* Loading indicator styles */
+    .form-loading {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(18, 18, 18, 0.9);
+      z-index: 10;
+      border-radius: var(--radius-lg);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 20px;
     }
     
     /* Page-specific styles */
@@ -665,93 +698,7 @@
   </a>
   
   <!-- Firebase Configuration and Form Submission Script -->
-  <script type="module">
-    // Import the functions you need from the SDKs
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-    
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDmsZlmti2s_-tnmfzu2dl3JXHc-O_MFIo",
-      authDomain: "tvvc-website.firebaseapp.com",
-      projectId: "tvvc-website",
-      storageBucket: "tvvc-website.firebasestorage.app",
-      messagingSenderId: "235626883938",
-      appId: "1:235626883938:web:109885d0682b9080bd1a3b"
-    };
-    
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
-    // Form submission handler
-    document.getElementById('tryout-registration-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      try {
-        // Get form values
-        const formData = {
-          playerInfo: {
-            firstName: document.getElementById('player-first-name').value,
-            lastName: document.getElementById('player-last-name').value,
-            birthDate: document.getElementById('birth-date').value,
-            grade: document.getElementById('grade').value,
-            ageGroup: document.getElementById('age-group').value,
-            school: document.getElementById('school').value
-          },
-          volleyballExperience: {
-            primaryPosition: document.getElementById('position').value,
-            secondaryPosition: document.getElementById('secondary-position').value || 'none',
-            experienceLevel: document.getElementById('experience').value,
-            previousClub: document.getElementById('previous-club').value || 'None'
-          },
-          guardianInfo: {
-            name: document.getElementById('parent-name').value,
-            relationship: document.getElementById('relationship').value,
-            email: document.getElementById('parent-email').value,
-            phone: document.getElementById('parent-phone').value,
-            address: document.getElementById('address').value,
-            city: document.getElementById('city').value,
-            zip: document.getElementById('zip').value
-          },
-          tryoutSession: document.getElementById('tryout-date').value,
-          termsAgreed: document.querySelector('input[name="termsAgreed"]').checked,
-          emailConsent: document.querySelector('input[name="emailConsent"]').checked,
-          registrationDate: serverTimestamp(),
-          status: 'pending' // For admin tracking
-        };
-        
-        // Save to Firestore
-        const docRef = await addDoc(collection(db, 'tryoutRegistrations'), formData);
-        console.log('Registration saved with ID: ', docRef.id);
-        
-        // Show success message
-        document.getElementById('tryout-registration-form').style.display = 'none';
-        document.getElementById('form-success').style.display = 'block';
-        
-        // Scroll to success message
-        document.getElementById('form-success').scrollIntoView({ behavior: 'smooth' });
-      } catch (error) {
-        console.error('Error adding registration: ', error);
-        document.getElementById('form-error').style.display = 'block';
-        
-        // Scroll to error message
-        document.getElementById('form-error').scrollIntoView({ behavior: 'smooth' });
-      }
-    });
-    
-    // Register another player button
-    document.getElementById('register-another').addEventListener('click', function() {
-      document.getElementById('tryout-registration-form').reset();
-      document.getElementById('form-success').style.display = 'none';
-      document.getElementById('tryout-registration-form').style.display = 'block';
-    });
-    
-    // Try again button
-    document.getElementById('try-again').addEventListener('click', function() {
-      document.getElementById('form-error').style.display = 'none';
-    });
-  </script>
+  <script type="module" src="assets/js/firebase-form-handler.js"></script>
   
   <!-- Site Navigation Script -->
   <script>

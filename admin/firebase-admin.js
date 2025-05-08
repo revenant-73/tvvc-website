@@ -1,3 +1,25 @@
+// Import Firebase modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  getDocs, 
+  query, 
+  where, 
+  orderBy, 
+  deleteDoc, 
+  doc,
+  updateDoc,
+  writeBatch
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
 // Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDmsZlmti2s_-tnmfzu2dl3JXHc-O_MFIo",
@@ -9,21 +31,18 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-
-// Initialize Firestore
-const db = firebase.firestore();
-
-// Initialize Firebase Auth
-const auth = firebase.auth();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 // Collection references
-const registrationsCollection = db.collection('tryoutRegistrations');
+const registrationsCollectionRef = collection(db, 'tryoutRegistrations');
 
 // Fetch all registrations from Firestore
 async function fetchRegistrations() {
   try {
-    const snapshot = await registrationsCollection.orderBy('registrationDate', 'desc').get();
+    const q = query(registrationsCollectionRef, orderBy('registrationDate', 'desc'));
+    const snapshot = await getDocs(q);
     
     if (snapshot.empty) {
       console.log('No registrations found');
@@ -66,7 +85,8 @@ async function fetchRegistrations() {
 // Delete a registration by ID
 async function deleteRegistration(id) {
   try {
-    await registrationsCollection.doc(id).delete();
+    const docRef = doc(db, 'tryoutRegistrations', id);
+    await deleteDoc(docRef);
     return true;
   } catch (error) {
     console.error('Error deleting registration:', error);
@@ -77,7 +97,8 @@ async function deleteRegistration(id) {
 // Update a registration's status
 async function updateRegistrationStatus(id, status) {
   try {
-    await registrationsCollection.doc(id).update({
+    const docRef = doc(db, 'tryoutRegistrations', id);
+    await updateDoc(docRef, {
       status: status
     });
     return true;
@@ -90,11 +111,12 @@ async function updateRegistrationStatus(id, status) {
 // Clear all registrations (admin only)
 async function clearAllRegistrations() {
   try {
-    const batch = db.batch();
-    const snapshot = await registrationsCollection.get();
+    const q = query(registrationsCollectionRef);
+    const snapshot = await getDocs(q);
     
-    snapshot.forEach(doc => {
-      batch.delete(doc.ref);
+    const batch = writeBatch(db);
+    snapshot.forEach(document => {
+      batch.delete(doc(db, 'tryoutRegistrations', document.id));
     });
     
     await batch.commit();
@@ -104,3 +126,57 @@ async function clearAllRegistrations() {
     return false;
   }
 }
+
+// Authentication functions
+// Check if user is authenticated
+function isUserAuthenticated() {
+  return auth.currentUser !== null;
+}
+
+// Sign in with email and password
+async function signInWithEmail(email, password) {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  } catch (error) {
+    console.error('Error signing in:', error);
+    throw error;
+  }
+}
+
+// Sign out
+async function signOutUser() {
+  try {
+    await signOut(auth);
+    return true;
+  } catch (error) {
+    console.error('Error signing out:', error);
+    return false;
+  }
+}
+
+// Reset password
+async function resetPassword(email) {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return true;
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    throw error;
+  }
+}
+
+// Export functions and objects
+export {
+  app,
+  db,
+  auth,
+  fetchRegistrations,
+  deleteRegistration,
+  updateRegistrationStatus,
+  clearAllRegistrations,
+  isUserAuthenticated,
+  signInWithEmail,
+  signOutUser,
+  resetPassword
+};
