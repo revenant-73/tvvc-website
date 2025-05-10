@@ -34,11 +34,5 @@
     <priority>0.4</priority>
   </url>
   
-  <!-- Utility Pages - Not Meant for Regular Users -->
-  <url>
-    <loc>https://www.tualatinvalleyvb.com/pre-launch-checklist-updated.html</loc>
-    <lastmod>2024-06-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.2</priority>
-  </url>
+  <!-- End of sitemap -->
 </urlset>

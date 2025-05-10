@@ -13,26 +13,40 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    
+    // Initialize Firebase immediately
+    const firebaseConfig = {
+      apiKey: "AIzaSyDmsZlmti2s_-tnmfzu2dl3JXHc-O_MFIo",
+      authDomain: "tvvc-website.firebaseapp.com",
+      projectId: "tvvc-website",
+      storageBucket: "tvvc-website.firebasestorage.app",
+      messagingSenderId: "235626883938",
+      appId: "1:235626883938:web:109885d0682b9080bd1a3b"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
     
     // Make Firebase services available globally
+    window.db = db;
+    window.auth = auth;
+    
+    // Check if user is already logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("User is already signed in:", user.email);
+        // If we have a showAdminPanel function defined, call it
+        if (typeof window.showAdminPanel === 'function') {
+          window.showAdminPanel();
+        }
+      } else {
+        console.log("No user is signed in");
+      }
+    });
+    
     window.initFirebase = () => {
-      const firebaseConfig = {
-        apiKey: "AIzaSyDmsZlmti2s_-tnmfzu2dl3JXHc-O_MFIo",
-        authDomain: "tvvc-website.firebaseapp.com",
-        projectId: "tvvc-website",
-        storageBucket: "tvvc-website.firebasestorage.app",
-        messagingSenderId: "235626883938",
-        appId: "1:235626883938:web:109885d0682b9080bd1a3b"
-      };
-      
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      const auth = getAuth(app);
-      
-      window.db = db;
-      window.auth = auth;
-      
       return { app, db, auth };
     };
   </script>
@@ -500,7 +514,7 @@
       <form id="auth-form" class="auth-form">
         <div class="form-group">
           <label for="email" class="form-label">Email</label>
-          <input type="email" id="email" class="form-input" required>
+          <input type="email" id="email" class="form-input" value="loren@tualatinvalleyvb.com" required>
         </div>
         
         <div class="form-group">
@@ -714,7 +728,8 @@
       fetchRegistrations,
       deleteRegistration,
       updateRegistrationStatus,
-      clearAllRegistrations
+      clearAllRegistrations,
+      auth
     } from './firebase-admin.js';
     
     // DOM Elements
@@ -738,6 +753,9 @@
     // Current registrations data
     let currentRegistrations = [];
     let currentRegistrationId = null;
+    
+    // Admin password constant
+    const ADMIN_PASSWORD = 'tvvcadmin2024';
     
     // Functions for showing/hiding loading state
     function showLoading(element) {
@@ -773,6 +791,9 @@
       logoutBtn.style.display = 'none';
     }
     
+    // Make showAuthForm available globally
+    window.showAuthForm = showAuthForm;
+    
     // Show the admin panel
     function showAdminPanel() {
       authSection.style.display = 'none';
@@ -783,30 +804,66 @@
       loadRegistrations();
     }
     
+    // Make showAdminPanel available globally
+    window.showAdminPanel = showAdminPanel;
+    
     // Handle authentication form submission
-    authForm.addEventListener('submit', function(e) {
+    authForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       
-      console.log("Login attempt with password:", password);
+      console.log("Login attempt with email:", email);
       
-      if (password === ADMIN_PASSWORD) {
-        console.log("Password correct, authenticating...");
-        // Set authentication in localStorage
-        localStorage.setItem('tvvc_admin_auth', 'true');
-        
-        // Show admin panel
-        showAdminPanel();
-        
-        // Clear password field
-        document.getElementById('password').value = '';
-        authError.style.display = 'none';
-      } else {
-        console.log("Password incorrect");
-        // Show error message
-        authError.textContent = 'Incorrect password. Please try again. The password is: tvvcadmin2024';
-        authError.style.display = 'block';
+      // Show loading state
+      document.getElementById('login-btn').disabled = true;
+      document.getElementById('login-text').style.display = 'none';
+      document.getElementById('login-spinner').style.display = 'inline-block';
+      authError.style.display = 'none';
+      
+      try {
+        // Try Firebase authentication first
+        try {
+          // Import the auth functions
+          const { signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js");
+          await signInWithEmailAndPassword(auth, email, password);
+          console.log("Firebase authentication successful");
+          
+          // Show admin panel
+          showAdminPanel();
+          
+          // Clear form fields
+          document.getElementById('email').value = '';
+          document.getElementById('password').value = '';
+          authError.style.display = 'none';
+        } catch (firebaseError) {
+          console.error("Firebase auth error:", firebaseError);
+          
+          // Fall back to password-based authentication
+          if (password === ADMIN_PASSWORD) {
+            console.log("Password correct, authenticating...");
+            // Set authentication in localStorage
+            localStorage.setItem('tvvc_admin_auth', 'true');
+            
+            // Show admin panel
+            showAdminPanel();
+            
+            // Clear password field
+            document.getElementById('password').value = '';
+            authError.style.display = 'none';
+          } else {
+            console.log("Password incorrect");
+            // Show error message
+            authError.textContent = 'Incorrect password. Please try again. The password is: tvvcadmin2024';
+            authError.style.display = 'block';
+          }
+        }
+      } finally {
+        // Reset loading state
+        document.getElementById('login-btn').disabled = false;
+        document.getElementById('login-text').style.display = 'inline';
+        document.getElementById('login-spinner').style.display = 'none';
       }
     });
     
@@ -827,8 +884,19 @@
       loadingSpinner.style.display = 'flex';
       
       try {
+        // Check if user is authenticated
+        if (!auth.currentUser) {
+          console.warn("User not authenticated, attempting to show login form");
+          showAuthForm();
+          loadingSpinner.style.display = 'none';
+          return;
+        }
+        
+        console.log("Fetching registrations as user:", auth.currentUser.email);
+        
         // Fetch registrations from Firestore
         currentRegistrations = await fetchRegistrations();
+        console.log("Fetched registrations:", currentRegistrations);
         
         // Update stats
         updateStats(currentRegistrations);
@@ -885,7 +953,34 @@
         addActionButtonListeners();
       } catch (error) {
         console.error('Error loading registrations:', error);
-        showSuccessMessage('Error loading registrations. Please try again.', 'error');
+        
+        // Check if it's an authentication error
+        if (error.message && error.message.includes('permission')) {
+          console.log("Permission error, showing auth form");
+          showAuthForm();
+          authError.textContent = 'Your session has expired. Please log in again.';
+          authError.style.display = 'block';
+        } else {
+          // Show error message
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error-message';
+          errorDiv.style.padding = '20px';
+          errorDiv.style.marginTop = '20px';
+          errorDiv.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
+          errorDiv.style.borderRadius = 'var(--radius-md)';
+          errorDiv.innerHTML = `
+            <h3>Error Loading Data</h3>
+            <p>${error.message || 'Could not load registrations. Please try again.'}</p>
+            <p>If this error persists, try logging out and back in.</p>
+          `;
+          
+          // Clear and add error message
+          registrationsTableBody.innerHTML = '';
+          document.querySelector('.table-container').appendChild(errorDiv);
+        }
+      } finally {
+        // Always hide the loading spinner
+        loadingSpinner.style.display = 'none';
       } finally {
         // Hide loading spinner
         loadingSpinner.style.display = 'none';
