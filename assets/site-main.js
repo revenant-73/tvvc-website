@@ -190,7 +190,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const contactForm = document.querySelector('.contact-form');
   if (contactForm) {
     contactForm.addEventListener('submit', function(e) {
-      e.preventDefault();
+      // Don't prevent default - let Netlify handle the form submission
+      // But still do client-side validation
       
       let isValid = true;
       const nameInput = contactForm.querySelector('input[name="name"]');
@@ -223,32 +224,21 @@ document.addEventListener('DOMContentLoaded', function() {
         isValid = false;
       }
       
-      if (isValid) {
-        // In a real application, you would send the form data to a server here
-        const submitButton = contactForm.querySelector('button[type="submit"]');
-        const originalText = submitButton.textContent;
-        
-        submitButton.disabled = true;
-        submitButton.textContent = 'Sending...';
-        
-        // Simulate form submission
-        setTimeout(() => {
-          contactForm.reset();
-          submitButton.disabled = false;
-          submitButton.textContent = originalText;
-          
-          // Show success message
-          const successMessage = document.createElement('div');
-          successMessage.className = 'success-message';
-          successMessage.textContent = 'Thank you! Your message has been sent.';
-          contactForm.appendChild(successMessage);
-          
-          // Remove success message after 5 seconds
-          setTimeout(() => {
-            successMessage.remove();
-          }, 5000);
-        }, 1500);
+      if (!isValid) {
+        // If validation fails, prevent form submission
+        e.preventDefault();
+        return;
       }
+      
+      // If we get here, form is valid - let Netlify handle the submission
+      // Update button state to show it's sending
+      const submitButton = contactForm.querySelector('button[type="submit"]');
+      const originalText = submitButton.textContent;
+      submitButton.disabled = true;
+      submitButton.textContent = 'Sending...';
+      
+      // Netlify will handle the actual form submission and redirect
+      // This is just for visual feedback before the page changes
     });
   }
   

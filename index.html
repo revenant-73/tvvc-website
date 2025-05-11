@@ -59,6 +59,20 @@
   <!-- Custom CSS - Minified for performance -->
   <link rel="stylesheet" href="assets/site-styles.min.css">
   
+  <!-- Hidden form for Netlify to detect at build time -->
+  <form name="contact" netlify netlify-honeypot="bot-field" hidden>
+    <input type="text" name="name" />
+    <input type="email" name="email" />
+    <select name="subject">
+      <option value="general">General Inquiry</option>
+      <option value="tryouts">Tryout Information</option>
+      <option value="programs">Program Information</option>
+      <option value="coaching">Coaching Opportunities</option>
+      <option value="other">Other</option>
+    </select>
+    <textarea name="message"></textarea>
+  </form>
+  
   <style>
     /* RGB color variables for animations */
     :root {
@@ -471,7 +485,7 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        text-fill-color: transparent;
+        color: transparent;
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         transform: translateZ(0); /* Fix for mobile rendering */
         position: relative;
@@ -1009,7 +1023,7 @@
         <div style="position: absolute; width: 100%; height: 100%; border: 4px solid rgba(0, 128, 128, 0.2); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite;"></div>
         <div style="position: absolute; width: 100%; height: 100%; border: 4px solid transparent; border-top-color: var(--color-teal); border-radius: 50%; animation: spin 1s linear infinite;"></div>
       </div>
-      <h2 style="color: white; font-family: 'Outfit', sans-serif; letter-spacing: 2px; font-size: 1.5rem; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">TVVC</h2>
+      <h2 style="font-family: 'Outfit', sans-serif; letter-spacing: 2px; font-size: 1.5rem; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;">TVVC</h2>
     </div>
   </div>
   
@@ -1024,7 +1038,7 @@
   <!-- Header - Now with sticky positioning -->
   <header class="site-header" style="position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(18, 18, 18, 0.9); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); transition: all 0.3s ease;">
     <div class="container header-container">
-      <a href="#hero" class="logo" style="background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+      <a href="#hero" class="logo" style="background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;">
         <span>TVVC</span>
       </a>
       
@@ -1475,7 +1489,7 @@
         <div class="card value-card" style="--hover-color: #20c997; background-color: #212121; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); padding: 1.5rem;">
           <div class="card-content text-center">
             <div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-              <i class="fas fa-seedling value-icon" style="font-size: 3.5rem; background: linear-gradient(135deg, #20c997, #0dcaf0); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;"></i>
+              <i class="fas fa-seedling value-icon" style="font-size: 3.5rem; background: linear-gradient(135deg, #20c997, #0dcaf0); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;"></i>
             </div>
             <h3 class="card-title" style="color: white; font-size: 1.3rem; margin-bottom: 0.3rem;">12U-14U Teams</h3>
             <h4 style="color: #20c997; font-weight: 500; margin-top: 0; margin-bottom: 0.8rem; font-family: 'Inter', sans-serif; font-size: 0.95rem;">Build the Foundation</h4>
@@ -1486,7 +1500,7 @@
         <div class="card value-card" style="--hover-color: #fd7e14; background-color: #212121; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); padding: 1.5rem;">
           <div class="card-content text-center">
             <div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-              <i class="fas fa-lightbulb value-icon" style="font-size: 3.5rem; background: linear-gradient(135deg, #ffc107, #fd7e14); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;"></i>
+              <i class="fas fa-lightbulb value-icon" style="font-size: 3.5rem; background: linear-gradient(135deg, #ffc107, #fd7e14); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;"></i>
             </div>
             <h3 class="card-title" style="color: white; font-size: 1.3rem; margin-bottom: 0.3rem;">15U-16U Teams</h3>
             <h4 style="color: #fd7e14; font-weight: 500; margin-top: 0; margin-bottom: 0.8rem; font-family: 'Inter', sans-serif; font-size: 0.95rem;">Grow Through the Game</h4>
@@ -1497,7 +1511,7 @@
         <div class="card value-card" style="--hover-color: #dc3545; background-color: #212121; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); padding: 1.5rem;">
           <div class="card-content text-center">
             <div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-              <i class="fas fa-star value-icon" style="font-size: 3.5rem; background: linear-gradient(135deg, #dc3545, #6c757d); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;"></i>
+              <i class="fas fa-star value-icon" style="font-size: 3.5rem; background: linear-gradient(135deg, #dc3545, #6c757d); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;"></i>
             </div>
             <h3 class="card-title" style="color: white; font-size: 1.3rem; margin-bottom: 0.3rem;">17U-18U Teams</h3>
             <h4 style="color: #dc3545; font-weight: 500; margin-top: 0; margin-bottom: 0.8rem; font-family: 'Inter', sans-serif; font-size: 0.95rem;">Lead with Confidence</h4>
@@ -1658,71 +1672,64 @@
         .coaches-slider {
           margin: 0 auto;
         }
-          
-          .coaches-carousel .coach-card {
-            width: 100%;
-            margin: 0 auto;
-            background: linear-gradient(145deg, #262626, #1a1a1a);
-            background-image: 
-              linear-gradient(145deg, #262626, #1a1a1a),
-              radial-gradient(circle at 20% 20%, rgba(var(--color-teal-rgb), 0.05) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(var(--color-coral-rgb), 0.05) 0%, transparent 50%);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 1.5rem;
-            min-height: 350px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-          }
-          
-          .coaches-carousel .coach-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--color-teal), var(--color-coral));
-          }
-          
-          .coaches-carousel .coach-image-container {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 1.5rem;
-            border: 3px solid var(--color-coral);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-          }
-          
-          .coaches-carousel .coach-card:hover .coach-image-container {
-            transform: none;
-          }
-          
-          .coaches-carousel .card-title {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-          }
-          
-          .coaches-carousel .coach-role {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-          }
-          
-          .coaches-carousel .coach-bio {
-            height: auto;
-            padding: 0;
-            margin: 0;
-            background: none;
-          }
+        
+        .coaches-carousel .coach-card {
+          width: 100%;
+          margin: 0 auto;
+          background: linear-gradient(145deg, #262626, #1a1a1a);
+          background-image: 
+            linear-gradient(145deg, #262626, #1a1a1a),
+            radial-gradient(circle at 20% 20%, rgba(var(--color-teal-rgb), 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(var(--color-coral-rgb), 0.05) 0%, transparent 50%);
+          border-radius: 16px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 1.5rem;
+          min-height: 350px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          position: relative;
+          overflow: hidden;
         }
         
-        @media (min-width: 577px) {
-          .coaches-carousel {
-            display: none; /* Hide carousel on desktop */
-          }
+        .coaches-carousel .coach-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 4px;
+          background: linear-gradient(90deg, var(--color-teal), var(--color-coral));
+        }
+        
+        .coaches-carousel .coach-image-container {
+          width: 120px;
+          height: 120px;
+          margin: 0 auto 1.5rem;
+          border: 3px solid var(--color-coral);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .coaches-carousel .coach-card:hover .coach-image-container {
+          transform: none;
+        }
+        
+        .coaches-carousel .card-title {
+          font-size: 1.5rem;
+          margin-bottom: 0.5rem;
+        }
+        
+        .coaches-carousel .coach-role {
+          font-size: 1.1rem;
+          margin-bottom: 1rem;
+        }
+        
+        .coaches-carousel .coach-bio {
+          height: auto;
+          padding: 0;
+          margin: 0;
+          background: none;
         }
       </style>
       
@@ -2127,7 +2134,7 @@
         <div style="position: relative; z-index: 1;">
           <div style="text-align: center; margin-bottom: var(--spacing-lg);">
             <h2 style="color: var(--color-white); font-size: 2.5rem; margin-bottom: var(--spacing-md); position: relative; display: inline-block;">
-              <span style="background: linear-gradient(to right, #33CCCC, #008080); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800;">Group Training</span>
+              <span style="background: linear-gradient(to right, #33CCCC, #008080); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; font-weight: 800;">Group Training</span>
               <span style="background-color: #FF6B6B; color: white; font-size: 1rem; padding: 5px 10px; border-radius: 20px; margin-left: 10px; vertical-align: middle; position: relative; top: -5px; font-weight: 600; box-shadow: 0 2px 5px rgba(255, 107, 107, 0.3);">COMING SOON</span>
             </h2>
             <p style="font-size: 1.2rem; color: rgba(255,255,255,0.9); max-width: 800px; margin: 0 auto; font-weight: 500;">
@@ -2278,7 +2285,7 @@
         <div style="position: relative; z-index: 1;">
           <div style="text-align: center; margin-bottom: var(--spacing-2xl);">
             <h2 style="color: var(--color-white); font-size: 2.5rem; margin-bottom: var(--spacing-md); position: relative; display: inline-block;">
-              <span style="background: linear-gradient(to right, #FFB84D, #FF6B6B); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800;">TVVC SAND</span>
+              <span style="background: linear-gradient(to right, #FFB84D, #FF6B6B); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; font-weight: 800;">TVVC SAND</span>
               <span style="background-color: #FFB84D; color: white; font-size: 1rem; padding: 5px 10px; border-radius: 20px; margin-left: 10px; vertical-align: middle; position: relative; top: -5px; font-weight: 600; box-shadow: 0 2px 5px rgba(255, 184, 77, 0.3);">COMING SOON</span>
             </h2>
             <p style="font-size: 1.2rem; color: rgba(255,255,255,0.9); max-width: 800px; margin: 0 auto; font-weight: 500;">
@@ -2369,13 +2376,11 @@
         <div class="contact-form-card" style="flex: 1; min-width: 300px; max-width: 600px; background-color: #1c1c1c; border-radius: 12px; padding: var(--spacing-2xl); box-shadow: 0 4px 12px rgba(0,0,0,0.4); position: relative; overflow: hidden; color: white;">
           <h3 class="card-title" style="font-size: 1.5rem; font-weight: bold; margin-bottom: var(--spacing-lg); color: var(--color-white); position: relative;">Send Us a Message</h3>
           
-          <form class="contact-form" action="https://formspree.io/f/movdjqlo" method="POST" style="position: relative;">
-            <input type="hidden" name="_subject" value="New message from TVVC website">
-            <input type="hidden" name="_next" value="https://www.tualatinvalleyvb.com/?thankyou=true">
+          <form class="contact-form" name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" netlify-success-url="/?thankyou=true" style="position: relative;">
+            <input type="hidden" name="form-name" value="contact">
+            <input type="hidden" name="subject" value="New message from TVVC website">
             <!-- Honeypot field to prevent spam -->
-            <input type="text" name="_gotcha" style="display: none;">
-            <!-- Honeypot field to prevent spam -->
-            <input type="text" name="_gotcha" style="display: none;">
+            <input type="hidden" name="bot-field" style="display: none;">
             <div class="form-row" style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md); flex-wrap: wrap;">
               <div class="form-group" style="flex: 1; min-width: 200px;">
                 <label for="name" class="form-label" style="display: block; margin-bottom: var(--spacing-xs); font-weight: 500; color: rgba(255,255,255,0.9);">Name</label>
@@ -2404,10 +2409,7 @@
               <textarea id="message" name="message" class="form-textarea" required style="width: 100%; min-height: 150px; transition: all 0.3s ease; background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 12px; outline: none;"></textarea>
             </div>
             
-            <!-- Anti-spam honeypot field -->
-            <div style="position: absolute; left: -9999px;">
-              <input type="text" name="_gotcha" tabindex="-1" autocomplete="off">
-            </div>
+            <!-- Netlify handles spam protection automatically -->
             
             <button type="submit" class="btn" style="background: linear-gradient(to right, #ff5c5c, #ff8585); color: white; border: none; padding: var(--spacing-md) var(--spacing-xl); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 100%;">
               <i class="fas fa-paper-plane" style="margin-right: var(--spacing-sm);"></i> Send Message
@@ -2477,7 +2479,7 @@
     <div class="container" style="max-width: 1400px; width: 100%; margin: 0 auto; padding: 0 2rem;">
       <div style="display: flex; flex-wrap: wrap; gap: 3rem; justify-content: space-between; margin-bottom: 3rem;">
         <div style="flex: 1; min-width: 250px;">
-          <a href="#hero" style="text-decoration: none; font-size: 2rem; font-weight: bold; font-family: 'Montserrat', sans-serif; display: inline-block; position: relative; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;" onmouseover="this.querySelector('.logo-underline').style.transform='scaleX(1)';" onmouseout="this.querySelector('.logo-underline').style.transform='scaleX(0)';">
+          <a href="#hero" style="text-decoration: none; font-size: 2rem; font-weight: bold; font-family: 'Montserrat', sans-serif; display: inline-block; position: relative; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;" onmouseover="this.querySelector('.logo-underline').style.transform='scaleX(1)';" onmouseout="this.querySelector('.logo-underline').style.transform='scaleX(0)';">
             <span>TVVC</span>
             <span class="logo-underline" style="position: absolute; bottom: -3px; left: 0; width: 100%; height: 2px; background: linear-gradient(135deg, var(--color-teal), var(--color-coral)); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease;"></span>
           </a>
@@ -2531,9 +2533,7 @@
             <a href="coach-ed.html" style="display: inline-block; padding: 5px 15px; background-color: #1c1c1c; color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; position: relative; z-index: 10;" onmouseover="this.style.backgroundColor='var(--color-teal)'; this.style.color='white'; this.style.borderColor='var(--color-teal)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.color='rgba(255, 255, 255, 0.5)'; this.style.borderColor='rgba(255, 255, 255, 0.1)';">
               <i class="fas fa-chalkboard-teacher" style="margin-right: 5px;"></i>Coaches
             </a>
-            <a href="admin/index.html" style="display: inline-block; padding: 5px 15px; background-color: #1c1c1c; color: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; position: relative; z-index: 10;" onmouseover="this.style.backgroundColor='#333'; this.style.color='white'; this.style.borderColor='#444';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.color='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.1)';">
-              <i class="fas fa-lock" style="margin-right: 5px;"></i>Admin
-            </a>
+
           </div>
         </div>
         <a href="#hero" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: #1c1c1c; color: white; border-radius: 50%; transition: all 0.3s ease;" aria-label="Back to top" onmouseover="this.style.backgroundColor='#ff5c5c'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 12px rgba(255, 92, 92, 0.3)';" onmouseout="this.style.backgroundColor='#1c1c1c'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
@@ -2627,7 +2627,6 @@
           }
         });
       });
-    });
   </script>
   
   <!-- Additional JavaScript for one-page site -->
@@ -2863,7 +2862,7 @@
       });
     });
     
-    // Contact form handling with Formspree
+    // Contact form handling with Netlify Forms
     document.addEventListener('DOMContentLoaded', () => {
       // Check for thank you parameter in URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -2896,7 +2895,7 @@
       }
       
       // For browsers with JavaScript disabled, the form will still work
-      // Formspree will handle the submission and redirect
+      // Netlify Forms will handle the submission and redirect
       
       // Add hover effects to form inputs
       const formInputs = document.querySelectorAll('.form-input, .form-textarea');
