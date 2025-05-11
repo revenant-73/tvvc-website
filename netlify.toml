@@ -19,6 +19,28 @@
   # Environment variables for branch deploys
   # environment = { NODE_VERSION = "16" }  # Uncomment if needed
 
+# Set security headers to improve site security and address cookie warnings
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Enable HTTPS
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    
+    # Prevent XSS attacks
+    X-XSS-Protection = "1; mode=block"
+    
+    # Prevent MIME type sniffing
+    X-Content-Type-Options = "nosniff"
+    
+    # Referrer policy
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+    # Cookie policy - helps with third-party cookie warnings
+    Set-Cookie = "SameSite=Lax; Secure"
+    
+    # Permissions policy
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
 # Redirects and headers are NGINX-style
 # For more information see: https://docs.netlify.com/routing/redirects/
 
