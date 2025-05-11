@@ -384,7 +384,18 @@
           </button>
         </div>
         
-        <form id="tryout-registration-form" style="display: block;">
+        <form id="tryout-registration-form" name="tryout-registration" method="POST" data-netlify="true" netlify-honeypot="bot-field" style="display: block;">
+          <!-- Netlify Forms honeypot field for spam protection -->
+          <p class="hidden" style="display: none;">
+            <label>Don't fill this out if you're human: <input name="bot-field" /></label>
+          </p>
+          
+          <!-- Hidden field to identify the form -->
+          <input type="hidden" name="form-name" value="tryout-registration" />
+          
+          <!-- Custom subject line for email notifications -->
+          <input type="hidden" name="subject" value="New TVVC Tryout Registration" data-remove-prefix />
+          
           <div class="form-section">
             <div class="form-section-title">
               <i class="fas fa-user"></i>
@@ -527,7 +538,9 @@
             <div class="form-grid">
               <div class="form-group">
                 <label for="parent-email" class="form-label">Email</label>
-                <input type="email" id="parent-email" name="parentEmail" class="form-input" required>
+                <input type="email" id="parent-email" name="email" class="form-input" required>
+                <!-- Hidden field to keep parentEmail for your records -->
+                <input type="hidden" name="parentEmail" id="parent-email-copy">
               </div>
               
               <div class="form-group">
@@ -697,8 +710,8 @@
     <i class="fas fa-chevron-up"></i>
   </a>
   
-  <!-- Firebase Configuration and Form Submission Script -->
-  <script type="module" src="assets/js/firebase-form-handler.js"></script>
+  <!-- Netlify Form Handler Script -->
+  <script src="assets/js/netlify-form-handler.js"></script>
   
   <!-- Site Navigation Script -->
   <script>
