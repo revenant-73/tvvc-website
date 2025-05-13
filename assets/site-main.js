@@ -186,83 +186,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Form validation
-  const contactForm = document.querySelector('.contact-form');
-  if (contactForm) {
-    contactForm.addEventListener('submit', function(e) {
-      // Don't prevent default - let Netlify handle the form submission
-      // But still do client-side validation
-      
-      let isValid = true;
-      const nameInput = contactForm.querySelector('input[name="name"]');
-      const emailInput = contactForm.querySelector('input[name="email"]');
-      const messageInput = contactForm.querySelector('textarea[name="message"]');
-      
-      // Reset previous error messages
-      contactForm.querySelectorAll('.error-message').forEach(el => el.remove());
-      
-      // Validate name
-      if (nameInput && !nameInput.value.trim()) {
-        addErrorMessage(nameInput, 'Please enter your name');
-        isValid = false;
-      }
-      
-      // Validate email
-      if (emailInput) {
-        if (!emailInput.value.trim()) {
-          addErrorMessage(emailInput, 'Please enter your email');
-          isValid = false;
-        } else if (!isValidEmail(emailInput.value)) {
-          addErrorMessage(emailInput, 'Please enter a valid email address');
-          isValid = false;
+  // Contact card hover effects
+  const contactOptions = document.querySelectorAll('.contact-option');
+  if (contactOptions) {
+    contactOptions.forEach(option => {
+      option.addEventListener('mouseover', function() {
+        // Find the gradient line at the top of the card and animate it
+        const gradientLine = this.querySelector('div:first-child');
+        if (gradientLine) {
+          gradientLine.style.transform = 'scaleX(1)';
         }
-      }
+      });
       
-      // Validate message
-      if (messageInput && !messageInput.value.trim()) {
-        addErrorMessage(messageInput, 'Please enter your message');
-        isValid = false;
-      }
-      
-      if (!isValid) {
-        // If validation fails, prevent form submission
-        e.preventDefault();
-        return;
-      }
-      
-      // If we get here, form is valid - let Netlify handle the submission
-      // Update button state to show it's sending
-      const submitButton = contactForm.querySelector('button[type="submit"]');
-      const originalText = submitButton.textContent;
-      submitButton.disabled = true;
-      submitButton.textContent = 'Sending...';
-      
-      // Netlify will handle the actual form submission and redirect
-      // This is just for visual feedback before the page changes
+      option.addEventListener('mouseout', function() {
+        // Reset the gradient line animation
+        const gradientLine = this.querySelector('div:first-child');
+        if (gradientLine) {
+          gradientLine.style.transform = 'scaleX(0)';
+        }
+      });
     });
-  }
-  
-  // Helper functions
-  function addErrorMessage(inputElement, message) {
-    const errorMessage = document.createElement('div');
-    errorMessage.className = 'error-message';
-    errorMessage.textContent = message;
-    errorMessage.style.color = 'var(--error)';
-    errorMessage.style.fontSize = '0.875rem';
-    errorMessage.style.marginTop = '0.25rem';
-    
-    inputElement.parentNode.appendChild(errorMessage);
-    inputElement.style.borderColor = 'var(--error)';
-    
-    inputElement.addEventListener('input', function() {
-      errorMessage.remove();
-      inputElement.style.borderColor = '';
-    }, { once: true });
-  }
-  
-  function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
   }
   
   // Animate elements when they come into view

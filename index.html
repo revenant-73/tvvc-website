@@ -2356,76 +2356,59 @@
         <p class="subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 1.2rem; margin-bottom: 1.5rem;">We're here to help—whether you're ready to join or just have a question.</p>
       </div>
       
-      <div class="contact-container" style="display: flex; flex-wrap: wrap; gap: var(--spacing-2xl); justify-content: center; align-items: stretch; margin-top: var(--spacing-2xl);">
-        <!-- Contact Info Card -->
-        <div class="contact-info-card" style="flex: 1; min-width: 300px; max-width: 400px; background-color: #1c1c1c; color: white; border-radius: 12px; padding: var(--spacing-2xl); position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
-          <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: var(--spacing-lg); position: relative; z-index: 1; color: var(--color-white);">Get In Touch</h3>
-          <p style="margin-bottom: var(--spacing-xl); line-height: 1.6; position: relative; z-index: 1; color: rgba(255, 255, 255, 0.8);">Have questions about our programs, tryouts, or anything else? We're here to help!</p>
+      <div class="contact-container" style="display: flex; justify-content: center; align-items: center; margin-top: var(--spacing-2xl);">
+        <!-- Enhanced Contact Card -->
+        <div class="contact-info-card" style="max-width: 800px; width: 100%; background: linear-gradient(145deg, #1c1c1c, #222222); color: white; border-radius: 16px; padding: var(--spacing-2xl); position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05);">
+          <!-- Decorative elements -->
+          <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 92, 92, 0.15) 0%, rgba(255, 92, 92, 0.05) 50%, transparent 70%); z-index: 0;"></div>
+          <div style="position: absolute; bottom: -80px; left: -80px; width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, rgba(0, 128, 128, 0.15) 0%, rgba(0, 128, 128, 0.05) 50%, transparent 70%); z-index: 0;"></div>
           
-          <div class="contact-methods" style="position: relative; z-index: 1;">
-            <div class="contact-method" style="display: flex; align-items: center; margin-bottom: var(--spacing-lg); transition: transform 0.3s ease;">
-              <i class="fas fa-phone" style="font-size: 1.2rem; color: #ff5c5c; margin-right: 12px;"></i>
-              <a href="tel:5033890760" style="color: white; text-decoration: none; transition: all 0.2s ease;">(503) 389-0760</a>
+          <div style="position: relative; z-index: 1; text-align: center; margin-bottom: var(--spacing-xl);">
+            <h3 style="font-size: 2rem; font-weight: bold; margin-bottom: var(--spacing-md); color: var(--color-white);">Let's Connect</h3>
+            <p style="font-size: 1.2rem; line-height: 1.6; color: rgba(255, 255, 255, 0.8); max-width: 600px; margin: 0 auto;">
+              Have questions about our programs, training sessions, or anything else? Reach out directly through text or email for a personal response.
+            </p>
+          </div>
+          
+          <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xl); justify-content: center; position: relative; z-index: 1;">
+            <!-- Text Message Option -->
+            <div class="contact-option" style="flex: 1; min-width: 280px; background-color: rgba(0, 0, 0, 0.2); border-radius: 12px; padding: var(--spacing-lg); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; position: relative; overflow: hidden;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0, 0, 0, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(to right, #ff5c5c, #ff8585); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease;"></div>
+              <div style="text-align: center; margin-bottom: var(--spacing-md);">
+                <div style="width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(145deg, #262626, #1a1a1a); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--spacing-md); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05);">
+                  <i class="fas fa-sms" style="font-size: 2rem; color: #ff5c5c;"></i>
+                </div>
+                <h4 style="font-size: 1.3rem; margin-bottom: var(--spacing-sm); color: var(--color-white);">Text Message</h4>
+                <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--spacing-md);">Quick responses for your volleyball questions</p>
+              </div>
+              <a href="sms:5033890760" class="btn" style="display: block; background: linear-gradient(to right, #ff5c5c, #ff8585); color: white; border: none; padding: var(--spacing-md); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); text-align: center; text-decoration: none;">
+                <i class="fas fa-comment" style="margin-right: var(--spacing-sm);"></i> Text Us
+              </a>
+              <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); margin-top: var(--spacing-md); text-align: center;">(503) 389-0760</p>
             </div>
             
-            <div class="contact-method" style="display: flex; align-items: center; transition: transform 0.3s ease;">
-              <i class="fas fa-envelope" style="font-size: 1.2rem; color: #ff5c5c; margin-right: 12px;"></i>
-              <a href="mailto:info@tualatinvalleyvb.com" style="color: white; text-decoration: none; transition: all 0.2s ease; word-break: break-all;">info@tualatinvalleyvb.com</a>
+            <!-- Email Option -->
+            <div class="contact-option" style="flex: 1; min-width: 280px; background-color: rgba(0, 0, 0, 0.2); border-radius: 12px; padding: var(--spacing-lg); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; position: relative; overflow: hidden;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0, 0, 0, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(to right, #008080, #33CCCC); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease;"></div>
+              <div style="text-align: center; margin-bottom: var(--spacing-md);">
+                <div style="width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(145deg, #262626, #1a1a1a); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--spacing-md); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05);">
+                  <i class="fas fa-envelope" style="font-size: 2rem; color: #33CCCC;"></i>
+                </div>
+                <h4 style="font-size: 1.3rem; margin-bottom: var(--spacing-sm); color: var(--color-white);">Email</h4>
+                <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--spacing-md);">Detailed inquiries and conversations</p>
+              </div>
+              <a href="mailto:info@tualatinvalleyvb.com" class="btn" style="display: block; background: linear-gradient(to right, #008080, #33CCCC); color: white; border: none; padding: var(--spacing-md); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); text-align: center; text-decoration: none;">
+                <i class="fas fa-envelope" style="margin-right: var(--spacing-sm);"></i> Email Us
+              </a>
+              <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); margin-top: var(--spacing-md); text-align: center; word-break: break-all;">info@tualatinvalleyvb.com</p>
             </div>
           </div>
-        </div>
-        
-        <!-- Contact Form Card -->
-        <div class="contact-form-card" style="flex: 1; min-width: 300px; max-width: 600px; background-color: #1c1c1c; border-radius: 12px; padding: var(--spacing-2xl); box-shadow: 0 4px 12px rgba(0,0,0,0.4); position: relative; overflow: hidden; color: white;">
-          <h3 class="card-title" style="font-size: 1.5rem; font-weight: bold; margin-bottom: var(--spacing-lg); color: var(--color-white); position: relative;">Send Us a Message</h3>
           
-          <form class="contact-form" name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" netlify-success-url="/?thankyou=true" style="position: relative;">
-            <input type="hidden" name="form-name" value="contact">
-            <input type="hidden" name="subject" value="New message from TVVC website">
-            <!-- Honeypot field to prevent spam -->
-            <input type="hidden" name="bot-field" style="display: none;">
-            <div class="form-row" style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md); flex-wrap: wrap;">
-              <div class="form-group" style="flex: 1; min-width: 200px;">
-                <label for="name" class="form-label" style="display: block; margin-bottom: var(--spacing-xs); font-weight: 500; color: rgba(255,255,255,0.9);">Name</label>
-                <input type="text" id="name" name="name" class="form-input" required style="width: 100%; transition: all 0.3s ease; background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 12px; outline: none;">
-              </div>
-              
-              <div class="form-group" style="flex: 1; min-width: 200px;">
-                <label for="email" class="form-label" style="display: block; margin-bottom: var(--spacing-xs); font-weight: 500; color: rgba(255,255,255,0.9);">Email</label>
-                <input type="email" id="email" name="email" class="form-input" required style="width: 100%; transition: all 0.3s ease; background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 12px; outline: none;">
-              </div>
-            </div>
-            
-            <div class="form-group" style="margin-bottom: var(--spacing-md);">
-              <label for="subject" class="form-label" style="display: block; margin-bottom: var(--spacing-xs); font-weight: 500; color: rgba(255,255,255,0.9);">Subject</label>
-              <select id="subject" name="subject" class="form-input" style="width: 100%; transition: all 0.3s ease; background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 12px; outline: none;">
-                <option value="general">General Inquiry</option>
-                <option value="tryouts">Tryout Information</option>
-                <option value="programs">Program Information</option>
-                <option value="coaching">Coaching Opportunities</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            
-            <div class="form-group" style="margin-bottom: var(--spacing-lg);">
-              <label for="message" class="form-label" style="display: block; margin-bottom: var(--spacing-xs); font-weight: 500; color: rgba(255,255,255,0.9);">Message</label>
-              <textarea id="message" name="message" class="form-textarea" required style="width: 100%; min-height: 150px; transition: all 0.3s ease; background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 12px; outline: none;"></textarea>
-            </div>
-            
-            <!-- Netlify handles spam protection automatically -->
-            
-            <button type="submit" class="btn" style="background: linear-gradient(to right, #ff5c5c, #ff8585); color: white; border: none; padding: var(--spacing-md) var(--spacing-xl); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 100%;">
-              <i class="fas fa-paper-plane" style="margin-right: var(--spacing-sm);"></i> Send Message
-            </button>
-          </form>
-          
-          <!-- Success indicator (hidden by default) -->
-          <div id="form-success" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(28, 28, 28, 0.9); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 10; border-radius: 12px;">
-            <div style="text-align: center;">
-              <i class="fas fa-check-circle" style="font-size: 4rem; color: #00bfa6; margin-bottom: 1rem;"></i>
-              <h3 style="color: white; margin-bottom: 0.5rem;">Message Sent!</h3>
-              <p style="color: rgba(255,255,255,0.8);">Thank you for contacting us. We'll get back to you soon.</p>
-            </div>
+          <div style="text-align: center; margin-top: var(--spacing-xl); position: relative; z-index: 1;">
+            <p style="color: rgba(255, 255, 255, 0.8); font-style: italic; display: inline-block; padding: var(--spacing-md); background-color: rgba(0, 0, 0, 0.2); border-radius: 8px; max-width: 600px; margin: 0 auto;">
+              <i class="fas fa-heart" style="color: #ff5c5c; margin-right: 8px;"></i>
+              We're committed to personal connections. Reach out directly and we'll create a plan that works for you!
+            </p>
           </div>
         </div>
       </div>
@@ -2516,8 +2499,8 @@
             <a href="mailto:info@tualatinvalleyvb.com" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#ff5c5c'; this.style.borderBottomColor='#ff5c5c';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">info@tualatinvalleyvb.com</a>
           </p>
           <p style="margin-bottom: 0.8rem;">
-            <i class="fas fa-calendar-alt" style="color: #808080; margin-right: 10px;"></i> 
-            <span style="color: rgba(255, 255, 255, 0.5); cursor: not-allowed;">Group Training <span style="background-color: #FF6B6B; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; margin-left: 5px;">COMING SOON</span></span>
+            <i class="fas fa-calendar-alt" style="color: #33CCCC; margin-right: 10px;"></i> 
+            <a href="#training-sessions" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: all 0.2s ease; border-bottom: 1px solid transparent;" onmouseover="this.style.color='#33CCCC'; this.style.borderBottomColor='#33CCCC';" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'; this.style.borderBottomColor='transparent';">Group Training</a>
           </p>
           <p>
             <i class="fas fa-volleyball-ball" style="color: #808080; margin-right: 10px;"></i> 
