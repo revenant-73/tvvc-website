@@ -2,7 +2,23 @@
 
 **Purpose:** This guide helps you engage your players meaningfully during pre-match, timeouts, between sets, and post-match conversations. It blends ecological coaching, motivational interviewing (MI), and acceptance and commitment training (ACT) with the NAC method: **Notice, Adjust, Commit**.
 
-TAB 1: Course Overview
+COURSE OUTLINE
+
+Course Overview: Why This Course Matters
+
+Module 1: Foundations of Ecological Dynamics
+
+Module 2: The Constraints-Led Approach (CLA)
+
+Module 3: NAC – Notice, Adjust, Commit
+
+Module 4: Motivational Interviewing (MI) for Coaches
+
+Module 5: Acceptance and Commitment Training (ACT)
+
+Module 6: The Ecology of Play 
+
+Course Overview
 
  Coaching Foundations Course: From Control to Connection
 Subtitle: A Practical Course in Ecological Dynamics, Constraints-Led Coaching, NAC Communication, Motivational Interviewing (MI), and Acceptance & Commitment Training (ACT)
@@ -13,9 +29,6 @@ This short but powerful coaching course equips Tualatin Valley Volleyball Club a
 You’ll explore the ecological dynamics framework, the constraints-led approach to training, and the communication methods of NAC, MI, and ACT — all of which are integrated into our match day and seasonal flow. This course is designed for new and returning coaches and will leave you with both the confidence and language to implement our values-based, athlete-centered approach.
 ---
 
-TAB 2: MODULE 1
-
-## COACH EDUCATION: CORE FRAMEWORKS
 
 ### 🧠 Module 1: Foundations of Ecological Dynamics
 
@@ -128,3 +141,607 @@ The ecological dynamics model doesn’t remove the coach — it redefines coachi
 > * Begin asking: “What did you see?” and “What did the game give you?”
 
 **Next Module: Constraints-Led Approach (CLA)** – Learn how to create learning without lectures by manipulating the environment instead of the athlete.
+
+--
+
+### 🧩 Module 2: The Constraints-Led Approach (CLA)
+
+**Objective:** Help coaches understand how to shape athlete learning by manipulating constraints, rather than relying on direct instruction. The CLA is the *how-to* engine behind ecological dynamics.
+
+---
+
+### What is the Constraints-Led Approach?
+
+The **Constraints-Led Approach** (CLA) is a method for designing practices that guide players toward desired outcomes by shaping the environment they interact with. Instead of telling players exactly what to do, you modify **constraints** to push them toward discovering effective solutions themselves.
+
+In CLA, skill emerges from the interaction between:
+
+* The **task** (rules, equipment, objectives)
+* The **environment** (space, surface, opponent behaviors)
+* The **athlete** (abilities, tendencies, emotional state)
+
+This is called the **constraint triangle** — and by adjusting one or more constraints, we can invite new behaviors without ever giving a technical cue.
+
+---
+
+### Types of Constraints
+
+#### 🟨 1. **Task Constraints**
+
+These are the easiest to modify and most directly connected to your practice plans.
+
+> 🏐 *Examples:*
+>
+> * Bonus point for a first-ball kill (FBK)
+> * Only tips or roll shots allowed
+> * Must set a back row attacker every 3rd play
+
+**Effect:** These constraints *highlight certain solutions* and *suppress others*. If you reward off-speed scoring, players will start noticing defensive gaps rather than always hitting hard.
+
+#### 🌍 2. **Environmental Constraints**
+
+These include the physical and sensory elements of the gym space, equipment, or game setup.
+
+> 🏐 *Examples:*
+>
+> * Use smaller courts to increase spatial awareness (e.g., skinny court)
+> * Use a lighter ball to slow down the game for younger players
+> * Play with loud music to increase pressure or test communication
+
+**Effect:** These changes alter *the feel and flow* of the game, creating more or less space, noise, time, and unpredictability.
+
+#### 👤 3. **Individual Constraints**
+
+These relate to a specific player’s state or characteristics — including emotional state, fatigue, size, or skill level.
+
+> 🏐 *Examples:*
+>
+> * A lefty attacker being encouraged to explore back-row swings
+> * Asking a quiet player to call every ball for 5 minutes
+> * Restricting a dominant player to only hit cross-court
+
+**Effect:** These personal limits *expand the skill set of the whole team* by preventing over-reliance and encouraging distributed ownership.
+
+---
+
+### Why CLA Works
+
+* Forces **attention to shift** toward information that matters (space, opponent, tempo)
+* Encourages **exploration**, not memorization
+* Builds **resilient performers**, not perfect robots
+* Removes the need for technical over-correction
+
+> 💡 *Remember: every constraint is a form of communication.*
+
+---
+
+### Sample Volleyball Constraints (by purpose)
+
+#### 🧠 To Improve Decision-Making
+
+* 2 points for a tool off the block
+* Must switch setters after each rally
+* Only score if the attack uses a shot not used on the previous rally
+
+#### 🧍‍♀️ To Encourage Communication
+
+* Silent rally = replay
+* Must name target before serve
+* Bonus point for triple coverage (e.g., hitter + 2 behind)
+
+#### 🎯 To Sharpen Precision
+
+* Target zones taped on court
+* Only allowed to serve short or deep corners
+* Bonus point for line shot or off-speed kill
+
+#### 🌀 To Develop Adaptability
+
+* Change the ball every 3 points (indoor, beach, heavy)
+* Rotate players out of position
+* Create 4v6 or uneven matchups
+
+> 💬 *Design Challenge: What’s a common struggle your team faces? What constraint could highlight that challenge without you giving a speech?*
+
+---
+
+### The Coach’s Role in CLA
+
+1. **Design the environment** — not to make it easier, but to make it more meaningful
+2. **Watch what emerges** — resist the urge to step in too quickly
+3. **Guide attention** — with questions, not commands
+4. **Adjust constraints** — if no progress is being made, shift the design, not the instruction
+
+---
+
+### From Theory to Practice
+
+#### In Practice:
+
+* Always ask: *What behavior am I trying to invite?* Then choose a constraint that makes that behavior more likely.
+* Debrief often: “What changed when we added that constraint?”
+* Use constraints progressively — don't overload too early. One powerful constraint is enough to shape behavior.
+
+#### In Matches:
+
+* Reflect between sets: “What’s emerging that we can amplify or counterbalance?”
+* Use substitution or rotation as a live constraint to shift rhythm
+* Observe how opponents are shaping constraints too — it goes both ways
+
+---
+
+### Final Takeaway
+
+The Constraints-Led Approach is your **design toolkit** for creating training that feels like the real game — but with deeper focus and more targeted outcomes.
+
+You are not a drill sergeant. You are a designer, a guide, and a builder of smart chaos.
+
+> ✅ What to do next:
+>
+> * Try changing *one constraint per drill* this week
+> * Ask players, “What did that constraint make you notice?”
+> * Begin a constraint bank of your favorites (we’ll help you build one in practice design sessions)
+
+**Next Module: NAC – Notice, Adjust, Commit** – Learn how to structure communication in timeouts and beyond using a perception-based, athlete-driven approach.
+
+
+---
+
+### 🔁 Module 3: NAC – Notice, Adjust, Commit
+
+**Objective:** Equip coaches with a simple, repeatable tool for helping athletes self-regulate, adapt, and take purposeful action during moments of pressure, confusion, or momentum shifts — especially in timeouts and between sets.
+
+---
+
+### What is NAC?
+
+**NAC** stands for **Notice → Adjust → Commit**, and it’s a player-centered communication framework that turns chaotic, emotional game moments into opportunities for grounded recalibration.
+
+Instead of giving commands or critiquing effort, NAC helps coaches:
+
+* Anchor players in perception
+* Invite athlete-led problem solving
+* Clarify intention going forward
+
+It’s fast. It’s flexible. It’s how we coach *in the moment* without losing connection.
+
+---
+
+### The Purpose of Each Step
+
+#### 🟢 **NOTICE** – “What are you seeing?”
+
+This stage focuses on awareness. Athletes reflect on what the game is telling them — not on what they’re doing wrong.
+
+> 🏐 *Example Questions:*
+>
+> * “What did you see on their last few serves?”
+> * “Where are they tipping most often?”
+> * “What’s happening with our first-ball contacts?”
+
+**Why it matters:** It activates perception-action coupling and keeps players locked into real-time information.
+
+> 💬 *Coach Reminder: Don’t correct — listen. Let them surface what’s showing up.*
+
+---
+
+#### 🟡 **ADJUST** – “What could we try?”
+
+Now we explore adaptation. What new approach, spacing, decision, or mindset might create a better outcome?
+
+> 🏐 *Example Questions:*
+>
+> * “What could you shift in your position or timing?”
+> * “Is there another shot or serve that fits here?”
+> * “What would change if we slowed the tempo down?”
+
+**Why it matters:** It builds adaptability and shared ownership. Players aren’t just hearing plans — they’re shaping them.
+
+> 💬 *Coach Tip: Offer constraints or possibilities only after hearing ideas first.*
+
+---
+
+#### 🔴 **COMMIT** – “What’s the plan for next ball?”
+
+This step locks in action. Everyone leaves the huddle or pause with clarity and confidence.
+
+> 🏐 *Example Questions:*
+>
+> * “What’s your next serve target?”
+> * “Who’s leading the call on serve receive?”
+> * “What are we going to hunt for in transition?”
+
+**Why it matters:** This cuts through doubt and hesitation. Committed action is more effective than hesitant perfection.
+
+> 💬 *Coach Cue: Use affirming body language and tone here. Energize belief.*
+
+---
+
+### Using NAC in Timeouts
+
+**Format:** 60–90 seconds. Max.
+
+1. Ask a **NOTICE** question to the group or a key player.
+2. Let players respond. Summarize themes.
+3. Shift to **ADJUST** – elicit 1–2 ideas.
+4. Clarify and **COMMIT** to one concrete plan.
+
+> 🏐 *Example:* “What are you seeing from their server? Okay — what might help us handle that? Great. Let’s commit to spacing wide and calling early. Rylie’s voice leads. Let’s go.”
+
+**Advanced Tip:** Train captains to run NAC during timeouts so it becomes athlete-owned.
+
+---
+
+### NAC Between Sets
+
+* Use the break to zoom out: What patterns are showing up?
+* Revisit identity: “What kind of team do we want to be this next set?”
+* Confirm adjustments, then set one point-of-commitment for the opening rally.
+
+> 🏐 *Set Change Example:* “Notice how we’re letting tips drop? What can we adjust in coverage? Let’s commit to inside-out movement and calling seam-first. First 5 points, we go all in.”
+
+---
+
+### Quick NAC: Between Points
+
+Even 10 seconds is enough.
+
+* “What do you see?”
+* “What could shift?”
+* “What’s your next move?”
+
+> 🔁 This quick-reset NAC keeps players from spiraling into self-blame or blank execution. It gives them a sense of control.
+
+---
+
+### Player-Led NAC: Ownership in Action
+
+Encourage athletes to use NAC with each other:
+
+* In huddles
+* After errors
+* During sideouts
+
+**Practice Idea:** Run a scrimmage where timeouts are led by players using NAC. Coaches only observe and reflect afterward.
+
+---
+
+### Integrating NAC into Match Day Flow
+
+| Moment          | NAC Use                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| Pre-Match       | “What will you NOTICE today?”                                           |
+| During Timeouts | Full NAC loop with team                                                 |
+| Between Sets    | Expanded NAC with reflection and values                                 |
+| After Points    | Quick NAC (micro-interactions)                                          |
+| Post-Match      | Reflective NAC: “What did you notice? What would you adjust next time?” |
+
+---
+
+### Final Takeaway
+
+**NAC is your anchor during the chaos of competition.**
+It doesn’t require speeches. It doesn’t require control. It requires presence.
+
+> ✅ Try This:
+>
+> * Use NAC in every timeout for your next two matches
+> * Teach your athletes the framework explicitly
+> * Begin recognizing when they use it without prompting
+
+**Next Module: Motivational Interviewing (MI) for Coaches** – Learn how to support player autonomy and guide inner motivation through better questions and intentional language.
+
+
+---
+
+### 💬 Module 4: Motivational Interviewing (MI) for Coaches
+
+**Objective:** Help coaches develop communication skills that promote athlete ownership, confidence, and internal motivation — while reducing over-coaching, conflict, and resistance.
+
+---
+
+### What is Motivational Interviewing?
+
+Motivational Interviewing (MI) is a collaborative, person-centered communication style that helps people explore and resolve ambivalence about change. In coaching, it allows us to stop pushing players *toward* outcomes and instead draw solutions *out* of them.
+
+MI was developed in clinical psychology to support behavioral change, but it’s now used across health care, education, and sport. The core principle is that **people are more likely to act on ideas they generate themselves.**
+
+---
+
+### The Spirit of MI
+
+Before using any tools, MI asks you to embody this **spirit**:
+
+* **Partnership:** You are working *with*, not *on* your athletes
+* **Acceptance:** You value their autonomy, strengths, and pace
+* **Compassion:** You act in their best interests, not your ego’s
+* **Evocation:** You believe their best solutions already exist within them
+
+> 💡 *Coaching Reflection: Do my conversations invite ownership or compliance?*
+
+---
+
+### The Four Core Tools
+
+#### 1. 🗣️ **Open-Ended Questions**
+
+Rather than yes/no, open-ended questions explore experiences and invite reflection.
+
+> 🏐 *Examples:*
+>
+> * “What did you notice about that rally?”
+> * “What’s one thing you want to work on this week?”
+> * “What made that play feel different?”
+
+#### 2. 💪 **Affirmations**
+
+Acknowledging effort, courage, creativity, or growth builds trust and reinforces values.
+
+> 🏐 *Examples:*
+>
+> * “That was a bold choice to swing line — love the risk.”
+> * “You kept supporting your teammates even after that run — that matters.”
+
+#### 3. 🔁 **Reflections**
+
+Reflect back what the athlete says — often better than advice. It helps them hear themselves more clearly.
+
+> 🏐 *Examples:*
+>
+> * Athlete: “I keep missing that dig.”
+> * Coach: “You’re frustrated that you were right there but couldn’t finish it.”
+
+#### 4. 📦 **Summaries**
+
+Wrap up the conversation and highlight key insights, affirming next steps.
+
+> 🏐 *Example:* “So you’re seeing more space on their left side, you want to attack with a tip early, and you’re staying calm even when they score a few. That’s a great plan.”
+
+---
+
+### Why MI Works in Volleyball
+
+* Builds trust and psychological safety
+* Encourages players to self-evaluate and self-correct
+* Prevents coach dependence
+* Develops resilient, reflective competitors
+
+> 💬 *Coach Reminder: MI isn’t soft — it’s strategic. Players who own their game become tougher, not weaker.*
+
+---
+
+### MI in Practice & Matches
+
+#### 🎯 In Practice:
+
+* Use open-ended check-ins: “What’s your goal this round?”
+* End reps with reflection: “What felt different that time?”
+* Pair players up to give peer affirmations
+
+#### 🔥 In Matches:
+
+* Short MI-style check-in: “What’s one thing you want to adjust next point?”
+* Use affirmations during timeouts: “Love how you stayed with that broken play.”
+* Summarize observations: “You’re seeing their block shift late — let’s work that angle again.”
+
+---
+
+### Common Pitfalls to Avoid
+
+* Over-questioning (interrogation kills insight)
+* Fake affirmations (“good job” ≠ meaningful feedback)
+* Talking more than listening
+* Rushing to solve instead of pausing to reflect
+
+> 🧠 *Tip: In high-stress moments, one calm reflection is more powerful than five frantic instructions.*
+
+---
+
+### Final Takeaway
+
+MI helps you shift from **talking at** players to **thinking with** them. It creates a coaching culture where communication deepens awareness, strengthens trust, and leads to lasting motivation.
+
+> ✅ Try This:
+>
+> * Replace one instruction this week with a reflection
+> * Use 1 open-ended question at the start of each timeout
+> * Begin collecting athlete quotes to reflect back — show them their own growth
+
+**Next Module: Acceptance and Commitment Training (ACT)** – Help your athletes stay grounded and take meaningful action even under pressure or after failure.
+
+
+---
+
+### 🌊 Module 5: Acceptance and Commitment Training (ACT)
+
+**Objective:** Equip coaches with a framework and language to help athletes stay present, regulate emotions, and act in alignment with their values — especially in moments of pressure, disappointment, or uncertainty.
+
+---
+
+### What is ACT?
+
+Acceptance and Commitment Training (ACT) is a psychological flexibility model that helps individuals become more open to difficult internal experiences while taking action in service of their values. In sport, ACT allows athletes to perform with presence, intention, and resilience — even when confidence is low or emotions run high.
+
+ACT is not about fixing thoughts or suppressing emotions. It’s about creating the space to act meaningfully, *even with discomfort.*
+
+---
+
+### The Six Core Processes of ACT
+
+#### 1. 🧊 **Acceptance** – *Make room for what shows up.*
+
+* Acknowledge thoughts, feelings, and body sensations without needing to avoid, control, or justify them.
+
+> 🏐 *Example:* “It’s okay to feel nervous — it means this matters.”
+
+#### 2. 🪞 **Cognitive Defusion** – *You are not your thoughts.*
+
+* Step back from the content of the mind; notice thoughts without being dominated by them.
+
+> 🏐 *Example:* “That’s just a story your brain tells when you're under pressure.”
+
+#### 3. 🧘 **Present Moment Awareness** – *Be where your feet are.*
+
+* Direct attention to here and now, using breath, sensation, or external focus (e.g., the ball, teammates, space).
+
+> 🏐 *Example:* “Eyes up. What do you see? Let’s get back to this point.”
+
+#### 4. 🧠 **Self-as-Context** – *You are the observer, not the storm.*
+
+* Help athletes see themselves as more than their current emotion or performance.
+
+> 🏐 *Example:* “This isn’t who you are — it’s just what’s happening right now.”
+
+#### 5. 🔥 **Values** – *Know what matters.*
+
+* Clarify what kind of teammate, competitor, or person they want to be — regardless of the score.
+
+> 🏐 *Example:* “Are we playing brave right now? Are we playing together?”
+
+#### 6. 🎯 **Committed Action** – *Do what matters — especially when it’s hard.*
+
+* Take purposeful steps in alignment with values, not just comfort or emotion.
+
+> 🏐 *Example:* “Even if you’re tired, what would the competitor in you choose next?”
+
+---
+
+### ACT in Volleyball: Practical Applications
+
+#### ⚠️ In High-Pressure Moments:
+
+* Name the emotion: “You look frustrated. That’s okay. Let’s breathe.”
+* Redirect to the present: “Eyes on the server. You’re here now.”
+* Anchor in values: “What kind of team do we want to be right now?”
+
+#### 🔄 In Practice:
+
+* Use grounding cues to reset: “Breathe. Exhale. Choose again.”
+* Create values cards for players (e.g., grit, joy, connection) and refer to them mid-rep
+* Reflect on action: “Did that choice match who you want to be?”
+
+---
+
+### Building an ACT-Infused Culture
+
+* Normalize mental discomfort instead of masking it
+* Reinforce identity over outcomes
+* Praise committed actions — not just successful ones
+* Train players to use ACT language with each other
+
+> 💡 *Culture Cue: “You don’t have to feel ready — just choose to act aligned.”*
+
+---
+
+### ACT Tools You Can Use Immediately
+
+| Tool              | Example Phrase                                         |
+| ----------------- | ------------------------------------------------------ |
+| Grounding Breath  | “In through the nose. Out. Now we go.”                 |
+| Values Reminder   | “Are we playing with trust right now?”                 |
+| Defusion Cue      | “That’s just a thought. You don’t have to believe it.” |
+| Commitment Prompt | “What would the best version of you do next?”          |
+
+---
+
+### Final Takeaway
+
+ACT shifts coaching from controlling emotion to cultivating resilience. Your athletes don’t need perfect thoughts or ideal confidence — they need permission to *act anyway.*
+
+> ✅ Try This:
+>
+> * Introduce ACT language in a timeout: “What still matters right now?”
+> * Share your own ACT cue during a match
+> * Debrief tough matches by asking: “Where did we stay true to who we are?”
+
+
+---
+
+### 🌱 Module 6: The Ecology of Play — A Unified Coaching Methodology
+
+**Objective:** Help coaches synthesize all the tools in this course into one athlete-centered, joy-oriented, scientifically grounded system of learning and competition: **The Ecology of Play**.
+
+---
+
+### What is The Ecology of Play?
+
+The Ecology of Play is a coaching philosophy and methodology that blends:
+
+* **Ecological Dynamics** (how athletes learn through perception and interaction)
+* **Constraints-Led Practice Design** (how we shape learning through the environment)
+* **NAC** (how we communicate clearly under pressure)
+* **Motivational Interviewing** (how we build trust and autonomy)
+* **ACT** (how we ground performance in values and presence)
+
+This is not a curriculum. It’s a way of thinking, designing, and relating — a system that sees each athlete as a dynamic learner within a meaningful context of relationships, movement, and discovery.
+
+---
+
+### Core Beliefs of The Ecology of Play
+
+1. **Skill is not installed — it’s discovered.**
+2. **Joy and struggle are not opposites — they’re teammates.**
+3. **The athlete is not a machine — they’re a meaning-maker.**
+4. **The best coaching conversations are co-creations.**
+5. **Values matter more than outcomes.**
+6. **Adaptability > repeatability.**
+
+---
+
+### The Interconnected Tools
+
+| Tool                               | What It Offers                                                   | How It Connects                                                                 |
+| ---------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Ecological Dynamics**            | A new lens on how movement, learning, and decision-making emerge | The foundation of our entire system — learning happens through doing in context |
+| **Constraints-Led Approach (CLA)** | The way we design practice to channel discovery                  | CLA shapes the environment to teach without over-instructing                    |
+| **NAC**                            | The method for in-the-moment recalibration                       | NAC helps players self-regulate and stay adaptable under pressure               |
+| **Motivational Interviewing (MI)** | The language of autonomy, empathy, and insight                   | MI strengthens trust and gives players voice in their journey                   |
+| **ACT**                            | The emotional resilience and values-based core                   | ACT provides grounding and clarity when things get hard                         |
+
+---
+
+### How It Looks in Real Life
+
+#### 🟢 *Practice Design*
+
+* Start with a game-based activity (2v2 or 3v3) that reflects real game demands
+* Layer in one constraint that highlights a focus (e.g., only scoring on tips = encourages space awareness)
+* Ask MI-style questions during breaks (“What are you noticing?” “What are you experimenting with?”)
+* Use ACT cues when emotion or conflict arises (“It’s okay to be frustrated. What still matters?”)
+
+#### 🟠 *Match Communication*
+
+* NAC is your structure during timeouts
+* Use MI to affirm and elicit reflection (“What’s working?” “What could we try?”)
+* Use ACT to keep players values-centered (“What kind of teammate do you want to be right now?”)
+
+#### 🔵 *Culture Building*
+
+* Teach the tools early — have athletes use NAC and ACT with each other
+* Refer to values often, not just outcomes
+* Invite joy into struggle: celebrate curiosity, misfires, persistence, and play
+
+---
+
+### Questions to Guide Your Integration
+
+> 💡 *Reflection Prompts:*
+
+* Which tool am I most confident using already?
+* Which one do I avoid or underuse?
+* Where can I combine two tools together this week?
+* How do I want my athletes to feel when they leave practice?
+
+---
+
+### Final Takeaway
+
+**The Ecology of Play** is more than a set of coaching tools — it’s a system for growing adaptable, joyful, and self-aware athletes. It’s how we teach courage without control. How we lead with presence, not pressure. And how we make the game a place of both *freedom* and *focus*.
+
+> ✅ Try This:
+>
+> * Pick 1 tool to deepen this week, and 1 to start using more often
+> * Rewrite a favorite drill using the CLA + ACT
+> * Ask your athletes: “What does joyful learning look like to you?”
+
+You now have a complete, integrated model for coaching with clarity, care, and curiosity. Welcome to The Ecology of Play.
