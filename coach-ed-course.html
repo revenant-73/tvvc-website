@@ -271,22 +271,66 @@
       100% { background-position: 0% 50%; }
     }
     
-    /* Interactive elements */
+    /* Interactive elements - Enhanced */
     .interactive-element {
       transition: all 0.3s ease;
       border-radius: 8px;
       overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(0, 128, 128, 0.2);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
     .interactive-element:hover {
       transform: translateY(-3px);
       box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+      border-color: var(--color-coral);
+    }
+    
+    .interactive-element::after {
+      content: '👆 Click to interact';
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    
+    .interactive-element:hover::after {
+      opacity: 1;
+      transform: translateY(0);
     }
     
     /* Tab styling enhancements */
     .tab-btn {
       position: relative;
       overflow: hidden;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .tab-btn::before {
+      content: '⟩';
+      font-size: 0.9em;
+      opacity: 0;
+      transform: translateX(-5px);
+      transition: all 0.3s ease;
+    }
+    
+    .tab-btn:hover::before,
+    .tab-btn.active::before {
+      opacity: 1;
+      transform: translateX(0);
     }
     
     .tab-btn::after {
@@ -295,7 +339,7 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 2px;
+      height: 3px;
       background-color: var(--color-coral);
       transform: scaleX(0);
       transform-origin: center;
@@ -309,6 +353,18 @@
     .tab-btn.active::after {
       transform: scaleX(1);
       background-color: var(--color-teal);
+    }
+    
+    .tab-btn:hover {
+      background-color: rgba(255, 107, 107, 0.2) !important;
+      border-color: var(--color-coral);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .tab-btn.active {
+      box-shadow: 0 4px 8px rgba(0, 128, 128, 0.3);
+      border-color: var(--color-teal);
     }
     
     /* Mobile styles */
@@ -386,6 +442,183 @@
         width: 22px !important;
         height: 22px !important;
       }
+    }
+    
+    /* Enhanced Interactive Elements - Added for better UX */
+    /* Reflection options with improved interactivity cues */
+    .reflection-option {
+      position: relative;
+      border: 1px solid rgba(0, 128, 128, 0.3);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .reflection-option::before {
+      content: '✓';
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 20px;
+      height: 20px;
+      background-color: var(--color-teal);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.3s ease;
+    }
+    
+    .reflection-option.selected::before {
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    .reflection-option::after {
+      content: 'Click to select';
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .reflection-option:hover::after {
+      opacity: 1;
+    }
+    
+    .reflection-option:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      border-color: var(--color-coral);
+    }
+    
+    /* Affordance options with improved interactivity cues */
+    .affordance-option {
+      position: relative;
+      border: 1px solid rgba(0, 128, 128, 0.3);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .affordance-option::before {
+      content: '⟲';
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      animation: spin 4s linear infinite;
+      opacity: 0.5;
+    }
+    
+    .affordance-option:hover::before {
+      opacity: 1;
+      color: var(--color-coral);
+    }
+    
+    .affordance-option::after {
+      content: 'Click to match';
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .affordance-option:hover::after {
+      opacity: 1;
+    }
+    
+    .affordance-option:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Flip card enhancements */
+    .flip-card {
+      position: relative;
+    }
+    
+    .flip-card::before {
+      content: '↻ Click to flip';
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .flip-card:hover::before {
+      opacity: 1;
+    }
+    
+    .flip-card-front, .flip-card-back {
+      border: 2px solid transparent;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .flip-card:hover .flip-card-front {
+      border-color: var(--color-coral);
+      box-shadow: 0 8px 16px rgba(255, 107, 107, 0.2);
+    }
+    
+    .flip-card:hover .flip-card-back {
+      border-color: var(--color-teal);
+      box-shadow: 0 8px 16px rgba(0, 128, 128, 0.2);
+    }
+    
+    /* Pulsing animation for interactive elements */
+    @keyframes softPulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 128, 128, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(0, 128, 128, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 128, 128, 0); }
+    }
+    
+    /* Add subtle pulse to all interactive elements on page load */
+    .tab-btn, .reflection-option, .affordance-option, .flip-card, .interactive-element {
+      animation: softPulse 2s ease-in-out 1;
+    }
+    
+    /* Class for drawing attention to interactive elements */
+    .pulse-attention {
+      animation: softPulse 1s ease-in-out infinite;
+      position: relative;
+    }
+    
+    .pulse-attention::after {
+      content: 'Interactive!';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--color-coral);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      opacity: 0.9;
+      white-space: nowrap;
+      animation: fadeInOut 1s ease-in-out infinite;
+    }
+    
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
     }
   </style>
 </head>
@@ -540,19 +773,31 @@
               <div style="background-color: rgba(30, 30, 30, 0.5); padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <p style="margin-top: 0;"><strong>Which of these do you currently emphasize in your coaching?</strong></p>
                 <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
-                  <div class="reflection-option" style="flex: 1; min-width: 200px; background-color: rgba(30, 30, 30, 0.7); padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.3)' : 'rgba(30, 30, 30, 0.7)';">
+                  <div class="reflection-option" style="flex: 1; min-width: 200px; background-color: rgba(30, 30, 30, 0.7); padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; position: relative; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.3)' : 'rgba(30, 30, 30, 0.7)';">
                     <p style="margin: 0;"><strong>Demonstrating perfect technique</strong></p>
+                    <span style="position: absolute; top: 5px; right: 5px; font-size: 16px; opacity: 0.7;">☐</span>
+                    <span class="select-indicator" style="position: absolute; top: 5px; right: 5px; font-size: 16px; opacity: 0; transition: all 0.3s ease;">✓</span>
+                    <span style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: rgba(255, 255, 255, 0.5);">Click to select</span>
                   </div>
-                  <div class="reflection-option" style="flex: 1; min-width: 200px; background-color: rgba(30, 30, 30, 0.7); padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.3)' : 'rgba(30, 30, 30, 0.7)';">
+                  <div class="reflection-option" style="flex: 1; min-width: 200px; background-color: rgba(30, 30, 30, 0.7); padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; position: relative; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.3)' : 'rgba(30, 30, 30, 0.7)';">
                     <p style="margin: 0;"><strong>Creating game-like situations</strong></p>
+                    <span style="position: absolute; top: 5px; right: 5px; font-size: 16px; opacity: 0.7;">☐</span>
+                    <span class="select-indicator" style="position: absolute; top: 5px; right: 5px; font-size: 16px; opacity: 0; transition: all 0.3s ease;">✓</span>
+                    <span style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: rgba(255, 255, 255, 0.5);">Click to select</span>
                   </div>
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                  <div class="reflection-option" style="flex: 1; min-width: 200px; background-color: rgba(30, 30, 30, 0.7); padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.3)' : 'rgba(30, 30, 30, 0.7)';">
+                  <div class="reflection-option" style="flex: 1; min-width: 200px; background-color: rgba(30, 30, 30, 0.7); padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; position: relative; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.3)' : 'rgba(30, 30, 30, 0.7)';">
                     <p style="margin: 0;"><strong>Giving verbal instructions</strong></p>
+                    <span style="position: absolute; top: 5px; right: 5px; font-size: 16px; opacity: 0.7;">☐</span>
+                    <span class="select-indicator" style="position: absolute; top: 5px; right: 5px; font-size: 16px; opacity: 0; transition: all 0.3s ease;">✓</span>
+                    <span style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: rgba(255, 255, 255, 0.5);">Click to select</span>
                   </div>
-                  <div class="reflection-option" style="flex: 1; min-width: 200px; background-color: rgba(30, 30, 30, 0.7); padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.3)' : 'rgba(30, 30, 30, 0.7)';">
+                  <div class="reflection-option" style="flex: 1; min-width: 200px; background-color: rgba(30, 30, 30, 0.7); padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; position: relative; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.3)' : 'rgba(30, 30, 30, 0.7)';">
                     <p style="margin: 0;"><strong>Asking questions about what players perceive</strong></p>
+                    <span style="position: absolute; top: 5px; right: 5px; font-size: 16px; opacity: 0.7;">☐</span>
+                    <span class="select-indicator" style="position: absolute; top: 5px; right: 5px; font-size: 16px; opacity: 0; transition: all 0.3s ease;">✓</span>
+                    <span style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: rgba(255, 255, 255, 0.5);">Click to select</span>
                   </div>
                 </div>
                 <p style="font-style: italic; margin-bottom: 0;">Select all that apply to your current coaching style. This is just for your reflection—there are no wrong answers!</p>
@@ -600,10 +845,22 @@
               <!-- Tabbed Interface for Core Concepts -->
               <div class="concept-tabs" style="margin: 25px 0;">
                 <div class="tab-buttons" style="display: flex; overflow-x: auto; gap: 10px; margin-bottom: 15px;">
-                  <button class="tab-btn active" data-tab="perception" style="padding: 10px 15px; background-color: var(--color-teal); color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;" onclick="activateTab(this, 'perception')">🔗 Perception-Action</button>
-                  <button class="tab-btn" data-tab="affordances" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;" onclick="activateTab(this, 'affordances')">🪜 Affordances</button>
-                  <button class="tab-btn" data-tab="representative" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;" onclick="activateTab(this, 'representative')">🧠 Representative Design</button>
-                  <button class="tab-btn" data-tab="variability" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;" onclick="activateTab(this, 'variability')">🔁 Movement Variability</button>
+                  <button class="tab-btn active" data-tab="perception" style="padding: 10px 15px; background-color: var(--color-teal); color: white; border: 2px solid var(--color-teal); border-radius: 4px; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 8px rgba(0, 128, 128, 0.3); position: relative;" onclick="activateTab(this, 'perception')">
+                    <span style="position: relative; z-index: 2;">🔗 Perception-Action</span>
+                    <span style="position: absolute; top: 5px; right: 5px; font-size: 10px; background-color: var(--color-coral); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">👆</span>
+                  </button>
+                  <button class="tab-btn" data-tab="affordances" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: 2px solid transparent; border-radius: 4px; cursor: pointer; white-space: nowrap; position: relative;" onclick="activateTab(this, 'affordances')">
+                    <span style="position: relative; z-index: 2;">🪜 Affordances</span>
+                    <span style="position: absolute; top: 5px; right: 5px; font-size: 10px; background-color: rgba(255, 107, 107, 0.5); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; opacity: 0.7;">👆</span>
+                  </button>
+                  <button class="tab-btn" data-tab="representative" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: 2px solid transparent; border-radius: 4px; cursor: pointer; white-space: nowrap; position: relative;" onclick="activateTab(this, 'representative')">
+                    <span style="position: relative; z-index: 2;">🧠 Representative Design</span>
+                    <span style="position: absolute; top: 5px; right: 5px; font-size: 10px; background-color: rgba(255, 107, 107, 0.5); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; opacity: 0.7;">👆</span>
+                  </button>
+                  <button class="tab-btn" data-tab="variability" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: 2px solid transparent; border-radius: 4px; cursor: pointer; white-space: nowrap; position: relative;" onclick="activateTab(this, 'variability')">
+                    <span style="position: relative; z-index: 2;">🔁 Movement Variability</span>
+                    <span style="position: absolute; top: 5px; right: 5px; font-size: 10px; background-color: rgba(255, 107, 107, 0.5); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; opacity: 0.7;">👆</span>
+                  </button>
                 </div>
                 
                 <!-- Tab Content -->
@@ -645,19 +902,27 @@
                       <div style="margin-top: 15px; background-color: rgba(0, 128, 128, 0.1); padding: 15px; border-radius: 8px;">
                         <p style="margin-top: 0;"><strong>Match the Affordance to the Action:</strong></p>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                          <div class="affordance-option" style="flex: 1; min-width: 200px; background-color: rgba(255, 107, 107, 0.2); padding: 10px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease;" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(255, 107, 107, 0.4)' : 'rgba(255, 107, 107, 0.2)';">
+                          <div class="affordance-option" style="flex: 1; min-width: 200px; background-color: rgba(255, 107, 107, 0.2); padding: 10px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; position: relative; border: 1px solid rgba(255, 107, 107, 0.3); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(255, 107, 107, 0.4)' : 'rgba(255, 107, 107, 0.2)';">
                             <p style="margin: 0;"><strong>Block shifted inside</strong></p>
+                            <span style="position: absolute; top: 5px; right: 5px; font-size: 14px; opacity: 0.7;">⟲</span>
+                            <span style="position: absolute; bottom: 3px; right: 5px; font-size: 9px; color: rgba(255, 255, 255, 0.6);">Click to match</span>
                           </div>
-                          <div class="affordance-option" style="flex: 1; min-width: 200px; background-color: rgba(0, 128, 128, 0.2); padding: 10px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease;" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.4)' : 'rgba(0, 128, 128, 0.2)';">
+                          <div class="affordance-option" style="flex: 1; min-width: 200px; background-color: rgba(0, 128, 128, 0.2); padding: 10px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; position: relative; border: 1px solid rgba(0, 128, 128, 0.3); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.4)' : 'rgba(0, 128, 128, 0.2)';">
                             <p style="margin: 0;"><strong>Hit line shot</strong></p>
+                            <span style="position: absolute; top: 5px; right: 5px; font-size: 14px; opacity: 0.7;">⟲</span>
+                            <span style="position: absolute; bottom: 3px; right: 5px; font-size: 9px; color: rgba(255, 255, 255, 0.6);">Click to match</span>
                           </div>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                          <div class="affordance-option" style="flex: 1; min-width: 200px; background-color: rgba(255, 107, 107, 0.2); padding: 10px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease;" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(255, 107, 107, 0.4)' : 'rgba(255, 107, 107, 0.2)';">
+                          <div class="affordance-option" style="flex: 1; min-width: 200px; background-color: rgba(255, 107, 107, 0.2); padding: 10px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; position: relative; border: 1px solid rgba(255, 107, 107, 0.3); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(255, 107, 107, 0.4)' : 'rgba(255, 107, 107, 0.2)';">
                             <p style="margin: 0;"><strong>Defender deep in corner</strong></p>
+                            <span style="position: absolute; top: 5px; right: 5px; font-size: 14px; opacity: 0.7;">⟲</span>
+                            <span style="position: absolute; bottom: 3px; right: 5px; font-size: 9px; color: rgba(255, 255, 255, 0.6);">Click to match</span>
                           </div>
-                          <div class="affordance-option" style="flex: 1; min-width: 200px; background-color: rgba(0, 128, 128, 0.2); padding: 10px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease;" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.4)' : 'rgba(0, 128, 128, 0.2)';">
+                          <div class="affordance-option" style="flex: 1; min-width: 200px; background-color: rgba(0, 128, 128, 0.2); padding: 10px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; position: relative; border: 1px solid rgba(0, 128, 128, 0.3); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);" onclick="this.classList.toggle('selected'); this.style.backgroundColor = this.classList.contains('selected') ? 'rgba(0, 128, 128, 0.4)' : 'rgba(0, 128, 128, 0.2)';">
                             <p style="margin: 0;"><strong>Tip short</strong></p>
+                            <span style="position: absolute; top: 5px; right: 5px; font-size: 14px; opacity: 0.7;">⟲</span>
+                            <span style="position: absolute; bottom: 3px; right: 5px; font-size: 9px; color: rgba(255, 255, 255, 0.6);">Click to match</span>
                           </div>
                         </div>
                       </div>
@@ -738,39 +1003,45 @@
               <h4>Misconceptions to Address</h4>
               <div style="display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0;">
                 <!-- Flip Card 1 -->
-                <div class="flip-card" style="flex: 1; min-width: 250px; height: 200px; perspective: 1000px; cursor: pointer;" onclick="this.querySelector('.flip-card-inner').style.transform = this.querySelector('.flip-card-inner').style.transform === 'rotateY(180deg)' ? 'rotateY(0deg)' : 'rotateY(180deg)'">
+                <div class="flip-card" style="flex: 1; min-width: 250px; height: 200px; perspective: 1000px; cursor: pointer; position: relative; border: 2px dashed rgba(255, 107, 107, 0.3); border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;" onclick="this.querySelector('.flip-card-inner').style.transform = this.querySelector('.flip-card-inner').style.transform === 'rotateY(180deg)' ? 'rotateY(0deg)' : 'rotateY(180deg)'">
+                  <div class="flip-indicator" style="position: absolute; top: 10px; right: 10px; z-index: 10; background-color: var(--color-coral); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 1.5s infinite; font-size: 14px;">↻</div>
                   <div class="flip-card-inner" style="position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d;">
-                    <div class="flip-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(255, 107, 107, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div class="flip-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(255, 107, 107, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 20px; box-shadow: inset 0 0 0 2px rgba(255, 107, 107, 0.3);">
                       <p style="margin: 0; font-weight: bold;">❌ "So there's no technique?"</p>
                     </div>
-                    <div class="flip-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(0, 128, 128, 0.2); border-radius: 8px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div class="flip-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(0, 128, 128, 0.2); border-radius: 8px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px; box-shadow: inset 0 0 0 2px rgba(0, 128, 128, 0.3);">
                       <p style="margin: 0;">✅ Technique is <em>emergent</em> — players develop stable solutions through solving problems, not mimicking demos.</p>
                     </div>
                   </div>
+                  <div style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255, 255, 255, 0.7); white-space: nowrap;">Click to flip card</div>
                 </div>
                 
                 <!-- Flip Card 2 -->
-                <div class="flip-card" style="flex: 1; min-width: 250px; height: 200px; perspective: 1000px; cursor: pointer;" onclick="this.querySelector('.flip-card-inner').style.transform = this.querySelector('.flip-card-inner').style.transform === 'rotateY(180deg)' ? 'rotateY(0deg)' : 'rotateY(180deg)'">
+                <div class="flip-card" style="flex: 1; min-width: 250px; height: 200px; perspective: 1000px; cursor: pointer; position: relative; border: 2px dashed rgba(255, 107, 107, 0.3); border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;" onclick="this.querySelector('.flip-card-inner').style.transform = this.querySelector('.flip-card-inner').style.transform === 'rotateY(180deg)' ? 'rotateY(0deg)' : 'rotateY(180deg)'">
+                  <div class="flip-indicator" style="position: absolute; top: 10px; right: 10px; z-index: 10; background-color: var(--color-coral); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 1.5s infinite; font-size: 14px;">↻</div>
                   <div class="flip-card-inner" style="position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d;">
-                    <div class="flip-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(255, 107, 107, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div class="flip-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(255, 107, 107, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 20px; box-shadow: inset 0 0 0 2px rgba(255, 107, 107, 0.3);">
                       <p style="margin: 0; font-weight: bold;">❌ "This just means chaos or letting them figure it out."</p>
                     </div>
-                    <div class="flip-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(0, 128, 128, 0.2); border-radius: 8px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div class="flip-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(0, 128, 128, 0.2); border-radius: 8px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px; box-shadow: inset 0 0 0 2px rgba(0, 128, 128, 0.3);">
                       <p style="margin: 0;">✅ Coaches shape the environment, guide attention, and build tasks that <strong>channel discovery</strong> — it's not hands-off; it's hands-wise.</p>
                     </div>
                   </div>
+                  <div style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255, 255, 255, 0.7); white-space: nowrap;">Click to flip card</div>
                 </div>
                 
                 <!-- Flip Card 3 -->
-                <div class="flip-card" style="flex: 1; min-width: 250px; height: 200px; perspective: 1000px; cursor: pointer;" onclick="this.querySelector('.flip-card-inner').style.transform = this.querySelector('.flip-card-inner').style.transform === 'rotateY(180deg)' ? 'rotateY(0deg)' : 'rotateY(180deg)'">
+                <div class="flip-card" style="flex: 1; min-width: 250px; height: 200px; perspective: 1000px; cursor: pointer; position: relative; border: 2px dashed rgba(255, 107, 107, 0.3); border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;" onclick="this.querySelector('.flip-card-inner').style.transform = this.querySelector('.flip-card-inner').style.transform === 'rotateY(180deg)' ? 'rotateY(0deg)' : 'rotateY(180deg)'">
+                  <div class="flip-indicator" style="position: absolute; top: 10px; right: 10px; z-index: 10; background-color: var(--color-coral); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 1.5s infinite; font-size: 14px;">↻</div>
                   <div class="flip-card-inner" style="position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d;">
-                    <div class="flip-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(255, 107, 107, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div class="flip-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(255, 107, 107, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 20px; box-shadow: inset 0 0 0 2px rgba(255, 107, 107, 0.3);">
                       <p style="margin: 0; font-weight: bold;">❌ "They just need reps."</p>
                     </div>
-                    <div class="flip-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(0, 128, 128, 0.2); border-radius: 8px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div class="flip-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background-color: rgba(0, 128, 128, 0.2); border-radius: 8px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px; box-shadow: inset 0 0 0 2px rgba(0, 128, 128, 0.3);">
                       <p style="margin: 0;">✅ Repetition without variation is not learning. <strong>Learning requires variability, attention, and context.</strong></p>
                     </div>
                   </div>
+                  <div style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255, 255, 255, 0.7); white-space: nowrap;">Click to flip card</div>
                 </div>
               </div>
               
@@ -878,9 +1149,18 @@
               <h4>Types of Constraints</h4>
               
               <div class="tab-buttons" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px;">
-                <button class="tab-btn active" data-tab="task" style="padding: 10px 15px; background-color: var(--color-teal); color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;" onclick="activateTab(this, 'task')">🟨 Task Constraints</button>
-                <button class="tab-btn" data-tab="environmental" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;" onclick="activateTab(this, 'environmental')">🌍 Environmental Constraints</button>
-                <button class="tab-btn" data-tab="individual" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;" onclick="activateTab(this, 'individual')">👤 Individual Constraints</button>
+                <button class="tab-btn active" data-tab="task" style="padding: 10px 15px; background-color: var(--color-teal); color: white; border: 2px solid var(--color-teal); border-radius: 4px; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 8px rgba(0, 128, 128, 0.3); position: relative;" onclick="activateTab(this, 'task')">
+                  <span style="position: relative; z-index: 2;">🟨 Task Constraints</span>
+                  <span style="position: absolute; top: 5px; right: 5px; font-size: 10px; background-color: var(--color-coral); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">👆</span>
+                </button>
+                <button class="tab-btn" data-tab="environmental" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: 2px solid transparent; border-radius: 4px; cursor: pointer; white-space: nowrap; position: relative;" onclick="activateTab(this, 'environmental')">
+                  <span style="position: relative; z-index: 2;">🌍 Environmental Constraints</span>
+                  <span style="position: absolute; top: 5px; right: 5px; font-size: 10px; background-color: rgba(255, 107, 107, 0.5); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; opacity: 0.7;">👆</span>
+                </button>
+                <button class="tab-btn" data-tab="individual" style="padding: 10px 15px; background-color: rgba(30, 30, 30, 0.7); color: white; border: 2px solid transparent; border-radius: 4px; cursor: pointer; white-space: nowrap; position: relative;" onclick="activateTab(this, 'individual')">
+                  <span style="position: relative; z-index: 2;">👤 Individual Constraints</span>
+                  <span style="position: absolute; top: 5px; right: 5px; font-size: 10px; background-color: rgba(255, 107, 107, 0.5); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; opacity: 0.7;">👆</span>
+                </button>
               </div>
               
               <div class="tab-content">
@@ -2140,6 +2420,39 @@
           }
         });
       });
+      
+      // Enhanced interactivity for reflection options
+      document.querySelectorAll('.reflection-option').forEach(option => {
+        option.addEventListener('click', function() {
+          const checkmark = this.querySelector('.select-indicator');
+          if (this.classList.contains('selected')) {
+            checkmark.style.opacity = '1';
+          } else {
+            checkmark.style.opacity = '0';
+          }
+        });
+        
+        // Add hover effect to show interactivity
+        option.addEventListener('mouseenter', function() {
+          const hint = this.querySelector('span:last-child');
+          hint.style.opacity = '1';
+        });
+        
+        option.addEventListener('mouseleave', function() {
+          const hint = this.querySelector('span:last-child');
+          hint.style.opacity = '0';
+        });
+      });
+      
+      // Add pulse animation to interactive elements on page load
+      setTimeout(() => {
+        document.querySelectorAll('.tab-btn, .flip-card, .reflection-option, .affordance-option').forEach(el => {
+          el.classList.add('pulse-attention');
+          setTimeout(() => {
+            el.classList.remove('pulse-attention');
+          }, 2000);
+        });
+      }, 1000);
     });
   </script>
   
