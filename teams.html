@@ -147,6 +147,103 @@
     .age-group-heading:first-of-type {
       margin-top: var(--space-lg);
     }
+
+    /* ===========================
+       SEASON COST CARD
+       =========================== */
+    
+    .season-cost {
+      background: linear-gradient(135deg, rgba(0, 180, 179, 0.08) 0%, rgba(255, 107, 97, 0.08) 100%);
+      border: 2px solid var(--color-primary-teal);
+      position: relative;
+    }
+
+    .season-cost h4 {
+      color: var(--color-primary-teal);
+      margin-bottom: var(--space-md);
+    }
+
+    .cost-highlight {
+      font-size: 2rem;
+      color: var(--color-primary-coral);
+      margin: var(--space-md) 0;
+      line-height: 1;
+    }
+
+    .cost-includes {
+      list-style: none;
+      padding: 0;
+      margin: var(--space-md) 0 0 0;
+    }
+
+    .cost-includes li {
+      padding: var(--space-sm) 0 var(--space-sm) var(--space-lg);
+      position: relative;
+      padding-left: calc(var(--space-lg) + 0.5rem);
+      color: var(--color-charcoal);
+    }
+
+    .cost-includes li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--color-primary-teal);
+      font-weight: bold;
+    }
+
+    /* ===========================
+       PAYMENT ASSISTANCE CARD
+       =========================== */
+
+    .payment-assistance {
+      background-color: rgba(0, 180, 179, 0.05);
+      border: 2px solid rgba(0, 180, 179, 0.3);
+    }
+
+    .payment-assistance h4 {
+      color: var(--color-primary-teal);
+      margin-bottom: var(--space-md);
+    }
+
+    .payment-breakdown {
+      list-style: none;
+      padding: 0;
+      margin: var(--space-md) 0;
+      background-color: rgba(255, 255, 255, 0.6);
+      padding: var(--space-md);
+      border-radius: var(--radius-sm);
+      border-left: 4px solid var(--color-primary-teal);
+    }
+
+    .payment-breakdown li {
+      padding: var(--space-sm) 0;
+      color: var(--color-charcoal);
+      font-size: var(--font-size-sm);
+    }
+
+    .payment-breakdown li:not(:last-child) {
+      padding-bottom: var(--space-md);
+      border-bottom: 1px solid rgba(0, 180, 179, 0.2);
+    }
+
+    .assistance-text {
+      font-size: var(--font-size-sm);
+      color: var(--color-charcoal);
+      margin-top: var(--space-md);
+      line-height: 1.6;
+    }
+
+    .assistance-text a {
+      color: var(--color-primary-teal);
+      text-decoration: none;
+      font-weight: var(--font-weight-semibold);
+      transition: color var(--transition-fast);
+    }
+
+    .assistance-text a:hover {
+      text-decoration: underline;
+      color: var(--color-primary-coral);
+    }
   </style>
 </head>
 
@@ -234,6 +331,26 @@
           <div class="card">
             <h4>Travel Region</h4>
             <p><strong>CEVA region</strong> (Vancouver, Eugene, Salem)</p>
+          </div>
+          <div class="card season-cost">
+            <h4>Full Season Cost</h4>
+            <p class="cost-highlight"><strong>$1,150</strong></p>
+            <p class="text-small"><strong>Includes:</strong></p>
+            <ul class="cost-includes">
+              <li>2 Jerseys</li>
+              <li>1 Practice T-shirt</li>
+              <li>All Tournament Fees</li>
+              <li>All Practices, Coaching & Training</li>
+            </ul>
+          </div>
+          <div class="card payment-assistance">
+            <h4>Payment Plans & Assistance</h4>
+            <p><strong>Standard Payment Plan:</strong></p>
+            <ul class="payment-breakdown">
+              <li>$230 Down Payment</li>
+              <li>5 Monthly Payments of $184 (Jan–May)</li>
+            </ul>
+            <p class="assistance-text">We're committed to making volleyball accessible. <strong>We're happy to work with families on flexible payment arrangements.</strong> If the season cost is a barrier, please reach out to us at <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a> to discuss financial assistance options.</p>
           </div>
         </div>
 
