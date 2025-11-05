@@ -38,4 +38,10 @@ tmp/
 
 # Private files
 *.pdf
-TVVC Handbook.pdf
+
+# Data exports and temporary files
+tvvc_*.txt
+*Schedule*.txt
+PlayWorks.txt
+privacy policy.txt
+update_stylesheets.py
