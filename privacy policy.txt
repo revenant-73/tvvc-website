@@ -1,0 +1,55 @@
+Privacy Policy
+Effective date: April 1, 2025 | Last updated: April 23, 2025
+
+1. Who we are
+Tualatin Valley Volleyball Club ("TVVC," "we," "our," "us") provides youth volleyball training, teams, and events. Our primary website is https://tualatinvalleyvb.com.
+
+2. Information we collect
+Identity data: parent or guardian name, athlete name, date of birth.
+Contact data: email address, phone number, mailing address.
+Payment data: Stripe customer ID, last four digits of the card, transaction amounts, refunds.
+Technical data: IP address, browser type, device information, and cookies.
+Usage data: pages visited, links clicked, time spent on pages, basic analytics.
+We collect this information when you create an account, register for programs, complete a payment, submit forms, or browse our website.
+
+3. How we use your information
+To process payments, issue refunds, and send receipts.
+To display your current balance and payment history in the parent portal or in email statements.
+To communicate schedules, club updates, policy changes, and promotional offers (marketing emails are always optional).
+To improve website functionality, security, and user experience.
+To comply with legal, tax, and accounting obligations.
+Our legal bases under the GDPR are contract performance, legitimate interest, consent (for marketing), and compliance with legal obligations.
+
+4. Sharing and disclosure
+Stripe processes all card payments; full card numbers never touch our servers.
+Email and SMS providers (for example, MailerLite or Textbelt) deliver receipts and notifications.
+Government or regulatory authorities if required to satisfy a law, regulation, or legal process.
+We do not sell or rent your personal data to anyone.
+5. Cookies and tracking
+We use essential cookies for site security and for Stripe checkout to function. Optional analytics cookies (for example, Plausible) help us understand traffic patterns. You can disable non-essential cookies in your browser settings at any time.
+
+6. Data security
+All data is transmitted over HTTPS/TLS encryption.
+Stripe is PCI-DSS Level 1 certified; we store only the minimal payment references (never full card numbers).
+Access to personal data inside TVVC is restricted to staff who need it to perform their role.
+We review site code and third-party integrations periodically for security vulnerabilities.
+7. Data retention
+We keep account and transaction records for as long as you remain a customer and for up to seven (7) years afterward, to meet tax and accounting requirements.
+
+8. Your rights
+Depending on your location, you may have the right to access, correct, delete, or restrict your personal data and to object to certain processing activities. To exercise these rights, email us at info@tualatinvalleyvb.com (placeholder address).
+
+9. Children's privacy
+TVVC's services are directed at athletes under 18 but require a parent or legal guardian to create and manage all accounts and payments. We do not knowingly collect personal data from children without parental consent.
+
+10. Changes to this policy
+We may update this Privacy Policy from time to time. When we make significant changes, we will post the new version on this page and update the "Last updated" date above. Material changes will also be announced via email.
+
+11. Contact us
+TVVC Privacy Officer
+
+Email: info@tualatinvalleyvb.com
+
+Mail: 27170 NW Dorland Rd, North Plains, OR 97133, USA
+
+TVVC

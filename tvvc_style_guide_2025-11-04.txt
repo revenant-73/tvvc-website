@@ -1,0 +1,83 @@
+TUALATIN VALLEY VOLLEYBALL CLUB — BRAND & STYLE GUIDE (WEB VERSION)
+Captured on: November 4, 2025
+
+------------------------------------------------------------
+🎨 COLOR PALETTE
+------------------------------------------------------------
+Primary Teal — #00B4B3 — Buttons, headers, accent borders, hover states
+Primary Coral — #FF6F61 — Highlights, call-to-action buttons, section dividers
+Charcoal — #222222 — Primary text color, header/footer backgrounds
+Cool Gray — #F3F3F3 — Background fill, alternate section color
+White — #FFFFFF — Page background, cards, text on dark areas
+Highlight Yellow (optional) — #FFD166 — Hover effects or accent marks
+
+------------------------------------------------------------
+🖋️ TYPOGRAPHY
+------------------------------------------------------------
+Headings (H1–H3): Montserrat or Poppins — Weight 600–700 — Modern, athletic feel
+Body Text: Open Sans or Inter — Weight 400–500 — Readable, friendly
+Accent / Quote Text: Playfair Display or DM Serif Display — Weight 500–600 — Used for quotes/mottos
+
+Text Style Notes:
+- Sentence-case headers for warmth
+- Coral underline or bar for emphasis
+- Short paragraphs (2–3 sentences max)
+
+------------------------------------------------------------
+🧱 LAYOUT & SPACING
+------------------------------------------------------------
+- Section structure: hero → about → values → teams → tryouts → footer
+- Container width: max 1200px; padding 5–8%
+- Alternate backgrounds: white ↔ light gray
+- Hero section: full-width image with charcoal overlay (opacity 0.3), bold white text
+- Buttons: rounded (12px radius), solid fill, white text, subtle shadow
+  * Primary: #FF6F61
+  * Secondary: #00B4B3
+  * Hover: darken by ~8%
+
+------------------------------------------------------------
+📸 IMAGERY & GRAPHIC STYLE
+------------------------------------------------------------
+- Mood: authentic athlete moments, teamwork, laughter
+- Tone: candid, warm, high contrast, slight film grain
+- Filters: matte finish or vignette for community-gym vibe
+- Design motif: black-ink zine overlays, halftone texture, hand-drawn elements
+
+------------------------------------------------------------
+💬 VOICE & TONE
+------------------------------------------------------------
+Warm & Authentic — “We believe learning is best fueled by joy and connection.”
+Curious & Intelligent — “Every rep is an experiment in noticing, adapting, and committing.”
+Inviting & Community-Focused — “Our doors are open to every player ready to grow.”
+
+Avoid clichés (“No days off”), corporate language, or overused buzzwords.
+
+------------------------------------------------------------
+🧭 LOGO & ICON GUIDELINES
+------------------------------------------------------------
+Primary logo: “TVVC” stacked wordmark in teal with coral underline
+Secondary mark: circle emblem or volleyball icon with text ring
+Favicon: “TV” in coral on teal
+Flat color only, with generous white space around marks
+
+------------------------------------------------------------
+⚙️ UI/UX DETAILS
+------------------------------------------------------------
+- Sticky navigation bar with coral accent line
+- CTA buttons (“Register,” “Join Tryouts,” etc.) visible above the fold
+- Smooth fade-in/slide-up motion (200ms)
+- Accessibility:
+  * Text contrast ratio ≥ 4.5:1
+  * Alt text for all images
+  * Colors paired with text labels
+
+------------------------------------------------------------
+📅 Summary
+------------------------------------------------------------
+The TVVC website design should feel:
+- Joyful but professional
+- Modern but grounded
+- Playful but intelligent
+- Accessible and authentic
+
+This concise guide supports consistent use of color, typography, and tone across all TVVC digital platforms.

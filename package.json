@@ -1,0 +1,22 @@
+{
+  "name": "tvvc-website",
+  "version": "1.0.0",
+  "description": "Tualatin Valley Volleyball Club website",
+  "main": "index.html",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "dev": "python -m http.server 8000"
+  },
+  "keywords": [
+    "volleyball",
+    "club",
+    "hillsboro"
+  ],
+  "author": "TVVC",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}

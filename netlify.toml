@@ -1,0 +1,42 @@
+# Netlify configuration for TVVC Website
+
+[build]
+  # No build step needed - static site
+  publish = "."
+  command = ""
+
+[[redirects]]
+  # Redirect all 404s to index.html for SPA routing (if needed in future)
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  condition = "!{Extensions}"
+
+[context.production]
+  # Production context
+  environment = { NODE_ENV = "production" }
+
+[context.deploy-preview]
+  # Deploy preview context
+  environment = { NODE_ENV = "staging" }
+
+# Cache control headers for static assets
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000, immutable"
+
+[[headers]]
+  for = "*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
