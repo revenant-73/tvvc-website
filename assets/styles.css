@@ -270,6 +270,114 @@ nav[aria-label="Primary navigation"] a:focus {
   line-height: var(--line-height-base);
 }
 
+.hero-tagline {
+  color: var(--color-charcoal);
+  font-size: clamp(0.95rem, 1.5vw, 1rem);
+  margin-top: var(--space-lg) !important;
+  font-style: italic;
+  max-width: 600px;
+  background-color: var(--color-primary-teal);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ===========================
+   AT A GLANCE SECTION
+   =========================== */
+
+#at-a-glance {
+  background-color: var(--color-charcoal);
+  color: var(--color-white);
+  padding: var(--space-2xl) 0;
+}
+
+.glance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+  text-align: center;
+}
+
+.glance-item h3 {
+  margin-bottom: var(--space-md);
+  color: var(--color-white);
+  font-weight: var(--font-weight-bold);
+  font-size: 1.1rem;
+}
+
+.glance-item p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--font-size-base);
+}
+
+/* ===========================
+   HOW TO JOIN SECTION
+   =========================== */
+
+.steps {
+  counter-reset: step-counter;
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xl) 0;
+  max-width: 700px;
+}
+
+.steps li {
+  position: relative;
+  padding-left: var(--space-2xl);
+  margin: var(--space-lg) 0;
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-base);
+}
+
+.steps li::before {
+  content: counter(step-counter);
+  counter-increment: step-counter;
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: var(--color-primary-coral);
+  color: var(--color-white);
+  border-radius: 50%;
+  font-weight: var(--font-weight-bold);
+  font-size: 1.1rem;
+}
+
+/* ===========================
+   FOOTER ACCESSIBILITY
+   =========================== */
+
+.footer-accessibility {
+  background-color: rgba(0, 180, 179, 0.1);
+  padding: var(--space-lg) var(--container-padding);
+  margin-bottom: var(--space-lg);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.footer-accessibility p {
+  margin: 0;
+  color: var(--color-white);
+  font-size: var(--font-size-base);
+}
+
+.footer-accessibility a {
+  color: var(--color-primary-teal);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+}
+
+.footer-accessibility a:hover {
+  color: var(--color-white);
+}
+
 /* ===========================
    SECTIONS
    =========================== */
@@ -541,6 +649,16 @@ a:focus-visible, button:focus-visible {
   outline-offset: 2px;
 }
 
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 3px solid var(--color-primary-teal);
+  outline-offset: 2px;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--color-white);
+  outline-offset: 2px;
+}
+
 /* ===========================
    MOBILE MENU
    =========================== */
@@ -696,6 +814,20 @@ a:focus-visible, button:focus-visible {
   
   .card-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .glance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .steps li {
+    padding-left: var(--space-xl);
+  }
+  
+  .steps li::before {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.9rem;
   }
   
   .footer-content {
