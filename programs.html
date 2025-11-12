@@ -32,6 +32,53 @@
       border-radius: var(--radius-md);
       margin-top: var(--space-xl);
     }
+
+    /* ===========================
+       PROGRAM NAVIGATION
+       =========================== */
+    
+    .program-nav {
+      background-color: var(--color-charcoal);
+      padding: var(--space-lg) 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .program-nav-container {
+      display: flex;
+      gap: var(--space-md);
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .program-nav a {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-sm) var(--space-lg);
+      background-color: rgba(255, 255, 255, 0.08);
+      color: var(--color-white);
+      border-radius: var(--radius-lg);
+      font-weight: var(--font-weight-medium);
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .program-nav a:hover,
+    .program-nav a:focus {
+      background-color: var(--color-primary-teal);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .program-nav-container {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding: 0 var(--space-md);
+      }
+    }
   </style>
 </head>
 
@@ -78,6 +125,14 @@
       </div>
     </section>
 
+    <!-- Program Navigation -->
+    <nav class="program-nav" aria-label="Program navigation">
+      <div class="program-nav-container">
+        <a href="#training">Group Training</a>
+        <a href="#playworks">PlayWorks</a>
+      </div>
+    </nav>
+
     <!-- Clinics Section - COMMENTED OUT FOR SEASONAL REUSE
     <section id="clinics">
       <div class="container">
@@ -115,6 +170,62 @@
       </div>
     </section>
     -->
+
+    <!-- Private & Group Training Section -->
+    <section id="training">
+      <div class="container">
+        <h2>Private & Group Training</h2>
+        <p class="section-subtitle">Grow through play. Learn through connection.</p>
+
+        <p>At Tualatin Valley Volleyball Club, we believe the best learning happens with others, not apart from them. Volleyball is a living, breathing game of interaction — a conversation between teammates, opponents, space, and the ball.</p>
+
+        <h3>⚠️ Private (1-on-1) Training</h3>
+        <p><strong>Private training is available only with director approval.</strong></p>
+        <p>While individual sessions can be helpful in specific cases, we don't believe volleyball is best learned in isolation. The game's richest lessons — reading, adapting, anticipating — happen through interaction.</p>
+        <p>If a one-on-one session makes sense for your needs, we'll design it intentionally around your goals.</p>
+
+        <h3>👥 Group Training (2–4 Players)</h3>
+        <div class="card-grid">
+          <div class="card">
+            <h4>Cost</h4>
+            <p><strong>$40 per player</strong><br>(maximum total $120)</p>
+          </div>
+          <div class="card">
+            <h4>Duration</h4>
+            <p><strong>90 minutes</strong></p>
+          </div>
+          <div class="card">
+            <h4>Who it's for</h4>
+            <p>Players who want focused, intentional training in a small-group setting that still mirrors real game play.</p>
+          </div>
+        </div>
+
+        <p>Each session is built around what you want to improve, while emphasizing the elements that create adaptable, confident players:</p>
+        <ul>
+          <li><strong>Attention</strong> – Where you focus, what you notice.</li>
+          <li><strong>Intention</strong> – What you're trying to create or influence.</li>
+          <li><strong>Decision Making</strong> – How you adapt when the game shifts.</li>
+        </ul>
+
+        <p>Sessions also integrate movement efficiency, athletic capacity, and the physical realities of volleyball — no static drills, no empty reps. Every moment is purposeful, connected, and alive.</p>
+
+        <h3>🔗 Ready to Train?</h3>
+        <p>If you're interested in scheduling a small group or private training session, reach out directly — we'd love to hear what you're hoping to work on.</p>
+        
+        <div class="card-grid">
+          <div class="card">
+            <h4>📧 Email</h4>
+            <p><a href="mailto:info@tualatinvalleyvolleyball.com">info@tualatinvalleyvolleyball.com</a></p>
+          </div>
+          <div class="card">
+            <h4>📱 Text</h4>
+            <p><a href="tel:+15033890760">(503) 389-0760</a></p>
+          </div>
+        </div>
+
+        <p>We'll help you find a time, confirm details, and make sure your session fits your goals and experience level.</p>
+      </div>
+    </section>
 
     <!-- PlayWorks Section -->
     <section id="playworks" class="alt">
