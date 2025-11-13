@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#00B4B4">
+  <title>Events — TVVC Volleyball Club</title>
+  <meta name="description" content="Explore TVVC's volleyball events including the May ShinDig, an end-of-season tournament for 14U and 16U teams.">
+  
+  <!-- Preload critical assets -->
+  <link rel="preload" as="image" href="./assets/images/hero-volleyball-action.jpg">
+  
+  <!-- Shared Stylesheet -->
+  <link rel="stylesheet" href="./assets/styles.css">
+  
+  <!-- Mobile Menu Script -->
+  <script src="./assets/menu-toggle.js" defer></script>
+  
+  <style>
+    .event-date {
+      background: linear-gradient(135deg, var(--color-primary-coral), var(--color-primary-teal));
+      color: var(--color-white);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--radius-md);
+      font-weight: var(--font-weight-bold);
+      display: inline-block;
+      margin: var(--space-md) 0;
+    }
+
+    .event-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-lg);
+      margin: var(--space-xl) 0;
+    }
+
+    .detail-card {
+      background-color: var(--color-white);
+      border: 2px solid var(--color-light-gray);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      transition: all var(--transition-normal);
+    }
+
+    .detail-card:hover {
+      border-color: var(--color-primary-coral);
+      box-shadow: var(--shadow-md);
+    }
+
+    .detail-card h3 {
+      color: var(--color-primary-coral);
+      margin-top: 0;
+      margin-bottom: var(--space-sm);
+    }
+
+    .format-section {
+      background-color: var(--color-light-gray-bg);
+      padding: var(--space-lg);
+      border-radius: var(--radius-md);
+      margin: var(--space-lg) 0;
+    }
+
+    .highlight-box {
+      background-color: var(--color-white);
+      border-left: 4px solid var(--color-primary-coral);
+      padding: var(--space-lg);
+      border-radius: var(--radius-md);
+      margin: var(--space-lg) 0;
+    }
+
+    .age-group-section {
+      margin: var(--space-xl) 0;
+    }
+
+    .age-group-section h3 {
+      color: var(--color-primary-coral);
+      padding-bottom: var(--space-sm);
+      border-bottom: 2px solid var(--color-primary-teal);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Skip to main content link for accessibility -->
+  <a class="skip-link" href="#main">Skip to main content</a>
+  
+  <!-- Header & Navigation -->
+  <header>
+    <div class="container">
+      <div class="header-top">
+        <div class="logo">
+          <h1>Tualatin Valley Volleyball Club</h1>
+          <span class="badge">Hillsboro, OR</span>
+        </div>
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      <nav aria-label="Primary navigation" class="header-nav" id="headerNav">
+        <a href="index.html">Home</a>
+        <a href="teams.html">Teams</a>
+        <a href="programs.html">Programs</a>
+        <a href="events.html">Events</a>
+        <a href="faq.html">FAQ</a>
+        <a href="#contact">Contact</a>
+        <a href="https://tvvc.volleyballcentral.io/" target="_blank" rel="noopener noreferrer" class="header-register-btn">Parent Dashboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main">
+    
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h2>May ShinDig 2026</h2>
+        <p>A fun, competitive end-of-season event for teams seeking one final tournament before summer.</p>
+        <div class="btn-group">
+          <a class="btn" href="https://tvvc.volleyballcentral.io/e/2026-may-shindig" target="_blank" rel="noopener noreferrer">Register Your Team</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Event Overview -->
+    <section id="overview">
+      <div class="container">
+        <h2>Event Overview</h2>
+        <p>The May ShinDig is designed specifically for teams that did not qualify for CEVA Regionals—a chance to close out your season with great volleyball, great energy, and a full day of matches.</p>
+
+        <div class="event-details-grid">
+          <div class="detail-card">
+            <h3>14U Division</h3>
+            <p><strong>Saturday, May 9, 2026</strong></p>
+            <p>12 teams max</p>
+          </div>
+          <div class="detail-card">
+            <h3>16U Division</h3>
+            <p><strong>Sunday, May 10, 2026</strong></p>
+            <p>12 teams max</p>
+          </div>
+          <div class="detail-card">
+            <h3>Location</h3>
+            <p><strong>Century High School<br>Hillsboro, OR</strong></p>
+          </div>
+          <div class="detail-card">
+            <h3>Timing</h3>
+            <p>Doors open at 7:00 AM<br>First match starts at 8:00 AM</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Entry & Costs Section -->
+    <section id="costs" class="alt">
+      <div class="container">
+        <h2>Entry Fees</h2>
+        
+        <div class="event-details-grid">
+          <div class="detail-card">
+            <h3>Team Entry</h3>
+            <p><strong>$125 per team</strong></p>
+            <p><small>12 teams max per day</small></p>
+          </div>
+          <div class="detail-card">
+            <h3>Spectator Door Charge</h3>
+            <p><strong>$5 per adult</strong></p>
+            <p><small>Supports Century High School Girls Volleyball</small></p>
+          </div>
+        </div>
+
+        <div class="highlight-box" style="background-color: rgba(255, 107, 97, 0.08); border-left-color: var(--color-primary-coral);">
+          <p><strong>⏰ Registration Opens Wednesday, April 15</strong></p>
+          <p style="margin-bottom: 0;">This event is for teams that are <strong>not playing in CEVA Regionals</strong>. If space permits after all non-regional teams have registered, we may accept regional teams as well.</p>
+        </div>
+
+        <div class="highlight-box">
+          <p><strong>Register Your Team:</strong> Contact us or register through the Parent Dashboard to secure your spot once registration opens.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tournament Format -->
+    <section id="format">
+      <div class="container">
+        <h2>Tournament Format</h2>
+        <p class="section-subtitle">Designed for competitive play with guaranteed full-day matches for all teams.</p>
+
+        <div class="format-section">
+          <h3>Pool Play Structure</h3>
+          <ul>
+            <li><strong>12 teams total</strong> per division</li>
+            <li><strong>3 pools of 4 teams</strong> each</li>
+            <li><strong>Standard pool play</strong> format</li>
+            <li><strong>Guaranteed full day of play</strong> for every team</li>
+          </ul>
+        </div>
+
+        <div class="format-section">
+          <h3>Playoff Brackets</h3>
+          <p>After pool play, teams advance to one of two playoff brackets:</p>
+          <ul>
+            <li><strong>Gold Bracket:</strong> Top 8 teams</li>
+            <li><strong>Silver Bracket:</strong> Next 4 teams</li>
+          </ul>
+          <p>All teams continue playing through to completion, ensuring every athlete gets multiple matches and a complete competitive experience.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Officiating & Staffing -->
+    <section id="officiating" class="alt">
+      <div class="container">
+        <h2>Officiating & Staffing</h2>
+
+        <div class="event-details-grid">
+          <div class="detail-card">
+            <h3>Certified Officials</h3>
+            <p>This is a recreational event—no certified officials will be provided.</p>
+          </div>
+          <div class="detail-card">
+            <h3>TVVC Officiating</h3>
+            <p>TVVC may provide R1 and R2 officials depending on availability. Final confirmation will be sent before the event.</p>
+          </div>
+          <div class="detail-card">
+            <h3>Additional Staff</h3>
+            <p>Line judges and scorekeepers will be provided by Century High School Girls Volleyball.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Who This Event Is For -->
+    <section id="who">
+      <div class="container">
+        <h2>Who This Event Is For</h2>
+        <p class="section-subtitle">Perfect for teams and players looking for a meaningful end-of-season experience.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>🏐 Non-Regional Teams</h3>
+            <p>Teams that did not qualify for CEVA Regionals—this is your moment to shine.</p>
+          </div>
+          <div class="card">
+            <h3>🎯 Coaches Seeking Balance</h3>
+            <p>Coaches looking for competitive but low-pressure season wrap-ups that keep the focus on fun and growth.</p>
+          </div>
+          <div class="card">
+            <h3>⚡ Players Ready to Play</h3>
+            <p>Players who want one more chance to play together before summer break.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Additional Details -->
+    <section id="details" class="alt">
+      <div class="container">
+        <h2>Additional Details</h2>
+
+        <div class="event-details-grid">
+          <div class="detail-card">
+            <h3>Spectators</h3>
+            <p>Welcome! Bring your family and friends to support the teams.</p>
+          </div>
+          <div class="detail-card">
+            <h3>Concessions</h3>
+            <p>Available on-site to fuel your day. Proceeds support Century High School Girls Volleyball.</p>
+          </div>
+          <div class="detail-card">
+            <h3>Parking</h3>
+            <p>On-site parking is available for all attendees.</p>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p><strong>Questions?</strong> Contact TVVC directly at <a href="tel:+15033890760">(503) 389-0760</a> or <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a></p>
+        </div>
+
+        <div class="btn-group">
+          <a class="btn" href="https://tvvc.volleyballcentral.io/e/2026-may-shindig" target="_blank" rel="noopener noreferrer">Register Your Team</a>
+          <a class="btn secondary" href="#contact">Contact Us</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>TVVC</h3>
+          <p>Tualatin Valley Volleyball Club — Volleyball with Purpose. Coaching with Heart.</p>
+        </div>
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <p>
+            <strong>Phone:</strong><br>
+            <a href="tel:+15033890760">(503) 389-0760</a>
+          </p>
+          <p>
+            <strong>Email:</strong><br>
+            <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a>
+          </p>
+        </div>
+        <div class="footer-section">
+          <h3>Quick Links</h3>
+          <ul style="list-style: none; padding: 0;">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="teams.html">Teams & Tryouts</a></li>
+            <li><a href="programs.html">Programs</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-accessibility">
+        <p><strong>Questions about cost or access?</strong> <a href="mailto:info@tualatinvalleyvb.com">Email us</a>. We'll work with you.</p>
+      </div>
+      <div class="footer-divider">
+        <p>© 2025 Tualatin Valley Volleyball Club. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
