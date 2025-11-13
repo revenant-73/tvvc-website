@@ -162,6 +162,10 @@ header .container {
   font-weight: var(--font-weight-bold);
 }
 
+.club-accent {
+  color: var(--color-primary-teal);
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
