@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#00B4B3">
+  <title>TAS — The Availability System | TVVC</title>
+  <meta name="description" content="TVVC Movement Prep & Strength Guide. Learn about TAS (The Availability System), practice warm-ups, isometric schedules, and bodyweight strength programs.">
+  
+  <link rel="stylesheet" href="./assets/styles.css">
+  <script src="./assets/menu-toggle.js" defer></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const accordionItems = document.querySelectorAll('.accordion-item');
+      accordionItems.forEach(item => {
+        const header = item.querySelector('.accordion-header');
+        header.addEventListener('click', function() {
+          item.classList.toggle('open');
+        });
+      });
+    });
+  </script>
+  
+  <style>
+    .tas-nav {
+      position: sticky;
+      top: 0;
+      background: var(--color-white);
+      border-bottom: 1px solid rgba(0, 180, 179, 0.15);
+      z-index: 100;
+      padding: var(--space-md) 0;
+      margin-bottom: var(--space-2xl);
+    }
+
+    .tas-nav-content {
+      display: flex;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tas-nav a {
+      font-size: var(--font-size-sm);
+      text-decoration: none;
+      color: var(--color-charcoal);
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-sm);
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .tas-nav a:hover {
+      background: rgba(0, 180, 179, 0.1);
+      color: var(--color-primary-teal);
+    }
+
+    .video-placeholder {
+      background: linear-gradient(135deg, rgba(0, 180, 179, 0.08), rgba(255, 107, 97, 0.08));
+      border: 2px dashed rgba(0, 180, 179, 0.3);
+      border-radius: var(--radius-md);
+      padding: var(--space-2xl);
+      margin: var(--space-lg) 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      flex-direction: column;
+      text-align: center;
+      gap: var(--space-md);
+    }
+
+    .video-placeholder-text {
+      color: var(--color-charcoal);
+      font-size: var(--font-size-sm);
+      font-style: italic;
+    }
+
+    .video-btn {
+      display: inline-block;
+      background: var(--color-primary-teal);
+      color: var(--color-white);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .video-btn:hover {
+      background: rgba(0, 180, 179, 0.8);
+      transform: translateY(-2px);
+    }
+
+    .tas-section {
+      scroll-margin-top: 120px;
+    }
+
+    .exercise-list {
+      list-style: none;
+      padding: 0;
+      margin: var(--space-lg) 0;
+    }
+
+    .exercise-item {
+      margin: var(--space-lg) 0;
+      padding: var(--space-lg);
+      background: rgba(0, 180, 179, 0.05);
+      border-left: 4px solid var(--color-primary-teal);
+      border-radius: var(--radius-sm);
+    }
+
+    .exercise-number {
+      font-weight: 700;
+      color: var(--color-primary-teal);
+      font-size: var(--font-size-lg);
+    }
+
+    .exercise-name {
+      font-weight: 600;
+      margin: var(--space-sm) 0;
+      font-size: var(--font-size-base);
+    }
+
+    .exercise-reps {
+      color: var(--color-charcoal);
+      font-size: var(--font-size-sm);
+      font-style: italic;
+      margin-top: var(--space-sm);
+    }
+
+    .exercise-cues {
+      margin: var(--space-md) 0 0 0;
+      padding-left: var(--space-lg);
+    }
+
+    .exercise-cues li {
+      margin: var(--space-sm) 0;
+      color: var(--color-charcoal);
+    }
+
+    .rule-box {
+      background: linear-gradient(135deg, rgba(0, 180, 179, 0.08), rgba(255, 107, 97, 0.08));
+      border-left: 4px solid var(--color-primary-teal);
+      padding: var(--space-lg);
+      margin: var(--space-lg) 0;
+      border-radius: var(--radius-sm);
+    }
+
+    .rule-number {
+      font-weight: 700;
+      color: var(--color-primary-teal);
+      font-size: var(--font-size-lg);
+    }
+
+    .zone-card {
+      background: var(--color-white);
+      padding: var(--space-lg);
+      margin: var(--space-lg) 0;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(0, 180, 179, 0.15);
+    }
+
+    .zone-title {
+      font-weight: 700;
+      font-size: var(--font-size-lg);
+      color: var(--color-primary-teal);
+      margin-bottom: var(--space-md);
+    }
+
+    .zone-card ul {
+      margin: var(--space-md) 0;
+      padding-left: var(--space-lg);
+    }
+
+    .zone-card li {
+      margin: var(--space-sm) 0;
+      color: var(--color-charcoal);
+    }
+
+    .motto-box {
+      background: linear-gradient(135deg, var(--color-primary-teal), rgba(0, 180, 179, 0.7));
+      color: var(--color-white);
+      padding: var(--space-3xl) var(--space-2xl);
+      text-align: center;
+      border-radius: var(--radius-md);
+      margin: var(--space-3xl) 0;
+    }
+
+    .motto-box h3 {
+      font-size: var(--font-size-2xl);
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .accordion-item {
+      background: rgba(0, 180, 179, 0.05);
+      border-left: 4px solid var(--color-primary-teal);
+      border-radius: var(--radius-sm);
+      margin: var(--space-lg) 0;
+      overflow: hidden;
+    }
+
+    .accordion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-lg);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.3s ease;
+    }
+
+    .accordion-header:hover {
+      background: rgba(0, 180, 179, 0.1);
+    }
+
+    .accordion-title {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .exercise-number {
+      font-weight: 700;
+      color: var(--color-primary-teal);
+      font-size: var(--font-size-sm);
+      margin-bottom: 4px;
+    }
+
+    .exercise-name {
+      font-weight: 600;
+      font-size: var(--font-size-base);
+      color: var(--color-charcoal);
+    }
+
+    .accordion-meta {
+      font-size: var(--font-size-sm);
+      color: var(--color-charcoal);
+      font-style: italic;
+      margin-left: var(--space-lg);
+      text-align: right;
+    }
+
+    .accordion-toggle {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: var(--space-md);
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .accordion-toggle::after {
+      content: '▼';
+      font-size: 12px;
+      color: var(--color-primary-teal);
+    }
+
+    .accordion-item.open .accordion-toggle {
+      transform: rotate(-180deg);
+    }
+
+    .accordion-content {
+      display: none;
+      padding: 0 var(--space-lg) var(--space-lg) var(--space-lg);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .accordion-item.open .accordion-content {
+      display: block;
+      max-height: 1000px;
+    }
+
+    .accordion-content .exercise-cues {
+      margin: var(--space-md) 0 0 0;
+      padding-left: var(--space-lg);
+    }
+
+    .accordion-content .exercise-cues li {
+      margin: var(--space-sm) 0;
+      color: var(--color-charcoal);
+    }
+
+    header .header-nav {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .tas-nav-content {
+        gap: var(--space-sm);
+      }
+
+      .tas-nav a {
+        font-size: 11px;
+        padding: var(--space-xs) var(--space-sm);
+      }
+
+      .exercise-item {
+        padding: var(--space-md);
+      }
+
+      .video-placeholder {
+        min-height: 150px;
+        padding: var(--space-lg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  
+  <header>
+    <div class="container">
+      <div class="header-top">
+        <div class="logo">
+          <h1><span class="club-accent">TVVC</span> TAS Guide</h1>
+          <span class="badge">Athlete Resources</span>
+        </div>
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      <nav aria-label="Primary navigation" class="header-nav" id="headerNav">
+        <a href="index.html">Home</a>
+        <a href="teams.html">Teams</a>
+        <a href="programs.html">Programs</a>
+        <a href="events.html">Events</a>
+        <a href="faq.html">FAQ</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <nav class="tas-nav">
+    <div class="tas-nav-content">
+      <a href="#what-is-tas">What is TAS?</a>
+      <a href="#practice-warmup">Practice Warm-Up</a>
+      <a href="#weekly-schedule">Weekly Schedule</a>
+      <a href="#tournament-warmups">Tournament Warm-Ups</a>
+      <a href="#addon-guide">Add-On Guide</a>
+      <a href="#strength-programs">Strength Programs</a>
+    </div>
+  </nav>
+
+  <main id="main">
+    <section class="hero" style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)), linear-gradient(135deg, rgba(0, 180, 179, 0.3), rgba(255, 107, 97, 0.2)); background-color: rgba(0, 180, 179, 0.15);">
+      <div class="hero-content">
+        <h2>TVVC Movement Prep & Strength Guide</h2>
+        <p style="font-size: var(--font-size-lg); margin-bottom: var(--space-lg);">Powered by TAS — The Availability System</p>
+        <p class="hero-tagline"><strong style="color: var(--color-white); font-size: var(--font-size-xl);">Prepared, not tired.</strong></p>
+      </div>
+    </section>
+
+    <div class="container">
+
+      <!-- What is TAS? -->
+      <section id="what-is-tas" class="tas-section">
+        <h2>What Is TAS?</h2>
+        
+        <p><strong>The Availability System (TAS)</strong> is our approach to preparing, strengthening, and calibrating the body so athletes stay healthy, explosive, and ready all season long — <em>without grinding themselves into fatigue or stiffness.</em></p>
+
+        <p><strong>TAS combines:</strong></p>
+        <ul>
+          <li>Low-load, high-frequency isometrics</li>
+          <li>Simple, consistent bodyweight strength</li>
+          <li>Asymmetric tendon-friendly loading</li>
+          <li>Movement calibration & awareness</li>
+          <li>Smart load management ("better is better")</li>
+        </ul>
+
+        <p><strong>TAS exists for one purpose:</strong></p>
+        <div class="rule-box">
+          <p style="font-size: var(--font-size-lg); font-weight: 600; margin: 0;"><strong>To create athletes who are AVAILABLE — healthy, resilient, explosive, confident, and ready every day.</strong></p>
+        </div>
+
+        <p>TAS is not a grind program. It's a readiness system designed to work <em>with</em> your season, not against it.</p>
+
+        <h3 style="margin-top: var(--space-2xl);">How to Use This Guide</h3>
+        <ul>
+          <li>Use the <strong>TAS Practice Warm-Up</strong> before every practice.</li>
+          <li>Follow the <strong>Weekly Isometric Schedule</strong> on non-practice days.</li>
+          <li>Use the <strong>Tournament Warm-Ups</strong> at events.</li>
+          <li>If you want to do extra work, follow the <strong>TAS Add-On Rules</strong>.</li>
+          <li>Do the <strong>Bodyweight Strength Program</strong> 2× per week on your own time.</li>
+        </ul>
+
+        <p><strong>Everything here is designed to support:</strong></p>
+        <ul>
+          <li>Joint health</li>
+          <li>Tendon resilience</li>
+          <li>Athletic posture</li>
+          <li>Movement clarity</li>
+          <li>Explosive ability</li>
+          <li>Consistent availability</li>
+        </ul>
+      </section>
+
+      <!-- TAS Practice-Day Warm-Up -->
+      <section id="practice-warmup" class="tas-section">
+        <h2>TAS Practice-Day Warm-Up (Official Standard)</h2>
+        <p><strong>Time:</strong> ~5 minutes<br><strong>Format:</strong> 25s hold + 5s pulses each</p>
+        <p style="font-weight: 600; color: var(--color-primary-teal);">This is the required warm-up for all TVVC teams.</p>
+
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">1</div>
+                <div class="exercise-name">Single-Leg KOT Split Lunge — Right</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-kot-split-lunge-r" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: KOT Split Lunge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+              <ul class="exercise-cues">
+                <li>Knee over toes</li>
+                <li>Heel down</li>
+                <li>Torso tall</li>
+                <li>Back leg lightly stabilizing</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">2</div>
+                <div class="exercise-name">Single-Leg KOT Split Lunge — Left</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-kot-split-lunge-l" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: KOT Split Lunge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+              <p style="margin: var(--space-md) 0;">Same setup.</p>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">3</div>
+                <div class="exercise-name">Tibialis Iso Lean</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tibialis-iso-lean" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Tibialis Iso Lean]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+              <ul class="exercise-cues">
+                <li>Toes lifted</li>
+                <li>Shin engaged</li>
+                <li>Lean backward slightly</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">4</div>
+                <div class="exercise-name">Wall Sit w/ Heel Raises (Isometric Soleus)</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-wall-sit-heels" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Wall Sit w/ Heel Raises]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+              <ul class="exercise-cues">
+                <li>Knees ~90°</li>
+                <li>Heels raised 1–2 inches</li>
+                <li>Quads + calves on</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">5</div>
+                <div class="exercise-name">Plank w/ Scap Push-Away</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-plank-scap" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Plank w/ Scap Push-Away]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+              <ul class="exercise-cues">
+                <li>Strong protraction</li>
+                <li>Ribs down</li>
+                <li>Long spine</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">6</div>
+                <div class="exercise-name">Block Jump Iso (90° / 90°)</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-block-jump-iso" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Block Jump Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+              <ul class="exercise-cues">
+                <li>Hips at 90°</li>
+                <li>Knees at 90°</li>
+                <li>Upright torso</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Weekly Isometric Schedule -->
+      <section id="weekly-schedule" class="tas-section">
+        <h2>Weekly Isometric Schedule (Non-Competition Weeks)</h2>
+        <p><strong>Daily → 5–10 minutes</strong><br>All holds = <strong>25s + 5s pulses</strong> unless otherwise noted.</p>
+
+        <h3>Day 1 — Lower Chain Primer</h3>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">KOT Split Lunge Hold (Right)</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day1-kot-r" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: KOT Split Lunge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">KOT Split Lunge Hold (Left)</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day1-kot-l" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: KOT Split Lunge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Tibialis Iso Lean</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day1-tib" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Tibialis Iso Lean]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Soleus Iso (bent knee)</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day1-soleus" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Soleus Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Deep Squat Hold</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day1-squat" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Deep Squat Hold]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Hollow Hold</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day1-hollow" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Hollow Hold]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Day 2 — Practice Day #1</h3>
+        <p>Use the <strong>TAS Practice Warm-Up</strong>.</p>
+
+        <h3>Day 3 — Recovery + Tissue Rebuild</h3>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Tibialis Iso Lean</div>
+              </div>
+              <div class="accordion-meta">20–25s</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day3-tib" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Tibialis Iso Lean]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Soleus Iso</div>
+              </div>
+              <div class="accordion-meta">20–25s</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day3-soleus" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Soleus Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Deep Squat Hold</div>
+              </div>
+              <div class="accordion-meta">20–25s</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day3-squat" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Deep Squat Hold]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Dead Bug or Hollow</div>
+              </div>
+              <div class="accordion-meta">20–25s</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day3-bug" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Dead Bug / Hollow Hold]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Prone Y/T</div>
+              </div>
+              <div class="accordion-meta">20–25s</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day3-yt" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Prone Y/T]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Day 4 — Shoulder & Lateral Stability</h3>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">External Rotation Iso (R/L)</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day4-er" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: External Rotation Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Plank Push-Away</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day4-plank" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Plank w/ Scap Push-Away]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Side Plank Top-Leg Lift (R/L)</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day4-side" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Side Plank w/ Top-Leg Lift]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Block Jump Iso</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day4-block" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Block Jump Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Day 5 — Practice Day #2</h3>
+        <p>Use the <strong>TAS Practice Warm-Up</strong>.</p>
+
+        <h3>Day 6 — Post-Week Reset</h3>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Deep Squat Hold</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day6-squat" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Deep Squat Hold]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Tibialis Lean</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day6-tib" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Tibialis Iso Lean]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Soleus Iso</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day6-soleus" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Soleus Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Plank Hold</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day6-plank" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Plank Hold]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-name">Prone Y Hold</div>
+              </div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-day6-y" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Prone Y]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Day 7 — Optional Player's Choice Day</h3>
+        <p>Choose based on what your body <em>tells you</em>:</p>
+        <ul>
+          <li><strong>Ankles sloppy</strong> → Tibialis + Soleus</li>
+          <li><strong>Knees tight</strong> → Lunge Iso + Deep Squat</li>
+          <li><strong>Shoulders tired</strong> → ER Iso + Scap Push-Away</li>
+          <li><strong>Core drifting</strong> → Hollow + Side Plank</li>
+        </ul>
+        <p style="font-weight: 600; margin-top: var(--space-lg);">NAC your body → Notice → Adapt → Commit.</p>
+      </section>
+
+      <!-- Tournament-Day Warmups -->
+      <section id="tournament-warmups" class="tas-section">
+        <h2>Tournament-Day Warmups (TAS Game-Day Protocol)</h2>
+
+        <h3>First Warmup of the Day (4–6 minutes)</h3>
+        <p>Each = <strong>25s + 5s pulses</strong></p>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">1</div>
+                <div class="exercise-name">KOT Split Lunge Hold — Right</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn-kot-r" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: KOT Split Lunge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">2</div>
+                <div class="exercise-name">KOT Split Lunge Hold — Left</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn-kot-l" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: KOT Split Lunge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">3</div>
+                <div class="exercise-name">Tibialis Iso Lean</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn-tib" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Tibialis Iso Lean]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">4</div>
+                <div class="exercise-name">Soleus Iso</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn-soleus" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Soleus Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">5</div>
+                <div class="exercise-name">Plank w/ Scap Push-Away</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn-plank" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Plank w/ Scap Push-Away]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">6</div>
+                <div class="exercise-name">External Rotation Iso (R/L)</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn-er" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: External Rotation Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">7</div>
+                <div class="exercise-name">Block Jump Iso</div>
+              </div>
+              <div class="accordion-meta">25s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn-block" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Block Jump Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Warmup Before Each Match After the First (1–2 minutes)</h3>
+        <p>Each = <strong>20s + 5s pulses</strong></p>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">1</div>
+                <div class="exercise-name">Soleus Iso</div>
+              </div>
+              <div class="accordion-meta">20s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn2-soleus" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Soleus Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">2</div>
+                <div class="exercise-name">Tibialis Iso Lean</div>
+              </div>
+              <div class="accordion-meta">20s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn2-tib" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Tibialis Iso Lean]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">3</div>
+                <div class="exercise-name">Plank Push-Away or Side Plank</div>
+              </div>
+              <div class="accordion-meta">20s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn2-plank" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Plank / Side Plank]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">4</div>
+                <div class="exercise-name">Block Jump Iso</div>
+              </div>
+              <div class="accordion-meta">20s + 5s pulses</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-tourn2-block" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Block Jump Iso]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Add-On Guide -->
+      <section id="addon-guide" class="tas-section">
+        <h2>TAS Add-On Guide (The No-Grind Rules)</h2>
+        <p style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-primary-teal);">Better is better. More is just more.</p>
+
+        <div class="rule-box">
+          <div class="rule-number">Rule 1 — Add, Don't Stack</div>
+          <p style="margin-top: var(--space-md);">If practice was hard → extra work must be light.</p>
+        </div>
+
+        <div class="rule-box">
+          <div class="rule-number">Rule 2 — The 10% Rule</div>
+          <p style="margin-top: var(--space-md);">Add only a <em>small</em> dose (≈10%), not a big one.</p>
+        </div>
+
+        <div class="rule-box">
+          <div class="rule-number">Rule 3 — Daily Add-On Limit</div>
+          <p style="margin-top: var(--space-md);">Max <strong>10–15 minutes</strong> of extras per day.</p>
+        </div>
+
+        <div class="rule-box">
+          <div class="rule-number">Rule 4 — The 48-Hour Rule</div>
+          <p style="margin-top: var(--space-md);">If a joint is sore for >48 hours → back off and stick to Green Zone movement only.</p>
+        </div>
+
+        <div class="rule-box">
+          <div class="rule-number">Rule 5 — Tournament Week</div>
+          <p style="margin-top: var(--space-md);">Green Zone only (mobility, easy strength). Save your power.</p>
+        </div>
+
+        <h3 style="margin-top: var(--space-2xl);">Load Zones (TAS Intelligence System)</h3>
+
+        <div class="zone-card">
+          <div class="zone-title">🟢 Green Zone — Always Safe</div>
+          <ul>
+            <li>Mobility</li>
+            <li>Light stretching</li>
+            <li>Tibialis / soleus</li>
+            <li>Deep squat flow</li>
+            <li>Crawling / rocking</li>
+            <li>Light core</li>
+            <li>Easy walks</li>
+          </ul>
+        </div>
+
+        <div class="zone-card">
+          <div class="zone-title">🟡 Yellow Zone — 2–3× / Week Max</div>
+          <ul>
+            <li>Light plyos</li>
+            <li>Acceleration drills</li>
+            <li>ATG-style accessories</li>
+            <li>Low-volume skill work</li>
+          </ul>
+        </div>
+
+        <div class="zone-card">
+          <div class="zone-title">🔴 Red Zone — Planned Only</div>
+          <p style="margin-bottom: var(--space-md);"><em>Not for add-ons. For structured training ONLY.</em></p>
+          <ul>
+            <li>Heavy lifting</li>
+            <li>High-volume jumps</li>
+            <li>HIIT</li>
+            <li>Long runs</li>
+            <li>Hard conditioning</li>
+          </ul>
+          <p style="margin-top: var(--space-md); font-style: italic;">Red Zone reduces readiness → use intentionally.</p>
+        </div>
+
+        <h3 style="margin-top: var(--space-2xl);">Multiple Sets of Isometrics (TAS Variation)</h3>
+        <p><strong>Best days for adding a second set:</strong></p>
+        <ul>
+          <li>Day 1</li>
+          <li>Day 3</li>
+          <li>Day 6</li>
+          <li>Day 7</li>
+        </ul>
+
+        <p><strong>How:</strong></p>
+        <ul>
+          <li>Set 1: 25s + 5s pulses</li>
+          <li>Rest 20–40s</li>
+          <li>Set 2: repeat</li>
+        </ul>
+
+        <p><strong>Movements worth doubling:</strong></p>
+        <ul>
+          <li>Tibialis</li>
+          <li>Soleus</li>
+          <li>KOT Lunge</li>
+          <li>External Rotation</li>
+          <li>Block Jump</li>
+        </ul>
+
+        <p style="margin-top: var(--space-lg); font-weight: 600;">Never double up the day before tournaments or on practice days.</p>
+        <p style="font-weight: 600;">Use NAC → Notice → Adapt → Commit.</p>
+      </section>
+
+      <!-- Bodyweight Strength Program -->
+      <section id="strength-programs" class="tas-section">
+        <h2>TAS Bodyweight Strength Program</h2>
+        <p><strong>No equipment required.</strong><br><strong>2× per week.</strong><br><strong>20–30 minutes.</strong><br><strong>Beginner → Intermediate progression.</strong></p>
+
+        <h3 style="margin-top: var(--space-2xl);">Beginner Program</h3>
+        <p style="font-style: italic; color: var(--color-charcoal); margin-bottom: var(--space-lg);">(Everyone starts here unless cleared by a coach.)</p>
+
+        <h4>Day A — Lower + Push + Core</h4>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">1</div>
+                <div class="exercise-name">Split Squat</div>
+              </div>
+              <div class="accordion-meta">3×8 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-a1" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Split Squat]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">2</div>
+                <div class="exercise-name">Glute Bridge</div>
+              </div>
+              <div class="accordion-meta">3×12</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-a2" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Glute Bridge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">3</div>
+                <div class="exercise-name">Step-Down (or heel tap)</div>
+              </div>
+              <div class="accordion-meta">3×6 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-a3" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Step-Down]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">4</div>
+                <div class="exercise-name">Push-Ups</div>
+              </div>
+              <div class="accordion-meta">3×6–10</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-a4" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Push-Up]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">5</div>
+                <div class="exercise-name">Backpack/Towel Row</div>
+              </div>
+              <div class="accordion-meta">3×10</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-a5" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Backpack Row]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">6</div>
+                <div class="exercise-name">Side Plank</div>
+              </div>
+              <div class="accordion-meta">2×20–25s each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-a6" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Side Plank]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h4>Day B — Posterior + Pull + Core</h4>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">1</div>
+                <div class="exercise-name">Reverse Lunge</div>
+              </div>
+              <div class="accordion-meta">3×8 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-b1" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Reverse Lunge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">2</div>
+                <div class="exercise-name">Wall Hip Hinge</div>
+              </div>
+              <div class="accordion-meta">3×10</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-b2" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Wall Hip Hinge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">3</div>
+                <div class="exercise-name">Lateral Lunge</div>
+              </div>
+              <div class="accordion-meta">3×6 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-b3" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Lateral Lunge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">4</div>
+                <div class="exercise-name">Push-Up Hold (mid-range)</div>
+              </div>
+              <div class="accordion-meta">3×20s</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-b4" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Push-Up Hold]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">5</div>
+                <div class="exercise-name">Table/Doorframe Row</div>
+              </div>
+              <div class="accordion-meta">3×6–10</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-b5" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Table / Doorframe Row]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">6</div>
+                <div class="exercise-name">Dead Bug or Hollow</div>
+              </div>
+              <div class="accordion-meta">3×15–20s</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-beg-b6" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Dead Bug / Hollow Hold]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: var(--space-2xl);">Intermediate Program</h3>
+        <p style="font-style: italic; color: var(--color-charcoal); margin-bottom: var(--space-lg);">(Earned through consistent, high-quality movement.)</p>
+
+        <h4>Day A — Lower + Push + Core</h4>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">1</div>
+                <div class="exercise-name">RFESS</div>
+              </div>
+              <div class="accordion-meta">3×6 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-a1" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: RFESS]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">2</div>
+                <div class="exercise-name">Single-Leg Glute Bridge</div>
+              </div>
+              <div class="accordion-meta">3×8 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-a2" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Single-Leg Glute Bridge]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">3</div>
+                <div class="exercise-name">Slow Step-Down</div>
+              </div>
+              <div class="accordion-meta">3×6</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-a3" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Slow Step-Down]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">4</div>
+                <div class="exercise-name">Push-Ups (full)</div>
+              </div>
+              <div class="accordion-meta">3×8–12</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-a4" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Push-Up]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">5</div>
+                <div class="exercise-name">Weighted Backpack / Deep Doorframe Row</div>
+              </div>
+              <div class="accordion-meta">3×10</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-a5" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Weighted Row]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">6</div>
+                <div class="exercise-name">Side Plank w/ Top-Leg Lift</div>
+              </div>
+              <div class="accordion-meta">2×15s</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-a6" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Side Plank w/ Top-Leg Lift]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h4>Day B — Posterior + Rotational Core + Pull</h4>
+        <div class="exercise-list">
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">1</div>
+                <div class="exercise-name">Single-Leg RDL</div>
+              </div>
+              <div class="accordion-meta">3×6 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-b1" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Single-Leg RDL]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">2</div>
+                <div class="exercise-name">Reverse Lunge w/ Rotation</div>
+              </div>
+              <div class="accordion-meta">3×6 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-b2" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Reverse Lunge w/ Rotation]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">3</div>
+                <div class="exercise-name">Cossack Squat</div>
+              </div>
+              <div class="accordion-meta">3×6 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-b3" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Cossack Squat]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">4</div>
+                <div class="exercise-name">Plyo or Fast-Up Push-Up</div>
+              </div>
+              <div class="accordion-meta">2×5</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-b4" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Plyo Push-Up]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">5</div>
+                <div class="exercise-name">Doorframe Row</div>
+              </div>
+              <div class="accordion-meta">3×10</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-b5" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Doorframe Row]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <div class="accordion-title">
+                <div class="exercise-number">6</div>
+                <div class="exercise-name">Anti-Rotation (Tall-Kneeling Switches)</div>
+              </div>
+              <div class="accordion-meta">3×8 each</div>
+              <div class="accordion-toggle"></div>
+            </div>
+            <div class="accordion-content">
+              <div id="video-int-b6" class="video-placeholder">
+                <div class="video-placeholder-text">[VIDEO: Anti-Rotation Tall-Kneeling]</div>
+                <a href="#" class="video-btn" onclick="return false;">Watch Demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Why TAS Works -->
+      <section id="why-tas-works" class="tas-section" style="margin-top: var(--space-3xl);">
+        <h2>Why TAS Works</h2>
+        <ul style="column-count: 2; column-gap: var(--space-2xl); margin: var(--space-2xl) 0;">
+          <li>Tendon-friendly</li>
+          <li>Joint-first</li>
+          <li>Low fatigue → high readiness</li>
+          <li>Movement-based, not grind-based</li>
+          <li>Accessible to ALL athletes</li>
+          <li>Supports practice, doesn't compete with it</li>
+          <li>Aligned with ecological principles</li>
+          <li>Built for youth athletes</li>
+          <li>Reduces injuries</li>
+          <li>Increases explosiveness</li>
+          <li>Creates consistency</li>
+          <li>Enhances availability</li>
+        </ul>
+      </section>
+
+      <!-- TAS Motto -->
+      <div class="motto-box">
+        <h3>Prepared, not tired.</h3>
+      </div>
+
+    </div>
+  </main>
+
+  <footer id="contact">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>TVVC</h3>
+          <p>Tualatin Valley Volleyball Club — Volleyball with Purpose. Coaching with Heart.</p>
+        </div>
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <p>
+            <strong>Phone:</strong><br>
+            <a href="tel:+15033890760">(503) 389-0760</a>
+          </p>
+          <p>
+            <strong>Email:</strong><br>
+            <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a>
+          </p>
+        </div>
+        <div class="footer-section">
+          <h3>Quick Links</h3>
+          <ul style="list-style: none; padding: 0;">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="teams.html">Teams & Tryouts</a></li>
+            <li><a href="programs.html">Programs</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-accessibility">
+        <p><strong>Questions about cost or access?</strong> <a href="mailto:info@tualatinvalleyvb.com">Email us</a>. We'll work with you.</p>
+      </div>
+      <div class="footer-divider">
+        <p>© 2025 Tualatin Valley Volleyball Club. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
