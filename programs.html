@@ -1,91 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#00B4B3">
+  <meta name="theme-color" content="#009695">
   <title>Programs — TVVC Volleyball Club</title>
-  <meta name="description" content="Explore TVVC's volleyball programs: Tryout Prep Clinics for all ages and PlayWorks, an exploratory program for 7th–9th graders.">
-  
+  <meta name="description"
+    content="Explore TVVC's volleyball programs: Tryout Prep Clinics for all ages and PlayWorks, an exploratory program for 7th–9th graders.">
+
   <!-- Preload critical assets -->
   <link rel="preload" as="image" href="./assets/images/hero-volleyball-action.jpg">
-  
+
+  <!-- Fonts: Outfit (Headings) & Inter (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
+    rel="stylesheet">
+
   <!-- Shared Stylesheet -->
   <link rel="stylesheet" href="./assets/styles.css">
-  
+
   <!-- Mobile Menu Script -->
   <script src="./assets/menu-toggle.js" defer></script>
-  
-  <style>
-    /* ===========================
-       PAGE-SPECIFIC: PROGRAMS
-       =========================== */
-    
-    /* ===========================
-       HIGHLIGHT BOX
-       =========================== */
-    
-    .highlight-box {
-      background-color: var(--color-white);
-      border-left: 4px solid var(--color-primary-coral);
-      padding: var(--space-lg);
-      border-radius: var(--radius-md);
-      margin-top: var(--space-xl);
-    }
-
-    /* ===========================
-       PROGRAM NAVIGATION
-       =========================== */
-    
-    .program-nav {
-      background-color: var(--color-charcoal);
-      padding: var(--space-lg) 0;
-      box-shadow: var(--shadow-md);
-    }
-
-    .program-nav-container {
-      display: flex;
-      gap: var(--space-md);
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .program-nav a {
-      display: inline-flex;
-      align-items: center;
-      padding: var(--space-sm) var(--space-lg);
-      background-color: rgba(255, 255, 255, 0.08);
-      color: var(--color-white);
-      border-radius: var(--radius-lg);
-      font-weight: var(--font-weight-medium);
-      transition: all var(--transition-fast);
-      white-space: nowrap;
-    }
-
-    .program-nav a:hover,
-    .program-nav a:focus {
-      background-color: var(--color-primary-teal);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-      text-decoration: none;
-    }
-
-    @media (max-width: 768px) {
-      .program-nav-container {
-        justify-content: flex-start;
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        padding: 0 var(--space-md);
-      }
-    }
-  </style>
 </head>
 
 <body>
   <!-- Skip to main content link for accessibility -->
   <a class="skip-link" href="#main">Skip to main content</a>
-  
+
   <!-- Header & Navigation -->
   <header>
     <div class="container">
@@ -107,23 +51,26 @@
         <a href="events.html">Events</a>
         <a href="faq.html">FAQ</a>
         <a href="#contact">Contact</a>
-        <a href="https://tvvc.volleyballcentral.io/" target="_blank" rel="noopener noreferrer" class="header-register-btn">Parent Dashboard</a>
+        <a href="https://tvvc.volleyballcentral.io/" target="_blank" rel="noopener noreferrer"
+          class="header-register-btn">Parent Dashboard</a>
       </nav>
     </div>
   </header>
 
   <!-- Main Content -->
   <main id="main">
-    
+
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
         <h2>Clinics & Programs</h2>
-        <p>Whether you're preparing for tryouts or exploring the game through PlayWorks, we have the right program for you.</p>
-        <div class="program-nav-container" style="justify-content: flex-start; gap: var(--space-sm);">
-          <a href="#training" class="btn" style="padding: var(--space-xs) var(--space-md); font-size: 0.9rem;">Group Training</a>
-          <a href="#ignition" class="btn" style="padding: var(--space-xs) var(--space-md); font-size: 0.9rem;">Ignition</a>
-          <a href="#playworks" class="btn" style="padding: var(--space-xs) var(--space-md); font-size: 0.9rem;">PlayWorks</a>
+        <p>Whether you're preparing for tryouts or exploring the game through PlayWorks, we have the right program for
+          you.</p>
+        <div class="program-nav-container">
+          <a href="#training" class="btn btn-sm">Group
+            Training</a>
+          <a href="#ignition" class="btn btn-sm">Ignition</a>
+          <a href="#playworks" class="btn btn-sm">PlayWorks</a>
         </div>
       </div>
     </section>
@@ -172,12 +119,14 @@
         <h2>Private & Group Training</h2>
         <p class="section-subtitle">Grow through play. Learn through connection.</p>
 
-        <p>At Tualatin Valley Volleyball Club, we believe the best learning happens with others, not apart from them. Volleyball is a living, breathing game of interaction — a conversation between teammates, opponents, space, and the ball.</p>
+        <p>The best learning happens with teammates, not alone. Volleyball is a conversation—reading your teammates, 
+          adapting to opponents, staying present with the moment.</p>
 
         <h3>⚠️ Private (1-on-1) Training</h3>
         <p><strong>Private training is available only with director approval.</strong></p>
-        <p>While individual sessions can be helpful in specific cases, we don't believe volleyball is best learned in isolation. The game's richest lessons — reading, adapting, anticipating — happen through interaction.</p>
-        <p>If a one-on-one session makes sense for your needs, we'll design it intentionally around your goals.</p>
+        <p>Volleyball is best learned with teammates. The game's richest lessons—reading the court, adapting on the fly,
+          anticipating—happen through interaction, not in isolation.</p>
+        <p>If a one-on-one session makes sense for your situation, we'll design it intentionally around your goals.</p>
 
         <h3>👥 Group Training (2–4 Players)</h3>
         <div class="card-grid">
@@ -191,34 +140,35 @@
           </div>
           <div class="card">
             <h4>Who it's for</h4>
-            <p>Players who want focused, intentional training in a small-group setting that still mirrors real game play.</p>
+            <p>Players who want focused, intentional training in a small-group setting that still mirrors real game
+              play.</p>
           </div>
         </div>
 
-        <p>Each session is built around what you want to improve, while emphasizing the elements that create adaptable, confident players:</p>
+        <p>Each session is built around what you want to improve, while emphasizing the elements that create adaptable,
+          confident players:</p>
         <ul>
           <li><strong>Attention</strong> – Where you focus, what you notice.</li>
           <li><strong>Intention</strong> – What you're trying to create or influence.</li>
           <li><strong>Decision Making</strong> – How you adapt when the game shifts.</li>
         </ul>
 
-        <p>Sessions also integrate movement efficiency, athletic capacity, and the physical realities of volleyball — no static drills, no empty reps. Every moment is purposeful, connected, and alive.</p>
+        <p>Every session is purposeful—no static drills, no empty reps. You're building the physical and mental skills 
+          that actually show up in matches.</p>
 
         <h3>🔗 Ready to Train?</h3>
-        <p>If you're interested in scheduling a small group or private training session, reach out directly — we'd love to hear what you're hoping to work on.</p>
-        
+        <p>Reach out and tell us what you want to work on. We'll find a time that fits.</p>
+
         <div class="card-grid">
           <div class="card">
             <h4>📧 Email</h4>
-            <p><a href="mailto:info@tualatinvalleyvolleyball.com">info@tualatinvalleyvolleyball.com</a></p>
+            <p><a href="mailto:info@tualatinvalleyvolleyball.com">info@tualatinvalleyvolleyball.com</a><br><span class="text-small"><em>Response within 24 hours</em></span></p>
           </div>
           <div class="card">
             <h4>📱 Text</h4>
             <p><a href="tel:+15033890760">(503) 389-0760</a></p>
           </div>
         </div>
-
-        <p>We'll help you find a time, confirm details, and make sure your session fits your goals and experience level.</p>
       </div>
     </section>
 
@@ -228,10 +178,12 @@
         <h2>Ignition Volleyball</h2>
         <p class="section-subtitle">Play. Learn. Love the Game.</p>
 
-        <p><strong>Ignition is an opportunity for 4th–6th graders to fall in love with the game of volleyball!</strong> We believe kids want to have fun with their friends, be seen by supportive adults, and play. Ignition puts children at the forefront, giving each player the opportunity to enjoy fun games with their peers while learning the fundamentals of volleyball.</p>
+        <p><strong>Ignition is for 4th–6th graders to fall in love with volleyball.</strong> Kids want fun, friendship, 
+          and to be seen by adults who care. Ignition delivers all three—with games, teamwork, and the fundamentals.</p>
 
         <h3>Why Ignition?</h3>
-        <p>We believe that training younger players on smaller courts, with lower nets, and a lighter ball creates better long-term learning. These thoughtful adjustments make the game more accessible and fun, allowing every player to touch the ball frequently and work with teammates in realistic, game-like scenarios.</p>
+        <p>Smaller courts, lower nets, lighter balls—these adjustments make the game accessible and fun. Every player 
+          touches the ball more, works with teammates in realistic situations, and builds real skills from day one.</p>
 
         <h3>Program Schedule</h3>
         <div class="card-grid">
@@ -250,25 +202,32 @@
         </div>
 
         <h3>What to Expect</h3>
-        <p>We use games to teach and learn, because they're both fun and realistic. Athletes move quickly from skill demonstrations to small-sided games, exploring the concepts we're teaching through play. Our curriculum focuses on the fundamentals — serving, passing, setting, and attacking — through varied game formats that maximize touches, engagement, and decision-making opportunities.</p>
+        <p>We use games to teach and learn, because they're both fun and realistic. Athletes move quickly from skill
+          demonstrations to small-sided games, exploring the concepts we're teaching through play. Our curriculum
+          focuses on the fundamentals — serving, passing, setting, and attacking — through varied game formats that
+          maximize touches, engagement, and decision-making opportunities.</p>
 
-        <p>Every practice is designed around what kids want: to have fun, play with friends, be noticed, and experience the joy of volleyball.</p>
+        <p>Every practice is designed around what kids want: to have fun, play with friends, be noticed, and experience
+          the joy of volleyball.</p>
 
         <h3>Learning Through Play</h3>
-        <p>Three essential components are woven throughout every Ignition session:</p>
-        
+        <p>Three essential components in every Ignition session:</p>
+
         <div class="card-grid">
           <div class="card">
             <h3>Fun</h3>
-            <p>Kids want to have fun. Ignition centers joy and play in every session, making volleyball exciting and memorable.</p>
+            <p>Kids want to have fun. Ignition centers joy and play in every session, making volleyball exciting and
+              memorable.</p>
           </div>
           <div class="card">
             <h3>Connection</h3>
-            <p>Kids want to play with friends and peers. Small-sided games and team activities build friendships and belonging.</p>
+            <p>Kids want to play with friends and peers. Small-sided games and team activities build friendships and
+              belonging.</p>
           </div>
           <div class="card">
             <h3>Recognition</h3>
-            <p>Kids want adults to see them. Our coaches celebrate effort, progress, and participation, building confidence in every player.</p>
+            <p>Kids want adults to see them. Our coaches celebrate effort, progress, and participation, building
+              confidence in every player.</p>
           </div>
         </div>
 
@@ -293,11 +252,13 @@
         </div>
 
         <div class="highlight-box">
-          <p><strong>Start the Spark:</strong> Ignition is where young athletes discover their love for volleyball. Join us this winter and watch them grow, have fun, and fall in love with the game.</p>
+          <p><strong>Start the Spark:</strong> Ignition is where young athletes discover their love for volleyball. Join
+            us this winter and watch them grow, have fun, and fall in love with the game.</p>
         </div>
 
         <div class="btn-group">
-          <a class="btn" href="https://tvvc.volleyballcentral.io/e/ignition" target="_blank" rel="noopener noreferrer">Register for Ignition</a>
+          <a class="btn" href="https://tvvc.volleyballcentral.io/e/ignition" target="_blank"
+            rel="noopener noreferrer">Register for Ignition</a>
         </div>
       </div>
     </section>
@@ -308,7 +269,8 @@
         <h2>PlayWorks Volleyball</h2>
         <p class="section-subtitle">Play. Learn. Grow.</p>
 
-        <p><strong>PlayWorks is an opportunity for 6th–10th graders to explore the game of volleyball through a variety of fun, competitive games.</strong> Designed for players who want to learn and improve without the commitment of a full club season, PlayWorks focuses on skill development, creativity, and confidence through play.</p>
+        <p><strong>PlayWorks is for 6th–10th graders who want to learn and improve without a full club commitment.</strong> 
+          Explore the game through fun, competitive play—building skills, creativity, and confidence along the way.</p>
 
         <h3>Program Schedule</h3>
         <div class="card-grid">
@@ -327,25 +289,31 @@
         </div>
 
         <h3>What to Expect</h3>
-        <p>The first session of each week is devoted to introducing and refining core volleyball skills — serving, passing, setting, and attacking — through small-sided games that maximize touches, engagement, and decision-making opportunities.</p>
-        
-        <p>The second session builds on those concepts with full-court play (4v4 or 6v6), featuring rotating challenges and themes that help each athlete and team learn to adapt, communicate, and compete with purpose.</p>
+        <p>The first session of each week is devoted to introducing and refining core volleyball skills — serving,
+          passing, setting, and attacking — through small-sided games that maximize touches, engagement, and
+          decision-making opportunities.</p>
+
+        <p>The second session builds on those concepts with full-court play (4v4 or 6v6), featuring rotating challenges
+          and themes that help each athlete and team learn to adapt, communicate, and compete with purpose.</p>
 
         <h3>Learning That Lasts</h3>
-        <p>Three essential components of learning and motivation are woven throughout every PlayWorks session:</p>
-        
+        <p>Three essential components in every PlayWorks session:</p>
+
         <div class="card-grid">
           <div class="card">
             <h3>Autonomy</h3>
-            <p>Athletes are given a voice and ownership in their learning process. Their input helps shape each day's focus, building confidence and buy-in.</p>
+            <p>Athletes are given a voice and ownership in their learning process. Their input helps shape each day's
+              focus, building confidence and buy-in.</p>
           </div>
           <div class="card">
             <h3>Mastery</h3>
-            <p>True mastery comes through exploration and persistence. Players discover how to respond to teammates, opponents, and new challenges within the game.</p>
+            <p>True mastery comes through exploration and persistence. Players discover how to respond to teammates,
+              opponents, and new challenges within the game.</p>
           </div>
           <div class="card">
             <h3>Purpose</h3>
-            <p>Each athlete arrives with their own "why." Together, we connect those individual purposes into a shared drive to grow, compete, and have fun.</p>
+            <p>Each athlete arrives with their own "why." Together, we connect those individual purposes into a shared
+              drive to grow, compete, and have fun.</p>
           </div>
         </div>
 
@@ -370,11 +338,13 @@
         </div>
 
         <div class="highlight-box">
-          <p><strong>Join the Game:</strong> This is volleyball at its best — joyful, challenging, and full of discovery. Come play, learn, and grow with us this winter.</p>
+          <p><strong>Join the Game:</strong> This is volleyball at its best — joyful, challenging, and full of
+            discovery. Come play, learn, and grow with us this winter.</p>
         </div>
 
         <div class="btn-group">
-          <a class="btn" href="https://tvvc.volleyballcentral.io/e/playworks" target="_blank" rel="noopener noreferrer">Register for PlayWorks</a>
+          <a class="btn" href="https://tvvc.volleyballcentral.io/e/playworks" target="_blank"
+            rel="noopener noreferrer">Register for PlayWorks</a>
         </div>
       </div>
     </section>
@@ -402,12 +372,14 @@
         </div>
         <div class="footer-section">
           <h3>Quick Links</h3>
-          <ul style="list-style: none; padding: 0;">
+          <ul class="list-unstyled">
             <li><a href="index.html">Home</a></li>
             <li><a href="teams.html">Teams & Tryouts</a></li>
             <li><a href="programs.html">Programs</a></li>
             <li><a href="faq.html">FAQ</a></li>
-            <li><a href="https://docs.google.com/document/d/18VKMlNt7iB_H07N7GVtsXiM_d_WuHHDeXnKpczEGfvg/edit?usp=sharing" target="_blank" rel="noopener noreferrer">TVVC Handbook</a></li>
+            <li><a
+                href="https://docs.google.com/document/d/18VKMlNt7iB_H07N7GVtsXiM_d_WuHHDeXnKpczEGfvg/edit?usp=sharing"
+                target="_blank" rel="noopener noreferrer">TVVC Handbook</a></li>
             <li><a href="privacy-policy.html">Privacy Policy</a></li>
           </ul>
         </div>
@@ -419,4 +391,5 @@
   </footer>
 
 </body>
+
 </html>

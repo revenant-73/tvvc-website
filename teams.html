@@ -1,592 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#00B4B3">
+  <meta name="theme-color" content="#009695">
   <title>Teams & Tryouts — TVVC Volleyball Club</title>
-  <meta name="description" content="Volleyball tryouts Hillsboro Oregon - TVVC's competitive age-group teams, girls volleyball club, 12U 14U 16U 18U clubs with development-first focus.">
-  
+  <meta name="description"
+    content="Volleyball tryouts Hillsboro Oregon - TVVC's competitive age-group teams, girls volleyball club, 12U 14U 16U 18U clubs with development-first focus.">
+
   <!-- Preload critical assets -->
   <link rel="preload" as="image" href="./assets/images/hero-volleyball-action.jpg">
-  
+
+  <!-- Fonts: Outfit (Headings) & Inter (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
+    rel="stylesheet">
+
   <!-- Shared Stylesheet -->
   <link rel="stylesheet" href="./assets/styles.css">
-  
+
   <!-- Mobile Menu Script -->
   <script src="./assets/menu-toggle.js" defer></script>
-  
-  <style>
-    /* ===========================
-       PAGE-SPECIFIC: TEAMS & SCHEDULE
-       =========================== */
-    
-    /* ===========================
-       TOURNAMENT SCHEDULE STYLES
-       =========================== */
-    
-    .schedule-container {
-      overflow-x: auto;
-      margin: var(--space-lg) 0;
-    }
-    
-    .schedule-table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: var(--color-white);
-      border: 1px solid #e0e0e0;
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .schedule-table thead {
-      background-color: var(--color-charcoal);
-      color: var(--color-white);
-    }
-    
-    .schedule-table th {
-      padding: var(--space-md) var(--space-lg);
-      text-align: left;
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-base);
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .schedule-table th:last-child {
-      border-right: none;
-    }
-    
-    .schedule-table td {
-      padding: var(--space-md) var(--space-lg);
-      border-bottom: 1px solid #e0e0e0;
-      font-size: var(--font-size-sm);
-    }
-    
-    .schedule-table tbody tr:hover {
-      background-color: rgba(0, 180, 179, 0.03);
-    }
-    
-    .schedule-table tbody tr:last-child td {
-      border-bottom: none;
-    }
-    
-    .schedule-date {
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-primary-coral);
-      white-space: nowrap;
-    }
-    
-    .schedule-event {
-      color: var(--color-charcoal);
-    }
-    
-    .schedule-qualifier {
-      color: var(--color-gray-dark);
-      font-style: italic;
-    }
-    
-    .schedule-regional {
-      background-color: rgba(255, 107, 97, 0.08);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-primary-coral);
-    }
-    
-    .age-group-heading {
-      margin-top: var(--space-2xl);
-      margin-bottom: var(--space-md);
-      padding-bottom: var(--space-md);
-      border-bottom: 2px solid var(--color-primary-teal);
-      color: var(--color-charcoal);
-      display: none;
-    }
-    
-    /* ===========================
-       TABS INTERFACE
-       =========================== */
-    
-    .schedule-tabs {
-      display: flex;
-      gap: var(--space-sm);
-      margin-bottom: var(--space-lg);
-      border-bottom: 2px solid #e0e0e0;
-      flex-wrap: wrap;
-    }
-    
-    .schedule-tab {
-      padding: var(--space-md) var(--space-lg);
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: var(--font-size-base);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-gray-dark);
-      transition: all var(--transition-fast);
-      border-bottom: 3px solid transparent;
-      position: relative;
-      bottom: -2px;
-    }
-    
-    .schedule-tab:hover {
-      color: var(--color-primary-teal);
-    }
-    
-    .schedule-tab.active {
-      color: var(--color-primary-teal);
-      border-bottom-color: var(--color-primary-teal);
-    }
-    
-    .schedule-tab-content {
-      display: none;
-    }
-    
-    .schedule-tab-content.active {
-      display: block;
-    }
-    
-    .age-group-heading:first-of-type {
-      margin-top: var(--space-lg);
-    }
-
-    /* ===========================
-       SEASON COST CARD
-       =========================== */
-    
-    .season-cost {
-      background: linear-gradient(135deg, rgba(0, 180, 179, 0.08) 0%, rgba(255, 107, 97, 0.08) 100%);
-      border: 2px solid var(--color-primary-teal);
-      position: relative;
-    }
-
-    .season-cost h4 {
-      color: var(--color-primary-teal);
-      margin-bottom: var(--space-md);
-    }
-
-    .cost-highlight {
-      font-size: 2rem;
-      color: var(--color-primary-coral);
-      margin: var(--space-md) 0;
-      line-height: 1;
-    }
-
-    .cost-includes {
-      list-style: none;
-      padding: 0;
-      margin: var(--space-md) 0 0 0;
-    }
-
-    .cost-includes li {
-      padding: var(--space-sm) 0 var(--space-sm) var(--space-lg);
-      position: relative;
-      padding-left: calc(var(--space-lg) + 0.5rem);
-      color: var(--color-charcoal);
-    }
-
-    .cost-includes li::before {
-      content: "✓";
-      position: absolute;
-      left: 0;
-      color: var(--color-primary-teal);
-      font-weight: bold;
-    }
-
-    /* ===========================
-       PAYMENT ASSISTANCE CARD
-       =========================== */
-
-    .payment-assistance {
-      background-color: rgba(0, 180, 179, 0.05);
-      border: 2px solid rgba(0, 180, 179, 0.3);
-    }
-
-    .payment-assistance h4 {
-      color: var(--color-primary-teal);
-      margin-bottom: var(--space-md);
-    }
-
-    .payment-breakdown {
-      list-style: none;
-      padding: 0;
-      margin: var(--space-md) 0;
-      background-color: rgba(255, 255, 255, 0.6);
-      padding: var(--space-md);
-      border-radius: var(--radius-sm);
-      border-left: 4px solid var(--color-primary-teal);
-    }
-
-    .payment-breakdown li {
-      padding: var(--space-sm) 0;
-      color: var(--color-charcoal);
-      font-size: var(--font-size-sm);
-    }
-
-    .payment-breakdown li:not(:last-child) {
-      padding-bottom: var(--space-md);
-      border-bottom: 1px solid rgba(0, 180, 179, 0.2);
-    }
-
-    .assistance-text {
-      font-size: var(--font-size-sm);
-      color: var(--color-charcoal);
-      margin-top: var(--space-md);
-      line-height: 1.6;
-    }
-
-    .assistance-text a {
-      color: var(--color-primary-teal);
-      text-decoration: none;
-      font-weight: var(--font-weight-semibold);
-      transition: color var(--transition-fast);
-    }
-
-    .assistance-text a:hover {
-      text-decoration: underline;
-      color: var(--color-primary-coral);
-    }
-
-    /* ===========================
-       SEASON INFORMATION LAYOUT
-       =========================== */
-    
-    .season-logistics {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--space-md);
-      margin-bottom: var(--space-2xl);
-    }
-
-    .season-financial {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--space-md);
-    }
-
-    @media (max-width: 1024px) {
-      .season-logistics {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .season-financial {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .season-logistics {
-        grid-template-columns: 1fr;
-      }
-
-      .season-financial {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* ===========================
-       QUICK NAVIGATION BAR
-       =========================== */
-    
-    .subnav {
-      display: flex;
-      gap: var(--space-md);
-      justify-content: center;
-      flex-wrap: wrap;
-      margin: var(--space-lg) 0;
-      padding: var(--space-md) 0;
-      border-top: 1px solid #e0e0e0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-
-    .subnav a {
-      color: var(--color-charcoal);
-      text-decoration: none;
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-base);
-      padding: var(--space-sm) var(--space-md);
-      transition: color var(--transition-fast);
-      scroll-behavior: smooth;
-    }
-
-    .subnav a:hover {
-      color: var(--color-primary-teal);
-    }
-
-    /* ===========================
-       SECTION INTRO
-       =========================== */
-    
-    .section-intro {
-      font-size: var(--font-size-lg);
-      line-height: 1.8;
-      color: var(--color-charcoal);
-      margin-bottom: var(--space-lg);
-      padding-bottom: var(--space-lg);
-      border-bottom: 1px solid rgba(0, 180, 179, 0.2);
-    }
-
-    /* ===========================
-       COACHES SECTION
-       =========================== */
-    
-    .coach-card {
-      text-align: center;
-    }
-
-    .coach-photo {
-      width: 100%;
-      height: 280px;
-      object-fit: cover;
-      border-radius: var(--radius-md);
-      margin-bottom: var(--space-md);
-      background-color: #f0f0f0;
-    }
-
-    .coach-card h3 {
-      color: var(--color-charcoal);
-      margin-bottom: var(--space-sm);
-    }
-
-    .coach-title {
-      color: var(--color-primary-teal);
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-semibold);
-      margin-bottom: var(--space-md);
-    }
-
-    /* ===========================
-       TESTIMONIAL SECTION
-       =========================== */
-    
-    .testimonial {
-      background: linear-gradient(135deg, rgba(0, 180, 179, 0.08) 0%, rgba(255, 107, 97, 0.08) 100%);
-      border-left: 4px solid var(--color-primary-teal);
-      padding: var(--space-lg);
-      margin: var(--space-2xl) 0;
-      border-radius: var(--radius-md);
-    }
-
-    .testimonial blockquote {
-      margin: 0;
-      font-size: var(--font-size-lg);
-      font-style: italic;
-      color: var(--color-charcoal);
-      line-height: 1.8;
-    }
-
-    .testimonial cite {
-      display: block;
-      margin-top: var(--space-md);
-      font-style: normal;
-      color: var(--color-primary-teal);
-      font-weight: var(--font-weight-semibold);
-    }
-
-    /* ===========================
-       COLLAPSIBLE FAQ
-       =========================== */
-    
-    .faq-section {
-      margin: var(--space-2xl) 0;
-    }
-
-    .faq-section details {
-      border: 1px solid #e0e0e0;
-      border-radius: var(--radius-md);
-      padding: var(--space-md);
-      margin-bottom: var(--space-md);
-      background-color: #f9f9f9;
-    }
-
-    .faq-section details[open] {
-      background-color: rgba(0, 180, 179, 0.05);
-    }
-
-    .faq-section summary {
-      cursor: pointer;
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-charcoal);
-      padding: var(--space-sm);
-      margin: calc(var(--space-md) * -1);
-      padding: var(--space-md);
-      user-select: none;
-      transition: color var(--transition-fast);
-    }
-
-    .faq-section summary:hover {
-      color: var(--color-primary-teal);
-    }
-
-    .faq-section details[open] summary {
-      color: var(--color-primary-teal);
-      margin-bottom: var(--space-md);
-    }
-
-    .faq-section p {
-      margin: var(--space-md) 0 0 0;
-      color: var(--color-charcoal);
-      line-height: 1.6;
-    }
-
-    /* ===========================
-       AGE GROUP STYLING
-       =========================== */
-    
-    .age-group-12-14 {
-      background: linear-gradient(135deg, rgba(0, 180, 179, 0.08) 0%, rgba(0, 180, 179, 0.04) 100%);
-      border-left: 4px solid var(--color-primary-teal);
-    }
-
-    .age-group-15-16 {
-      background: linear-gradient(135deg, rgba(255, 107, 97, 0.08) 0%, rgba(255, 107, 97, 0.04) 100%);
-      border-left: 4px solid var(--color-primary-coral);
-    }
-
-    .age-group-17-18 {
-      background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.04) 100%);
-      border-left: 4px solid #FFC107;
-    }
-
-    .age-group-label {
-      display: inline-block;
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-bold);
-      padding: var(--space-xs) var(--space-sm);
-      border-radius: var(--radius-sm);
-      margin-bottom: var(--space-sm);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .age-group-12-14 .age-group-label {
-      background-color: rgba(0, 180, 179, 0.15);
-      color: var(--color-primary-teal);
-    }
-
-    .age-group-15-16 .age-group-label {
-      background-color: rgba(255, 107, 97, 0.15);
-      color: var(--color-primary-coral);
-    }
-
-    .age-group-17-18 .age-group-label {
-      background-color: rgba(255, 193, 7, 0.15);
-      color: #E6B800;
-    }
-
-    /* ===========================
-       SEASON INFORMATION LAYOUT
-       =========================== */
-    
-    .season-logistics {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--space-lg);
-      margin-bottom: var(--space-2xl);
-    }
-
-    .season-financial {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--space-lg);
-    }
-
-    /* ===========================
-       ACCORDION SCHEDULE (MOBILE)
-       =========================== */
-    
-    .schedule-accordion {
-      border: 1px solid #e0e0e0;
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      margin-bottom: var(--space-md);
-    }
-
-    .schedule-accordion-header {
-      width: 100%;
-      padding: var(--space-md) var(--space-lg);
-      background-color: var(--color-charcoal);
-      color: var(--color-white);
-      border: none;
-      cursor: pointer;
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-base);
-      transition: all var(--transition-fast);
-      text-align: left;
-      display: none;
-    }
-
-    .schedule-accordion-header:hover {
-      background-color: var(--color-primary-teal);
-    }
-
-    .schedule-accordion-header.active {
-      background-color: var(--color-primary-teal);
-    }
-
-    .schedule-accordion-content {
-      display: none;
-      padding: var(--space-lg);
-      background-color: var(--color-white);
-    }
-
-    .schedule-accordion-content.active {
-      display: block;
-    }
-
-    /* Mobile responsiveness */
-    @media (max-width: 768px) {
-      .subnav {
-        gap: var(--space-sm);
-      }
-
-      .subnav a {
-        padding: var(--space-sm) var(--space-md);
-        font-size: var(--font-size-sm);
-      }
-
-      .testimonial {
-        padding: var(--space-md);
-      }
-
-      .coach-photo {
-        height: 200px;
-      }
-
-      .schedule-tabs {
-        display: none;
-      }
-
-      .schedule-accordion-header {
-        display: block;
-      }
-
-      .schedule-tab-content {
-        border: 1px solid #e0e0e0;
-        border-radius: var(--radius-md);
-        overflow: hidden;
-        margin-bottom: var(--space-md);
-      }
-
-      .season-logistics {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .season-financial {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .season-logistics {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
 </head>
 
 <body>
   <!-- Skip to main content link for accessibility -->
   <a class="skip-link" href="#main">Skip to main content</a>
-  
+
   <!-- Header & Navigation -->
   <header>
     <div class="container">
@@ -608,19 +51,21 @@
         <a href="events.html">Events</a>
         <a href="faq.html">FAQ</a>
         <a href="#contact">Contact</a>
-        <a href="https://tvvc.volleyballcentral.io/" target="_blank" rel="noopener noreferrer" class="header-register-btn">Parent Dashboard</a>
+        <a href="https://tvvc.volleyballcentral.io/" target="_blank" rel="noopener noreferrer"
+          class="header-register-btn">Parent Dashboard</a>
       </nav>
     </div>
   </header>
 
   <!-- Main Content -->
   <main id="main">
-    
+
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
         <h2>Competitive Teams. Development First.</h2>
-        <p>Three age-group levels with a focus on skill development, game understanding, and the love of volleyball. Join a team where growth matters more than outcomes.</p>
+        <p>Three age-group levels with a focus on skill development, game understanding, and the love of volleyball.
+          Join a team where growth matters more than outcomes.</p>
         <div class="btn-group">
           <a class="btn secondary" href="#tryouts">View Team Details</a>
         </div>
@@ -640,33 +85,37 @@
     <section id="teams">
       <div class="container">
         <h2>Age Group Teams</h2>
-        
+
         <p class="section-intro">
-          Our club teams compete in the CEVA region and train in Hillsboro. Each team is built around our ecological approach — game-based, connected, and joyful learning.
+          Our club teams compete in the CEVA region and train in Hillsboro. Each team is built around game-based, 
+          connected, and joyful learning.
         </p>
-        
+
         <div class="card-grid">
           <div class="card age-group-12-14">
             <span class="age-group-label">Foundation Phase</span>
             <h3>12U–14U — Build the Foundation</h3>
-            <p>Fun, supportive environment focused on building confidence and game understanding through play-based learning. We emphasize joy, teamwork, and the fundamentals of volleyball.</p>
+            <p>Fun, supportive environment focused on building confidence and game understanding through play-based
+              learning. We emphasize joy, teamwork, and the fundamentals of volleyball.</p>
           </div>
-          
+
           <div class="card age-group-15-16">
             <span class="age-group-label">Development Phase</span>
             <h3>15U–16U — Grow Through the Game</h3>
-            <p>Developing skills while learning to read the game in real-time. We focus on decision-making and communication in a growth-first environment where development matters more than outcomes.</p>
+            <p>Developing skills while learning to read the game in real-time. We focus on decision-making and
+              communication in a growth-first environment where development matters more than outcomes.</p>
           </div>
-          
+
           <div class="card age-group-17-18">
             <span class="age-group-label">Competitive Phase</span>
             <h3>17U–18U — Lead with Confidence</h3>
-            <p>A competitive space for athletes to elevate skills and leadership. Whether pursuing college volleyball or finishing their club journey, we focus on meaningful training and personal growth.</p>
+            <p>A competitive space for athletes to elevate skills and leadership. Whether pursuing college volleyball or
+              finishing their club journey, we focus on meaningful training and personal growth.</p>
           </div>
         </div>
 
         <h3>Season Information</h3>
-        
+
         <div class="season-logistics">
           <div class="card">
             <h4>Season Dates</h4>
@@ -705,13 +154,18 @@
               <li>$230 Down Payment</li>
               <li>5 Monthly Payments of $184 (Jan–May)</li>
             </ul>
-            <p class="assistance-text">We're committed to making volleyball accessible. <strong>We're happy to work with families on flexible payment arrangements.</strong> If the season cost is a barrier, please reach out to us at <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a> to discuss financial assistance options.</p>
-            <p class="assistance-text"><em><strong>No player will be turned away due to finances. Reach out — we'll make it work.</strong></em></p>
+            <p class="assistance-text">We're committed to making volleyball accessible. <strong>We're happy to work with
+                families on flexible payment arrangements.</strong> If the season cost is a barrier, please reach out to
+              us at <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a> to discuss financial
+              assistance options.</p>
+            <p class="assistance-text"><em><strong>No player will be turned away due to finances. Reach out — we'll make
+                  it work.</strong></em></p>
           </div>
         </div>
 
         <h3 id="schedule">2026 Tournament Schedule</h3>
-        <p class="section-subtitle">Competitive matches and regional qualifiers across age groups. All teams participate in CEVA region tournaments with qualifying opportunities for regional competitions.</p>
+        <p class="section-subtitle">Competitive matches and regional qualifiers across age groups. All teams participate
+          in CEVA region tournaments with qualifying opportunities for regional competitions.</p>
 
         <!-- Schedule Tabs -->
         <div class="schedule-tabs">
@@ -754,7 +208,8 @@
                 </tr>
                 <tr>
                   <td class="schedule-date">5/2/26–5/3/26</td>
-                  <td class="schedule-regional">CEVA Regional Tournament <span class="schedule-qualifier">(IF QUALIFIED)</span></td>
+                  <td class="schedule-regional">CEVA Regional Tournament <span class="schedule-qualifier">(IF
+                      QUALIFIED)</span></td>
                 </tr>
               </tbody>
             </table>
@@ -795,7 +250,8 @@
                 </tr>
                 <tr>
                   <td class="schedule-date">4/25/26–4/26/26</td>
-                  <td class="schedule-regional">CEVA Regional Tournament <span class="schedule-qualifier">(IF QUALIFIED)</span></td>
+                  <td class="schedule-regional">CEVA Regional Tournament <span class="schedule-qualifier">(IF
+                      QUALIFIED)</span></td>
                 </tr>
               </tbody>
             </table>
@@ -840,7 +296,8 @@
                 </tr>
                 <tr>
                   <td class="schedule-date">4/25/26–4/26/26</td>
-                  <td class="schedule-regional">CEVA Regional Tournament <span class="schedule-qualifier">(IF QUALIFIED)</span></td>
+                  <td class="schedule-regional">CEVA Regional Tournament <span class="schedule-qualifier">(IF
+                      QUALIFIED)</span></td>
                 </tr>
               </tbody>
             </table>
@@ -893,19 +350,34 @@
         <p class="section-subtitle">We're looking for athletes who are curious, coachable, and excited to grow.</p>
 
         <h3>Join Our Club Teams</h3>
-        <p>We're not just looking for the most skilled players — we're looking for athletes who are curious, coachable, and excited to grow. At TVVC, our tryouts focus on learning potential, effort, attitude, and how players connect with others on the court. Registration is now open!</p>
+        <p><strong>Curious. Coachable. Excited to grow.</strong> That's who we're looking for. Our tryouts focus on 
+          learning potential, effort, attitude, and how players connect on the court. Registration is now open!</p>
 
         <h3>Upcoming Tryout Dates</h3>
         <ul>
-          <li><strong>12U–14U:</strong> November 9, 5:00–7:00 PM<br><em>Location: <a href="https://maps.app.goo.gl/WYTsCRyFvMsXBBj56" target="_blank" rel="noopener noreferrer">South Meadows Middle School</a></em><br><em class="text-small">Parking lot accessed off SE Brookwood Ave, next to the football field.</em></li>
-          <li><strong>15U:</strong> November 16, 1:30–3:30 PM<br><em>Location: <a href="https://maps.app.goo.gl/YJmziPGYLnYW8vuD6" target="_blank" rel="noopener noreferrer">Century High School</a></em><br><em class="text-small">Park in the north parking lot next to the football field. Enter through the north entrance.</em></li>
-          <li><strong>16U:</strong> November 16, 4:00–6:00 PM<br><em>Location: <a href="https://maps.app.goo.gl/YJmziPGYLnYW8vuD6" target="_blank" rel="noopener noreferrer">Century High School</a></em><br><em class="text-small">Park in the north parking lot next to the football field. Enter through the north entrance.</em></li>
-          <li><strong>17U–18U:</strong> November 16, 6:30–8:30 PM<br><em>Location: <a href="https://maps.app.goo.gl/YJmziPGYLnYW8vuD6" target="_blank" rel="noopener noreferrer">Century High School</a></em><br><em class="text-small">Park in the north parking lot next to the football field. Enter through the north entrance.</em></li>
+          <li><strong>12U–14U:</strong> November 9, 5:00–7:00 PM<br><em>Location: <a
+                href="https://maps.app.goo.gl/WYTsCRyFvMsXBBj56" target="_blank" rel="noopener noreferrer">South Meadows
+                Middle School</a></em><br><em class="text-small">Parking lot accessed off SE Brookwood Ave, next to the
+              football field.</em></li>
+          <li><strong>15U:</strong> November 16, 1:30–3:30 PM<br><em>Location: <a
+                href="https://maps.app.goo.gl/YJmziPGYLnYW8vuD6" target="_blank" rel="noopener noreferrer">Century High
+                School</a></em><br><em class="text-small">Park in the north parking lot next to the football field.
+              Enter through the north entrance.</em></li>
+          <li><strong>16U:</strong> November 16, 4:00–6:00 PM<br><em>Location: <a
+                href="https://maps.app.goo.gl/YJmziPGYLnYW8vuD6" target="_blank" rel="noopener noreferrer">Century High
+                School</a></em><br><em class="text-small">Park in the north parking lot next to the football field.
+              Enter through the north entrance.</em></li>
+          <li><strong>17U–18U:</strong> November 16, 6:30–8:30 PM<br><em>Location: <a
+                href="https://maps.app.goo.gl/YJmziPGYLnYW8vuD6" target="_blank" rel="noopener noreferrer">Century High
+                School</a></em><br><em class="text-small">Park in the north parking lot next to the football field.
+              Enter through the north entrance.</em></li>
         </ul>
 
         <h3>What to Bring</h3>
         <ul>
-          <li><strong>USAV Membership Required:</strong> <a href="https://cevaregion.org/membership/" target="_blank" rel="noopener noreferrer">Purchase a Girls Tryout Membership via CEVA</a>. If you make a team, this tryout membership cost will be applied to your full season membership.</li>
+          <li><strong>USAV Membership Required:</strong> <a href="https://cevaregion.org/membership/" target="_blank"
+              rel="noopener noreferrer">Purchase a Girls Tryout Membership via CEVA</a>. If you make a team, this tryout
+            membership cost will be applied to your full season membership.</li>
           <li>Athletic attire and volleyball shoes</li>
           <li>Water bottle and small towel</li>
         </ul>
@@ -930,7 +402,8 @@
         <div class="faq-section">
           <details>
             <summary>What if my child can't attend tryouts?</summary>
-            <p>Please contact us at <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a> — we can often arrange an alternate evaluation.</p>
+            <p>Please contact us at <a href="mailto:info@tualatinvalleyvb.com">info@tualatinvalleyvb.com</a> — we can
+              often arrange an alternate evaluation.</p>
           </details>
           <details>
             <summary>Do returning players need to try out?</summary>
@@ -938,7 +411,8 @@
           </details>
           <details>
             <summary>How are players evaluated?</summary>
-            <p>We assess learning potential, effort, attitude, and how players connect with others on the court. Technical skill is important, but we also value coachability and growth mindset.</p>
+            <p>We assess learning potential, effort, attitude, and how players connect with others on the court.
+              Technical skill is important, but we also value coachability and growth mindset.</p>
           </details>
           <details>
             <summary>When will I hear back about team placement?</summary>
@@ -972,12 +446,14 @@
         </div>
         <div class="footer-section">
           <h3>Quick Links</h3>
-          <ul style="list-style: none; padding: 0;">
+          <ul class="list-unstyled">
             <li><a href="index.html">Home</a></li>
             <li><a href="teams.html">Teams & Tryouts</a></li>
             <li><a href="programs.html">Programs</a></li>
             <li><a href="faq.html">FAQ</a></li>
-            <li><a href="https://docs.google.com/document/d/18VKMlNt7iB_H07N7GVtsXiM_d_WuHHDeXnKpczEGfvg/edit?usp=sharing" target="_blank" rel="noopener noreferrer">TVVC Handbook</a></li>
+            <li><a
+                href="https://docs.google.com/document/d/18VKMlNt7iB_H07N7GVtsXiM_d_WuHHDeXnKpczEGfvg/edit?usp=sharing"
+                target="_blank" rel="noopener noreferrer">TVVC Handbook</a></li>
             <li><a href="privacy-policy.html">Privacy Policy</a></li>
           </ul>
         </div>
@@ -991,13 +467,13 @@
   <script>
     // Tournament Schedule Tabs
     document.querySelectorAll('.schedule-tab').forEach(tab => {
-      tab.addEventListener('click', function() {
+      tab.addEventListener('click', function () {
         const tabId = this.getAttribute('data-tab');
-        
+
         // Remove active class from all tabs and contents
         document.querySelectorAll('.schedule-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.schedule-tab-content').forEach(c => c.classList.remove('active'));
-        
+
         // Add active class to clicked tab and corresponding content
         this.classList.add('active');
         const contentElement = document.getElementById(tabId);
@@ -1009,14 +485,14 @@
 
     // Tournament Schedule Accordion (Mobile)
     document.querySelectorAll('.schedule-accordion-header').forEach(header => {
-      header.addEventListener('click', function() {
+      header.addEventListener('click', function () {
         const accordionId = this.getAttribute('data-accordion');
         const contentElement = document.getElementById(accordionId);
-        
+
         // Remove active class from all accordion headers and contents
         document.querySelectorAll('.schedule-accordion-header').forEach(h => h.classList.remove('active'));
         document.querySelectorAll('.schedule-accordion-content').forEach(c => c.classList.remove('active'));
-        
+
         // Add active class to clicked header and corresponding content
         this.classList.add('active');
         if (contentElement) {
@@ -1027,4 +503,5 @@
   </script>
 
 </body>
+
 </html>
