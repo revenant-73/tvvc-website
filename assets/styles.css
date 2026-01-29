@@ -323,7 +323,7 @@ header .container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: nowrap; /* Prevent wrapping for a cleaner look */
+  width: 100%;
 }
 
 .logo {
@@ -342,18 +342,21 @@ header .container {
   margin: 0;
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-extrabold);
-  color: var(--color-charcoal);
+  color: var(--color-primary-coral); /* Modern Coral for the main text */
   letter-spacing: -0.04em;
-  line-height: 1;
+  line-height: 1.1;
+  display: flex;
+  flex-direction: column;
 }
 
 .club-accent {
-  color: var(--color-primary-teal);
-  display: block; /* Stack on mobile for better fit */
-  font-size: 0.7em;
+  color: var(--color-primary-teal); /* Striking Teal for the accent */
+  display: block;
+  font-size: 0.65em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 2px;
+  letter-spacing: 0.15em;
+  margin-bottom: -2px;
+  font-weight: var(--font-weight-bold);
 }
 
 .badge {
@@ -379,6 +382,7 @@ header .container {
   border: none;
   cursor: pointer;
   padding: var(--space-sm);
+  margin-right: -10px; /* Pull closer to right edge on mobile */
   gap: 5px;
   z-index: 1100;
 }
@@ -444,25 +448,47 @@ header .container {
   box-shadow: var(--shadow-sm);
 }
 
-.header-register-btn:hover {
+.header-register-btn:hover,
+.header-register-btn:focus,
+.header-register-btn:active {
   background-color: var(--color-primary-coral-dark) !important;
+  color: var(--color-white) !important;
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+  outline: none;
+}
+
+.header-register-btn:visited {
+  color: var(--color-white) !important;
 }
 
 /* Desktop Navigation */
-@media (min-width: 900px) {
+@media (min-width: 1100px) {
   .menu-toggle {
     display: none;
   }
 
   header .container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     padding-top: var(--space-lg);
-    padding-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    gap: var(--space-md);
+  }
+
+  .header-top {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    flex-shrink: 0;
   }
 
   .logo h1 {
     font-size: var(--font-size-2xl);
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.3em;
   }
 
   .club-accent {
@@ -471,21 +497,27 @@ header .container {
     text-transform: none;
     letter-spacing: inherit;
     margin-bottom: 0;
+    font-weight: inherit;
   }
 
   .header-nav {
     display: flex;
     flex-direction: row;
-    width: auto;
-    padding: 0;
-    gap: var(--space-md);
-    margin-left: auto;
+    width: 100%;
+    padding: var(--space-sm) 0 0;
+    gap: var(--space-xl);
+    justify-content: flex-start;
     align-items: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
   }
 
   .header-nav a {
-    padding: var(--space-xs) 0;
     font-size: var(--font-size-base);
+    transition: all var(--transition-fast);
+  }
+
+  .header-nav a:not(.header-register-btn) {
+    padding: var(--space-xs) 0;
     position: relative;
     background-color: transparent !important;
   }
@@ -506,13 +538,13 @@ header .container {
     width: 100%;
   }
 
-  .header-nav a:hover {
+  .header-nav a:not(.header-register-btn):hover {
     color: var(--color-primary-teal);
   }
 
   .header-register-btn {
     padding: var(--space-sm) var(--space-lg) !important;
-    margin-left: var(--space-sm);
+    margin-left: auto;
     border-radius: var(--radius-full) !important;
   }
 }
