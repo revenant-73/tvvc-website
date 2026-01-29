@@ -39,7 +39,7 @@ test.describe('Core Values Section', () => {
       '🔄', // Adaptability
       '🎯', // Athlete Ownership
       '🤝', // Connection
-      '⚽', // Play
+      '🏐', // Play
       '💪', // Resilience
       '🚀', // Freedom
       '✨', // Authenticity
@@ -72,16 +72,16 @@ test.describe('Core Values Section', () => {
   test('should have alternating border colors (teal, coral, orange)', async ({ page }) => {
     // Test the color pattern: teal (#00B4B3), coral (#FF6F61), orange (#FF9A56)
     const colorPattern = [
-      'rgb(0, 180, 179)',     // teal
-      'rgb(255, 111, 97)',    // coral
+      'rgb(0, 150, 149)',     // teal
+      'rgb(232, 93, 78)',     // coral
       'rgb(255, 154, 86)',    // orange
-      'rgb(0, 180, 179)',     // teal
-      'rgb(255, 111, 97)',    // coral
+      'rgb(0, 150, 149)',     // teal
+      'rgb(232, 93, 78)',     // coral
       'rgb(255, 154, 86)',    // orange
-      'rgb(0, 180, 179)',     // teal
-      'rgb(255, 111, 97)',    // coral
+      'rgb(0, 150, 149)',     // teal
+      'rgb(232, 93, 78)',     // coral
       'rgb(255, 154, 86)',    // orange
-      'rgb(0, 180, 179)',     // teal
+      'rgb(0, 150, 149)',     // teal
     ];
 
     const cards = page.locator('.value-card');

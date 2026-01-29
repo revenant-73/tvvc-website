@@ -494,27 +494,40 @@ header .container {
 }
 
 .hero-content {
-  max-width: var(--container-max-width);
-  margin: 0 auto;
+  max-width: 800px;
+  margin: 0;
   width: 100%;
-  padding: 0;
-  /* Container padding handles this */
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  padding: var(--space-xl);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (min-width: 768px) {
+  .hero-content {
+    padding: var(--space-2xl);
+    background: rgba(0, 0, 0, 0.2);
+  }
 }
 
 .hero h2 {
   color: var(--color-white);
-  font-size: clamp(2rem, 6vw, 4rem);
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
   margin-bottom: var(--space-md);
-  line-height: 1.1;
-  max-width: 800px;
+  line-height: 1;
+  max-width: 100%;
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.04em;
 }
 
 .hero p {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(1.125rem, 2.5vw, 1.35rem);
   max-width: 600px;
-  line-height: 1.5;
+  line-height: 1.4;
+  margin-bottom: var(--space-lg);
 }
 
 .hero .hero-tagline {
@@ -777,6 +790,42 @@ section:last-of-type {
 }
 
 /* ===========================
+   AGE GROUP CARDS (Teams Page)
+   =========================== */
+
+.age-group-card {
+  border-top: 6px solid;
+  position: relative;
+}
+
+.age-group-card.foundation {
+  border-top-color: var(--color-primary-teal);
+}
+
+.age-group-card.development {
+  border-top-color: var(--color-primary-coral);
+}
+
+.age-group-card.competitive {
+  border-top-color: var(--color-accent-orange);
+}
+
+.card-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-md);
+}
+
+.age-group-label {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-medium);
+  margin-bottom: var(--space-xs);
+  display: block;
+}
+
+/* ===========================
    VALUE CARDS SPECIFIC STYLING
    =========================== */
 
@@ -788,7 +837,7 @@ section:last-of-type {
 }
 
 .value-icon {
-  font-size: 3rem;
+  font-size: var(--font-size-3xl);
   margin-bottom: var(--space-md);
   display: block;
   line-height: 1;
@@ -853,6 +902,275 @@ section:last-of-type {
 
 .value-card-10 {
   border-left-color: var(--color-primary-teal);
+}
+
+/* ===========================
+   LOGISTICS GRID
+   =========================== */
+
+.logistics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md);
+  margin: var(--space-xl) 0;
+}
+
+.logistics-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background-color: var(--color-white);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  transition: all var(--transition-fast);
+}
+
+.logistics-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-teal);
+}
+
+.logistics-icon {
+  font-size: 2rem;
+  background-color: var(--color-bg-lighter);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+}
+
+.logistics-content h4 {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.logistics-content p {
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-charcoal);
+}
+
+/* ===========================
+   FINANCIAL GRID
+   =========================== */
+
+.financial-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+  margin: var(--space-xl) 0;
+}
+
+@media (min-width: 768px) {
+  .financial-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.financial-card {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.financial-card.highlight {
+  border: 2px solid var(--color-primary-teal);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-badge {
+  position: absolute;
+  top: 1rem;
+  right: -2rem;
+  background-color: var(--color-primary-teal);
+  color: var(--color-white);
+  padding: 0.25rem 3rem;
+  transform: rotate(45deg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+}
+
+.price-tag {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin: var(--space-md) 0;
+}
+
+.price-tag .currency {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-teal);
+}
+
+.price-tag .amount {
+  font-size: 3.5rem;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1;
+  color: var(--color-charcoal);
+  letter-spacing: -0.02em;
+}
+
+.price-tag .period {
+  font-size: var(--font-size-base);
+  color: var(--color-gray-medium);
+}
+
+.includes-label {
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-sm);
+  color: var(--color-charcoal);
+}
+
+.check-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.check-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.check-list li::before {
+  content: "✓";
+  color: var(--color-primary-teal);
+  font-weight: var(--font-weight-bold);
+}
+
+.payment-plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  background-color: var(--color-bg-lighter);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  margin: var(--space-md) 0;
+}
+
+.plan-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-label {
+  color: var(--color-gray-dark);
+  font-weight: var(--font-weight-medium);
+}
+
+.plan-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-charcoal);
+}
+
+.plan-divider {
+  height: 1px;
+  background-color: var(--color-border-light);
+}
+
+.assistance-box {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: auto;
+  padding-top: var(--space-lg);
+  border-top: 1px dashed var(--color-border-light);
+}
+
+.assistance-icon {
+  font-size: 1.5rem;
+}
+
+.assistance-content p {
+  margin: 0 0 4px;
+  font-size: var(--font-size-sm);
+}
+
+.text-link {
+  color: var(--color-primary-teal);
+  font-weight: var(--font-weight-bold);
+  text-decoration: underline;
+  font-size: var(--font-size-sm);
+}
+
+/* ===========================
+   TRYOUT GRID
+   =========================== */
+
+.tryout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-lg);
+  margin: var(--space-xl) 0;
+}
+
+.tryout-card {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  position: relative;
+  transition: all var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+}
+
+.tryout-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary-coral);
+}
+
+.tryout-date-badge {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  background-color: var(--color-primary-coral);
+  color: var(--color-white);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.tryout-card h4 {
+  margin: 0 0 var(--space-xs);
+  color: var(--color-primary-teal);
+  font-size: var(--font-size-xl);
+}
+
+.tryout-time {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-charcoal);
+  margin-bottom: var(--space-md);
+}
+
+.tryout-location {
+  margin-bottom: var(--space-md);
+  line-height: 1.4;
+}
+
+.tryout-location strong {
+  display: block;
+  color: var(--color-charcoal);
 }
 
 /* ===========================
@@ -1476,33 +1794,74 @@ select:focus-visible {
 
 .schedule-tabs {
   display: flex;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
-  border-bottom: 2px solid var(--color-border-light);
-  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+  justify-content: center;
+  border-bottom: none;
 }
 
 .schedule-tab {
-  padding: var(--space-md) var(--space-lg);
-  background: none;
-  border: none;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-bg-lighter);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-full);
   cursor: pointer;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-gray-dark);
   transition: all var(--transition-fast);
-  border-bottom: 3px solid transparent;
-  position: relative;
-  bottom: -2px;
+  position: static;
 }
 
 .schedule-tab:hover {
+  background-color: var(--color-bg-light);
   color: var(--color-primary-teal);
+  border-color: var(--color-primary-teal);
 }
 
 .schedule-tab.active {
+  background-color: var(--color-primary-teal);
+  color: var(--color-white);
+  border-color: var(--color-primary-teal);
+  box-shadow: var(--shadow-md);
+}
+
+.schedule-accordion-header {
+  display: none;
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  text-align: left;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-heading);
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.schedule-accordion-header::after {
+  content: "+";
+  position: absolute;
+  right: var(--space-lg);
+  font-size: 1.5rem;
   color: var(--color-primary-teal);
-  border-bottom-color: var(--color-primary-teal);
+}
+
+.schedule-accordion-header.active {
+  background-color: var(--color-primary-teal);
+  color: var(--color-white);
+  border-color: var(--color-primary-teal);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-bottom: 0;
+}
+
+.schedule-accordion-header.active::after {
+  content: "−";
+  color: var(--color-white);
 }
 
 .schedule-tab-content {
@@ -1511,6 +1870,12 @@ select:focus-visible {
 
 .schedule-tab-content.active {
   display: block;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .age-group-heading:first-of-type {
@@ -1642,26 +2007,31 @@ select:focus-visible {
 
 .subnav {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   justify-content: center;
   flex-wrap: wrap;
-  margin: var(--space-lg) 0;
-  padding: var(--space-md) 0;
-  border-top: 1px solid var(--color-border-light);
+  margin: 0;
+  padding: var(--space-sm) 0;
+  background-color: var(--color-white);
   border-bottom: 1px solid var(--color-border-light);
+  position: sticky;
+  top: 60px; /* Below the main header */
+  z-index: 900;
+  box-shadow: var(--shadow-sm);
 }
 
 .subnav a {
-  color: var(--color-charcoal);
+  color: var(--color-gray-dark);
   text-decoration: none;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-base);
-  padding: var(--space-sm) var(--space-md);
-  transition: color var(--transition-fast);
-  scroll-behavior: smooth;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  padding: var(--space-xs) var(--space-md);
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-full);
 }
 
 .subnav a:hover {
+  background-color: var(--color-bg-lighter);
   color: var(--color-primary-teal);
 }
 
@@ -1873,9 +2243,29 @@ select:focus-visible {
 
   .schedule-tab-content {
     border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-md);
+    border-top: none;
+    border-bottom-left-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
     overflow: hidden;
     margin-bottom: var(--space-md);
+  }
+
+  .schedule-tab-content.active {
+    display: block;
+    animation: none; /* Disable animation on mobile accordion for better performance */
+  }
+}
+
+@media (max-width: 768px) {
+  .subnav {
+    position: static;
+    box-shadow: none;
+    padding: var(--space-md) var(--container-padding);
+  }
+  
+  .hero-content {
+    margin: 0 var(--container-padding);
+    padding: var(--space-lg);
   }
 }
 

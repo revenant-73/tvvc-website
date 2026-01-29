@@ -459,13 +459,13 @@ test.describe('Tournament Schedule Feature', () => {
       await page.setViewportSize({ width: 375, height: 667 });
       await page.goto('http://localhost:8000/teams.html');
       
-      const tabs = ['14U Division', '16U Division', '18U Division'];
+      const accordions = ['14U Division', '16U Division', '18U Division'];
       const tabIds = ['schedule-14u', 'schedule-16u', 'schedule-18u'];
       
-      for (let i = 0; i < tabs.length; i++) {
-        // Click on the tab
-        const tab = page.locator('.schedule-tab').filter({ hasText: tabs[i] });
-        await tab.click();
+      for (let i = 0; i < accordions.length; i++) {
+        // Click on the accordion header
+        const header = page.locator('.schedule-accordion-header').filter({ hasText: accordions[i] });
+        await header.click();
         
         // Check if table is visible
         const table = page.locator(`#${tabIds[i]} .schedule-table`);
