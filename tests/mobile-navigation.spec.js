@@ -31,16 +31,18 @@ test.describe('Mobile Navigation Menu', () => {
 
         // All navigation items should be visible
         const navLinks = headerNav.locator('a');
-        await expect(navLinks).toHaveCount(7);
+        await expect(navLinks).toHaveCount(9);
 
         // Check each nav item is visible
         await expect(navLinks.nth(0)).toContainText('Home');
         await expect(navLinks.nth(1)).toContainText('Teams');
         await expect(navLinks.nth(2)).toContainText('Programs');
-        await expect(navLinks.nth(3)).toContainText('Events');
-        await expect(navLinks.nth(4)).toContainText('FAQ');
-        await expect(navLinks.nth(5)).toContainText('Contact');
-        await expect(navLinks.nth(6)).toContainText('Parent Dashboard');
+        await expect(navLinks.nth(3)).toContainText('Summer Camps & Clinics');
+        await expect(navLinks.nth(4)).toContainText('Outdoor Events');
+        await expect(navLinks.nth(5)).toContainText('Events');
+        await expect(navLinks.nth(6)).toContainText('FAQ');
+        await expect(navLinks.nth(7)).toContainText('Contact');
+        await expect(navLinks.nth(8)).toContainText('Parent Dashboard');
       });
 
       test('mobile: hamburger icon displays at breakpoint', async ({ page }) => {
@@ -136,9 +138,9 @@ test.describe('Mobile Navigation Menu', () => {
 
         // All navigation items should be visible
         const navLinks = headerNav.locator('a');
-        await expect(navLinks).toHaveCount(7);
+        await expect(navLinks).toHaveCount(9);
 
-        const expectedItems = ['Home', 'Teams', 'Programs', 'Events', 'FAQ', 'Contact', 'Parent Dashboard'];
+        const expectedItems = ['Home', 'Teams', 'Programs', 'Summer Camps & Clinics', 'Outdoor Events', 'Events', 'FAQ', 'Contact', 'Parent Dashboard'];
         for (let i = 0; i < expectedItems.length; i++) {
           await expect(navLinks.nth(i)).toBeVisible();
           await expect(navLinks.nth(i)).toContainText(expectedItems[i]);
