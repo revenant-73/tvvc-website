@@ -79,11 +79,11 @@
         <div class="event-details-grid">
           <div class="detail-card">
             <h3>14U</h3>
-            <p><strong>Saturday, May 9</strong><br>12 teams</p>
+            <p><strong>Saturday, May 9</strong><br>Max 12 teams</p>
           </div>
           <div class="detail-card">
             <h3>16U</h3>
-            <p><strong>Sunday, May 10</strong><br>12 teams</p>
+            <p><strong>Sunday, May 10</strong><br>Max 12 teams</p>
           </div>
           <div class="detail-card">
             <h3>Location & Time</h3>
@@ -96,27 +96,8 @@
         </div>
 
         <div class="highlight-box highlight-box-danger">
+          <p>The tournament format will be dependent on the total number of teams participating in each division.</p>
           <p class="mb-0">Teams register through Parent Dashboard closer to the event date.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Tournament Format -->
-    <section id="format" class="alt">
-      <div class="container">
-        <h2>Tournament Format</h2>
-
-        <div class="event-details-grid">
-          <div class="detail-card">
-            <h3>Pool Play</h3>
-            <p><strong>12 teams</strong> split into <strong>3 pools of 4</strong><br>Guaranteed full day of play for
-              every team</p>
-          </div>
-          <div class="detail-card">
-            <h3>Playoffs</h3>
-            <p><strong>Gold Bracket:</strong> Top 8 teams<br><strong>Silver Bracket:</strong> Next 4 teams<br>All teams
-              compete through completion</p>
-          </div>
         </div>
       </div>
     </section>
@@ -131,7 +112,7 @@
           </div>
           <div class="detail-card">
             <h3>🏐 For Non-Regional Teams</h3>
-            <p>Your moment to shine with competitive, fun season wrap-up play.</p>
+            <p>Your moment to shine with competitive, fun season wrap-up play. Teams who know they won't be playing in CEVA Regionals may <a href="mailto:info@tualatinvalleyvb.com">email us</a> to secure a spot before registration opens.</p>
           </div>
           <div class="detail-card">
             <h3>Spectators Welcome</h3>
@@ -151,7 +132,7 @@
           </a>
         </div>
         <p class="text-center text-sm">
-          <strong>Registration opens April 20, 2026.</strong> We'll notify you when doors open.
+          <strong>Registration opens April 10, 2026.</strong> We'll notify you when doors open.
         </p>
 
         <div class="highlight-box">
@@ -223,7 +204,7 @@
       const registerBtn = document.getElementById('registerBtn');
       const today = new Date();
       const currentYear = today.getFullYear();
-      const registrationOpenDate = new Date(currentYear, 3, 25);
+      const registrationOpenDate = new Date(currentYear, 3, 10);
 
       if (today >= registrationOpenDate) {
         registerBtn.disabled = false;
