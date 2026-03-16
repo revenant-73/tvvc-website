@@ -46,6 +46,68 @@
       font-weight: var(--font-weight-bold);
       margin-bottom: var(--space-sm);
     }
+    .btn-clinic {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-sm);
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      margin-left: 8px;
+    }
+    .btn-serving {
+      background-color: var(--color-primary-teal);
+      color: white;
+    }
+    .btn-serving:hover {
+      background-color: var(--color-primary-teal-dark);
+      color: white;
+      transform: translateY(-1px);
+    }
+    .btn-hitting {
+      background-color: var(--color-primary-coral);
+      color: white;
+    }
+    .btn-hitting:hover {
+      background-color: var(--color-primary-coral-dark);
+      color: white;
+      transform: translateY(-1px);
+    }
+    .btn-defense {
+      background-color: var(--color-accent-orange);
+      color: white;
+    }
+    .btn-defense:hover {
+      background-color: #e68a4b; /* Slightly darker orange */
+      color: white;
+      transform: translateY(-1px);
+    }
+    .clinic-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px dashed var(--color-border-light);
+    }
+    .clinic-list li:last-child {
+      border-bottom: none;
+    }
+    .clinic-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .clinic-time {
+      font-weight: var(--font-weight-bold);
+      color: var(--color-charcoal);
+    }
+    .clinic-name {
+      color: var(--color-gray-dark);
+      font-size: var(--font-size-sm);
+    }
   </style>
 </head>
 
@@ -117,7 +179,7 @@
           </div>
           <div class="feature-box">
             <h3>Registration Info</h3>
-            <p>Public registration opens <strong>March 2026</strong>. Early enrollment will be offered to current TVVC families before public registration opens.</p>
+            <p>Public registration is now <strong>OPEN</strong>. Early enrollment has been offered to current TVVC families.</p>
             <p><em>"Cost should never be the reason an athlete misses out. If finances are a barrier, please reach out — we will work something out."</em></p>
           </div>
         </div>
@@ -132,7 +194,7 @@
                 <p><strong>Who it’s for:</strong> Athletes entering 6th–8th grade new to organized volleyball.</p>
                 <p>Introduces foundational skills (serving, passing, setting, attacking) inside a team system through game-like activities.</p>
               </div>
-              <button class="btn btn-disabled" disabled>Registration Open Soon!</button>
+              <a href="https://tvvc.volleyballcentral.io/e/6th8th-grade-volleyball-foundations-camp" target="_blank" rel="noopener noreferrer" class="btn">Register Now</a>
             </div>
 
             <!-- June 22-24 -->
@@ -143,7 +205,7 @@
                 <p><strong>Who it’s for:</strong> Athletes developing approach, arm swing, timing, and coordination.</p>
                 <p>Focuses on building a strong attacking foundation within realistic game-like scenarios.</p>
               </div>
-              <button class="btn btn-disabled" disabled>Registration Open Soon!</button>
+              <a href="https://tvvc.volleyballcentral.io/e/hitting-foundations-camp" target="_blank" rel="noopener noreferrer" class="btn">Register Now</a>
             </div>
 
             <!-- July 6-8 -->
@@ -154,7 +216,7 @@
                 <p><strong>Who it’s for:</strong> Athletes entering 6th–8th grade who have played school/club team.</p>
                 <p>Increased pace, longer rallies, and harder decisions. Sharpening the edge of technical and tactical skills.</p>
               </div>
-              <button class="btn btn-disabled" disabled>Registration Open Soon!</button>
+              <a href="https://tvvc.volleyballcentral.io/e/6th-8th-grade-volleyball-performance-camp" target="_blank" rel="noopener noreferrer" class="btn">Register Now</a>
             </div>
 
             <!-- July 13-15 -->
@@ -165,7 +227,7 @@
                 <p><strong>Who it’s for:</strong> Athletes entering 4th–6th grade newer to volleyball.</p>
                 <p>Building real fundamentals while falling in love with the game through energetic, game-based activities.</p>
               </div>
-              <button class="btn btn-disabled" disabled>Registration Open Soon!</button>
+              <a href="https://tvvc.volleyballcentral.io/e/4tha6th-grade-ignition-volleyball-camp" target="_blank" rel="noopener noreferrer" class="btn">Register Now</a>
             </div>
 
             <!-- July 20-22 -->
@@ -176,7 +238,7 @@
                 <p><strong>Who it’s for:</strong> Experienced hitters who want to elevate their attacking game.</p>
                 <p>Maximizing power and vertical jump while emphasizing mid-air decisions and reading the block.</p>
               </div>
-              <button class="btn btn-disabled" disabled>Registration Open Soon!</button>
+              <a href="https://tvvc.volleyballcentral.io/e/hitting-performance-camp" target="_blank" rel="noopener noreferrer" class="btn">Register Now</a>
             </div>
 
             <!-- July 27-29 -->
@@ -187,7 +249,7 @@
                 <p><strong>Who it’s for:</strong> Athletes entering 6th–8th grade newer to organized volleyball.</p>
                 <p>A second opportunity to build strong fundamentals before fall seasons begin.</p>
               </div>
-              <button class="btn btn-disabled" disabled>Registration Open Soon!</button>
+              <a href="https://tvvc.volleyballcentral.io/e/6tha8th-grade-volleyball-foundations-camp" target="_blank" rel="noopener noreferrer" class="btn">Register Now</a>
             </div>
 
             <!-- August 3-5 -->
@@ -198,7 +260,7 @@
                 <p><strong>Who it’s for:</strong> Athletes entering 9th–12th grade preparing for tryouts.</p>
                 <p>Build confidence with core systems, serve receive structure, and realistic scrimmage scenarios.</p>
               </div>
-              <button class="btn btn-disabled" disabled>Registration Open Soon!</button>
+              <a href="https://tvvc.volleyballcentral.io/e/high-school-tryout-prep-camp-1" target="_blank" rel="noopener noreferrer" class="btn">Register Now</a>
             </div>
 
             <!-- August 10-12 -->
@@ -209,7 +271,7 @@
                 <p><strong>Who it’s for:</strong> Athletes entering 9th–12th grade preparing for tryouts.</p>
                 <p>A second opportunity to sharpen readiness and build competitive clarity heading into tryouts.</p>
               </div>
-              <button class="btn btn-disabled" disabled>Registration Open Soon!</button>
+              <a href="https://tvvc.volleyballcentral.io/e/high-school-tryout-prep-camp-2" target="_blank" rel="noopener noreferrer" class="btn">Register Now</a>
             </div>
           </div>
         </div>
@@ -252,12 +314,29 @@
               <span class="date-badge" style="background-color: var(--color-primary-coral);">May Saturdays</span>
               <h3>May 16, 23, 30</h3>
               <p><strong>Designed for:</strong> 6th–9th grade athletes and newer players.</p>
-              <ul class="list-unstyled">
-                <li><strong>9:00–10:30am:</strong> Serving</li>
-                <li><strong>10:30am–12:00pm:</strong> Hitting</li>
-                <li><strong>12:00–1:30pm:</strong> Serve Receive/Defense</li>
+              <ul class="list-unstyled clinic-list">
+                <li>
+                  <div class="clinic-info">
+                    <span class="clinic-time">9:00–10:30am</span>
+                    <span class="clinic-name">Serving</span>
+                  </div>
+                  <a href="https://tvvc.volleyballcentral.io/e/serving-clinics" target="_blank" rel="noopener noreferrer" class="btn-clinic btn-serving">Register Serving</a>
+                </li>
+                <li>
+                  <div class="clinic-info">
+                    <span class="clinic-time">10:30am–12:00pm</span>
+                    <span class="clinic-name">Hitting</span>
+                  </div>
+                  <a href="https://tvvc.volleyballcentral.io/e/hitting-clinics" target="_blank" rel="noopener noreferrer" class="btn-clinic btn-hitting">Register Hitting</a>
+                </li>
+                <li>
+                  <div class="clinic-info">
+                    <span class="clinic-time">12:00–1:30pm</span>
+                    <span class="clinic-name">Serve Receive/Defense</span>
+                  </div>
+                  <a href="https://tvvc.volleyballcentral.io/e/defense-serve-receive-clinics" target="_blank" rel="noopener noreferrer" class="btn-clinic btn-defense">Register Defense</a>
+                </li>
               </ul>
-              <button class="btn btn-disabled" disabled style="margin-top: var(--space-md);">Registration Open Soon!</button>
             </div>
 
             <!-- Summer Thursday Clinics -->
@@ -265,12 +344,29 @@
               <span class="date-badge" style="background-color: var(--color-primary-coral);">Summer Thursdays</span>
               <h3>June 18 – August 13</h3>
               <p><strong>Dates:</strong> June 18, 25, July 9, 16, 23, 30, Aug 6, 13</p>
-              <ul class="list-unstyled">
-                <li><strong>8:00–9:30am:</strong> Serving</li>
-                <li><strong>9:30–11:00am:</strong> Hitting</li>
-                <li><strong>11:00am–12:30pm:</strong> Serve Receive/Defense</li>
+              <ul class="list-unstyled clinic-list">
+                <li>
+                  <div class="clinic-info">
+                    <span class="clinic-time">8:00–9:30am</span>
+                    <span class="clinic-name">Serving</span>
+                  </div>
+                  <a href="https://tvvc.volleyballcentral.io/e/serving-clinics" target="_blank" rel="noopener noreferrer" class="btn-clinic btn-serving">Register Serving</a>
+                </li>
+                <li>
+                  <div class="clinic-info">
+                    <span class="clinic-time">9:30–11:00am</span>
+                    <span class="clinic-name">Hitting</span>
+                  </div>
+                  <a href="https://tvvc.volleyballcentral.io/e/hitting-clinics" target="_blank" rel="noopener noreferrer" class="btn-clinic btn-hitting">Register Hitting</a>
+                </li>
+                <li>
+                  <div class="clinic-info">
+                    <span class="clinic-time">11:00am–12:30pm</span>
+                    <span class="clinic-name">Serve Receive/Defense</span>
+                  </div>
+                  <a href="https://tvvc.volleyballcentral.io/e/defense-serve-receive-clinics" target="_blank" rel="noopener noreferrer" class="btn-clinic btn-defense">Register Defense</a>
+                </li>
               </ul>
-              <button class="btn btn-disabled" disabled style="margin-top: var(--space-md);">Registration Open Soon!</button>
             </div>
           </div>
         </div>

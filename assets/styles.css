@@ -793,6 +793,7 @@ section:last-of-type {
 .btn:hover,
 .btn:focus {
   background-color: var(--color-primary-coral-dark);
+  color: var(--color-white);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   text-decoration: none;

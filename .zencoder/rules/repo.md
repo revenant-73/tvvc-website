@@ -13,13 +13,14 @@ The **TVVC Website** is the official online presence for the Tualatin Valley Vol
 - [**./assets/**](./assets/): Shared resources including the centralized [**./assets/styles.css**](./assets/styles.css) and [**./assets/menu-toggle.js**](./assets/menu-toggle.js).
 - [**./assets/images/**](./assets/images/): Directory for all image assets used across the site.
 - [**./tests/**](./tests/): Comprehensive end-to-end test suite using Playwright.
-- [**./.zencoder/**](./.zencoder/): Contains AI-specific rules and development workflows.
+- [**./.zencoder/**](./.zencoder/): Contains AI-specific rules and development workflows (excluded via `.gitignore`).
 
 ## Language & Runtime
 **Language**: HTML5, CSS3, Vanilla JavaScript  
 **Runtime**: Node.js 16+ (Testing environment), Python 3.6+ (Local development server)  
 **Build System**: Static site (Direct deployment)  
 **Package Manager**: npm (v10.9.2 or compatible)
+**Registration Status**: Summer 2026 Registration is now **OPEN**.
 
 ## Dependencies
 **Main Dependencies**:
@@ -72,7 +73,7 @@ npm run test:ui
 ## CSS Architecture & Design System
 The project follows a "Shared Core, Page-Specific Extensions" strategy:
 - **Design Tokens**: Centralized in `:root` of [**./assets/styles.css**](./assets/styles.css) using CSS variables.
-  - **Colors**: Teal (`#00B4B3`), Coral (`#FF6F61`), Charcoal (`#222222`).
+  - **Colors**: Teal (`#009695`), Coral (`#E85D4E`), Charcoal (`#1A1A1A`).
   - **Spacing**: 8px base scale (e.g., `--space-md: 16px`).
 - **Shared Styles**: Global resets, header/footer layouts, and common components (buttons, sections) are defined in the shared stylesheet.
 - **Page-Specific Styles**: Unique styling for specific components (like tournament tables or FAQ cards) are contained within `<style>` blocks in the respective HTML files.
