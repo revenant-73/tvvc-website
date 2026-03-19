@@ -90,6 +90,10 @@
 
   /* Heights */
   --announcement-bar-height: 2.375rem;
+
+  /* Container Settings */
+  --container-max-width: 1200px;
+  --container-padding: 2rem;
 }
 
 /* ===========================
@@ -2135,10 +2139,6 @@ select:focus-visible {
 }
 
 .subnav {
-  display: flex;
-  gap: var(--space-sm);
-  justify-content: center;
-  flex-wrap: wrap;
   margin: 0;
   padding: var(--space-sm) 0;
   background-color: var(--color-white);
@@ -2147,6 +2147,13 @@ select:focus-visible {
   top: 60px; /* Below the main header */
   z-index: 900;
   box-shadow: var(--shadow-sm);
+}
+
+.subnav .container {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .subnav a {
