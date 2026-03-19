@@ -315,9 +315,6 @@ li {
   font-size: var(--font-size-sm);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  position: sticky;
-  top: 0;
-  z-index: 1100;
   display: block;
   text-decoration: none;
   transition: background-color var(--transition-fast);
@@ -344,7 +341,7 @@ header {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   position: sticky;
-  top: var(--announcement-bar-height);
+  top: 0;
   z-index: 1000;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: var(--shadow-sm);
