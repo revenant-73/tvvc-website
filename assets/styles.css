@@ -348,13 +348,69 @@ header {
   z-index: 1000;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: var(--shadow-sm);
-  transition: all var(--transition-base);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  width: 100%;
+}
+
+/* Dynamic Floating Pill State */
+header.scrolled {
+  position: fixed;
+  top: var(--space-md);
+  left: 0;
+  right: 0;
+  width: calc(100% - (var(--container-padding) * 2));
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--shadow-lg);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+@media (min-width: 1100px) {
+  header.scrolled {
+    top: var(--space-sm);
+    border-radius: var(--radius-full);
+  }
 }
 
 header .container {
   padding-top: var(--space-md);
   padding-bottom: var(--space-md);
-  transition: padding var(--transition-base);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+header.scrolled .container {
+  padding-top: var(--space-sm);
+  padding-bottom: var(--space-sm);
+}
+
+header.scrolled .logo {
+  transform: scale(0.9);
+}
+
+header.scrolled .logo h1 {
+  font-size: var(--font-size-lg);
+}
+
+header.scrolled .badge {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  padding: 0;
+  margin: 0;
+}
+
+@media (min-width: 1100px) {
+  header.scrolled .logo h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  header.scrolled .header-nav {
+    padding-top: var(--space-xs);
+    gap: var(--space-lg);
+    border-top-color: transparent;
+  }
 }
 
 .header-top {
