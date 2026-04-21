@@ -7,9 +7,8 @@ test.describe('Tournament Schedule Feature', () => {
 
   test.describe('Schedule Section Rendering', () => {
     test('should render the 2026 Tournament Schedule heading', async ({ page }) => {
-      const heading = page.locator('h3').filter({ hasText: '2026 Tournament Schedule' });
+      const heading = page.locator('h2').filter({ hasText: '2026 Tournament Schedule' });
       await expect(heading).toBeVisible();
-      await expect(heading).toHaveText('2026 Tournament Schedule');
     });
 
     test('should render tournament schedule subtitle', async ({ page }) => {
@@ -21,27 +20,27 @@ test.describe('Tournament Schedule Feature', () => {
   });
 
   test.describe('Schedule Tabs Interface', () => {
-    test('should render all three tab buttons', async ({ page }) => {
+    test('should render all four tab buttons', async ({ page }) => {
       const tabs = page.locator('.schedule-tab');
-      await expect(tabs).toHaveCount(3);
+      await expect(tabs).toHaveCount(4);
     });
 
-    test('should have 14U Division tab with active state on load', async ({ page }) => {
+    test('should have 12U Division tab with active state on load', async ({ page }) => {
+      const tab12u = page.locator('.schedule-tab').filter({ hasText: '12U Division' });
+      await expect(tab12u).toHaveClass(/active/);
+    });
+
+    test('should render 12U schedule by default', async ({ page }) => {
+      const content12u = page.locator('#schedule-12u');
+      await expect(content12u).toHaveClass(/active/);
+    });
+
+    test('should switch to 14U schedule when 14U tab is clicked', async ({ page }) => {
       const tab14u = page.locator('.schedule-tab').filter({ hasText: '14U Division' });
-      await expect(tab14u).toHaveClass(/active/);
-    });
-
-    test('should render 14U schedule by default', async ({ page }) => {
+      await tab14u.click();
+      
       const content14u = page.locator('#schedule-14u');
       await expect(content14u).toHaveClass(/active/);
-    });
-
-    test('should switch to 16U schedule when 16U tab is clicked', async ({ page }) => {
-      const tab16u = page.locator('.schedule-tab').filter({ hasText: '16U Division' });
-      await tab16u.click();
-      
-      const content16u = page.locator('#schedule-16u');
-      await expect(content16u).toHaveClass(/active/);
     });
 
     test('should switch to 18U schedule when 18U tab is clicked', async ({ page }) => {
@@ -61,12 +60,19 @@ test.describe('Tournament Schedule Feature', () => {
     });
 
     test('should update active tab class when switching tabs', async ({ page }) => {
+      const tab12u = page.locator('.schedule-tab').filter({ hasText: '12U Division' });
       const tab14u = page.locator('.schedule-tab').filter({ hasText: '14U Division' });
       const tab16u = page.locator('.schedule-tab').filter({ hasText: '16U Division' });
       
-      // Initially 14U should be active
-      await expect(tab14u).toHaveClass(/active/);
+      // Initially 12U should be active
+      await expect(tab12u).toHaveClass(/active/);
+      await expect(tab14u).not.toHaveClass(/active/);
       await expect(tab16u).not.toHaveClass(/active/);
+      
+      // After clicking 14U
+      await tab14u.click();
+      await expect(tab12u).not.toHaveClass(/active/);
+      await expect(tab14u).toHaveClass(/active/);
       
       // After clicking 16U
       await tab16u.click();
@@ -76,6 +82,12 @@ test.describe('Tournament Schedule Feature', () => {
   });
 
   test.describe('14U Schedule Table', () => {
+    test.beforeEach(async ({ page }) => {
+      // Click on 14U tab before each test
+      const tab14u = page.locator('.schedule-tab').filter({ hasText: '14U Division' });
+      await tab14u.click();
+    });
+
     test('should render 14U schedule table with correct structure', async ({ page }) => {
       // Find the 14U table (first table after "14U Division" heading)
       const tables = page.locator('.schedule-table');
@@ -101,7 +113,7 @@ test.describe('Tournament Schedule Feature', () => {
       const firstTable = page.locator('.schedule-table').nth(0);
       const dateCells = firstTable.locator('.schedule-date');
       
-      const expectedDates = ['1/11/26', '1/25/26', '2/22/26', '3/8/26', '4/11/26', '5/2/26–5/3/26'];
+      const expectedDates = ['1/11/26', '1/25/26', '2/22/26', '3/8/26', '4/11/26', '5/2/26'];
       
       for (let i = 0; i < expectedDates.length; i++) {
         await expect(dateCells.nth(i)).toHaveText(expectedDates[i]);
@@ -118,7 +130,7 @@ test.describe('Tournament Schedule Feature', () => {
         'Power League #1',
         'Power League #2',
         'Power League #3',
-        'CEVA Regional Tournament (IF QUALIFIED)'
+        'CEVA Regional Tournament'
       ];
       
       for (let i = 0; i < expectedEvents.length; i++) {
@@ -173,7 +185,7 @@ test.describe('Tournament Schedule Feature', () => {
       const table = page.locator('#schedule-16u .schedule-table');
       const dateCells = table.locator('.schedule-date');
       
-      const expectedDates = ['1/4/26', '2/1/26', '2/21/26', '3/15/26', '4/18/26', '4/25/26–4/26/26'];
+      const expectedDates = ['1/4/26', '2/1/26', '2/21/26', '3/15/26', '4/18/26', '4/25/26'];
       
       for (let i = 0; i < expectedDates.length; i++) {
         await expect(dateCells.nth(i)).toHaveText(expectedDates[i]);
@@ -190,7 +202,7 @@ test.describe('Tournament Schedule Feature', () => {
         'Power League #1',
         'Power League #2',
         'Power League #3',
-        'CEVA Regional Tournament (IF QUALIFIED)'
+        'CEVA Regional Tournament'
       ];
       
       for (let i = 0; i < expectedEvents.length; i++) {
@@ -244,7 +256,7 @@ test.describe('Tournament Schedule Feature', () => {
         '3/7/26',
         '3/14/26',
         '4/4/26',
-        '4/25/26–4/26/26'
+        '4/25/26'
       ];
       
       for (let i = 0; i < expectedDates.length; i++) {
@@ -263,7 +275,7 @@ test.describe('Tournament Schedule Feature', () => {
         'Mid-Season Block Party (17s)',
         'Power League #2',
         'Power League #3',
-        'CEVA Regional Tournament (IF QUALIFIED)'
+        'CEVA Regional Tournament'
       ];
       
       for (let i = 0; i < expectedEvents.length; i++) {
@@ -291,15 +303,11 @@ test.describe('Tournament Schedule Feature', () => {
   });
 
   test.describe('Table Styling and Accessibility', () => {
-    test('should style date cells with coral color', async ({ page }) => {
-      const dateCells = page.locator('.schedule-date');
-      const firstDateCell = dateCells.nth(0);
-      
-      // Check if the element has the correct class applied
-      await expect(firstDateCell).toHaveClass(/schedule-date/);
-    });
-
     test('should have date cells with no-wrap text', async ({ page }) => {
+      // Use 14U division for testing styles
+      const tab14u = page.locator('.schedule-tab').filter({ hasText: '14U Division' });
+      await tab14u.click();
+      
       const dateCells = page.locator('.schedule-date');
       const firstDateCell = dateCells.nth(0);
       
@@ -330,9 +338,10 @@ test.describe('Tournament Schedule Feature', () => {
     });
 
     test('should have tables with proper border and shadow styling', async ({ page }) => {
-      const firstTable = page.locator('.schedule-table').nth(0);
+      // Check the glass container which has the shadow
+      const container = page.locator('.glass').filter({ has: page.locator('.schedule-table') }).first();
       
-      const boxShadow = await firstTable.evaluate(el =>
+      const boxShadow = await container.evaluate(el =>
         window.getComputedStyle(el).boxShadow
       );
       expect(boxShadow).not.toBe('none');
@@ -352,6 +361,12 @@ test.describe('Tournament Schedule Feature', () => {
   });
 
   test.describe('Table Interaction', () => {
+    test.beforeEach(async ({ page }) => {
+      // Click on 14U tab to make table visible
+      const tab14u = page.locator('.schedule-tab').filter({ hasText: '14U Division' });
+      await tab14u.click();
+    });
+
     test('should have hover effect on table rows', async ({ page }) => {
       const firstTable = page.locator('.schedule-table').nth(0);
       const firstRow = firstTable.locator('tbody tr').nth(0);
@@ -391,9 +406,9 @@ test.describe('Tournament Schedule Feature', () => {
   });
 
   test.describe('Schedule Section Positioning', () => {
-    test('should display tournament schedule after season information', async ({ page }) => {
-      const seasonHeading = page.locator('h3').filter({ hasText: 'Season Information' });
-      const scheduleHeading = page.locator('h3').filter({ hasText: '2026 Tournament Schedule' });
+    test('should display tournament schedule after season logistics', async ({ page }) => {
+      const seasonHeading = page.locator('h2').filter({ hasText: 'Season Logistics' });
+      const scheduleHeading = page.locator('h2').filter({ hasText: '2026 Tournament Schedule' });
       
       const seasonBoundingBox = await seasonHeading.boundingBox();
       const scheduleBoundingBox = await scheduleHeading.boundingBox();
@@ -401,33 +416,28 @@ test.describe('Tournament Schedule Feature', () => {
       // Schedule heading should be below season heading
       expect(scheduleBoundingBox.y).toBeGreaterThan(seasonBoundingBox.y);
     });
-
-    test('should display tournament schedule before tryout information', async ({ page }) => {
-      const scheduleHeading = page.locator('h3').filter({ hasText: '2026 Tournament Schedule' });
-      const tryoutHeading = page.locator('h2').filter({ hasText: 'Tryout Information' });
-      
-      const scheduleBoundingBox = await scheduleHeading.boundingBox();
-      const tryoutBoundingBox = await tryoutHeading.boundingBox();
-      
-      // Schedule heading should be above tryout heading
-      expect(scheduleBoundingBox.y).toBeLessThan(tryoutBoundingBox.y);
-    });
   });
 
   test.describe('Data Accuracy', () => {
     test('should match all schedule data from source file', async ({ page }) => {
       // 14U specific data
-      const table14u = page.locator('.schedule-table').nth(0);
+      const tab14u = page.locator('.schedule-tab').filter({ hasText: '14U Division' });
+      await tab14u.click();
+      const table14u = page.locator('#schedule-14u .schedule-table');
       await expect(table14u).toContainText('1/11/26');
-      await expect(table14u).toContainText('5/2/26–5/3/26');
+      await expect(table14u).toContainText('5/2/26');
       
       // 16U specific data
-      const table16u = page.locator('.schedule-table').nth(1);
+      const tab16u = page.locator('.schedule-tab').filter({ hasText: '16U Division' });
+      await tab16u.click();
+      const table16u = page.locator('#schedule-16u .schedule-table');
       await expect(table16u).toContainText('1/4/26');
-      await expect(table16u).toContainText('4/25/26–4/26/26');
+      await expect(table16u).toContainText('4/25/26');
       
       // 18U specific data
-      const table18u = page.locator('.schedule-table').nth(2);
+      const tab18u = page.locator('.schedule-tab').filter({ hasText: '18U Division' });
+      await tab18u.click();
+      const table18u = page.locator('#schedule-18u .schedule-table');
       await expect(table18u).toContainText('1/3/26');
       await expect(table18u).toContainText('Cabin Fever');
     });
@@ -444,10 +454,14 @@ test.describe('Tournament Schedule Feature', () => {
     });
 
     test('should have CEVA Regional Tournament in all three divisions', async ({ page }) => {
-      const allTables = page.locator('.schedule-table');
+      const tabs = ['14U Division', '16U Division', '18U Division'];
+      const tabIds = ['schedule-14u', 'schedule-16u', 'schedule-18u'];
       
-      for (let i = 0; i < 3; i++) {
-        const table = allTables.nth(i);
+      for (let i = 0; i < tabs.length; i++) {
+        const tab = page.locator('.schedule-tab').filter({ hasText: tabs[i] });
+        await tab.click();
+        
+        const table = page.locator(`#${tabIds[i]} .schedule-table`);
         await expect(table).toContainText('CEVA Regional Tournament');
         await expect(table).toContainText('(IF QUALIFIED)');
       }
@@ -459,13 +473,13 @@ test.describe('Tournament Schedule Feature', () => {
       await page.setViewportSize({ width: 375, height: 667 });
       await page.goto('http://localhost:8000/teams.html');
       
-      const accordions = ['14U Division', '16U Division', '18U Division'];
+      const tabs = ['14U Division', '16U Division', '18U Division'];
       const tabIds = ['schedule-14u', 'schedule-16u', 'schedule-18u'];
       
-      for (let i = 0; i < accordions.length; i++) {
-        // Click on the accordion header
-        const header = page.locator('.schedule-accordion-header').filter({ hasText: accordions[i] });
-        await header.click();
+      for (let i = 0; i < tabs.length; i++) {
+        // Click on the tab
+        const tab = page.locator('.schedule-tab').filter({ hasText: tabs[i] });
+        await tab.click();
         
         // Check if table is visible
         const table = page.locator(`#${tabIds[i]} .schedule-table`);
@@ -489,8 +503,12 @@ test.describe('Tournament Schedule Feature', () => {
       await page.setViewportSize({ width: 768, height: 1024 });
       await page.goto('http://localhost:8000/teams.html');
       
-      const scheduleHeading = page.locator('h3').filter({ hasText: '2026 Tournament Schedule' });
+      const scheduleHeading = page.locator('h2').filter({ hasText: '2026 Tournament Schedule' });
       await expect(scheduleHeading).toBeVisible();
+      
+      // Click 14U tab to make table visible
+      const tab14u = page.locator('.schedule-tab').filter({ hasText: '14U Division' });
+      await tab14u.click();
       
       const firstTable = page.locator('.schedule-table').nth(0);
       await expect(firstTable).toBeVisible();

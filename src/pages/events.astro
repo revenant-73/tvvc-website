@@ -1,0 +1,101 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ScrollReveal from '../components/ScrollReveal.astro';
+---
+
+<BaseLayout title="Events" description="Explore TVVC's volleyball events including the May ShinDig, an end-of-season tournament for 14U and 16U teams.">
+  <main class="pt-32">
+    <!-- Hero Section -->
+    <section class="px-6 py-20 relative text-center md:text-left">
+      <div class="max-w-6xl mx-auto flex flex-col items-center md:items-start">
+        <ScrollReveal>
+          <img src="/assets/images/may shindig 26.jpg" alt="May ShinDig 2026 Logo" class="w-48 h-auto mb-10 border border-white/10 rounded-2xl shadow-glow-teal" />
+        </ScrollReveal>
+        
+        <ScrollReveal delay={0.2}>
+          <h1 class="text-4xl md:text-7xl font-heading font-extrabold mb-6 leading-tight text-white italic text-brand-teal">
+            May ShinDig 2026
+          </h1>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.4}>
+          <p class="text-lg text-white/60 max-w-2xl leading-relaxed mb-10">
+            A fun, competitive end-of-season tournament for teams not competing in CEVA Regionals. Your moment to shine with competitive, fun season wrap-up play.
+          </p>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.6}>
+          <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+            <a href="https://tvvc.volleyballcentral.io/e/2026-may-shindig" target="_blank" class="btn btn-primary px-12">Register Your Team</a>
+            <span class="text-xs text-white/40 font-bold uppercase tracking-widest mt-4 md:mt-0 flex items-center">Registration opens April 10, 2026</span>
+          </div>
+        </ScrollReveal>
+      </div>
+    </section>
+
+    <!-- Details Section -->
+    <section class="max-w-6xl mx-auto px-6 py-24 scroll-mt-32 border-y border-white/5">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { title: '14U Division', desc: 'Saturday, May 9', sub: 'Max 12 teams', accent: 'brand-teal' },
+          { title: '16U Division', desc: 'Sunday, May 10', sub: 'Max 12 teams', accent: 'brand-teal' },
+          { title: 'Location', desc: 'Century High', sub: 'Doors 7 AM | Match 8 AM', accent: 'white' },
+          { title: 'Fees', desc: '$100 per team', sub: '$5 per spectator', accent: 'brand-coral' }
+        ].map((item, i) => (
+          <ScrollReveal delay={i * 0.1}>
+            <div class="glass-card p-8 h-full flex flex-col justify-between border-white/10 hover:border-brand-teal/30">
+               <div>
+                  <h3 class={`text-sm font-bold uppercase tracking-widest mb-4 ${item.accent === 'brand-teal' ? 'text-brand-teal' : item.accent === 'brand-coral' ? 'text-brand-coral' : 'text-white'}`}>{item.title}</h3>
+                  <p class="text-2xl font-heading font-extrabold text-white mb-2 leading-tight">{item.desc}</p>
+                  <p class="text-xs text-white/40 font-bold uppercase tracking-widest">{item.sub}</p>
+               </div>
+            </div>
+          </ScrollReveal>
+        ))}
+      </div>
+    </section>
+
+    <!-- Content Blocks -->
+    <section class="max-w-6xl mx-auto px-6 py-32">
+       <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start mb-24">
+          <ScrollReveal direction="left">
+            <div>
+              <h2 class="text-3xl md:text-5xl font-heading mb-8 text-white leading-tight">Tournament <span class="text-brand-teal italic text-4xl">Operations</span></h2>
+              <div class="space-y-8">
+                 <div class="glass-card border-white/5">
+                    <h4 class="text-brand-teal font-bold mb-3 uppercase text-xs tracking-widest">Officiating</h4>
+                    <p class="text-sm text-white/50 leading-relaxed">TVVC officials run matches as available. Century High provides line judges and scorekeepers to keep the energy focused on play.</p>
+                 </div>
+                 <div class="glass-card border-white/5">
+                    <h4 class="text-brand-teal font-bold mb-3 uppercase text-xs tracking-widest">Spectators</h4>
+                    <p class="text-sm text-white/50 leading-relaxed">Bring family and friends! On-site parking and concessions available ($5 entry per adult). Music and positive energy all day.</p>
+                 </div>
+              </div>
+            </div>
+          </ScrollReveal>
+          
+          <ScrollReveal direction="right">
+            <div class="glass-card p-12 bg-white/5 border-white/10 relative overflow-hidden group">
+               <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-brand-coral/10 rounded-full blur-3xl group-hover:bg-brand-coral/20 transition-all duration-500"></div>
+               <h3 class="text-2xl font-heading font-extrabold mb-6 text-brand-coral leading-tight uppercase tracking-widest italic">Coaches & Admins Only</h3>
+               <p class="text-white/60 text-lg leading-relaxed mb-8">
+                 Only coaches and club administrators are authorized to register teams. Parents and players: reach out to your team's coach to coordinate entry.
+               </p>
+               <p class="text-sm text-white/40 italic font-bold">
+                 The tournament format will be dependent on the total number of teams participating in each division.
+               </p>
+            </div>
+          </ScrollReveal>
+       </div>
+
+       <!-- Contact Notice -->
+       <ScrollReveal>
+         <div class="p-12 glass rounded-3xl border-brand-teal/20 text-center max-w-2xl mx-auto">
+            <h2 class="text-2xl font-heading font-bold mb-4 text-white">Questions?</h2>
+            <p class="text-white/50 mb-8">Contact TVVC at <a href="tel:+15033890760" class="text-brand-teal">(503) 389-0760</a> or <a href="mailto:info@tualatinvalleyvb.com" class="text-brand-teal">info@tualatinvalleyvb.com</a></p>
+            <a href="/" class="btn btn-secondary px-8">Back to Home</a>
+         </div>
+       </ScrollReveal>
+    </section>
+  </main>
+</BaseLayout>

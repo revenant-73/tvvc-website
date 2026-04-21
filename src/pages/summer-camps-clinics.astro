@@ -1,0 +1,194 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ScrollReveal from '../components/ScrollReveal.astro';
+
+const camps = [
+  {
+    date: 'June 15–17',
+    title: '6th-8th Grade Volleyball Foundations Camp',
+    who: 'Athletes entering 6th–8th grade new to organized volleyball.',
+    desc: 'Introduces foundational skills (serving, passing, setting, attacking) inside a team system through game-like activities.',
+    link: 'https://tvvc.volleyballcentral.io/e/6th8th-grade-volleyball-foundations-camp'
+  },
+  {
+    date: 'June 22–24',
+    title: 'Hitting Foundations Camp',
+    who: 'Athletes developing approach, arm swing, timing, and coordination.',
+    desc: 'Focuses on building a strong attacking foundation within realistic game-like scenarios.',
+    link: 'https://tvvc.volleyballcentral.io/e/hitting-foundations-camp'
+  },
+  {
+    date: 'July 6–8',
+    title: '6th-8th Grade Volleyball Performance Camp',
+    who: 'Athletes entering 6th–8th grade who have played school/club team.',
+    desc: 'Increased pace, longer rallies, and harder decisions. Sharpening the edge of technical and tactical skills.',
+    link: 'https://tvvc.volleyballcentral.io/e/6th-8th-grade-volleyball-performance-camp'
+  },
+  {
+    date: 'July 13–15',
+    title: 'Ignition Camp – 4th–6th Grade',
+    who: 'Athletes entering 4th–6th grade newer to volleyball.',
+    desc: 'Building real fundamentals while falling in love with the game through energetic, game-based activities.',
+    link: 'https://tvvc.volleyballcentral.io/e/4tha6th-grade-ignition-volleyball-camp'
+  },
+  {
+    date: 'July 20–22',
+    title: 'Hitting Performance Camp',
+    who: 'Experienced hitters who want to elevate their attacking game.',
+    desc: 'Maximizing power and vertical jump while emphasizing mid-air decisions and reading the block.',
+    link: 'https://tvvc.volleyballcentral.io/e/hitting-performance-camp'
+  },
+  {
+    date: 'July 27–29',
+    title: '6th-8th Grade Volleyball Foundations Camp',
+    who: 'Athletes entering 6th–8th grade newer to organized volleyball.',
+    desc: 'A second opportunity to build strong fundamentals before fall seasons begin.',
+    link: 'https://tvvc.volleyballcentral.io/e/6tha8th-grade-volleyball-foundations-camp'
+  },
+  {
+    date: 'August 3–5',
+    title: 'High School Tryout Prep Camp #1',
+    who: 'Athletes entering 9th–12th grade preparing for tryouts.',
+    desc: 'Build confidence with core systems, serve receive structure, and realistic scrimmage scenarios.',
+    link: 'https://tvvc.volleyballcentral.io/e/high-school-tryout-prep-camp-1'
+  },
+  {
+    date: 'August 10–12',
+    title: 'High School Tryout Prep Camp #2',
+    who: 'Athletes entering 9th–12th grade preparing for tryouts.',
+    desc: 'A second opportunity to sharpen readiness and build competitive clarity heading into tryouts.',
+    link: 'https://tvvc.volleyballcentral.io/e/high-school-tryout-prep-camp-2'
+  }
+];
+
+const clinicGroups = [
+  {
+    title: 'May Saturdays',
+    dates: 'May 16, 23, 30',
+    who: '6th–9th grade athletes and newer players.',
+    accent: 'brand-teal',
+    clinics: [
+      { time: '9:00–10:30am', name: 'Hitting', link: 'https://tvvc.volleyballcentral.io/e/hitting-clinics' },
+      { time: '10:30am–12:00pm', name: 'Serving', link: 'https://tvvc.volleyballcentral.io/e/serving-clinics' },
+      { time: '12:00–1:30pm', name: 'Serve Receive/Defense', link: 'https://tvvc.volleyballcentral.io/e/defense-serve-receive-clinics' }
+    ]
+  },
+  {
+    title: 'Summer Thursdays',
+    dates: 'June 18 – August 13',
+    who: 'June 18, 25, July 9, 16, 23, 30, Aug 6, 13',
+    accent: 'brand-coral',
+    clinics: [
+      { time: '8:00–9:30am', name: 'Hitting', link: 'https://tvvc.volleyballcentral.io/e/hitting-clinics' },
+      { time: '9:30–11:00am', name: 'Serving', link: 'https://tvvc.volleyballcentral.io/e/serving-clinics' },
+      { time: '11:00am–12:30pm', name: 'Serve Receive/Defense', link: 'https://tvvc.volleyballcentral.io/e/defense-serve-receive-clinics' }
+    ]
+  }
+];
+---
+
+<BaseLayout title="Summer Camps & Clinics" description="TVVC Summer 2026 Camps and Clinics in Hillsboro, OR. High-quality training for all ages and skill levels.">
+  <main class="pt-32">
+    <!-- Hero Section -->
+    <section class="px-6 py-20 relative text-center md:text-left">
+      <div class="max-w-6xl mx-auto">
+        <span class="text-brand-teal font-bold uppercase tracking-widest text-xs mb-4 block">Summer 2026</span>
+        <h1 class="text-4xl md:text-7xl font-heading font-extrabold mb-6 leading-tight text-white">
+          Camps & <span class="text-brand-teal">Clinics</span>
+        </h1>
+        <p class="text-lg text-white/60 max-w-2xl leading-relaxed mb-10">
+          Intentional training, competitive play, and building momentum. No long drill lines—just real volleyball.
+        </p>
+        <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+          <a href="#camps" class="btn btn-secondary !px-6 !py-2 text-sm">Summer Camps</a>
+          <a href="#clinics" class="btn btn-secondary !px-6 !py-2 text-sm">Summer Clinics</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Camps Section -->
+    <section id="camps" class="max-w-6xl mx-auto px-6 py-24 scroll-mt-32">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start mb-16">
+        <div>
+          <h2 class="text-3xl md:text-5xl font-heading mb-8 text-white">Summer <span class="text-brand-teal italic">Camps</span></h2>
+          <p class="text-white/60 mb-8 leading-relaxed text-lg">
+            At TVVC, summer camps are built around representative play, small-sided games, and real decision-making. Athletes move, compete, and learn how the game actually works.
+          </p>
+          <div class="grid grid-cols-2 gap-4">
+             <div class="glass p-4 rounded-xl border-white/5">
+                <span class="text-[10px] uppercase font-bold text-brand-teal block mb-1">Time</span>
+                <span class="text-sm font-bold">8am – 12pm</span>
+             </div>
+             <div class="glass p-4 rounded-xl border-white/5">
+                <span class="text-[10px] uppercase font-bold text-brand-teal block mb-1">Cost</span>
+                <span class="text-sm font-bold">$185 / camp</span>
+             </div>
+          </div>
+        </div>
+        <div class="glass-card bg-brand-teal/5 border-brand-teal/20 p-8 md:p-12">
+          <h3 class="text-xl font-heading font-bold mb-4">Registration Info</h3>
+          <p class="text-white/60 mb-6 leading-relaxed">
+            Public registration is now <strong>OPEN</strong>. Early enrollment has been offered to current TVVC families.
+          </p>
+          <p class="text-sm italic text-white/40 border-l-2 border-brand-teal pl-4">
+            "Cost should never be the reason an athlete misses out. Reach out — we will work something out."
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {camps.map((camp, i) => (
+          <ScrollReveal delay={i * 0.1}>
+            <div class="glass-card h-full flex flex-col justify-between group hover:border-brand-teal/30">
+              <div>
+                <span class="bg-brand-teal text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-6 inline-block">{camp.date}</span>
+                <h3 class="text-xl font-heading font-bold mb-3 text-white leading-tight">{camp.title}</h3>
+                <p class="text-[10px] text-brand-teal font-bold uppercase mb-4 tracking-wider">{camp.who}</p>
+                <p class="text-sm text-white/50 leading-relaxed mb-8">{camp.desc}</p>
+              </div>
+              <a href={camp.link} target="_blank" class="btn btn-secondary !w-full text-xs">Register Now</a>
+            </div>
+          </ScrollReveal>
+        ))}
+      </div>
+    </section>
+
+    <!-- Clinics Section -->
+    <section id="clinics" class="bg-brand-coral/5 py-32 scroll-mt-32">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-16">
+           <h2 class="text-3xl md:text-5xl font-heading mb-6 text-white">Summer <span class="text-brand-coral italic">Clinics</span></h2>
+           <p class="text-white/40 max-w-2xl mx-auto">Focused. High-Quality. Small-Group Training. One court, capped enrollment, and direct feedback.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+           {clinicGroups.map((group) => (
+             <ScrollReveal>
+               <div class="glass-card border-white/10 hover:border-brand-coral/30">
+                  <span class={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block ${group.accent === 'brand-teal' ? 'bg-brand-teal text-white' : 'bg-brand-coral text-white'}`}>{group.title}</span>
+                  <h3 class="text-2xl font-heading font-bold mb-2 text-white">{group.dates}</h3>
+                  <p class="text-sm text-white/40 mb-8">{group.who}</p>
+                  
+                  <div class="space-y-4">
+                     {group.clinics.map((clinic) => (
+                       <div class="flex items-center justify-between p-4 glass rounded-xl border-white/5 hover:border-white/10 transition-colors">
+                          <div>
+                            <span class="text-[10px] text-white/40 font-bold block">{clinic.time}</span>
+                            <span class="font-bold text-sm text-white">{clinic.name}</span>
+                          </div>
+                          <a href={clinic.link} target="_blank" class={`btn !py-1.5 !px-4 text-[10px] uppercase ${group.accent === 'brand-teal' ? 'btn-primary' : '!bg-brand-coral !shadow-glow-coral'}`}>Register</a>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+             </ScrollReveal>
+           ))}
+        </div>
+
+        <div class="mt-16 text-center text-white/40 text-sm">
+           <p>Location: TVVC Facility (2820 SE 58th Court) | Cost: $30 per clinic | Format: 90-minute sessions</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

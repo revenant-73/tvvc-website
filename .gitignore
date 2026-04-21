@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
-package-lock.json
+
+# package-lock.json (NOT ignored for Netlify/CI reproducibility)
 
 # Playwright test artifacts
 playwright-report/

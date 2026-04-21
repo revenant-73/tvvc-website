@@ -1,0 +1,289 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ScrollReveal from '../components/ScrollReveal.astro';
+
+const valueGroups = [
+  {
+    category: 'The Mindset',
+    tagline: 'How we think about growth',
+    accent: 'brand-teal',
+    values: [
+      { icon: '🤔', title: 'Curiosity Over Certainty', description: 'We embrace questions, exploration, and learning through experience—because growth comes from the unknown.', size: 'large' },
+      { icon: '🔄', title: 'Adaptability in Action', description: 'Thrive in dynamic, unpredictable game situations.', size: 'small' },
+      { icon: '🎯', title: 'Athlete Ownership', description: 'Players are active participants in their learning journey.', size: 'small' }
+    ]
+  },
+  {
+    category: 'The Training',
+    tagline: 'Our approach on the court',
+    accent: 'brand-coral',
+    values: [
+      { icon: '🏐', title: 'Play with Purpose', description: 'Every activity is rooted in the context of the game, helping athletes connect movement with intention.', size: 'large' },
+      { icon: '💪', title: 'Resilience Through Challenge', description: "Struggle isn't failure—it's feedback for growth.", size: 'small' },
+      { icon: '🚀', title: 'Freedom to Explore', description: 'We encourage athletes to test, adjust, and discover their own solutions through active play.', size: 'small' }
+    ]
+  },
+  {
+    category: 'The Culture',
+    tagline: 'How we build community',
+    accent: 'white',
+    values: [
+      { icon: '🤝', title: 'Connection Before Correction', description: 'We build trust first—because meaningful change only happens in safe relationships.', size: 'medium' },
+      { icon: '✨', title: 'Authenticity Always', description: "Coaches and players show up real. No faking perfection.", size: 'small' },
+      { icon: '🎉', title: 'Joy in the Process', description: 'Learning is fueled by laughter and shared excitement.', size: 'small' },
+      { icon: '🛡️', title: 'Support with Standards', description: 'High expectations met with empathy and guidance.', size: 'medium' }
+    ]
+  }
+];
+---
+
+<BaseLayout title="Home">
+  <main class="relative overflow-hidden pt-32">
+    <!-- Hero Section -->
+    <section class="min-h-[90vh] flex items-center justify-center px-6 py-20 relative overflow-hidden">
+      <!-- Hero Image with Filter & Overlay -->
+      <div class="absolute inset-0 z-0">
+        <img 
+          src="/assets/images/hero-volleyball-action.jpg" 
+          alt="Volleyball net in focus" 
+          class="w-full h-full object-cover mix-blend-luminosity opacity-40 grayscale contrast-125"
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal/80 via-brand-charcoal/60 to-brand-charcoal"></div>
+        <div class="absolute inset-0 bg-brand-teal/10 mix-blend-color"></div>
+        
+        <!-- Animated Blobs -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-teal/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-brand-coral/10 rounded-full blur-[120px] animate-pulse" style="animation-delay: 2s;"></div>
+      </div>
+
+      <div class="max-w-4xl mx-auto text-center relative z-10">
+        <ScrollReveal>
+          <span class="inline-block px-4 py-1.5 rounded-full border border-white/10 glass text-[10px] font-bold uppercase tracking-[0.2em] mb-8 text-brand-teal">
+            Tualatin Valley Volleyball Club
+          </span>
+        </ScrollReveal>
+        
+        <ScrollReveal delay={0.2}>
+          <h1 class="text-5xl md:text-8xl font-heading font-extrabold mb-8 leading-[1.05] tracking-tight text-white uppercase">
+            Play with <span class="text-brand-teal italic">Purpose</span>
+          </h1>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.4}>
+          <p class="text-lg md:text-xl text-white/60 mb-12 max-w-2xl mx-auto leading-relaxed">
+            Developing resilient, kind, and adaptable athletes through the game of volleyball.
+          </p>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.6}>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/programs" class="btn btn-primary px-10">Register for Summer 2026</a>
+            <a href="/teams" class="btn btn-secondary px-10">Explore Teams</a>
+          </div>
+        </ScrollReveal>
+      </div>
+    </section>
+
+    <!-- Programs Bento Grid -->
+    <section class="max-w-6xl mx-auto px-6 py-24">
+      <ScrollReveal>
+        <div class="mb-16 text-center md:text-left">
+          <h2 class="text-3xl md:text-5xl font-heading mb-6 text-white">Our <span class="text-brand-teal">Programs</span></h2>
+          <p class="text-white/40 max-w-md">From introductory play to competitive club teams, we have a path for every athlete.</p>
+        </div>
+      </ScrollReveal>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 h-full">
+        <!-- Club Teams -->
+        <div class="md:col-span-2 md:row-span-2 glass-card flex flex-col justify-between group overflow-hidden border-brand-teal/20 p-0">
+          <ScrollReveal direction="left" className="h-full flex flex-col">
+            <div class="relative h-48 md:h-64 overflow-hidden">
+              <img 
+                src="/assets/images/14 Teal.jpg" 
+                alt="14 Teal team in action" 
+                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 mix-blend-luminosity hover:mix-blend-normal hover:opacity-100 transition-all"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-brand-charcoal via-brand-charcoal/20 to-transparent"></div>
+            </div>
+            <div class="p-8 flex-1 flex flex-col justify-between">
+              <div>
+                <span class="text-[10px] font-bold bg-brand-teal/10 text-brand-teal px-3 py-1 rounded-full uppercase tracking-wider mb-6 inline-block">Ages 11-18</span>
+                <h3 class="text-3xl font-heading mb-4 text-white">Club Teams</h3>
+                <p class="text-white/60 mb-8 max-w-sm">Competitive age-group teams with full season training, regional tournaments, and a focus on intentional development.</p>
+              </div>
+              <a href="/teams" class="flex items-center gap-2 text-sm font-bold text-brand-teal group-hover:gap-4 transition-all">
+                Learn About Teams <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </a>
+            </div>
+          </ScrollReveal>
+        </div>
+
+        <!-- Ignition -->
+        <div class="md:col-span-1 glass-card flex flex-col justify-between border-brand-coral/20">
+          <ScrollReveal delay={0.2}>
+            <div>
+              <span class="text-[10px] font-bold bg-brand-coral/10 text-brand-coral px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Ages 9-12</span>
+              <h3 class="text-xl font-heading mb-2 text-white">Ignition</h3>
+              <p class="text-sm text-white/50 mb-6">Introductory program for 4th-6th graders to fall in love with the game.</p>
+              <a href="/programs#ignition" class="text-xs font-bold text-brand-coral hover:text-white transition-colors">Learn More →</a>
+            </div>
+          </ScrollReveal>
+        </div>
+
+        <!-- PlayWorks -->
+        <div class="md:col-span-1 glass-card flex flex-col justify-between">
+          <ScrollReveal delay={0.4}>
+            <div>
+              <span class="text-[10px] font-bold bg-white/5 text-white/50 px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Ages 11-16</span>
+              <h3 class="text-xl font-heading mb-2 text-white">PlayWorks</h3>
+              <p class="text-sm text-white/50 mb-6">Skill-focused exploratory program. Game-based learning.</p>
+              <a href="/programs#playworks" class="text-xs font-bold text-brand-teal hover:text-white transition-colors">Learn More →</a>
+            </div>
+          </ScrollReveal>
+        </div>
+
+        <!-- Summer Camps -->
+        <div class="md:col-span-2 glass-card flex flex-col justify-between relative overflow-hidden bg-brand-teal/5">
+          <ScrollReveal delay={0.3}>
+            <div class="absolute -bottom-10 -right-10 w-48 h-48 bg-brand-teal/10 rounded-full blur-3xl"></div>
+            <div>
+              <span class="text-[10px] font-bold bg-brand-teal text-white px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block shadow-glow-teal">Registration Open</span>
+              <h3 class="text-xl font-heading mb-2 text-white">Summer 2026 Camps</h3>
+              <p class="text-sm text-white/50 max-w-xs">High-quality summer training in our Hillsboro facility.</p>
+            </div>
+            <a href="/summer-camps-clinics" class="mt-6 text-sm font-bold text-brand-teal">Register Now →</a>
+          </ScrollReveal>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="max-w-6xl mx-auto px-6 py-32">
+       <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          <ScrollReveal direction="left">
+            <div>
+              <h2 class="text-3xl md:text-5xl font-heading mb-8 text-white leading-tight">About <span class="text-brand-teal italic">TVVC</span></h2>
+              <p class="text-white/60 text-lg leading-relaxed mb-8">
+                <strong>Tualatin Valley Volleyball Club</strong> was founded in 2024 to make high-quality volleyball accessible and joyful—centered on what matters most: the growth of the athlete.
+              </p>
+              <div class="space-y-4 text-white/80">
+                <p class="flex items-center gap-3"><span class="text-brand-teal font-bold">✓</span> Affordability — We keep costs low.</p>
+                <p class="flex items-center gap-3"><span class="text-brand-teal font-bold">✓</span> Balance — Time-conscious scheduling.</p>
+                <p class="flex items-center gap-3"><span class="text-brand-teal font-bold">✓</span> Joyful Learning — Grounded in play.</p>
+              </div>
+            </div>
+          </ScrollReveal>
+          
+          <ScrollReveal direction="right">
+            <div class="relative group">
+              <div class="glass-card p-0 overflow-hidden border-white/10 relative transition-all duration-500 group-hover:border-brand-teal/30">
+                <img 
+                  src="/assets/images/14 White.jpeg" 
+                  alt="TVVC athletes huddle" 
+                  class="w-full h-auto object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-brand-charcoal/80 via-transparent to-transparent"></div>
+                <div class="absolute bottom-6 left-6 right-6">
+                   <p class="text-xl font-heading text-white leading-relaxed italic mb-2">
+                     "We're building confident, adaptable players."
+                   </p>
+                   <span class="text-[10px] font-bold text-brand-teal uppercase tracking-[0.2em]">Our Culture in Action</span>
+                </div>
+              </div>
+              <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-brand-teal/20 rounded-full blur-3xl -z-10 group-hover:bg-brand-teal/40 transition-all"></div>
+            </div>
+          </ScrollReveal>
+       </div>
+    </section>
+
+    <!-- Section Break Image -->
+    <section class="relative h-64 md:h-[400px] overflow-hidden my-12 group">
+      <img 
+        src="/assets/images/16 teeal 2.jpeg" 
+        alt="TVVC players in action" 
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]"
+      />
+      <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal via-transparent to-brand-charcoal"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+         <div class="text-center px-6">
+            <ScrollReveal>
+              <h3 class="text-2xl md:text-4xl font-heading text-white italic drop-shadow-2xl">The heartbeat of TVVC is our <span class="text-brand-teal">Athletes</span>.</h3>
+            </ScrollReveal>
+         </div>
+      </div>
+    </section>
+
+    <!-- Core Values Bento -->
+    <section class="bg-black/40 py-32" id="core-values">
+      <div class="max-w-6xl mx-auto px-6">
+        <ScrollReveal>
+          <div class="mb-20 text-center md:text-left">
+            <h2 class="text-3xl md:text-5xl font-heading mb-4 text-white">Our Core <span class="text-brand-teal italic">Principles</span></h2>
+            <p class="text-white/40 max-w-xl">A deeper look at the philosophy that drives every practice and match at TVVC.</p>
+          </div>
+        </ScrollReveal>
+
+        <div class="space-y-20">
+          {valueGroups.map((group) => (
+            <div>
+              <ScrollReveal>
+                <div class="flex items-baseline gap-4 mb-8">
+                  <h3 class={`text-2xl font-heading font-bold ${group.accent === 'brand-teal' ? 'text-brand-teal' : group.accent === 'brand-coral' ? 'text-brand-coral' : 'text-white'}`}>
+                    {group.category}
+                  </h3>
+                  <span class="text-white/20 text-sm uppercase tracking-widest font-bold">/ {group.tagline}</span>
+                </div>
+              </ScrollReveal>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {group.values.map((v, i) => (
+                  <ScrollReveal delay={i * 0.1} direction="up" className={`glass-card relative overflow-hidden group ${v.size === 'large' ? 'md:col-span-2' : v.size === 'medium' ? 'md:col-span-1.5' : 'md:col-span-1'}`}>
+                    <div class={`absolute top-0 right-0 w-32 h-32 opacity-10 blur-3xl transition-opacity group-hover:opacity-20 ${group.accent === 'brand-teal' ? 'bg-brand-teal' : group.accent === 'brand-coral' ? 'bg-brand-coral' : 'bg-white'}`}></div>
+                    <span class="text-3xl mb-6 block">{v.icon}</span>
+                    <h4 class="text-xl font-heading font-bold mb-3 text-white">{v.title}</h4>
+                    <p class="text-sm text-white/50 leading-relaxed max-w-sm">{v.description}</p>
+                  </ScrollReveal>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Final Thank You Message -->
+    <section class="max-w-4xl mx-auto px-6 py-32 text-center">
+       <ScrollReveal>
+         <div class="glass p-8 md:p-16 rounded-[2rem] border-brand-teal/20 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-teal/50 to-transparent"></div>
+            
+            <h2 class="text-3xl md:text-5xl font-heading mb-10 text-brand-teal leading-tight">
+              Thank You for a Season of <span class="text-white italic">Growth</span>, Connection, and Competition
+            </h2>
+            
+            <div class="space-y-8 text-white/80 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
+              <p>
+                This season, our athletes played, learned, adapted, competed, and grew. None of that happens without the support of families who believe in what we are building.
+              </p>
+              
+              <p>
+                <strong>To every player:</strong> thank you for your effort, your courage, your care for each other, and your willingness to keep showing up.
+              </p>
+              
+              <p>
+                <strong>To every family:</strong> thank you for your trust, your flexibility, your patience, and your support throughout the season.
+              </p>
+              
+              <p class="text-white font-bold">
+                We are deeply grateful for the chance to coach, support, and grow alongside your athletes.
+              </p>
+              
+              <p class="text-brand-teal italic font-heading text-2xl pt-4">
+                Wherever the game takes you next, we hope this season leaves you with confidence, connection, and memories worth carrying forward.
+              </p>
+            </div>
+         </div>
+       </ScrollReveal>
+    </section>
+  </main>
+</BaseLayout>

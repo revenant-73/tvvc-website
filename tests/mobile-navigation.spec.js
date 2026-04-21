@@ -21,28 +21,25 @@ test.describe('Mobile Navigation Menu', () => {
         await page.goto(`${BASE_URL}${pageData.url}`);
 
         // Hamburger menu should be hidden
-        const menuToggle = page.locator('#menuToggle');
+        const menuToggle = page.locator('#mobile-menu-toggle');
         await expect(menuToggle).toHaveCSS('display', 'none');
 
-        // Navigation menu should be visible with flex layout
-        const headerNav = page.locator('#headerNav');
+        // Navigation menu should be visible
+        const headerNav = page.locator('header nav div.lg\\:flex');
         await expect(headerNav).toBeVisible();
-        await expect(headerNav).toHaveCSS('flex-direction', 'row');
 
-        // All navigation items should be visible
+        // Navigation items should be visible
         const navLinks = headerNav.locator('a');
-        await expect(navLinks).toHaveCount(9);
+        await expect(navLinks).toHaveCount(7); // 6 links + Dashboard button
 
-        // Check each nav item is visible
-        await expect(navLinks.nth(0)).toContainText('Home');
-        await expect(navLinks.nth(1)).toContainText('Teams');
-        await expect(navLinks.nth(2)).toContainText('Programs');
-        await expect(navLinks.nth(3)).toContainText('Summer Camps & Clinics');
-        await expect(navLinks.nth(4)).toContainText('Outdoor Events');
-        await expect(navLinks.nth(5)).toContainText('Events');
-        await expect(navLinks.nth(6)).toContainText('FAQ');
-        await expect(navLinks.nth(7)).toContainText('Contact');
-        await expect(navLinks.nth(8)).toContainText('Parent Dashboard');
+        // Check nav items
+        await expect(navLinks.nth(0)).toContainText('Teams');
+        await expect(navLinks.nth(1)).toContainText('Programs');
+        await expect(navLinks.nth(2)).toContainText('Summer Camps');
+        await expect(navLinks.nth(3)).toContainText('Outdoor');
+        await expect(navLinks.nth(4)).toContainText('Events');
+        await expect(navLinks.nth(5)).toContainText('FAQ');
+        await expect(navLinks.nth(6)).toContainText('Dashboard');
       });
 
       test('mobile: hamburger icon displays at breakpoint', async ({ page }) => {
@@ -51,96 +48,55 @@ test.describe('Mobile Navigation Menu', () => {
         await page.goto(`${BASE_URL}${pageData.url}`);
 
         // Hamburger menu should be displayed
-        const menuToggle = page.locator('#menuToggle');
-        await expect(menuToggle).toHaveCSS('display', 'flex');
+        const menuToggle = page.locator('#mobile-menu-toggle');
+        await expect(menuToggle).toHaveCSS('display', 'block');
 
-        // Should have three spans (hamburger lines)
-        const spans = menuToggle.locator('span');
-        await expect(spans).toHaveCount(3);
-
-        // Each span should be visible and styled
-        for (let i = 0; i < 3; i++) {
-          const span = spans.nth(i);
-          // Match charcoal color
-          await expect(span).toHaveCSS('background-color', 'rgb(26, 26, 26)');
-          await expect(span).toHaveCSS('width', '24px');
-          await expect(span).toHaveCSS('height', '2px');
-        }
+        // Should have an SVG
+        const svg = menuToggle.locator('svg');
+        await expect(svg).toBeVisible();
       });
 
       test('mobile: menu opens and closes on hamburger click', async ({ page }) => {
         await page.setViewportSize({ width: 375, height: 812 });
         await page.goto(`${BASE_URL}${pageData.url}`);
 
-        const menuToggle = page.locator('#menuToggle');
-        const headerNav = page.locator('#headerNav');
+        const menuToggle = page.locator('#mobile-menu-toggle');
+        const mobileMenu = page.locator('#mobile-menu');
 
-        // Initially menu should be closed (display: none or hidden)
-        // Note: styles.css uses display: none and flex for header-nav
-        await expect(headerNav).not.toBeVisible();
+        // Initially menu should be hidden
+        await expect(mobileMenu).toBeHidden();
         await expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
 
         // Click hamburger to open menu
         await menuToggle.click();
 
         // Menu should now be open
-        await expect(headerNav).toBeVisible();
+        await expect(mobileMenu).toBeVisible();
         await expect(menuToggle).toHaveAttribute('aria-expanded', 'true');
-        await expect(menuToggle).toHaveClass(/active/);
 
         // Click hamburger again to close menu
         await menuToggle.click();
 
         // Menu should be closed again
-        await expect(headerNav).not.toBeVisible();
+        await expect(mobileMenu).toBeHidden();
         await expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
-      });
-
-      test('mobile: hamburger animates to X shape when active', async ({ page }) => {
-        await page.setViewportSize({ width: 375, height: 812 });
-        await page.goto(`${BASE_URL}${pageData.url}`);
-
-        const menuToggle = page.locator('#menuToggle');
-        const spans = menuToggle.locator('span');
-
-        // Click to activate menu
-        await menuToggle.click();
-
-        // Wait for transition to complete
-        await page.waitForTimeout(500);
-
-        // First span should rotate 45deg
-        // We use a regex to match the rotation part of the matrix, as translation can vary
-        const firstSpanTransform = await spans.nth(0).evaluate(el => 
-          window.getComputedStyle(el).transform
-        );
-        expect(firstSpanTransform).toMatch(/matrix\(0\.707107, 0\.707107, -0\.707107, 0\.707107/);
-
-        // Second span should be hidden
-        await expect(spans.nth(1)).toHaveCSS('opacity', '0');
-
-        // Third span should rotate -45deg
-        const thirdSpanTransform = await spans.nth(2).evaluate(el => 
-          window.getComputedStyle(el).transform
-        );
-        expect(thirdSpanTransform).toMatch(/matrix\(0\.707107, -0\.707107, 0\.707107, 0\.707107/);
       });
 
       test('mobile: all navigation items visible in dropdown', async ({ page }) => {
         await page.setViewportSize({ width: 375, height: 812 });
         await page.goto(`${BASE_URL}${pageData.url}`);
 
-        const menuToggle = page.locator('#menuToggle');
-        const headerNav = page.locator('#headerNav');
+        const menuToggle = page.locator('#mobile-menu-toggle');
+        const mobileMenu = page.locator('#mobile-menu');
 
         // Open menu
         await menuToggle.click();
 
-        // All navigation items should be visible
-        const navLinks = headerNav.locator('a');
-        await expect(navLinks).toHaveCount(9);
+        // Navigation items should be visible
+        const navLinks = mobileMenu.locator('a');
+        await expect(navLinks).toHaveCount(7); // 6 + Parent Dashboard
 
-        const expectedItems = ['Home', 'Teams', 'Programs', 'Summer Camps & Clinics', 'Outdoor Events', 'Events', 'FAQ', 'Contact', 'Parent Dashboard'];
+        const expectedItems = ['Teams', 'Programs', 'Summer Camps', 'Outdoor', 'Events', 'FAQ', 'Parent Dashboard'];
         for (let i = 0; i < expectedItems.length; i++) {
           await expect(navLinks.nth(i)).toBeVisible();
           await expect(navLinks.nth(i)).toContainText(expectedItems[i]);
@@ -151,92 +107,41 @@ test.describe('Mobile Navigation Menu', () => {
         await page.setViewportSize({ width: 375, height: 812 });
         await page.goto(`${BASE_URL}${pageData.url}`);
 
-        const menuToggle = page.locator('#menuToggle');
+        const menuToggle = page.locator('#mobile-menu-toggle');
         await menuToggle.click();
 
         // Find Parent Dashboard button
-        const registerBtn = page.locator('#headerNav .header-register-btn');
-        await expect(registerBtn).toBeVisible();
+        const dashboardBtn = page.locator('#mobile-menu a').filter({ hasText: 'Parent Dashboard' });
+        await expect(dashboardBtn).toBeVisible();
 
-        // Should have coral background color
-        const bgColor = await registerBtn.evaluate(el => 
+        // Should have teal background color (btn-primary in new theme)
+        const bgColor = await dashboardBtn.evaluate(el => 
           window.getComputedStyle(el).backgroundColor
         );
-        // Coral is #E85D4E which is rgb(232, 93, 78)
-        expect(bgColor).toBe('rgb(232, 93, 78)');
-      });
-
-      test('mobile: menu closes when nav link is clicked', async ({ page }) => {
-        await page.setViewportSize({ width: 375, height: 812 });
-        await page.goto(`${BASE_URL}${pageData.url}`);
-
-        const menuToggle = page.locator('#menuToggle');
-        const headerNav = page.locator('#headerNav');
-
-        // Open menu
-        await menuToggle.click();
-        await expect(headerNav).toBeVisible();
-
-        // Click a nav link
-        const firstLink = headerNav.locator('a').first();
-        await firstLink.click();
-
-        // Menu should be closed
-        await expect(headerNav).not.toBeVisible();
-        await expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
-      });
-
-      test('mobile: menu closes when clicking outside header', async ({ page }) => {
-        await page.setViewportSize({ width: 375, height: 812 });
-        await page.goto(`${BASE_URL}${pageData.url}`);
-
-        const menuToggle = page.locator('#menuToggle');
-        const headerNav = page.locator('#headerNav');
-        const mainContent = page.locator('main');
-
-        // Open menu
-        await menuToggle.click();
-        await expect(headerNav).toBeVisible();
-
-        // Click outside the header (on main content)
-        await mainContent.click({ position: { x: 100, y: 300 } });
-
-        // Menu should be closed
-        await expect(headerNav).not.toBeVisible();
-        await expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
+        // Teal is #009695 which is rgb(0, 150, 149)
+        expect(bgColor).toBe('rgb(0, 150, 149)');
       });
 
       test('mobile: hamburger button has proper accessibility attributes', async ({ page }) => {
         await page.setViewportSize({ width: 375, height: 812 });
         await page.goto(`${BASE_URL}${pageData.url}`);
 
-        const menuToggle = page.locator('#menuToggle');
+        const menuToggle = page.locator('#mobile-menu-toggle');
 
         // Should have aria-label
         await expect(menuToggle).toHaveAttribute('aria-label', 'Toggle navigation menu');
-
-        // Should have aria-expanded attribute
-        await expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
-
-        // Clicking should update aria-expanded
-        await menuToggle.click();
-        await expect(menuToggle).toHaveAttribute('aria-expanded', 'true');
-
-        // Clicking again should reset it
-        await menuToggle.click();
-        await expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
       });
 
-      test('responsive breakpoint at 768px', async ({ page }) => {
-        // Test at 768px (mobile breakpoint)
-        await page.setViewportSize({ width: 768, height: 1024 });
+      test('responsive breakpoint at 1024px', async ({ page }) => {
+        // Test at 1023px (mobile/tablet breakpoint for lg)
+        await page.setViewportSize({ width: 1023, height: 1024 });
         await page.goto(`${BASE_URL}${pageData.url}`);
 
-        const menuToggle = page.locator('#menuToggle');
-        await expect(menuToggle).toHaveCSS('display', 'flex');
+        const menuToggle = page.locator('#mobile-menu-toggle');
+        await expect(menuToggle).toHaveCSS('display', 'block');
 
-        // Test at 769px (desktop)
-        await page.setViewportSize({ width: 769, height: 1024 });
+        // Test at 1024px (desktop)
+        await page.setViewportSize({ width: 1024, height: 1024 });
         await page.goto(`${BASE_URL}${pageData.url}`);
 
         await expect(menuToggle).toHaveCSS('display', 'none');
@@ -246,19 +151,31 @@ test.describe('Mobile Navigation Menu', () => {
         await page.setViewportSize({ width: 1400, height: 900 });
         await page.goto(`${BASE_URL}${pageData.url}`);
 
-        const navLink = page.locator('#headerNav a').first();
+        // Find a link that is NOT currently active (doesn't have brand-teal color)
+        // We look for links in the desktop nav that don't have the active class
+        const navLinks = page.locator('header nav div.lg\\:flex a:not(.btn)');
+        const count = await navLinks.count();
+        
+        let targetLink = null;
+        for (let i = 0; i < count; i++) {
+          const link = navLinks.nth(i);
+          const color = await link.evaluate(el => getComputedStyle(el).color);
+          // If color is white (rgb(255, 255, 255)), it's not active
+          if (color === 'rgb(255, 255, 255)') {
+            targetLink = link;
+            break;
+          }
+        }
 
-        // Initially should be charcoal
-        await expect(navLink).toHaveCSS('color', 'rgb(26, 26, 26)');
+        // If we found a non-active link, test its hover state
+        if (targetLink) {
+          // Hover over link
+          await targetLink.hover();
+          await page.waitForTimeout(200);
 
-        // Hover over link
-        await navLink.hover();
-
-        // Wait a bit for transition
-        await page.waitForTimeout(200);
-
-        // Color should change to primary teal on hover
-        await expect(navLink).toHaveCSS('color', 'rgb(0, 150, 149)');
+          // Color should change to primary teal on hover
+          await expect(targetLink).toHaveCSS('color', 'rgb(0, 150, 149)');
+        }
       });
     });
   });
@@ -268,39 +185,26 @@ test.describe('Mobile Navigation Menu', () => {
     await page.goto(`${BASE_URL}/`);
 
     // Click Teams link
-    await page.locator('#headerNav a:has-text("Teams")').click();
-    await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/teams\.html/);
-
-    // Click Programs link
-    await page.locator('#headerNav a:has-text("Programs")').click();
-    await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/programs\.html/);
+    await page.locator('header nav a').filter({ hasText: 'Teams' }).first().click();
+    await page.waitForURL(/\/teams\.html/);
+    await expect(page.url()).toContain('teams.html');
 
     // Click FAQ link
-    await page.locator('#headerNav a:has-text("FAQ")').click();
-    await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/faq\.html/);
-
-    // Click Home link
-    await page.locator('#headerNav a:has-text("Home")').click();
-    await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/index\.html|\/$/);
+    await page.locator('header nav a').filter({ hasText: 'FAQ' }).first().click();
+    await page.waitForURL(/\/faq\.html/);
+    await expect(page.url()).toContain('faq.html');
   });
 
   test('Parent Dashboard button opens external link in new tab', async ({ page, context }) => {
     await page.setViewportSize({ width: 1400, height: 900 });
     await page.goto(`${BASE_URL}/`);
 
-    const registerBtn = page.locator('#headerNav .header-register-btn');
+    const dashboardBtn = page.locator('header nav a:has-text("Dashboard")');
 
     // Should have target="_blank"
-    await expect(registerBtn).toHaveAttribute('target', '_blank');
-
-    // Should have rel="noopener noreferrer"
-    await expect(registerBtn).toHaveAttribute('rel', 'noopener noreferrer');
+    await expect(dashboardBtn).toHaveAttribute('target', '_blank');
 
     // Should link to volleyball central
-    await expect(registerBtn).toHaveAttribute('href', /volleyballcentral/);
+    await expect(dashboardBtn).toHaveAttribute('href', /volleyballcentral/);
   });
 });

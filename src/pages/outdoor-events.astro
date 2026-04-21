@@ -1,0 +1,118 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ScrollReveal from '../components/ScrollReveal.astro';
+
+const events = [
+  {
+    date: 'TBD – Summer 2026',
+    title: 'Summer Grass Series #1',
+    who: 'Middle School (6th–8th) & High School (9th–12th)',
+    desc: 'Pool play into Gold & Silver brackets. Seeded matches ensure every team continues competing after pool results are finalized.',
+    cost: '$25 per athlete',
+    capacity: '24 Teams Total'
+  },
+  {
+    date: 'TBD – Summer 2026',
+    title: 'Summer Grass Series #2',
+    who: 'Middle School (6th–8th) & High School (9th–12th)',
+    desc: 'Build momentum and compete for bragging rights across the summer. Participation in both Series #1 and #2 is encouraged!',
+    cost: '$25 per athlete',
+    capacity: '24 Teams Total'
+  },
+  {
+    date: 'TBD – Summer 2026',
+    title: 'Family Grass Challenge',
+    who: 'Parent/Player Doubles (2v2)',
+    desc: 'A lighthearted and memorable event focused on connection and community. Expect music, friendly competition, and family fun.',
+    cost: '$25 per participant',
+    capacity: 'Limited Capacity'
+  }
+];
+---
+
+<BaseLayout title="Outdoor Events" description="TVVC Outdoor 2026 Grass Series and Family Events in Hillsboro, OR. Competitive and fun doubles volleyball.">
+  <main class="pt-32">
+    <!-- Hero -->
+    <section class="px-6 py-20 relative text-center md:text-left">
+      <div class="max-w-6xl mx-auto">
+        <span class="text-brand-teal font-bold uppercase tracking-widest text-xs mb-4 block text-brand-teal">Outdoor 2026</span>
+        <h1 class="text-4xl md:text-7xl font-heading font-extrabold mb-6 leading-tight text-white">
+          Grass Series & <span class="text-brand-teal italic">Family Events</span>
+        </h1>
+        <p class="text-lg text-white/60 max-w-2xl leading-relaxed">
+          Organized, competitive, and genuinely fun doubles volleyball. No long days. No grind. Just well-run grass tournaments.
+        </p>
+      </div>
+    </section>
+
+    <!-- Intro -->
+    <section class="max-w-6xl mx-auto px-6 py-24 scroll-mt-32 border-y border-white/5">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <h2 class="text-3xl md:text-5xl font-heading mb-8 text-white leading-tight">Outdoor <span class="text-brand-teal italic text-4xl">Volleyball</span></h2>
+          <p class="text-white/60 text-lg leading-relaxed mb-8">
+            TVVC Outdoor is designed to bring athletes together in a competitive but relaxed summer environment. These events are not training sessions. They are opportunities to compete, connect, and enjoy the game in a different setting.
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+           {['Doubles (2v2)', 'Min. 4 Matches', 'Organized & Efficient', 'MS & HS Divisions'].map(item => (
+             <div class="glass p-6 rounded-2xl border-white/5 text-center text-xs font-bold uppercase tracking-widest text-brand-teal">
+                {item}
+             </div>
+           ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Grass Series Grid -->
+    <section class="max-w-6xl mx-auto px-6 py-32">
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {events.map((event, i) => (
+            <ScrollReveal delay={i * 0.1}>
+              <div class="glass-card h-full flex flex-col justify-between border-white/5 hover:border-brand-teal/30 group relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-teal/5 rounded-full blur-3xl group-hover:bg-brand-teal/10 transition-all duration-500"></div>
+                <div>
+                  <span class="bg-brand-teal/10 text-brand-teal text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-6 inline-block">{event.date}</span>
+                  <h3 class="text-2xl font-heading font-bold mb-3 text-white">{event.title}</h3>
+                  <p class="text-[10px] text-white/40 font-bold uppercase mb-4 tracking-wider">{event.who}</p>
+                  <p class="text-sm text-white/50 leading-relaxed mb-8">{event.desc}</p>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-white/5">
+                   <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">
+                      <span>Cost</span>
+                      <span>Capacity</span>
+                   </div>
+                   <div class="flex justify-between text-xs font-bold text-brand-teal">
+                      <span>{event.cost}</span>
+                      <span>{event.capacity}</span>
+                   </div>
+                </div>
+              </div>
+            </ScrollReveal>
+          ))}
+       </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="max-w-4xl mx-auto px-6 py-24 text-center">
+       <div class="glass-card !bg-brand-teal/5 border-brand-teal/20 p-12 relative overflow-hidden">
+          <h2 class="text-3xl font-heading mb-6 text-white leading-tight">What to <span class="text-brand-teal italic text-2xl">Expect</span></h2>
+          <div class="flex flex-wrap gap-4 justify-center text-sm font-bold text-white/60 mb-12">
+             <span>Clear Communication</span>
+             <span>•</span>
+             <span>Efficient Rounds</span>
+             <span>•</span>
+             <span>Positive Energy</span>
+             <span>•</span>
+             <span>Awards</span>
+          </div>
+          <p class="text-sm text-white/40 mb-10 max-w-lg mx-auto leading-relaxed italic">
+             "Doubles grass volleyball is one of the best ways to grow reading skills and court awareness. Plus, it's just fun."
+          </p>
+          <button class="btn btn-secondary cursor-not-allowed opacity-50 px-12">Registration Open Soon!</button>
+       </div>
+    </section>
+  </main>
+</BaseLayout>

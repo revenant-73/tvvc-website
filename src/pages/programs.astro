@@ -1,0 +1,188 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Programs" description="Explore TVVC's volleyball programs: Private/Group training, Ignition for 4th-6th graders, and PlayWorks for 6th-10th graders.">
+  <main class="pt-32">
+    <!-- Hero Section -->
+    <section class="px-6 py-20 relative">
+      <div class="max-w-6xl mx-auto text-center md:text-left">
+        <span class="text-brand-teal font-bold uppercase tracking-widest text-xs mb-4 block">Development Pathways</span>
+        <h1 class="text-4xl md:text-7xl font-heading font-extrabold mb-6 leading-tight">
+          Group Training & <span class="text-brand-teal">Programs</span>
+        </h1>
+        <p class="text-lg text-white/60 max-w-2xl leading-relaxed mb-10">
+          Whether you're preparing for tryouts or exploring the game through PlayWorks, we have the right program for you.
+        </p>
+        
+        <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+          <a href="/summer-camps-clinics" class="btn btn-primary !px-6 !py-2 text-sm">Register for Summer 2026</a>
+          <a href="#ignition" class="btn btn-secondary !px-6 !py-2 text-sm">Ignition</a>
+          <a href="#playworks" class="btn btn-secondary !px-6 !py-2 text-sm">PlayWorks</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Training Section -->
+    <section id="training" class="max-w-6xl mx-auto px-6 py-24 scroll-mt-32">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+        <div>
+          <h2 class="text-3xl md:text-5xl font-heading mb-8">Group <span class="text-brand-teal italic text-4xl">Training</span></h2>
+          <p class="text-white/60 mb-8 leading-relaxed">
+            The best learning happens with teammates, not alone. Volleyball is a conversation—reading your teammates, adapting to opponents, staying present with the moment.
+          </p>
+          
+          <ul class="space-y-6">
+            {[
+              { label: 'Attention', desc: 'Focus on what actually matters on court.' },
+              { label: 'Intention', desc: 'Play with purpose, not just repetition.' },
+              { label: 'Decision Making', desc: 'Adapt as the game shifts.' }
+            ].map(item => (
+              <li class="flex items-start gap-4">
+                <span class="w-6 h-6 rounded-full bg-brand-teal/20 text-brand-teal flex items-center justify-center text-xs mt-1">✓</span>
+                <span class="text-white/80"><strong>{item.label}</strong> — {item.desc}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="glass-card bg-brand-teal/5 border-brand-teal/20 p-8 md:p-12">
+          <h3 class="text-xl font-heading font-bold mb-6">Coaching Philosophy</h3>
+          <p class="text-white/50 mb-6 italic leading-relaxed">
+            "We don't train in isolation because the game isn't played in isolation. Every session is purposeful—no static drills, no empty reps."
+          </p>
+          <div class="space-y-4">
+            <div class="glass rounded-xl p-6 border-white/5">
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="font-bold">Group Session (2–4 Players)</h4>
+                <div class="text-right">
+                  <span class="text-brand-teal font-bold block text-xl">$40</span>
+                  <span class="text-[10px] uppercase text-white/40 font-bold tracking-widest">Per Player / 90 Min</span>
+                </div>
+              </div>
+              <p class="text-xs text-white/40">Our most recommended format. Mirrors real game play.</p>
+            </div>
+            <div class="glass rounded-xl p-6 border-white/5 opacity-60">
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="font-bold">1-on-1 Training</h4>
+                <span class="text-white/40 italic">Director Approval Only</span>
+              </div>
+              <p class="text-xs text-white/40">Focused solo sessions for specific technical goals.</p>
+            </div>
+          </div>
+          <div class="mt-8">
+            <p class="text-[10px] uppercase text-white/40 font-bold tracking-[0.2em] mb-3 text-center">Contact Director to Schedule</p>
+            <a href="mailto:info@tualatinvalleyvb.com" class="btn btn-primary w-full">Email to Book Session</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ignition Section -->
+    <section id="ignition" class="bg-brand-coral/5 py-32 scroll-mt-32">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20">
+          <div>
+            <span class="bg-brand-coral text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-6 inline-block">4th–6th Grade</span>
+            <h2 class="text-3xl md:text-6xl font-heading font-extrabold mb-8 leading-tight">Ignition <span class="text-brand-coral">Volleyball</span></h2>
+            <p class="text-lg text-white/60 leading-relaxed mb-8">
+              Ignition is where young athletes fall in love with the game through play. We believe that at this age, the best way to learn is through joy, movement, and connection.
+            </p>
+            <div class="flex flex-wrap gap-4">
+               {['Fun', 'Connection', 'Recognition', 'Play'].map(tag => (
+                 <span class="px-4 py-2 rounded-lg glass border-brand-coral/20 text-brand-coral text-xs font-bold uppercase tracking-widest">{tag}</span>
+               ))}
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div class="glass-card border-brand-coral/20 p-6">
+              <h4 class="text-brand-coral font-bold text-xs uppercase mb-2">Winter</h4>
+              <p class="text-sm font-bold">Jan 12 – Mar 13</p>
+            </div>
+            <div class="glass-card border-brand-coral/20 p-6">
+              <h4 class="text-brand-coral font-bold text-xs uppercase mb-2">Spring</h4>
+              <p class="text-sm font-bold">Mar 30 – Jun 5</p>
+            </div>
+            <div class="glass-card border-brand-coral/20 p-6">
+              <h4 class="text-brand-coral font-bold text-xs uppercase mb-2">Fall</h4>
+              <p class="text-sm font-bold">Aug 31 – Nov 6</p>
+            </div>
+            <div class="glass-card border-brand-coral/20 p-6 flex items-center justify-center bg-brand-coral/10">
+              <span class="text-xl font-bold font-heading">$175</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-sm text-white/50 leading-relaxed">
+          <div class="glass-card border-white/5">
+             <h3 class="text-white text-lg font-bold mb-4">✨ The Child at the Center</h3>
+             <p>Practices are built around fun, fast-moving games that encourage exploration, teamwork, and confidence. Instead of full-size equipment, we use smaller courts, lower nets, and lighter balls.</p>
+          </div>
+          <div class="glass-card border-white/5">
+             <h3 class="text-white text-lg font-bold mb-4">💡 How Learning Happens</h3>
+             <p>We use scoring and rule variations to teach principles through small-sided games. Athletes move quickly from brief demonstrations into play, where they explore ideas and solve problems.</p>
+          </div>
+        </div>
+
+        <div class="mt-12 text-center">
+          <a href="https://tvvc.volleyballcentral.io/e/ignition" target="_blank" class="btn btn-primary !bg-brand-coral !shadow-glow-coral">Register for Ignition</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- PlayWorks Section -->
+    <section id="playworks" class="max-w-6xl mx-auto px-6 py-32 scroll-mt-32">
+       <div class="text-center mb-16">
+          <span class="bg-white/10 text-white/50 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-6 inline-block">6th–10th Grade</span>
+          <h2 class="text-3xl md:text-6xl font-heading font-extrabold mb-6">PlayWorks</h2>
+          <p class="text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
+            A skill-focused exploratory program designed to maximize touches and decisions through game-based learning.
+          </p>
+       </div>
+
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          {[
+            { title: 'Core Skills', desc: 'Heavy focus on serving, passing, setting, and attacking.' },
+            { title: 'Game-Based', desc: 'Each week builds skill and understanding through play.' },
+            { title: 'Low Commitment', desc: 'Perfect for athletes looking to grow without the full club load.' }
+          ].map(item => (
+            <div class="glass-card p-8 text-center border-white/5 hover:border-brand-teal/30">
+              <h4 class="text-brand-teal font-bold mb-3">{item.title}</h4>
+              <p class="text-sm text-white/50 leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+       </div>
+
+       <div class="glass-card !p-0 overflow-hidden border-white/10">
+          <div class="grid grid-cols-1 md:grid-cols-2">
+            <div class="p-8 md:p-12 border-b md:border-b-0 md:border-r border-white/10">
+               <h3 class="font-heading font-bold text-2xl mb-6">2026 Sessions</h3>
+               <div class="space-y-4">
+                  <div class="flex justify-between p-4 glass rounded-lg text-sm">
+                    <span>Winter Session</span>
+                    <span class="font-bold">Jan 12 – Mar 13</span>
+                  </div>
+                  <div class="flex justify-between p-4 glass rounded-lg text-sm">
+                    <span>Spring Session</span>
+                    <span class="font-bold">Mar 30 – Jun 5</span>
+                  </div>
+                  <div class="flex justify-between p-4 glass rounded-lg text-sm">
+                    <span>Fall Session</span>
+                    <span class="font-bold">Aug 31 – Nov 6</span>
+                  </div>
+               </div>
+            </div>
+            <div class="p-8 md:p-12 flex flex-col justify-center text-center md:text-left">
+               <div class="mb-6">
+                 <span class="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1 block">Registration</span>
+                 <div class="text-4xl font-heading font-bold">$175 <span class="text-sm font-normal text-white/40">/ session</span></div>
+               </div>
+               <p class="text-sm text-white/40 mb-8 max-w-xs">Includes program t-shirt. Sessions run 2x per week at our Hillsboro facility.</p>
+               <a href="https://tvvc.volleyballcentral.io/e/playworks" target="_blank" class="btn btn-primary">Register for PlayWorks</a>
+            </div>
+          </div>
+       </div>
+    </section>
+  </main>
+</BaseLayout>

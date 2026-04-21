@@ -21,7 +21,7 @@ module.exports = defineConfig({
   ],
 
   webServer: {
-    command: 'python -m http.server 8000',
+    command: 'python -m http.server 8000 --directory dist',
     url: 'http://localhost:8000',
     reuseExistingServer: !process.env.CI,
   },

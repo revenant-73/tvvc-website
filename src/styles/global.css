@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-brand-teal: #009695;
+    --color-brand-coral: #E85D4E;
+    --color-brand-charcoal: #0B0E14;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-brand-charcoal text-white font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+  }
+  
+  .glass-card {
+    @apply glass rounded-2xl p-6 transition-all duration-300 hover:border-brand-teal/50 hover:bg-white/10;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-full font-bold transition-all duration-300;
+  }
+
+  .btn-primary {
+    @apply bg-brand-teal text-white hover:bg-brand-teal-dark hover:scale-105 active:scale-95 shadow-glow-teal;
+  }
+
+  .btn-secondary {
+    @apply border-2 border-white/20 text-white hover:bg-white/10 hover:border-white/40;
+  }
+}

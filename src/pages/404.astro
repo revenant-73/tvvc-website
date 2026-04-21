@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="404 - Page Not Found">
+  <main class="min-h-[70vh] flex items-center justify-center px-6 py-32">
+    <div class="max-w-md w-full text-center">
+      <span class="text-8xl mb-8 block">🏐</span>
+      <h1 class="text-4xl md:text-6xl font-heading font-extrabold mb-6 leading-tight">
+        Out of <span class="text-brand-teal italic">Bounds</span>
+      </h1>
+      <p class="text-lg text-white/60 mb-10 leading-relaxed">
+        Oops! Looks like that page didn't clear the net. Let's get you back in the game.
+      </p>
+      <a href="/" class="btn btn-primary px-10">Back to Home</a>
+    </div>
+  </main>
+</BaseLayout>

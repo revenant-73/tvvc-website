@@ -4,24 +4,26 @@ Official website for Tualatin Valley Volleyball Club — a high-quality, afforda
 
 ## 🏐 Features
 
-- **Homepage** (`index.html`) — Hero section, core values, call-to-action
-- **Teams** (`teams.html`) — Current rosters and team information
-- **Programs** (`programs.html`) — Available programs and tryouts
-- **FAQ** (`faq.html`) — Frequently asked questions
+- **Modern UI** — Built with Astro, Tailwind CSS, and Framer Motion
+- **Responsive Design** — Fully optimized for mobile, tablet, and desktop
+- **Performance** — Static site generation for lightning-fast load times
+- **Interactive Schedules** — Real-time tournament tracking and team rosters
+- **SEO Optimized** — Semantic HTML and proper metadata
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: HTML5, CSS3 (vanilla, no framework)
-- **Testing**: Playwright
-- **Server**: Python `http.server` (port 8000)
-- **Deployment**: Netlify
+- **Framework**: [Astro](https://astro.build/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Components**: [React](https://reactjs.org/) & [Framer Motion](https://www.framer.com/motion/)
+- **Testing**: [Playwright](https://playwright.dev/)
+- **Deployment**: [Netlify](https://www.netlify.com/)
 
 ## 📦 Getting Started
 
 ### Prerequisites
-- Node.js 16+ (for Playwright tests)
-- Python 3.6+ (for local server)
-- Git
+
+- **Node.js**: v18.17.1 or higher
+- **npm**: v9.6.7 or higher
 
 ### Installation
 
@@ -30,7 +32,7 @@ Official website for Tualatin Valley Volleyball Club — a high-quality, afforda
 git clone https://github.com/revenant-73/tvvc-website.git
 cd tvvc-website
 
-# Install Playwright
+# Install dependencies
 npm install
 ```
 
@@ -39,62 +41,59 @@ npm install
 Start the local development server:
 
 ```bash
-python -m http.server 8000
+npm run dev
 ```
 
-Website will be available at `http://localhost:8000`
+The website will be available at `http://localhost:4321`.
+
+### Build
+
+Create a production-ready build in the `dist/` directory:
+
+```bash
+npm run build
+```
 
 ### Testing
 
-Run Playwright tests:
+Run the end-to-end test suite:
 
 ```bash
 # Run all tests
-npx playwright test
+npm test
 
-# Run tests in headed mode (see browser)
-npx playwright test --headed
+# Run tests in headed mode
+npm run test:headed
 
-# Run specific test file
-npx playwright test tests/core-values.spec.js
-
-# View test results
-npx playwright show-report
+# Open Playwright UI
+npm run test:ui
 ```
 
 ## 📁 Project Structure
 
 ```
 .
-├── index.html                 # Homepage
-├── teams.html                 # Teams page
-├── programs.html              # Programs page
-├── faq.html                   # FAQ page
-├── playwright.config.js       # Playwright configuration
-├── assets/
-│   └── images/               # All image assets
-├── tests/
-│   ├── core-values.spec.js   # Homepage core values tests
-│   └── tournament-schedule.spec.js
-├── README.md
-└── .gitignore
+├── src/
+│   ├── components/      # Reusable React/Astro components
+│   ├── layouts/         # Page templates (BaseLayout)
+│   ├── pages/           # Site routes (index, teams, programs, faq)
+│   └── styles/          # Global CSS and Tailwind directives
+├── public/              # Static assets (images, icons)
+├── tests/               # Playwright E2E tests
+├── astro.config.mjs     # Astro configuration
+├── tailwind.config.mjs  # Tailwind configuration
+└── netlify.toml         # Netlify deployment configuration
 ```
-
-## 🎨 Design System
-
-CSS variables are defined in each HTML file's `<style>` block:
-
-- **Colors**: Teal (#00B4B3), Coral (#FF6F61), Charcoal (#222222)
-- **Spacing**: 8px base scale (4px, 8px, 16px, 24px, 32px, 48px, 64px)
-- **Typography**: System font stack, responsive sizing
-- **Radius**: 4px, 8px, 12px, full
-- **Shadows**: sm, md, lg
 
 ## 🚀 Deployment
 
-The site is automatically deployed to Netlify on every push to `main`.
+The site is automatically deployed to Netlify on every push to the `main` branch.
 
-[View Live](https://tvvc-website.netlify.app)
+**Deployment Configuration:**
+- **Build Command**: `npm run build`
+- **Publish Directory**: `dist`
+
+[View Live Site](https://tualatinvalleyvb.com)
 
 ## 📝 License
 

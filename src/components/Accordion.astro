@@ -1,0 +1,62 @@
+---
+interface Props {
+  title: string;
+  number?: string;
+  meta?: string;
+}
+
+const { title, number, meta } = Astro.props;
+---
+
+<div class="accordion-item glass-card !p-0 mb-4 overflow-hidden group">
+  <button class="accordion-header w-full text-left p-6 flex items-center justify-between hover:bg-white/5 transition-colors">
+    <div class="accordion-title flex flex-col gap-1">
+      {number && <span class="text-[10px] font-bold text-brand-teal uppercase tracking-widest leading-none mb-1">{number}</span>}
+      <h3 class="text-lg font-heading font-bold text-white group-hover:text-brand-teal transition-colors">{title}</h3>
+    </div>
+    <div class="flex items-center gap-4">
+      {meta && <span class="hidden sm:block text-[11px] font-bold text-white/40 uppercase tracking-widest">{meta}</span>}
+      <div class="accordion-icon w-6 h-6 flex items-center justify-center rounded-full border border-white/10 group-hover:border-brand-teal/50 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="accordion-svg transition-transform duration-300"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+    </div>
+  </button>
+  <div class="accordion-content hidden px-6 pb-6">
+    <div class="pt-2 border-t border-white/5 mt-2">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<script>
+  function setupAccordions() {
+    const accordions = document.querySelectorAll('.accordion-item');
+    
+    accordions.forEach(item => {
+      const header = item.querySelector('.accordion-header');
+      const content = item.querySelector('.accordion-content');
+      const svg = item.querySelector('.accordion-svg');
+      
+      header?.addEventListener('click', () => {
+        const isOpen = !content?.classList.contains('hidden');
+        
+        // Close others in the same parent if needed (optional)
+        // For now, let's allow multiple open
+        
+        if (isOpen) {
+          content?.classList.add('hidden');
+          svg?.classList.remove('rotate-180');
+        } else {
+          content?.classList.remove('hidden');
+          svg?.classList.add('rotate-180');
+        }
+      });
+    });
+  }
+
+  // Setup on initial load
+  setupAccordions();
+
+  // Setup on view transitions (if used)
+  document.addEventListener('astro:after-swap', setupAccordions);
+</script>

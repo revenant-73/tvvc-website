@@ -11,3 +11,83 @@ Preferred Use Cases: I’m building apps for volleyball coaching and club manage
 Design Style: For UI/UX, I like clean, modern designs with dark mode by default. Rounded corners, bold fonts, intuitive flows. Function over fluff, but aesthetics still matter.
 
 Don’t do this: Avoid moralizing, giving lectures, or telling me what I "should" do unless it’s a major safety/security issue. Also, skip over-explaining obvious stuff unless I specifically ask for more detail.
+
+# TVVC Website Information
+
+## Summary
+The **TVVC Website** is the official online presence for the Tualatin Valley Volleyball Club, a non-profit organization in Hillsboro, OR (2820 SE 58th Court). It is a **modern static website** built using **Astro**, **React**, and **Tailwind CSS**. It uses **Playwright** for E2E testing and is deployed via **Netlify**.
+
+## Structure
+- [**./src/pages/**](./src/pages/): Contains site routes (Astro components).
+- [**./src/components/**](./src/components/): Reusable UI components (React/Astro).
+- [**./src/layouts/**](./src/layouts/): Page templates like `BaseLayout.astro`.
+- [**./public/assets/**](./public/assets/): Static resources like images and legacy styles.
+- [**./tests/**](./tests/): Comprehensive end-to-end test suite using Playwright.
+
+## Language & Runtime
+**Language**: JavaScript, Astro, JSX  
+**Runtime**: Node.js 18+  
+**Framework**: Astro 6.0+  
+**Styling**: Tailwind CSS  
+**Package Manager**: npm  
+**Registration Status**: Summer 2026 Registration is now **OPEN**.
+
+## Dependencies
+**Main Dependencies**:
+- **astro**: ^6.1.6
+- **react**: ^19.2.5
+- **tailwindcss**: ^3.4.19
+- **framer-motion**: ^12.38.0
+
+**Development Dependencies**:
+- **@playwright/test**: ^1.56.1
+
+## Build & Installation
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## Testing
+**Framework**: Playwright  
+**Test Location**: [**./tests/**](./tests/)  
+**Naming Convention**: `*.spec.js`  
+**Configuration**: [**./playwright.config.js**](./playwright.config.js)
+
+**Key Test Suites**:
+- [**./tests/core-values.spec.js**](./tests/core-values.spec.js): Validates the homepage core values section.
+- [**./tests/tournament-schedule.spec.js**](./tests/tournament-schedule.spec.js): Verifies tournament schedule table rendering and data accuracy.
+- [**./tests/mobile-navigation.spec.js**](./tests/mobile-navigation.spec.js): Tests the interactive mobile navigation menu.
+
+**Run Commands**:
+```bash
+# Run all tests
+npm test
+
+# Run tests in headed mode
+npm run test:headed
+
+# Run tests with Playwright UI
+npm run test:ui
+```
+
+## Main Pages
+- [**./src/pages/index.astro**](./src/pages/index.astro): Primary homepage.
+- [**./src/pages/teams.astro**](./src/pages/teams.astro): Displays current rosters and tournament schedules (Club Teams).
+- [**./src/pages/programs.astro**](./src/pages/programs.astro): Information on club programs (In-House Programs).
+- [**./src/pages/summer-camps-clinics.astro**](./src/pages/summer-camps-clinics.astro): Summer training schedules.
+- [**./src/pages/outdoor-events.astro**](./src/pages/outdoor-events.astro): Information on outdoor volleyball.
+- [**./src/pages/events.astro**](./src/pages/events.astro): Seasonal events (May Shindig).
+- [**./src/pages/faq.astro**](./src/pages/faq.astro): Frequently Asked Questions.
+
+## CSS Architecture & Design System
+The project uses **Tailwind CSS** for styling, with a centralized design system:
+- **Design Tokens**: Configured in [**./tailwind.config.mjs**](./tailwind.config.mjs).
+  - **Colors**: Teal (`#009695`), Coral (`#E85D4E`), Charcoal (`#1A1A1A`).
+- **Global Styles**: Defined in [**./src/styles/globals.css**](./src/styles/globals.css).

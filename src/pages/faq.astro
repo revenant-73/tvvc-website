@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const faqCategories = [
+  {
+    title: 'Club Volleyball Basics',
+    questions: [
+      {
+        q: 'What is Club Volleyball?',
+        a: 'Club volleyball is organized outside of the school season (typically winter–spring). Teams practice weekly and compete in regional events. It\'s a chance to get more touches, grow confidence, and keep playing with friends.'
+      },
+      {
+        q: 'Why play Club Volleyball?',
+        a: 'More meaningful reps, better competition, and a supportive team environment. Whether preparing for high school/college or playing for fun, club accelerates learning.'
+      },
+      {
+        q: 'How does TVVC differ?',
+        a: 'Accessible & local (lower costs, less travel), joy-first culture, smaller rosters (more court time), and modern training focused on decision-making.'
+      }
+    ]
+  },
+  {
+    title: 'Logistics & Costs',
+    questions: [
+      {
+        q: 'How much does it cost?',
+        a: 'We keep costs significantly lower than traditional clubs. We provide a clear breakdown before registration and avoid surprise fees.'
+      },
+      {
+        q: 'Where are practices?',
+        a: 'Practices are held at TVVC, 2820 SE 58th Court, Hillsboro, OR 97123.'
+      },
+      {
+        q: 'What is the time commitment?',
+        a: 'Typically 2 practices per week plus local tournaments. We support multi-sport athletes and healthy balance.'
+      }
+    ]
+  },
+  {
+    title: 'Development',
+    questions: [
+      {
+        q: 'Can my child play multiple sports?',
+        a: 'Absolutely. We encourage multi-sport participation—great for coordination, resilience, and long-term development.'
+      },
+      {
+        q: 'How do tryouts work?',
+        a: 'Held each November. We evaluate how players perceive, decide, and act in game-realistic settings alongside their technical skills.'
+      }
+    ]
+  }
+];
+---
+
+<BaseLayout title="FAQ" description="Frequently asked questions about TVVC costs, tryouts, practices, and philosophy.">
+  <main class="pt-32">
+    <!-- Hero -->
+    <section class="px-6 py-20">
+      <div class="max-w-4xl mx-auto text-center">
+        <h1 class="text-4xl md:text-7xl font-heading font-extrabold mb-6 italic text-brand-teal">FAQ</h1>
+        <p class="text-lg text-white/60 leading-relaxed max-w-2xl mx-auto">
+          Transparent answers about how we train, compete, and support families at Tualatin Valley Volleyball Club.
+        </p>
+      </div>
+    </section>
+
+    <!-- FAQ Content -->
+    <section class="max-w-4xl mx-auto px-6 pb-32">
+      <div class="space-y-16">
+        {faqCategories.map((cat) => (
+          <div>
+            <h2 class="text-xl font-heading font-bold mb-8 uppercase tracking-widest text-white/40 border-b border-white/10 pb-4">
+              {cat.title}
+            </h2>
+            <div class="space-y-4">
+              {cat.questions.map((item) => (
+                <div class="glass-card group hover:border-brand-teal/30">
+                  <h3 class="text-lg font-bold mb-3 text-white group-hover:text-brand-teal transition-colors flex items-center gap-3">
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-teal"></span>
+                    {item.q}
+                  </h3>
+                  <div class="text-white/50 text-sm leading-relaxed pl-4.5 border-l border-white/5 ml-0.5">
+                    {item.a}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Contact CTA -->
+      <div class="mt-20 p-12 glass rounded-3xl border-brand-teal/20 text-center">
+        <h2 class="text-2xl font-heading font-bold mb-4">Still have questions?</h2>
+        <p class="text-white/50 mb-8">Reach out and we'll get back to you quickly.</p>
+        <div class="flex flex-wrap gap-4 justify-center">
+          <a href="mailto:info@tualatinvalleyvb.com" class="btn btn-primary px-8">Email Us</a>
+          <a href="tel:+15033890760" class="btn btn-secondary px-8">Call (503) 389-0760</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

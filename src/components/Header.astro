@@ -1,0 +1,107 @@
+---
+const { pathname } = Astro.url;
+const normalizedPath = pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+
+const navLinks = [
+  { href: '/teams.html', label: 'Club Teams' },
+  { href: '/programs.html', label: 'In-House Programs' },
+  { href: '/summer-camps-clinics.html', label: 'Summer Camps & Clinics' },
+  { href: '/outdoor-events.html', label: 'Outdoor Events' },
+  { href: '/events.html', label: 'May Shindig', class: 'text-brand-coral' },
+  { href: '/faq.html', label: 'FAQ' },
+];
+
+const isHome = normalizedPath === '/';
+---
+
+<header class="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-6xl z-50">
+  <nav class="glass rounded-full px-6 py-2 md:py-3 flex items-center justify-between">
+    <a href="/" class="flex flex-col">
+      <span class="font-heading font-extrabold text-lg leading-tight tracking-tight">
+        <span class="text-brand-teal">TV</span>VC
+      </span>
+      <span class="text-[10px] uppercase tracking-widest text-white/40 font-bold -mt-1">Hillsboro, OR</span>
+    </a>
+
+    <!-- Desktop Navigation -->
+    <div class="hidden lg:flex items-center gap-6 text-[11px] uppercase tracking-[0.15em] font-bold">
+      {navLinks.map(link => (
+        <a 
+          href={link.href} 
+          class:list={[
+            "hover:text-brand-teal transition-colors",
+            link.class,
+            normalizedPath === link.href ? "text-brand-teal" : ""
+          ]}
+        >
+          {link.label}
+        </a>
+      ))}
+      <a href="https://tvvc.volleyballcentral.io/" target="_blank" class="btn btn-primary !py-2 !px-4 !text-[10px] !tracking-widest">Dashboard</a>
+    </div>
+
+    <!-- Mobile/Small Desktop Toggle -->
+    <button class="lg:hidden text-white p-2" id="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu Backdrop -->
+  <div id="mobile-menu" class="hidden absolute top-16 left-0 w-full glass rounded-3xl p-8 flex flex-col gap-6 lg:hidden border-white/10 shadow-2xl transition-all duration-300 opacity-0 -translate-y-4">
+    {navLinks.map(link => (
+      <a 
+        href={link.href} 
+        class:list={[
+          "text-lg font-heading font-bold",
+          link.class,
+          normalizedPath === link.href ? "text-brand-teal" : ""
+        ]}
+      >
+        {link.label}
+      </a>
+    ))}
+    <a href="https://tvvc.volleyballcentral.io/" target="_blank" class="btn btn-primary !w-full">Parent Dashboard</a>
+  </div>
+</header>
+
+<script>
+  function setupMobileMenu() {
+    const toggle = document.getElementById('mobile-menu-toggle');
+    const menu = document.getElementById('mobile-menu');
+    
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', () => {
+      const isHidden = menu.classList.contains('hidden');
+      
+      if (isHidden) {
+        menu.classList.remove('hidden');
+        // Small delay to allow transition
+        requestAnimationFrame(() => {
+          menu.classList.remove('opacity-0', '-translate-y-4');
+        });
+        toggle.setAttribute('aria-expanded', 'true');
+      } else {
+        menu.classList.add('opacity-0', '-translate-y-4');
+        toggle.setAttribute('aria-expanded', 'false');
+        
+        const onTransitionEnd = () => {
+          menu.classList.add('hidden');
+          menu.removeEventListener('transitionend', onTransitionEnd);
+        };
+        menu.addEventListener('transitionend', onTransitionEnd);
+      }
+    });
+
+    // Close menu on link click
+    menu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        menu.classList.add('opacity-0', '-translate-y-4', 'hidden');
+        toggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  setupMobileMenu();
+  document.addEventListener('astro:after-swap', setupMobileMenu);
+</script>

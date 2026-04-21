@@ -1,42 +1,18 @@
-# Netlify configuration for TVVC Website
-
 [build]
-  # No build step needed - static site
-  publish = "."
-  command = ""
+  command = "npm run build"
+  publish = "dist"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer-when-downgrade"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';"
 
 [[redirects]]
-  # Redirect all 404s to index.html for SPA routing (if needed in future)
   from = "/*"
   to = "/index.html"
   status = 200
-  condition = "!{Extensions}"
-
-[context.production]
-  # Production context
-  environment = { NODE_ENV = "production" }
-
-[context.deploy-preview]
-  # Deploy preview context
-  environment = { NODE_ENV = "staging" }
-
-# Cache control headers for static assets
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.css"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/assets/images/*"
-  [headers.values]
-    Cache-Control = "public, max-age=2592000, immutable"
-
-[[headers]]
-  for = "*.html"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+  condition = {role = ["admin"]}
