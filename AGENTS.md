@@ -27,7 +27,7 @@ The **TVVC Website** is the official online presence for the Tualatin Valley Vol
 ## Language & Runtime
 **Language**: JavaScript, Astro, JSX  
 **Runtime**: Node.js 18+  
-**Framework**: Astro 6.0+  
+**Framework**: Astro 5.0+  
 **Styling**: Tailwind CSS  
 **Package Manager**: npm  
 **Registration Status**: Summer 2026 Registration is now **OPEN**.
