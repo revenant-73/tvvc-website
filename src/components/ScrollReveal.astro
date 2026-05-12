@@ -20,35 +20,45 @@ const y = direction === 'up' ? offset : direction === 'down' ? -offset : 0;
 </div>
 
 <script>
-  const observerOptions = {
-    root: null,
-    rootMargin: '0px',
-    threshold: 0.1
-  };
+  function initReveal() {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.05
+    };
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const target = entry.target as HTMLElement;
-        const delay = target.getAttribute('data-delay') || '0';
-        const x = target.getAttribute('data-x') || '0';
-        const y = target.getAttribute('data-y') || '0';
-        
-        target.style.transition = `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`;
-        target.style.opacity = '1';
-        target.style.transform = 'translate(0, 0)';
-        observer.unobserve(target);
-      }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const target = entry.target as HTMLElement;
+          const delay = target.getAttribute('data-delay') || '0';
+          
+          target.style.transition = `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`;
+          target.style.opacity = '1';
+          target.style.transform = 'translate(0, 0)';
+          observer.unobserve(target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+      const target = el as HTMLElement;
+      // If already revealed (e.g. on back navigation), don't hide again
+      if (target.style.opacity === '1') return;
+
+      const x = target.getAttribute('data-x') || '0';
+      const y = target.getAttribute('data-y') || '0';
+      
+      target.style.opacity = '0';
+      target.style.transform = `translate(${x}px, ${y}px)`;
+      observer.observe(target);
     });
-  }, observerOptions);
+  }
 
-  document.querySelectorAll('.reveal-on-scroll').forEach(el => {
-    const target = el as HTMLElement;
-    const x = target.getAttribute('data-x') || '0';
-    const y = target.getAttribute('data-y') || '0';
-    
-    target.style.opacity = '0';
-    target.style.transform = `translate(${x}px, ${y}px)`;
-    observer.observe(target);
-  });
+  // Run on initial load
+  initReveal();
+
+  // Run on Astro page load (for View Transitions)
+  document.addEventListener('astro:page-load', initReveal);
+  document.addEventListener('astro:after-swap', initReveal);
 </script>

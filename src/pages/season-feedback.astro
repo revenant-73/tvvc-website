@@ -116,18 +116,17 @@ const ratings = [1, 2, 3, 4, 5];
           </div>
         </ScrollReveal>
       ) : (
-        <ScrollReveal delay={0.2}>
-          <div class="glass-card border-white/10 p-8 md:p-12 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-brand-teal/5 rounded-full blur-[100px] -z-10"></div>
-            
-            {error && (
-              <div class="bg-brand-coral/10 border border-brand-coral/20 text-brand-coral p-6 rounded-2xl mb-12 text-sm font-bold flex items-center gap-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                {error}
-              </div>
-            )}
-            
-            <form method="POST" class="space-y-16">
+        <div class="glass-card border-white/10 p-8 md:p-12 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-brand-teal/5 rounded-full blur-[100px] -z-10"></div>
+          
+          {error && (
+            <div class="bg-brand-coral/10 border border-brand-coral/20 text-brand-coral p-6 rounded-2xl mb-12 text-sm font-bold flex items-center gap-4">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              {error}
+            </div>
+          )}
+          
+          <form method="POST" class="space-y-16">
               <!-- Section 1 -->
               <div class="space-y-8">
                 <div class="flex items-center gap-4">
@@ -150,10 +149,15 @@ const ratings = [1, 2, 3, 4, 5];
 
                   <div class="space-y-4">
                     <label for="team" class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal">Which team were you connected to this season?</label>
-                    <select id="team" name="team" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-brand-teal outline-none transition-colors appearance-none">
-                      <option value="" disabled selected class="bg-brand-charcoal">Select your team</option>
-                      {teams.map(t => <option value={t} class="bg-brand-charcoal">{t}</option>)}
-                    </select>
+                    <div class="relative">
+                      <select id="team" name="team" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-brand-teal outline-none transition-colors appearance-none cursor-pointer">
+                        <option value="" disabled selected class="bg-brand-charcoal">Select your team</option>
+                        {teams.map(t => <option value={t} class="bg-brand-charcoal">{t}</option>)}
+                      </select>
+                      <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -508,7 +512,6 @@ const ratings = [1, 2, 3, 4, 5];
               </div>
             </form>
           </div>
-        </ScrollReveal>
       )}
     </div>
   </main>
