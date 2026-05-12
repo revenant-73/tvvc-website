@@ -14,7 +14,7 @@ export default defineConfig({
       filter: (page) => page !== 'https://tualatinvalleyvb.com/season-feedback'
     })
   ],
-  output: 'hybrid',
+  output: 'static',
   adapter: netlify(),
   build: {
     format: 'file'
