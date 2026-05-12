@@ -83,12 +83,17 @@ const ratings = [1, 2, 3, 4, 5];
 ---
 
 <BaseLayout title="Season Feedback" description="TVVC Season Feedback - Help us notice, adapt, and grow." noindex={true}>
-  <main class="pt-32 pb-24 px-6">
-    <div class="max-w-4xl mx-auto">
+  <main class="pt-24 md:pt-32 pb-24 px-4 md:px-6">
+    <div class="max-w-4xl mx-auto relative">
+      <div class="absolute -top-12 right-0 opacity-10 hover:opacity-100 transition-opacity">
+        <a href="/admin/feedback" class="text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </a>
+      </div>
       <ScrollReveal>
-        <div class="text-center mb-16">
+        <div class="text-center mb-12 md:mb-16">
           <h1 class="text-4xl md:text-7xl font-heading font-extrabold mb-6 text-white leading-tight uppercase tracking-tight">
-            Help Us Notice, <br/><span class="text-brand-teal italic">Adapt, and Grow</span>
+            Help Us Notice, <br class="hidden sm:block"/><span class="text-brand-teal italic">Adapt, and Grow</span>
           </h1>
           <div class="max-w-2xl mx-auto space-y-4 text-white/60 text-lg leading-relaxed">
             <p>Thank you for being part of TVVC this season.</p>
@@ -116,27 +121,27 @@ const ratings = [1, 2, 3, 4, 5];
           </div>
         </ScrollReveal>
       ) : (
-        <div class="glass-card border-white/10 p-8 md:p-12 relative overflow-hidden">
+        <div class="glass-card border-white/10 p-5 sm:p-8 md:p-12 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-64 h-64 bg-brand-teal/5 rounded-full blur-[100px] -z-10"></div>
           
           {error && (
-            <div class="bg-brand-coral/10 border border-brand-coral/20 text-brand-coral p-6 rounded-2xl mb-12 text-sm font-bold flex items-center gap-4">
+            <div class="bg-brand-coral/10 border border-brand-coral/20 text-brand-coral p-4 sm:p-6 rounded-2xl mb-8 md:mb-12 text-sm font-bold flex items-center gap-4">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
               {error}
             </div>
           )}
           
-          <form method="POST" class="space-y-16">
+          <form method="POST" class="space-y-12 md:space-y-16">
               <!-- Section 1 -->
-              <div class="space-y-8">
+              <div class="space-y-6 md:space-y-8">
                 <div class="flex items-center gap-4">
-                  <span class="w-8 h-8 rounded-full bg-brand-teal text-white flex items-center justify-center font-bold text-xs">1</span>
-                  <h2 class="text-2xl font-heading font-bold text-white uppercase tracking-widest italic">Who Are You?</h2>
+                  <span class="w-8 h-8 rounded-full bg-brand-teal text-white flex items-center justify-center font-bold text-xs shrink-0">1</span>
+                  <h2 class="text-xl md:text-2xl font-heading font-bold text-white uppercase tracking-widest italic">Who Are You?</h2>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal">I am filling this out as a…</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal">I am filling this out as a…</label>
                     <div class="grid grid-cols-1 gap-2">
                       {["Player", "Parent/Guardian", "Both player and parent together", "Coach", "Other"].map(type => (
                         <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
@@ -148,7 +153,7 @@ const ratings = [1, 2, 3, 4, 5];
                   </div>
 
                   <div class="space-y-4">
-                    <label for="team" class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal">Which team were you connected to this season?</label>
+                    <label for="team" class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal">Which team were you connected to this season?</label>
                     <div class="relative">
                       <select id="team" name="team" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-brand-teal outline-none transition-colors appearance-none cursor-pointer">
                         <option value="" disabled selected class="bg-brand-charcoal">Select your team</option>
@@ -163,12 +168,12 @@ const ratings = [1, 2, 3, 4, 5];
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-white/5 pt-8">
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal">Would you like your feedback to be anonymous?</label>
-                    <div class="flex gap-4">
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal">Would you like your feedback to be anonymous?</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {["Yes", "No", "I’m fine either way"].map(opt => (
-                        <label class="flex-1 text-center">
+                        <label class="text-center">
                           <input type="radio" name="anonymous" value={opt} required class="sr-only peer" />
-                          <div class="py-3 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-teal peer-checked:border-brand-teal text-xs font-bold text-white/40 peer-checked:text-white transition-all">
+                          <div class="py-3 px-2 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-teal peer-checked:border-brand-teal text-xs font-bold text-white/40 peer-checked:text-white transition-all active:scale-95">
                             {opt}
                           </div>
                         </label>
@@ -176,7 +181,7 @@ const ratings = [1, 2, 3, 4, 5];
                     </div>
                   </div>
                   <div class="space-y-4">
-                    <label for="name" class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal">Name — optional</label>
+                    <label for="name" class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal">Name — optional</label>
                     <input type="text" id="name" name="name" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-brand-teal outline-none transition-colors" />
                   </div>
                 </div>
@@ -190,18 +195,18 @@ const ratings = [1, 2, 3, 4, 5];
                 </div>
 
                 <div class="space-y-4">
-                  <div class="flex justify-between items-end">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral">Overall, how would you rate your TVVC experience this season?</label>
-                    <div class="flex gap-4 text-[10px] font-bold uppercase text-white/30 tracking-widest">
+                  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2">
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral">Overall, how would you rate your TVVC experience this season?</label>
+                    <div class="flex gap-4 text-[10px] md:text-xs font-bold uppercase text-white/30 tracking-widest">
                       <span>1 = Not Good</span>
                       <span>5 = Excellent</span>
                     </div>
                   </div>
-                  <div class="flex gap-2">
+                  <div class="flex gap-1.5 md:gap-2">
                     {ratings.map(num => (
                       <label class="flex-1">
                         <input type="radio" name="overall_rating" value={num} required class="sr-only peer" />
-                        <div class="text-center py-4 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-coral peer-checked:border-brand-coral text-white font-bold transition-all hover:scale-105">
+                        <div class="text-center py-4 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-coral peer-checked:border-brand-coral text-white font-bold transition-all hover:scale-[1.02] active:scale-95">
                           {num}
                         </div>
                       </label>
@@ -211,22 +216,22 @@ const ratings = [1, 2, 3, 4, 5];
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div class="space-y-4">
-                    <label for="best_parts" class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral">What were the best parts of your TVVC experience this season?</label>
+                    <label for="best_parts" class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral">What were the best parts of your TVVC experience this season?</label>
                     <textarea id="best_parts" name="best_parts" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-coral outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label for="frustrating_parts" class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral">What were the most frustrating or disappointing parts of your TVVC experience this season?</label>
+                    <label for="frustrating_parts" class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral">What were the most frustrating or disappointing parts of your TVVC experience this season?</label>
                     <textarea id="frustrating_parts" name="frustrating_parts" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-coral outline-none transition-colors"></textarea>
                   </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div class="space-y-4">
-                    <label for="keep_doing" class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral">What is one thing TVVC should absolutely keep doing?</label>
+                    <label for="keep_doing" class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral">What is one thing TVVC should absolutely keep doing?</label>
                     <textarea id="keep_doing" name="keep_doing" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-coral outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label for="consider_changing" class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral">What is one thing TVVC should seriously consider changing?</label>
+                    <label for="consider_changing" class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral">What is one thing TVVC should seriously consider changing?</label>
                     <textarea id="consider_changing" name="consider_changing" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-coral outline-none transition-colors"></textarea>
                   </div>
                 </div>
@@ -239,7 +244,7 @@ const ratings = [1, 2, 3, 4, 5];
                   <h2 class="text-2xl font-heading font-bold text-white uppercase tracking-widest italic">Coaching & Team Environment</h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                   {[
                     { label: "The coaching environment felt positive and supportive.", name: "coaching_positive", sub: "1 = Strongly disagree | 5 = Strongly agree" },
                     { label: "The coaching helped players grow in confidence, skill, decision-making, and competitiveness.", name: "coaching_growth" },
@@ -251,11 +256,11 @@ const ratings = [1, 2, 3, 4, 5];
                         <label class="block text-sm font-bold text-white/80 leading-tight">{q.label}</label>
                         {q.sub && <span class="text-[9px] uppercase tracking-widest text-white/30 font-bold">{q.sub}</span>}
                       </div>
-                      <div class="flex gap-2">
+                      <div class="flex gap-1.5 md:gap-2">
                         {ratings.map(num => (
                           <label class="flex-1">
                             <input type="radio" name={q.name} value={num} required class="sr-only peer" />
-                            <div class="text-center py-2 rounded-lg border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-teal text-xs font-bold text-white transition-all">
+                            <div class="text-center py-3 rounded-lg border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-teal text-xs font-bold text-white transition-all active:scale-95">
                               {num}
                             </div>
                           </label>
@@ -267,15 +272,15 @@ const ratings = [1, 2, 3, 4, 5];
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8">
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal">What did your coach or coaching staff do well?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal">What did your coach or coaching staff do well?</label>
                     <textarea name="coaching_well" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-teal outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal">What could the coaching staff improve next season?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal">What could the coaching staff improve next season?</label>
                     <textarea name="coaching_improve" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-teal outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal">Did the team environment feel healthy and connected? Why or why not?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal">Did the team environment feel healthy and connected? Why or why not?</label>
                     <textarea name="team_environment" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-teal outline-none transition-colors"></textarea>
                   </div>
                 </div>
@@ -295,12 +300,12 @@ const ratings = [1, 2, 3, 4, 5];
                     { label: "Schedules, tournaments, payments, events, and expectations were easy to understand.", name: "easy_to_understand" }
                   ].map(q => (
                     <div class="space-y-4">
-                      <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 leading-relaxed">{q.label}</label>
-                      <div class="flex gap-1">
+                      <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-white/50 leading-relaxed">{q.label}</label>
+                      <div class="flex gap-1 md:gap-2">
                         {ratings.map(num => (
                           <label class="flex-1">
                             <input type="radio" name={q.name} value={num} required class="sr-only peer" />
-                            <div class="text-center py-2 rounded bg-white/5 border border-white/5 cursor-pointer peer-checked:bg-white peer-checked:text-brand-charcoal text-[10px] font-bold transition-all">
+                            <div class="text-center py-3 rounded bg-white/5 border border-white/5 cursor-pointer peer-checked:bg-white peer-checked:text-brand-charcoal text-[11px] md:text-xs font-bold transition-all active:scale-95">
                               {num}
                             </div>
                           </label>
@@ -312,15 +317,15 @@ const ratings = [1, 2, 3, 4, 5];
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">What communication worked well?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-white/30">What communication worked well?</label>
                     <textarea name="communication_well" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">What communication needs to improve?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-white/30">What communication needs to improve?</label>
                     <textarea name="communication_improve" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Were there any moments where you felt confused, out of the loop, or unsure what was happening?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-white/30">Were there any moments where you felt confused, out of the loop, or unsure what was happening?</label>
                     <textarea name="confusion_moments" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                 </div>
@@ -340,12 +345,12 @@ const ratings = [1, 2, 3, 4, 5];
                     { label: "The tournament schedule felt appropriate for our club model.", name: "tournament_schedule" }
                   ].map(q => (
                     <div class="space-y-4">
-                      <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral/50 leading-relaxed">{q.label}</label>
-                      <div class="flex gap-2">
+                      <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral/50 leading-relaxed">{q.label}</label>
+                      <div class="flex gap-1.5 md:gap-2">
                         {ratings.map(num => (
                           <label class="flex-1">
                             <input type="radio" name={q.name} value={num} required class="sr-only peer" />
-                            <div class="text-center py-3 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-coral text-xs font-bold text-white transition-all">
+                            <div class="text-center py-3 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-coral text-xs font-bold text-white transition-all active:scale-95">
                               {num}
                             </div>
                           </label>
@@ -357,11 +362,11 @@ const ratings = [1, 2, 3, 4, 5];
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral/30">What would make TVVC feel like an even better value for families?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral/30">What would make TVVC feel like an even better value for families?</label>
                     <textarea name="better_value" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-coral outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral/30">Were there any costs, expectations, or logistics that felt unclear or difficult?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral/30">Were there any costs, expectations, or logistics that felt unclear or difficult?</label>
                     <textarea name="unclear_logistics" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-coral outline-none transition-colors"></textarea>
                   </div>
                 </div>
@@ -374,18 +379,18 @@ const ratings = [1, 2, 3, 4, 5];
                   <h2 class="text-2xl font-heading font-bold text-white uppercase tracking-widest italic">Player Growth</h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                   {[
                     { label: "This season helped the player grow as a volleyball player.", name: "volleyball_growth" },
                     { label: "This season helped the player grow in confidence, resilience, leadership, or connection.", name: "personal_growth" }
                   ].map(q => (
                     <div class="space-y-4">
                       <label class="block text-sm font-bold text-white/80 leading-tight">{q.label}</label>
-                      <div class="flex gap-2">
+                      <div class="flex gap-1.5 md:gap-2">
                         {ratings.map(num => (
                           <label class="flex-1">
                             <input type="radio" name={q.name} value={num} required class="sr-only peer" />
-                            <div class="text-center py-3 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-teal text-xs font-bold text-white transition-all">
+                            <div class="text-center py-3 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-teal text-xs font-bold text-white transition-all active:scale-95">
                               {num}
                             </div>
                           </label>
@@ -397,11 +402,11 @@ const ratings = [1, 2, 3, 4, 5];
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal/30">What growth did you notice this season?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal/30">What growth did you notice this season?</label>
                     <textarea name="noticeable_growth" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-teal outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal/30">What areas still need more support?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal/30">What areas still need more support?</label>
                     <textarea name="support_needed" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white focus:border-brand-teal outline-none transition-colors"></textarea>
                   </div>
                 </div>
@@ -414,20 +419,20 @@ const ratings = [1, 2, 3, 4, 5];
                   <h2 class="text-2xl font-heading font-bold text-white uppercase tracking-widest italic">Future Direction</h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                   <div class="space-y-4">
-                    <div class="flex justify-between items-end">
-                      <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral">How likely are you to return to TVVC next season?</label>
-                      <div class="flex gap-4 text-[10px] font-bold uppercase text-white/30 tracking-widest">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2">
+                      <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral">How likely are you to return to TVVC next season?</label>
+                      <div class="flex gap-4 text-[10px] md:text-xs font-bold uppercase text-white/30 tracking-widest">
                         <span>1 = Unlikely</span>
                         <span>5 = Very likely</span>
                       </div>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-1.5 md:gap-2">
                       {ratings.map(num => (
                         <label class="flex-1">
                           <input type="radio" name="return_likelihood" value={num} required class="sr-only peer" />
-                          <div class="text-center py-4 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-coral peer-checked:border-brand-coral text-white font-bold transition-all">
+                          <div class="text-center py-4 rounded-xl border border-white/10 bg-white/5 cursor-pointer peer-checked:bg-brand-coral peer-checked:border-brand-coral text-white font-bold transition-all active:scale-95">
                             {num}
                           </div>
                         </label>
@@ -435,13 +440,13 @@ const ratings = [1, 2, 3, 4, 5];
                     </div>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral/50">What would make you more likely to return?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-coral/50">What would make you more likely to return?</label>
                     <textarea name="return_incentive" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                 </div>
 
                 <div class="space-y-6 pt-8">
-                  <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal">What additional opportunities would you like TVVC to consider offering? (Select all that apply)</label>
+                  <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal">What additional opportunities would you like TVVC to consider offering? (Select all that apply)</label>
                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[
                       "Out-of-state travel tournament opportunities for top teams", "More tournaments overall", 
@@ -460,11 +465,11 @@ const ratings = [1, 2, 3, 4, 5];
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal/30">If you selected any of the above, which ones feel most important to you and why?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal/30">If you selected any of the above, which ones feel most important to you and why?</label>
                     <textarea name="important_opportunities" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal/30">What do you hope TVVC becomes over the next few years?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-brand-teal/30">What do you hope TVVC becomes over the next few years?</label>
                     <textarea name="future_hope" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                 </div>
@@ -479,22 +484,22 @@ const ratings = [1, 2, 3, 4, 5];
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">What is something you wish TVVC leadership understood better?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-white/30">What is something you wish TVVC leadership understood better?</label>
                     <textarea name="leadership_understanding" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">What is something you appreciated that maybe didn’t get said enough?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-white/30">What is something you appreciated that maybe didn’t get said enough?</label>
                     <textarea name="appreciation" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">If you could give Loren and the TVVC staff one piece of advice, what would it be?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-white/30">If you could give Loren and the TVVC staff one piece of advice, what would it be?</label>
                     <textarea name="advice" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                   <div class="space-y-4">
-                    <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Anything else you want us to know?</label>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] text-white/30">Anything else you want us to know?</label>
                     <textarea name="anything_else" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white outline-none transition-colors"></textarea>
                   </div>
                 </div>

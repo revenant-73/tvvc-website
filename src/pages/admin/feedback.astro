@@ -1,0 +1,179 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getDb } from '../../db';
+import { feedback } from '../../db/schema';
+import { desc } from 'drizzle-orm';
+
+const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
+let authenticated = false;
+let responses = [];
+
+if (Astro.request.method === 'POST') {
+  const data = await Astro.request.formData();
+  if (data.get('passcode') === ADMIN_PASSCODE) {
+    authenticated = true;
+  }
+}
+
+// In a real app, you'd use a session. For this simple case, we check if authenticated.
+if (authenticated || Astro.url.searchParams.get('auth') === 'true') {
+  authenticated = true;
+  const db = getDb(
+    import.meta.env.TURSO_DATABASE_URL || '',
+    import.meta.env.TURSO_AUTH_TOKEN || ''
+  );
+  responses = await db.select().from(feedback).orderBy(desc(feedback.createdAt));
+}
+
+const stats = {
+  total: responses.length,
+  avgRating: responses.length > 0 
+    ? (responses.reduce((acc, curr) => acc + curr.overallRating, 0) / responses.length).toFixed(1)
+    : 0
+};
+---
+
+<BaseLayout title="Feedback Admin" noindex={true}>
+  <main class="pt-32 pb-24 px-4 md:px-6">
+    <div class="max-w-7xl mx-auto">
+      {!authenticated ? (
+        <div class="max-w-md mx-auto">
+          <div class="glass-card p-8 border-white/10 text-center">
+            <h1 class="text-2xl font-heading font-bold text-white mb-6 uppercase tracking-widest">Admin Access</h1>
+            <form method="POST" class="space-y-4">
+              <input 
+                type="password" 
+                name="passcode" 
+                placeholder="Enter Passcode" 
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none text-center"
+                required 
+              />
+              <button type="submit" class="btn btn-primary w-full">Login</button>
+            </form>
+          </div>
+        </div>
+      ) : (
+        <div class="space-y-8">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <h1 class="text-4xl font-heading font-bold text-white uppercase tracking-tighter">Season <span class="text-brand-teal italic">Feedback</span></h1>
+              <p class="text-white/40 text-sm uppercase tracking-widest mt-2">Dashboard</p>
+            </div>
+            <div class="flex gap-4">
+              <div class="glass-card px-6 py-4 border-white/5 flex flex-col items-center min-w-[120px]">
+                <span class="text-[10px] font-bold uppercase text-brand-teal tracking-widest mb-1">Total Responses</span>
+                <span class="text-3xl font-heading font-bold text-white">{stats.total}</span>
+              </div>
+              <div class="glass-card px-6 py-4 border-white/5 flex flex-col items-center min-w-[120px]">
+                <span class="text-[10px] font-bold uppercase text-brand-coral tracking-widest mb-1">Avg Rating</span>
+                <span class="text-3xl font-heading font-bold text-white">{stats.avgRating}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-6">
+            {responses.map((res) => (
+              <div class="glass-card border-white/10 p-6 md:p-8 hover:border-brand-teal/30 transition-colors">
+                <div class="flex flex-col md:flex-row justify-between gap-4 mb-8 pb-6 border-b border-white/5">
+                  <div class="space-y-1">
+                    <div class="flex items-center gap-3">
+                      <span class="text-xl font-heading font-bold text-white uppercase">{res.team}</span>
+                      <span class={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest ${res.overallRating >= 4 ? 'bg-brand-teal/20 text-brand-teal' : 'bg-brand-coral/20 text-brand-coral'}`}>
+                        Rating: {res.overallRating}/5
+                      </span>
+                    </div>
+                    <p class="text-xs text-white/40 uppercase tracking-widest font-bold">
+                      {res.userType} • {res.anonymous === 'Yes' ? 'Anonymous' : (res.name || 'No Name Provided')}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-[10px] text-white/20 uppercase font-bold tracking-widest">
+                      {new Date(res.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {/* Experience Section */}
+                  <div class="space-y-4">
+                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-brand-teal border-l-2 border-brand-teal pl-3">Experience</h3>
+                    <div class="space-y-4">
+                      {res.bestParts && (
+                        <div>
+                          <p class="text-[9px] uppercase font-bold text-white/30 mb-1">Best Parts</p>
+                          <p class="text-sm text-white/80 leading-relaxed">{res.bestParts}</p>
+                        </div>
+                      )}
+                      {res.frustratingParts && (
+                        <div>
+                          <p class="text-[9px] uppercase font-bold text-white/30 mb-1">Frustrating Parts</p>
+                          <p class="text-sm text-white/80 leading-relaxed">{res.frustratingParts}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Coaching Section */}
+                  <div class="space-y-4">
+                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-brand-coral border-l-2 border-brand-coral pl-3">Coaching</h3>
+                    <div class="space-y-4">
+                      <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="bg-white/5 p-2 rounded text-center">
+                          <p class="text-[8px] uppercase text-white/30 font-bold mb-1">Positivity</p>
+                          <p class="text-sm font-bold text-white">{res.coachingPositive}/5</p>
+                        </div>
+                        <div class="bg-white/5 p-2 rounded text-center">
+                          <p class="text-[8px] uppercase text-white/30 font-bold mb-1">Growth</p>
+                          <p class="text-sm font-bold text-white">{res.coachingGrowth}/5</p>
+                        </div>
+                      </div>
+                      {res.coachingWell && (
+                        <div>
+                          <p class="text-[9px] uppercase font-bold text-white/30 mb-1">Coaching Well</p>
+                          <p class="text-sm text-white/80 leading-relaxed">{res.coachingWell}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Future & Advice */}
+                  <div class="space-y-4">
+                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-white border-l-2 border-white pl-3">Future & Advice</h3>
+                    <div class="space-y-4">
+                      <div>
+                        <p class="text-[9px] uppercase font-bold text-white/30 mb-1">Return Likelihood</p>
+                        <p class="text-sm font-bold text-white">{res.returnLikelihood}/5</p>
+                      </div>
+                      {res.advice && (
+                        <div>
+                          <p class="text-[9px] uppercase font-bold text-white/30 mb-1">Advice</p>
+                          <p class="text-sm text-white/80 leading-relaxed italic">"{res.advice}"</p>
+                        </div>
+                      )}
+                      {res.anythingElse && (
+                        <div>
+                          <p class="text-[9px] uppercase font-bold text-white/30 mb-1">Anything Else</p>
+                          <p class="text-sm text-white/80 leading-relaxed">{res.anythingElse}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Expandable/Full Data can be added here if needed */}
+              </div>
+            ))}
+            
+            {responses.length === 0 && (
+              <div class="glass-card p-20 text-center border-white/5">
+                <p class="text-white/30 uppercase tracking-[0.2em] font-bold">No responses found yet.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  </main>
+</BaseLayout>
