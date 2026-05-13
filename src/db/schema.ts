@@ -60,5 +60,6 @@ export const feedback = sqliteTable('feedback', {
   advice: text('advice'),
   anythingElse: text('anything_else'),
   
+  starred: integer('starred', { mode: 'boolean' }).default(false),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 });
