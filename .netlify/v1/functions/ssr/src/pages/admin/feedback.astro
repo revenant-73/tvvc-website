@@ -1,0 +1,263 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getDb } from '../../db';
+import { feedback } from '../../db/schema';
+import { desc, asc, eq, and } from 'drizzle-orm';
+
+const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
+let authenticated = false;
+let responses = [];
+let allResponses = [];
+let error = null;
+
+// Get filters from URL
+const teamFilter = Astro.url.searchParams.get('team') || '';
+const userFilter = Astro.url.searchParams.get('user') || '';
+const sort = Astro.url.searchParams.get('sort') || 'newest';
+
+if (Astro.request.method === 'POST') {
+  try {
+    const data = await Astro.request.formData();
+    if (data.get('passcode') === ADMIN_PASSCODE) {
+      authenticated = true;
+    } else {
+      error = "Incorrect passcode.";
+    }
+  } catch (e) {
+    error = "Error processing login.";
+  }
+}
+
+if (authenticated || Astro.url.searchParams.get('auth') === 'true') {
+  authenticated = true;
+  try {
+    const db = getDb(
+      import.meta.env.TURSO_DATABASE_URL || '',
+      import.meta.env.TURSO_AUTH_TOKEN || ''
+    );
+    
+    // Fetch all for stats
+    allResponses = await db.select().from(feedback);
+    
+    // Build query for display
+    let query = db.select().from(feedback);
+    
+    // Apply sorting
+    if (sort === 'newest') query.orderBy(desc(feedback.createdAt));
+    else if (sort === 'oldest') query.orderBy(asc(feedback.createdAt));
+    else if (sort === 'highest') query.orderBy(desc(feedback.overallRating));
+    else if (sort === 'lowest') query.orderBy(asc(feedback.overallRating));
+
+    responses = await query;
+
+    // Client-side like filtering for simple logic
+    if (teamFilter) responses = responses.filter(r => r.team === teamFilter);
+    if (userFilter) responses = responses.filter(r => r.userType === userFilter);
+
+  } catch (e) {
+    console.error("Dashboard Database Error:", e);
+    error = "Database error. Check connection.";
+  }
+}
+
+const teams = [...new Set(allResponses.map(r => r.team))].sort();
+const userTypes = [...new Set(allResponses.map(r => r.userType))].sort();
+
+const calculateAvg = (arr, key) => {
+    const valid = arr.filter(r => r[key] !== null && r[key] !== undefined);
+    if (valid.length === 0) return 0;
+    return (valid.reduce((acc, curr) => acc + curr[key], 0) / valid.length).toFixed(1);
+};
+
+const stats = {
+  total: allResponses.length,
+  filtered: responses.length,
+  avgOverall: calculateAvg(allResponses, 'overallRating'),
+  avgCoaching: calculateAvg(allResponses, 'coachingPositive'),
+  avgValue: calculateAvg(allResponses, 'goodValue'),
+  avgComm: calculateAvg(allResponses, 'clubCommunication'),
+  avgGrowth: calculateAvg(allResponses, 'volleyballGrowth'),
+  avgReturn: calculateAvg(allResponses, 'returnLikelihood'),
+};
+---
+
+<BaseLayout title="Feedback Admin" noindex={true}>
+  <main class="pt-32 pb-24 px-4 md:px-6">
+    <div class="max-w-7xl mx-auto">
+      {error && (
+        <div class="max-w-2xl mx-auto mb-8 bg-brand-coral/10 border border-brand-coral/20 text-brand-coral p-4 rounded-xl text-center text-sm font-bold">
+          {error}
+        </div>
+      )}
+
+      {!authenticated ? (
+        <div class="max-w-md mx-auto">
+          <div class="glass-card p-8 border-white/10 text-center">
+            <h1 class="text-2xl font-heading font-bold text-white mb-6 uppercase tracking-widest">Admin Access</h1>
+            <form method="POST" class="space-y-4">
+              <input type="password" name="passcode" placeholder="Enter Passcode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none text-center" required />
+              <button type="submit" class="btn btn-primary w-full">Login</button>
+            </form>
+          </div>
+        </div>
+      ) : (
+        <div class="space-y-12">
+          {/* Header & Main Stats */}
+          <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div class="space-y-2">
+              <h1 class="text-4xl md:text-5xl font-heading font-bold text-white uppercase tracking-tighter">Feedback <span class="text-brand-teal italic">Intelligence</span></h1>
+              <p class="text-white/40 text-xs uppercase tracking-[0.3em] font-bold">Notice • Adapt • Grow</p>
+            </div>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: 'Total', val: stats.total, color: 'text-white' },
+                { label: 'Overall', val: stats.avgOverall, color: 'text-brand-teal' },
+                { label: 'Return', val: stats.avgReturn, color: 'text-brand-coral' },
+                { label: 'Value', val: stats.avgValue, color: 'text-white' },
+              ].map(s => (
+                <div class="glass-card px-4 py-3 border-white/5 text-center min-w-[100px]">
+                  <p class="text-[8px] font-bold uppercase text-white/30 tracking-widest mb-1">{s.label}</p>
+                  <p class={`text-xl font-heading font-bold ${s.color}`}>{s.val}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Aggregated Section Scores */}
+          <div class="glass-card p-6 border-white/5 bg-white/[0.01]">
+            <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-6 text-center">Section Averages</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-8">
+              {[
+                { label: 'Coaching', val: stats.avgCoaching, color: 'bg-brand-teal' },
+                { label: 'Comm', val: stats.avgComm, color: 'bg-white' },
+                { label: 'Value', val: stats.avgValue, color: 'bg-brand-coral' },
+                { label: 'Growth', val: stats.avgGrowth, color: 'bg-brand-teal' },
+                { label: 'Return', val: stats.avgReturn, color: 'bg-brand-coral' },
+              ].map(s => (
+                <div class="space-y-3">
+                  <div class="flex justify-between items-end text-[10px] font-bold uppercase tracking-widest">
+                    <span class="text-white/50">{s.label}</span>
+                    <span class="text-white">{s.val}</span>
+                  </div>
+                  <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div class={`h-full ${s.color} rounded-full`} style={`width: ${(s.val/5)*100}%`}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Controls: Filtering, Sorting, Export */}
+          <div class="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white/5 p-4 rounded-2xl border border-white/5">
+            <div class="flex flex-wrap gap-3">
+              <select onchange="window.location.href = `?auth=true&team=${this.value}&user=${new URLSearchParams(window.location.search).get('user') || ''}&sort=${new URLSearchParams(window.location.search).get('sort') || ''}`" class="bg-brand-charcoal border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-brand-teal">
+                <option value="">All Teams</option>
+                {teams.map(t => <option value={t} selected={teamFilter === t}>{t}</option>)}
+              </select>
+
+              <select onchange="window.location.href = `?auth=true&team=${new URLSearchParams(window.location.search).get('team') || ''}&user=${this.value}&sort=${new URLSearchParams(window.location.search).get('sort') || ''}`" class="bg-brand-charcoal border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-brand-teal">
+                <option value="">All Users</option>
+                {userTypes.map(u => <option value={u} selected={userFilter === u}>{u}</option>)}
+              </select>
+
+              <select onchange="window.location.href = `?auth=true&team=${new URLSearchParams(window.location.search).get('team') || ''}&user=${new URLSearchParams(window.location.search).get('user') || ''}&sort=${this.value}`" class="bg-brand-charcoal border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-brand-teal">
+                <option value="newest" selected={sort === 'newest'}>Newest First</option>
+                <option value="oldest" selected={sort === 'oldest'}>Oldest First</option>
+                <option value="highest" selected={sort === 'highest'}>Highest Rated</option>
+                <option value="lowest" selected={sort === 'lowest'}>Lowest Rated</option>
+              </select>
+            </div>
+
+            <button id="exportCsv" class="text-[10px] font-bold uppercase tracking-widest text-brand-teal hover:text-white transition-colors flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-teal/20 hover:bg-brand-teal/10">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+          </div>
+
+          {/* Response List */}
+          <div class="space-y-4">
+            <div class="flex justify-between items-center px-4">
+               <p class="text-[10px] font-bold uppercase tracking-widest text-white/30">Showing {responses.length} responses</p>
+               { (teamFilter || userFilter) && <a href="?auth=true" class="text-[10px] font-bold uppercase text-brand-coral hover:underline">Clear Filters</a>}
+            </div>
+            
+            <div class="grid grid-cols-1 gap-3">
+              {responses.map((res) => (
+                <a href={`/admin/feedback/${res.id}?auth=true`} class="glass-card border-white/10 p-4 md:p-5 hover:border-brand-teal/50 hover:bg-white/[0.02] transition-all group flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-4 md:gap-6">
+                    <div class={`w-10 h-10 rounded-full bg-white/5 flex items-center justify-center font-heading font-bold border border-white/5 group-hover:border-brand-teal/30 transition-colors ${res.overallRating >= 4 ? 'text-brand-teal' : (res.overallRating <= 2 ? 'text-brand-coral' : 'text-white')}`}>
+                      {res.overallRating}
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <h3 class="text-sm font-heading font-bold text-white uppercase tracking-tight">
+                          {res.anonymous === 'Yes' ? 'Anonymous' : (res.name || 'Anonymous')}
+                        </h3>
+                        {res.starred && (
+                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="text-brand-teal"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        )}
+                      </div>
+                      <p class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                        {res.team} • {res.userType}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center gap-6">
+                    <div class="hidden sm:block text-right">
+                      <p class="text-[9px] text-white/20 uppercase font-bold tracking-widest mb-0.5">Submitted</p>
+                      <p class="text-[11px] text-white/60 font-medium">
+                        {new Date(res.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                    <div class="text-white/20 group-hover:text-brand-teal transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                  </div>
+                </a>
+              ))}
+              
+              {responses.length === 0 && (
+                <div class="glass-card p-20 text-center border-white/5">
+                  <p class="text-white/30 uppercase tracking-[0.2em] font-bold">No matching responses.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  </main>
+</BaseLayout>
+
+<script is:inline define:vars={{ responses }}>
+  document.getElementById('exportCsv')?.addEventListener('click', () => {
+    if (!responses || responses.length === 0) return;
+    
+    const headers = Object.keys(responses[0]);
+    const csvRows = [
+      headers.join(','),
+      ...responses.map(row => 
+        headers.map(fieldName => {
+          const value = row[fieldName];
+          const escaped = ('' + value).replace(/"/g, '""');
+          return `"${escaped}"`;
+        }).join(',')
+      )
+    ];
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `tvvc_feedback_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+</script>

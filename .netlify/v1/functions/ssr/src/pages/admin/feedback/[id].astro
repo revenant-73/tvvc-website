@@ -1,0 +1,241 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getDb } from '../../../db';
+import { feedback } from '../../../db/schema';
+import { eq } from 'drizzle-orm';
+
+const { id } = Astro.params;
+const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
+let authenticated = false;
+let response = null;
+let error = null;
+
+if (Astro.request.method === 'POST') {
+  const data = await Astro.request.formData();
+  const action = data.get('action');
+
+  if (action === 'login') {
+    if (data.get('passcode') === ADMIN_PASSCODE) {
+      authenticated = true;
+    } else {
+      error = "Incorrect passcode.";
+    }
+  } else if (action === 'toggle-star') {
+    authenticated = true; // Assume authenticated if they are acting on a specific record
+    try {
+      const db = getDb(
+        import.meta.env.TURSO_DATABASE_URL || '',
+        import.meta.env.TURSO_AUTH_TOKEN || ''
+      );
+      const current = await db.select().from(feedback).where(eq(feedback.id, parseInt(id)));
+      if (current[0]) {
+        await db.update(feedback)
+          .set({ starred: !current[0].starred })
+          .where(eq(feedback.id, parseInt(id)));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+}
+
+// Simple auth check via query param for navigation from the list page
+if (authenticated || Astro.url.searchParams.get('auth') === 'true') {
+  authenticated = true;
+  try {
+    const db = getDb(
+      import.meta.env.TURSO_DATABASE_URL || '',
+      import.meta.env.TURSO_AUTH_TOKEN || ''
+    );
+    const results = await db.select().from(feedback).where(eq(feedback.id, parseInt(id)));
+    response = results[0];
+    
+    if (!response) {
+      error = "Response not found.";
+    }
+  } catch (e) {
+    console.error(e);
+    error = "Error loading response.";
+  }
+}
+
+const ratingClass = (val) => val >= 4 ? 'text-brand-teal' : (val <= 2 ? 'text-brand-coral' : 'text-white/60');
+---
+
+<BaseLayout title="Feedback Detail" noindex={true}>
+  <main class="pt-32 pb-24 px-4 md:px-6">
+    <div class="max-w-4xl mx-auto">
+      <a href="/admin/feedback?auth=true" class="inline-flex items-center gap-2 text-white/40 hover:text-brand-teal transition-colors mb-8 uppercase tracking-widest text-[10px] font-bold">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Back to List
+      </a>
+
+      {!authenticated ? (
+        <div class="max-w-md mx-auto">
+          <div class="glass-card p-8 border-white/10 text-center">
+            <h1 class="text-2xl font-heading font-bold text-white mb-6 uppercase tracking-widest">Admin Access</h1>
+            <form method="POST" class="space-y-4">
+              <input type="hidden" name="action" value="login" />
+              <input type="password" name="passcode" placeholder="Enter Passcode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none text-center" required />
+              <button type="submit" class="btn btn-primary w-full">Login</button>
+            </form>
+          </div>
+        </div>
+      ) : response ? (
+        <div class="space-y-12">
+          {/* Header */}
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8">
+            <div class="space-y-2">
+              <div class="flex items-center gap-4">
+                <p class="text-brand-teal font-bold uppercase tracking-[0.3em] text-[10px]">Feedback Response</p>
+                <form method="POST">
+                   <input type="hidden" name="action" value="toggle-star" />
+                   <button type="submit" class={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border transition-all flex items-center gap-2 ${response.starred ? 'bg-brand-teal text-brand-charcoal border-brand-teal' : 'text-white/40 border-white/10 hover:border-brand-teal hover:text-brand-teal'}`}>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill={response.starred ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                     {response.starred ? 'Starred for Marketing' : 'Star for Marketing'}
+                   </button>
+                </form>
+              </div>
+              <h1 class="text-4xl font-heading font-bold text-white uppercase tracking-tighter">
+                {response.anonymous === 'Yes' ? 'Anonymous' : (response.name || 'Anonymous')}
+              </h1>
+              <div class="flex gap-3 text-xs text-white/40 uppercase tracking-widest font-bold">
+                <span>{response.team}</span>
+                <span>•</span>
+                <span>{response.userType}</span>
+              </div>
+            </div>
+            <div class="text-left md:text-right">
+              <p class="text-[10px] text-white/20 uppercase font-bold tracking-widest mb-1">Date Submitted</p>
+              <p class="text-white font-medium">
+                {new Date(response.createdAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-12">
+            {/* Section 1: Ratings Overview */}
+            <section class="glass-card p-8 border-white/5">
+              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest mb-8 italic text-brand-teal">Overall Ratings</h2>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {[
+                  { label: "Overall Exp", val: response.overallRating },
+                  { label: "Communication", val: response.clubCommunication },
+                  { label: "Value", val: response.goodValue },
+                  { label: "Return Likelihood", val: response.returnLikelihood }
+                ].map(stat => (
+                  <div class="text-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                    <p class="text-[9px] uppercase font-bold text-white/30 mb-2 tracking-widest leading-tight h-8 flex items-center justify-center">{stat.label}</p>
+                    <p class={`text-3xl font-heading font-bold ${ratingClass(stat.val)}`}>{stat.val}<span class="text-xs text-white/10 ml-1">/5</span></p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Section 2: Experience Details */}
+            <section class="space-y-8">
+              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest italic border-l-4 border-brand-coral pl-4">The Experience</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-2">
+                  <p class="text-[10px] uppercase font-bold text-brand-teal tracking-widest">Best Parts</p>
+                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.bestParts || "No comment."}</p>
+                </div>
+                <div class="space-y-2">
+                  <p class="text-[10px] uppercase font-bold text-brand-coral tracking-widest">Frustrating Parts</p>
+                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.frustratingParts || "No comment."}</p>
+                </div>
+                <div class="space-y-2">
+                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Keep Doing</p>
+                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.keepDoing || "No comment."}</p>
+                </div>
+                <div class="space-y-2">
+                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Consider Changing</p>
+                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.considerChanging || "No comment."}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 3: Coaching */}
+            <section class="space-y-8">
+              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest italic border-l-4 border-brand-teal pl-4">Coaching & Team</h2>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {[
+                  { label: "Positive Env", val: response.coachingPositive },
+                  { label: "Growth", val: response.coachingGrowth },
+                  { label: "Practices", val: response.practicesUseful },
+                  { label: "Prob Solving", val: response.encouragedProblemSolving }
+                ].map(stat => (
+                  <div class="text-center p-3 rounded-lg bg-white/5">
+                    <p class="text-[8px] uppercase font-bold text-white/30 mb-1">{stat.label}</p>
+                    <p class="text-xl font-bold text-white">{stat.val}</p>
+                  </div>
+                ))}
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-2">
+                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">What Went Well</p>
+                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.coachingWell || "No comment."}</p>
+                </div>
+                <div class="space-y-2">
+                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Areas to Improve</p>
+                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.coachingImprove || "No comment."}</p>
+                </div>
+              </div>
+            </section>
+
+             {/* Section 4: Future */}
+             <section class="space-y-8">
+              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest italic border-l-4 border-white/20 pl-4">Future Direction</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-2">
+                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Return Incentive</p>
+                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.returnIncentive || "No comment."}</p>
+                </div>
+                <div class="space-y-2">
+                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Opportunities Desired</p>
+                  <div class="bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">
+                    {response.additionalOpportunities ? (
+                      <div class="flex flex-wrap gap-2">
+                        {JSON.parse(response.additionalOpportunities).map(opt => (
+                          <span class="text-[10px] px-2 py-1 bg-brand-teal/10 text-brand-teal rounded border border-brand-teal/20 uppercase font-bold tracking-tighter">{opt}</span>
+                        ))}
+                      </div>
+                    ) : <p class="text-white/40 italic text-sm">None selected.</p>}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Final Thoughts */}
+            <section class="glass-card p-8 border-brand-teal/20 bg-brand-teal/[0.02]">
+              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest mb-6 italic">Final Thoughts & Advice</h2>
+              <div class="space-y-6">
+                <div>
+                  <p class="text-[10px] uppercase font-bold text-brand-teal tracking-widest mb-2">Advice for Loren & Staff</p>
+                  <p class="text-lg text-white font-medium leading-relaxed italic">"{response.advice || "No advice provided."}"</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                  <div>
+                    <p class="text-[10px] uppercase font-bold text-white/30 mb-2">Appreciation</p>
+                    <p class="text-sm text-white/70 leading-relaxed">{response.appreciation || "n/a"}</p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] uppercase font-bold text-white/30 mb-2">Anything Else</p>
+                    <p class="text-sm text-white/70 leading-relaxed">{response.anything_else || "n/a"}</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      ) : (
+        <div class="text-center py-20">
+          <p class="text-brand-coral font-bold uppercase tracking-widest">{error || "Something went wrong."}</p>
+          <a href="/admin/feedback" class="btn btn-secondary mt-8">Back to List</a>
+        </div>
+      )}
+    </div>
+  </main>
+</BaseLayout>
