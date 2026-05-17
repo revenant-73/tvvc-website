@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Privacy & Security" description="Learn how TVVC protects your data and payment information.">
+  <main class="pt-32 pb-24 px-4 md:px-6">
+    <div class="max-w-3xl mx-auto">
+      <div class="mb-16">
+        <h1 class="text-4xl md:text-6xl font-heading font-bold text-white uppercase mb-6">
+          Privacy & <span class="text-brand-teal italic">Security</span>
+        </h1>
+        <p class="text-white/60 text-lg leading-relaxed">
+          Your trust is our priority. Here is how we handle and protect your information at Tualatin Valley Volleyball Club.
+        </p>
+      </div>
+
+      <div class="space-y-12">
+        {/* Secure Payments Section */}
+        <section class="glass-card p-8 border-brand-teal/20 space-y-6">
+          <div class="w-12 h-12 rounded-2xl bg-brand-teal/10 flex items-center justify-center text-brand-teal">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-heading font-bold text-white uppercase tracking-tight">Secure Payments</h2>
+          <div class="text-white/60 space-y-4 leading-relaxed">
+            <p>
+              We use <span class="text-white font-bold">Stripe</span> to process all payments. Stripe is one of the world's most secure and trusted payment processors.
+            </p>
+            <ul class="space-y-3 list-disc pl-5">
+              <li><span class="text-white font-semibold">PCI Compliance:</span> Sensitive payment info (credit card numbers, CVV) never touches our servers. Stripe handles all encryption.</li>
+              <li><span class="text-white font-semibold">Encryption:</span> All transactions are encrypted via industry-standard TLS (Transport Layer Security).</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* Data Protection Section */}
+        <section class="glass-card p-8 border-white/5 space-y-6">
+          <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/60">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-heading font-bold text-white uppercase tracking-tight">How We Use Your Data</h2>
+          <div class="text-white/60 space-y-4 leading-relaxed">
+            <p>
+              The information we collect during registration is strictly used for organizing programs, ensuring player safety, and communicating with parents.
+            </p>
+            <ul class="space-y-3 list-disc pl-5">
+              <li><span class="text-white font-semibold">No Third-Party Sales:</span> We never sell, rent, or share your data with outside marketing firms.</li>
+              <li><span class="text-white font-semibold">Encrypted Storage:</span> Your data is stored in a secure, private database accessible only to authorized TVVC leadership.</li>
+              <li><span class="text-white font-semibold">Medical Privacy:</span> Sensitive medical and allergy information is shared only with the relevant coaches and staff to ensure athlete safety.</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* Contact Section */}
+        <div class="text-center pt-8">
+          <p class="text-white/40 text-sm mb-6">Have questions about your data?</p>
+          <a href="/contact" class="btn btn-secondary">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

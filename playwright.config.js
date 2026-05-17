@@ -1,6 +1,12 @@
 // @ts-check
 const { defineConfig, devices } = require('@playwright/test');
 
+/**
+ * Read environment variables from file.
+ * https://github.com/motdotla/dotenv
+ */
+require('dotenv').config();
+
 module.exports = defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -9,7 +15,7 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:8000',
+    baseURL: process.env.BASE_URL || 'http://localhost:4321',
     trace: 'on-first-retry',
   },
 
@@ -20,9 +26,9 @@ module.exports = defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'python -m http.server 8000 --directory dist',
-    url: 'http://localhost:8000',
+  webServer: process.env.BASE_URL ? undefined : {
+    command: 'npm run dev',
+    url: 'http://localhost:4321',
     reuseExistingServer: !process.env.CI,
   },
 });

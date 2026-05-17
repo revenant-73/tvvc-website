@@ -10,6 +10,8 @@ const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || '', {
 
 const endpointSecret = import.meta.env.STRIPE_WEBHOOK_SECRET;
 
+export const prerender = false;
+
 export const POST: APIRoute = async ({ request }) => {
   const sig = request.headers.get('stripe-signature');
   const body = await request.text();
@@ -23,8 +25,13 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown Error'}`, { status: 400 });
   }
 
+  const databaseUrl = import.meta.env.TURSO_DATABASE_URL;
+  if (!databaseUrl) {
+    return new Response('Database configuration missing', { status: 500 });
+  }
+
   const db = getDb(
-    import.meta.env.TURSO_DATABASE_URL || '',
+    databaseUrl,
     import.meta.env.TURSO_AUTH_TOKEN || ''
   );
 

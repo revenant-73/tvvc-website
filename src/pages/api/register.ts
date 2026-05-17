@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../db';
 import { registrations, athletes, registrationItems, events } from '../../db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,13 +9,25 @@ const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-01-27.acacia' as any,
 });
 
+export const prerender = false;
+
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const databaseUrl = import.meta.env.TURSO_DATABASE_URL;
+    const stripeSecretKey = import.meta.env.STRIPE_SECRET_KEY;
+
+    if (!databaseUrl) {
+      throw new Error('Database configuration missing (TURSO_DATABASE_URL)');
+    }
+    if (!stripeSecretKey) {
+      throw new Error('Payment configuration missing (STRIPE_SECRET_KEY)');
+    }
+
     const body = await request.json();
     const { parentInfo, athletes: athleteData } = body;
 
     const db = getDb(
-      import.meta.env.TURSO_DATABASE_URL || '',
+      databaseUrl,
       import.meta.env.TURSO_AUTH_TOKEN || ''
     );
 
@@ -68,7 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     for (const a of athleteData) {
-      const athleteResult = await db.insert(athletes).values({
+      const [athleteResult] = await db.insert(athletes).values({
         registrationId: registrationId,
         firstName: a.firstName,
         lastName: a.lastName,
@@ -79,7 +91,11 @@ export const POST: APIRoute = async ({ request }) => {
         waiverAgreed: a.waiverAgreed,
       }).returning({ id: athletes.id });
 
-      const athleteId = athleteResult[0].id;
+      if (!athleteResult) {
+        throw new Error('Failed to create athlete record');
+      }
+
+      const athleteId = athleteResult.id;
 
       for (const eventId of a.selectedEvents) {
         await db.insert(registrationItems).values({
@@ -112,6 +128,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   } catch (err) {
     console.error('Registration API Error:', err);
-    return new Response(JSON.stringify({ error: 'An internal error occurred.' }), { status: 500 });
+    const message = err instanceof Error ? err.message : 'An internal error occurred.';
+    return new Response(JSON.stringify({ error: message }), { status: 500 });
   }
 };

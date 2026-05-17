@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Tournament Schedule Feature', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:8000/teams.html');
+    await page.goto('/teams');
   });
 
   test.describe('Schedule Section Rendering', () => {
@@ -471,7 +471,7 @@ test.describe('Tournament Schedule Feature', () => {
   test.describe('Responsive Design', () => {
     test('should maintain table visibility on mobile viewport', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto('http://localhost:8000/teams.html');
+      await page.goto('/teams');
       
       const tabs = ['14U Division', '16U Division', '18U Division'];
       const tabIds = ['schedule-14u', 'schedule-16u', 'schedule-18u'];
@@ -489,7 +489,7 @@ test.describe('Tournament Schedule Feature', () => {
 
     test('should have scrollable table container on mobile', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto('http://localhost:8000/teams.html');
+      await page.goto('/teams');
       
       // Test the currently visible table container
       const container = page.locator('.schedule-container').first();
@@ -501,7 +501,7 @@ test.describe('Tournament Schedule Feature', () => {
 
     test('should maintain readability on tablet viewport', async ({ page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
-      await page.goto('http://localhost:8000/teams.html');
+      await page.goto('/teams');
       
       const scheduleHeading = page.locator('h2').filter({ hasText: '2026 Tournament Schedule' });
       await expect(scheduleHeading).toBeVisible();

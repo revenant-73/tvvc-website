@@ -1,16 +1,16 @@
 const { test, expect } = require('@playwright/test');
 
-// Base URL for testing
-const BASE_URL = 'http://localhost:8000';
+// Base URL for testing (using relative paths for Playwright config baseURL)
+const BASE_URL = '';
 
 test.describe('Mobile Navigation Menu', () => {
   // Test on all pages to ensure consistency
   const pages = [
     { url: '/', name: 'Homepage' },
-    { url: '/teams.html', name: 'Teams' },
-    { url: '/programs.html', name: 'Programs' },
-    { url: '/faq.html', name: 'FAQ' },
-    { url: '/privacy-policy.html', name: 'Privacy Policy' }
+    { url: '/teams', name: 'Teams' },
+    { url: '/programs', name: 'Programs' },
+    { url: '/faq', name: 'FAQ' },
+    { url: '/privacy-policy', name: 'Privacy Policy' }
   ];
 
   pages.forEach(pageData => {
@@ -30,16 +30,15 @@ test.describe('Mobile Navigation Menu', () => {
 
         // Navigation items should be visible
         const navLinks = headerNav.locator('a');
-        await expect(navLinks).toHaveCount(7); // 6 links + Dashboard button
+        await expect(navLinks).toHaveCount(6); // 5 links + Dashboard button
 
         // Check nav items
-        await expect(navLinks.nth(0)).toContainText('Teams');
-        await expect(navLinks.nth(1)).toContainText('Programs');
-        await expect(navLinks.nth(2)).toContainText('Summer Camps');
-        await expect(navLinks.nth(3)).toContainText('Outdoor');
-        await expect(navLinks.nth(4)).toContainText('Events');
-        await expect(navLinks.nth(5)).toContainText('FAQ');
-        await expect(navLinks.nth(6)).toContainText('Dashboard');
+        await expect(navLinks.nth(0)).toContainText('Club Teams');
+        await expect(navLinks.nth(1)).toContainText('In-House Programs');
+        await expect(navLinks.nth(2)).toContainText('Summer Camps & Clinics');
+        await expect(navLinks.nth(3)).toContainText('Outdoor Events');
+        await expect(navLinks.nth(4)).toContainText('FAQ');
+        await expect(navLinks.nth(5)).toContainText('Dashboard');
       });
 
       test('mobile: hamburger icon displays at breakpoint', async ({ page }) => {
@@ -94,9 +93,9 @@ test.describe('Mobile Navigation Menu', () => {
 
         // Navigation items should be visible
         const navLinks = mobileMenu.locator('a');
-        await expect(navLinks).toHaveCount(7); // 6 + Parent Dashboard
+        await expect(navLinks).toHaveCount(6); // 5 + Parent Dashboard
 
-        const expectedItems = ['Teams', 'Programs', 'Summer Camps', 'Outdoor', 'Events', 'FAQ', 'Parent Dashboard'];
+        const expectedItems = ['Club Teams', 'In-House Programs', 'Summer Camps & Clinics', 'Outdoor Events', 'FAQ', 'Parent Dashboard'];
         for (let i = 0; i < expectedItems.length; i++) {
           await expect(navLinks.nth(i)).toBeVisible();
           await expect(navLinks.nth(i)).toContainText(expectedItems[i]);
@@ -186,13 +185,13 @@ test.describe('Mobile Navigation Menu', () => {
 
     // Click Teams link
     await page.locator('header nav a').filter({ hasText: 'Teams' }).first().click();
-    await page.waitForURL(/\/teams\.html/);
-    await expect(page.url()).toContain('teams.html');
+    await page.waitForURL(/\/teams/);
+    await expect(page.url()).toContain('teams');
 
     // Click FAQ link
     await page.locator('header nav a').filter({ hasText: 'FAQ' }).first().click();
-    await page.waitForURL(/\/faq\.html/);
-    await expect(page.url()).toContain('faq.html');
+    await page.waitForURL(/\/faq/);
+    await expect(page.url()).toContain('faq');
   });
 
   test('Parent Dashboard button opens external link in new tab', async ({ page, context }) => {

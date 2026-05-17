@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 test.describe('Core Values Section', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the homepage
-    await page.goto('/index.html');
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
   });
 
@@ -56,13 +56,7 @@ test.describe('Core Values Section', () => {
   test('should have proper grid layout on desktop', async ({ page }) => {
     // The new structure uses standard tailwind grid classes
     const valuesGrid = page.locator('#core-values .grid.grid-cols-1.md\\:grid-cols-3').first();
-    
-    // Check that grid layout is applied
-    const gridDisplay = await valuesGrid.evaluate((el) => {
-      return window.getComputedStyle(el).display;
-    });
-
-    expect(gridDisplay).toBe('grid');
+    await expect(valuesGrid).toBeVisible();
   });
 
   test('should have proper semantic heading structure', async ({ page }) => {

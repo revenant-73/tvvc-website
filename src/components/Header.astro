@@ -3,11 +3,11 @@ const { pathname } = Astro.url;
 const normalizedPath = pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
 
 const navLinks = [
-  { href: '/teams.html', label: 'Club Teams' },
-  { href: '/programs.html', label: 'In-House Programs' },
-  { href: '/summer-camps-clinics.html', label: 'Summer Camps & Clinics' },
-  { href: '/outdoor-events.html', label: 'Outdoor Events' },
-  { href: '/faq.html', label: 'FAQ' },
+  { href: '/teams', label: 'Club Teams' },
+  { href: '/programs', label: 'In-House Programs' },
+  { href: '/summer-camps-clinics', label: 'Summer Camps & Clinics' },
+  { href: '/outdoor-events', label: 'Outdoor Events' },
+  { href: '/faq', label: 'FAQ' },
 ];
 
 const isHome = normalizedPath === '/';

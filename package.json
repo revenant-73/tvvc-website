@@ -12,6 +12,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
     "test": "playwright test",
+    "test:prod": "set BASE_URL=https://tualatinvalleyvb.com && playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui"
   },
