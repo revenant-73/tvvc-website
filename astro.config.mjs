@@ -15,6 +15,9 @@ export default defineConfig({
     })
   ],
   adapter: netlify(),
+  security: {
+    checkOrigin: false
+  },
   build: {
     format: 'file'
   }
