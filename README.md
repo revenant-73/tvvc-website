@@ -66,6 +66,9 @@ Run the end-to-end test suite:
 # Run all tests
 npm test
 
+# Run tests against production
+npm run test:prod
+
 # Run tests in headed mode
 npm run test:headed
 

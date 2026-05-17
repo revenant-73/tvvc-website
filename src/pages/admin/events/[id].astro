@@ -25,12 +25,16 @@ if (Astro.request.method === 'POST') {
     if (data.get('passcode') === ADMIN_PASSCODE || authenticated) {
       authenticated = true;
       const newCapacity = parseInt(data.get('capacity') as string);
+      const newSpotsFilled = parseInt(data.get('spotsFilled') as string);
       
-      if (!isNaN(newCapacity)) {
+      if (!isNaN(newCapacity) && !isNaN(newSpotsFilled)) {
         await db.update(events)
-          .set({ capacity: newCapacity })
+          .set({ 
+            capacity: newCapacity,
+            spotsFilled: newSpotsFilled
+          })
           .where(eq(events.id, id as string));
-        success = "Capacity updated successfully.";
+        success = "Event updated successfully.";
       }
     } else {
       error = "Incorrect passcode.";
@@ -80,26 +84,33 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
             </div>
           )}
 
-          <div class="space-y-3">
-            <label class="text-[10px] font-bold uppercase tracking-widest text-white/50">Maximum Capacity</label>
-            <div class="flex items-center gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-3">
+              <label class="text-[10px] font-bold uppercase tracking-widest text-white/50">Maximum Capacity</label>
               <input 
                 type="number" 
                 name="capacity" 
                 value={eventData.capacity} 
-                min={eventData.spotsFilled}
+                min="0"
                 class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-2xl font-heading font-bold text-white focus:border-brand-teal outline-none" 
                 required 
               />
-              <div class="text-right shrink-0">
-                <p class="text-[8px] font-bold uppercase text-white/30 tracking-widest mb-1">Current Enrollment</p>
-                <p class="text-xl font-heading font-bold text-brand-teal">{eventData.spotsFilled}</p>
-              </div>
             </div>
-            <p class="text-[10px] text-white/30 italic">Note: Capacity cannot be set lower than the current number of enrolled athletes ({eventData.spotsFilled}).</p>
+
+            <div class="space-y-3">
+              <label class="text-[10px] font-bold uppercase tracking-widest text-white/50">Current Enrollment</label>
+              <input 
+                type="number" 
+                name="spotsFilled" 
+                value={eventData.spotsFilled} 
+                min="0"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-2xl font-heading font-bold text-brand-teal focus:border-brand-teal outline-none" 
+                required 
+              />
+            </div>
           </div>
 
-          <button type="submit" class="btn btn-primary w-full py-4 text-sm uppercase tracking-widest font-bold">Update Event Capacity</button>
+          <button type="submit" class="btn btn-primary w-full py-4 text-sm uppercase tracking-widest font-bold">Update Event Details</button>
         </form>
       </div>
     </div>

@@ -76,11 +76,15 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
         </div>
 
         {authenticated && (
-           <div class="flex gap-3">
+           <div class="flex flex-wrap gap-3">
              <div class="glass-card px-6 py-3 border-white/5 text-center min-w-[120px]">
                <p class="text-[8px] font-bold uppercase text-white/30 tracking-widest mb-1">Enrolled</p>
                <p class="text-xl font-heading font-bold text-white">{roster.length} / {eventData.capacity}</p>
              </div>
+             <button id="addPlayerBtn" class="btn btn-primary !py-3 !px-6 !text-[10px] uppercase tracking-widest flex items-center gap-2 h-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+                Add Player
+             </button>
              <button id="exportCsv" class="btn btn-secondary !py-3 !px-6 !text-[10px] uppercase tracking-widest flex items-center gap-2 h-full">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export CSV
@@ -160,10 +164,134 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
         </div>
       )}
     </div>
+
+    <!-- Manual Add Player Modal -->
+    <div id="addPlayerModal" class="fixed inset-0 z-[100] hidden items-center justify-center px-4 bg-brand-charcoal/80 backdrop-blur-md">
+      <div class="glass-card border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 md:p-12 relative animate-in fade-in zoom-in duration-300">
+        <button id="closeModalBtn" class="absolute top-6 right-6 text-white/40 hover:text-white transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <div class="mb-8">
+          <h2 class="text-2xl font-heading font-bold text-white uppercase tracking-tight">Manual <span class="text-brand-teal italic">Player Entry</span></h2>
+          <p class="text-white/40 text-[10px] uppercase tracking-widest font-bold mt-2">Add athlete to {eventData.name}</p>
+        </div>
+
+        <form id="addPlayerForm" class="space-y-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">First Name</label>
+              <input type="text" name="firstName" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">Last Name</label>
+              <input type="text" name="lastName" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">Grade</label>
+              <input type="text" name="grade" required placeholder="e.g. 7th" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">T-Shirt Size</label>
+              <input type="text" name="tshirtSize" placeholder="e.g. Adult M" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">Parent Info (Optional)</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input type="text" name="parentName" placeholder="Parent Name" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs focus:border-brand-teal outline-none" />
+              <input type="email" name="parentEmail" placeholder="Parent Email" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs focus:border-brand-teal outline-none" />
+              <input type="tel" name="parentPhone" placeholder="Parent Phone" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs focus:border-brand-teal outline-none" />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">Medical Info</label>
+            <textarea name="medicalInfo" placeholder="Allergies, etc." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none min-h-[80px]"></textarea>
+          </div>
+
+          <div class="pt-4 flex gap-4">
+             <button type="button" id="cancelBtn" class="flex-1 py-4 border border-white/10 rounded-xl text-white/60 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all">Cancel</button>
+             <button type="submit" id="submitManualBtn" class="flex-[2] btn btn-primary py-4 text-[10px] uppercase tracking-widest font-bold">Add to Roster</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
 </BaseLayout>
 
-<script is:inline define:vars={{ roster, eventName: eventData?.name }}>
+<script is:inline define:vars={{ roster, eventName: eventData?.name, eventId: id, ADMIN_PASSCODE }}>
+  // Modal Logic
+  const modal = document.getElementById('addPlayerModal');
+  const addBtn = document.getElementById('addPlayerBtn');
+  const closeBtn = document.getElementById('closeModalBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const addForm = document.getElementById('addPlayerForm');
+
+  const openModal = () => {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeModal = () => {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = 'auto';
+    addForm.reset();
+  };
+
+  addBtn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+
+  // Form Submission
+  addForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById('submitManualBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Processing...';
+
+    const formData = new FormData(addForm);
+    const athlete = {
+      firstName: formData.get('firstName'),
+      lastName: formData.get('lastName'),
+      grade: formData.get('grade'),
+      tshirtSize: formData.get('tshirtSize'),
+      parentName: formData.get('parentName'),
+      parentEmail: formData.get('parentEmail'),
+      parentPhone: formData.get('parentPhone'),
+      medicalInfo: formData.get('medicalInfo'),
+    };
+
+    try {
+      const response = await fetch('/api/admin/manual-register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passcode: ADMIN_PASSCODE,
+          athlete,
+          eventId
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        window.location.reload();
+      } else {
+        alert(result.error || 'Failed to add player');
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Add to Roster';
+      }
+    } catch (err) {
+      alert('Network error');
+      submitBtn.disabled = false;
+      submitBtn.innerText = 'Add to Roster';
+    }
+  });
+
+  // CSV Export Logic
   document.getElementById('exportCsv')?.addEventListener('click', () => {
     if (!roster || roster.length === 0) return;
     
