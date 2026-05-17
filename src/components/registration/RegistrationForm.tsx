@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import WaiverModal from './WaiverModal';
+import LiabilityWaiver from './LiabilityWaiver';
+import MediaRelease from './MediaRelease';
 
 interface Event {
   id: string;
@@ -309,65 +310,23 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
             </button>
 
             {expandedWaivers[index] && (
-              <div className="glass-card border-white/10 p-6 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                <MediaRelease 
+                  athleteName={athlete.firstName} 
+                  agreed={athlete.photoReleaseAgreed} 
+                  onChange={(val) => updateAthlete(index, 'photoReleaseAgreed', val)} 
+                />
                 
-                {/* 1. Media Release (Optional) */}
-                <section className="space-y-4">
-                  <h4 className="text-[10px] font-bold text-brand-teal uppercase tracking-[0.2em] flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-brand-teal/20 flex items-center justify-center">1</span>
-                    Media Release (Optional)
-                  </h4>
-                  <p className="text-xs text-white/50 leading-relaxed">
-                    We use photos/videos of athletes for promotional purposes (website, social media). These images always reflect a positive, respectful environment.
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => updateAthlete(index, 'photoReleaseAgreed', true)}
-                      className={`p-3 rounded-xl border text-center transition-all ${athlete.photoReleaseAgreed ? 'bg-brand-teal/10 border-brand-teal' : 'bg-white/5 border-white/10 hover:border-white/20'}`}
-                    >
-                      <span className="block font-bold text-white text-xs">Agree</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateAthlete(index, 'photoReleaseAgreed', false)}
-                      className={`p-3 rounded-xl border text-center transition-all ${!athlete.photoReleaseAgreed ? 'bg-brand-coral/10 border-brand-coral' : 'bg-white/5 border-white/10 hover:border-white/20'}`}
-                    >
-                      <span className="block font-bold text-white text-xs">Decline</span>
-                    </button>
-                  </div>
-                </section>
-
-                {/* 2. Liability Waiver (Required) */}
-                <section className="space-y-4 pt-6 border-t border-white/5">
-                  <h4 className="text-[10px] font-bold text-brand-coral uppercase tracking-[0.2em] flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-brand-coral/20 flex items-center justify-center">2</span>
-                    Liability Waiver (Required)
-                  </h4>
-                  <div className="text-[10px] text-white/40 leading-relaxed bg-black/20 p-4 rounded-xl h-40 overflow-y-auto border border-white/5 custom-scrollbar">
-                    <p className="font-bold text-white mb-2 uppercase">Assumption of Risk & Release of Liability</p>
-                    <p className="mb-4">Participation in TVVC programs involves inherent risks (collisions, falls, impact). I voluntarily assume all responsibility for any bodily injury or harm.</p>
-                    <p className="mb-4">I hereby release TVVC, its owners, and staff from any liability or claims arising from participation.</p>
-                    <p className="font-bold text-white italic">I have read this waiver in its entirety, understand its terms, and agree freely.</p>
-                  </div>
-                  <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${athlete.waiverAgreed ? 'bg-brand-teal/10 border-brand-teal' : 'bg-brand-coral/5 border-brand-coral/30'}`}>
-                    <input 
-                      type="checkbox"
-                      required
-                      checked={athlete.waiverAgreed}
-                      onChange={(e) => updateAthlete(index, 'waiverAgreed', e.target.checked)}
-                      className="accent-brand-teal w-5 h-5 shrink-0"
-                    />
-                    <span className="text-[11px] font-bold text-white leading-tight">
-                      I agree to the Liability Waiver & Release
-                    </span>
-                  </label>
-                </section>
+                <LiabilityWaiver 
+                  athleteName={athlete.firstName} 
+                  agreed={athlete.waiverAgreed} 
+                  onChange={(val) => updateAthlete(index, 'waiverAgreed', val)} 
+                />
 
                 <button
                   type="button"
                   onClick={() => toggleWaiver(index)}
-                  className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all"
+                  className="w-full py-4 rounded-xl bg-white/5 border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all"
                 >
                   Minimize Waivers
                 </button>

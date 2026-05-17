@@ -10,7 +10,11 @@ const MediaRelease: React.FC<MediaReleaseProps> = ({ athleteName, agreed, onChan
   return (
     <div className="glass-card border-white/5 p-6 space-y-6">
       <div className="space-y-4 text-sm text-white/60 leading-relaxed">
-        <h3 className="text-lg font-heading font-bold text-white uppercase tracking-tight">Media Release & Consent</h3>
+        <div className="border-b border-white/10 pb-4 mb-4">
+          <h3 className="text-lg font-heading font-bold text-white uppercase tracking-tight">Media Release & Consent</h3>
+          <p className="text-[10px] font-bold text-brand-teal uppercase tracking-[0.2em] mt-1">Optional</p>
+        </div>
+        
         <p>
           At Tualatin Valley Volleyball Club, we love celebrating our athletes, our teams, and the joy of the game. 
           Photos and videos taken during practices, games, tournaments, and events often capture the spirit of learning, 
@@ -30,45 +34,51 @@ const MediaRelease: React.FC<MediaReleaseProps> = ({ athleteName, agreed, onChan
           </p>
         </div>
 
-        <div className="space-y-2 text-xs italic">
+        <div className="space-y-2 text-xs italic opacity-80 border-l-2 border-white/10 pl-4">
           <p>• I give permission for TVVC to take, use, and share photographs and/or videos of my child for promotional or educational purposes.</p>
           <p>• I understand these images may appear on the club’s website, social media, and printed materials.</p>
           <p>• I understand there will be no financial compensation for the use of these images.</p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
-        <label className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer ${agreed ? 'bg-brand-teal/10 border-brand-teal' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
-          <input 
-            type="radio" 
-            name={`media-release-${athleteName}`}
-            checked={agreed === true}
-            onChange={() => onChange(true)}
-            className="mt-1 accent-brand-teal"
-          />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-white/5">
+        <button
+          type="button"
+          onClick={() => onChange(true)}
+          className={`
+            flex items-center gap-3 p-4 rounded-xl border transition-all text-left
+            ${agreed ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal/20' : 'bg-white/5 border-white/10 hover:border-white/20'}
+          `}
+        >
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${agreed ? 'border-brand-teal bg-brand-teal' : 'border-white/20'}`}>
+            {agreed && <span className="text-white text-[10px]">✓</span>}
+          </div>
           <div>
-            <span className="block font-bold text-white text-sm">I Agree</span>
-            <span className="block text-[10px] text-white/40 leading-tight mt-1">
-              TVVC may use photos/videos of {athleteName} for public promotional materials.
+            <span className="block font-bold text-white text-sm">Agree</span>
+            <span className="block text-[9px] text-white/40 leading-tight">
+              Permission granted
             </span>
           </div>
-        </label>
+        </button>
 
-        <label className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer ${!agreed ? 'bg-brand-coral/10 border-brand-coral' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
-          <input 
-            type="radio" 
-            name={`media-release-${athleteName}`}
-            checked={agreed === false}
-            onChange={() => onChange(false)}
-            className="mt-1 accent-brand-coral"
-          />
+        <button
+          type="button"
+          onClick={() => onChange(false)}
+          className={`
+            flex items-center gap-3 p-4 rounded-xl border transition-all text-left
+            ${!agreed ? 'bg-brand-coral/10 border-brand-coral shadow-glow-coral/20' : 'bg-white/5 border-white/10 hover:border-white/20'}
+          `}
+        >
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${!agreed ? 'border-brand-coral bg-brand-coral' : 'border-white/20'}`}>
+            {!agreed && <span className="text-white text-[10px]">✓</span>}
+          </div>
           <div>
-            <span className="block font-bold text-white text-sm">I Do Not Agree</span>
-            <span className="block text-[10px] text-white/40 leading-tight mt-1">
-               {athleteName} will still be in team/internal photos, but they will NOT be shared publicly.
+            <span className="block font-bold text-white text-sm">Decline</span>
+            <span className="block text-[9px] text-white/40 leading-tight">
+              No public media
             </span>
           </div>
-        </label>
+        </button>
       </div>
     </div>
   );

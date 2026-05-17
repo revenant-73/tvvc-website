@@ -43,7 +43,6 @@ test.describe('Registration Flow', () => {
     await page.locator('input[type="text"]').nth(1).fill('John');
     await page.locator('input[type="text"]').nth(2).fill('Doe');
     await page.locator('select').first().selectOption('6th');
-    await page.locator('select').nth(1).selectOption('Adult M');
     await page.getByPlaceholder(/medical information/i).fill('None');
 
     // Select an event
