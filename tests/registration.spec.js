@@ -51,7 +51,7 @@ test.describe('Registration Flow', () => {
     await firstEvent.click();
 
     // Expand waiver section
-    await page.getByRole('button', { name: /Action Required: Waivers|Waivers Completed/i }).click();
+    await page.getByRole('button', { name: /Sign Waivers|Waivers Completed/i }).click();
 
     // Check waiver - avoid dev toolbar toggle by being specific
     const waiverCheckbox = page.locator('form input[type="checkbox"][required]');
