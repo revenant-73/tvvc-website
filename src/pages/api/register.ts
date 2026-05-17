@@ -86,7 +86,6 @@ export const POST: APIRoute = async ({ request }) => {
         lastName: a.lastName,
         grade: a.grade,
         medicalInfo: a.medicalInfo,
-        tshirtSize: a.tshirtSize,
         photoReleaseAgreed: a.photoReleaseAgreed,
         waiverAgreed: a.waiverAgreed,
       }).returning({ id: athletes.id });

@@ -17,13 +17,11 @@ interface Athlete {
   lastName: string;
   grade: string;
   medicalInfo: string;
-  tshirtSize: string;
   selectedEvents: string[];
   photoReleaseAgreed: boolean;
   waiverAgreed: boolean;
 }
 
-const tshirtSizes = ['Youth S', 'Youth M', 'Youth L', 'Adult S', 'Adult M', 'Adult L', 'Adult XL'];
 const grades = ['4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
 
 export default function RegistrationForm({ initialEvents }: { initialEvents: Event[] }) {
@@ -39,7 +37,6 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
       lastName: '',
       grade: '',
       medicalInfo: '',
-      tshirtSize: '',
       selectedEvents: [],
       photoReleaseAgreed: false,
       waiverAgreed: false,
@@ -114,7 +111,6 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
       lastName: '',
       grade: '',
       medicalInfo: '',
-      tshirtSize: '',
       selectedEvents: [],
       photoReleaseAgreed: false,
       waiverAgreed: false,
@@ -153,11 +149,11 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
     // Validation
     const isParentInfoComplete = parentInfo.name && parentInfo.email && parentInfo.phone;
     const hasIncompleteAthletes = athletes.some(a => 
-      !a.firstName || !a.lastName || !a.grade || !a.tshirtSize || !a.medicalInfo || a.selectedEvents.length === 0 || !a.waiverAgreed
+      !a.firstName || !a.lastName || !a.grade || !a.medicalInfo || a.selectedEvents.length === 0 || !a.waiverAgreed
     );
 
     if (!isParentInfoComplete || hasIncompleteAthletes) {
-      alert("Please complete all parent information, athlete details (including T-shirt size and medical info), select at least one event per athlete, and agree to the waivers.");
+      alert("Please complete all parent information, athlete details (including medical info), select at least one event per athlete, and agree to the waivers.");
       setIsSubmitting(false);
       return;
     }
@@ -237,7 +233,7 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
             Athlete #{index + 1} Details
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">First Name</label>
               <input 
@@ -266,18 +262,6 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
               >
                 <option value="">Select Grade</option>
                 {grades.map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">T-Shirt Size</label>
-              <select 
-                required
-                className="w-full bg-brand-charcoal border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors appearance-none cursor-pointer"
-                value={athlete.tshirtSize}
-                onChange={e => updateAthlete(index, 'tshirtSize', e.target.value)}
-              >
-                <option value="">Select Size</option>
-                {tshirtSizes.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
           </div>

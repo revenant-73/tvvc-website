@@ -40,7 +40,6 @@ try {
       lastName: athletes.lastName,
       grade: athletes.grade,
       medicalInfo: athletes.medicalInfo,
-      tshirtSize: athletes.tshirtSize,
       parentName: registrations.parentName,
       parentEmail: registrations.parentEmail,
       parentPhone: registrations.parentPhone,
@@ -134,7 +133,6 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
                       </td>
                       <td class="px-6 py-5">
                         <div class="space-y-1">
-                          {player.tshirtSize && <span class="text-[9px] font-bold uppercase bg-white/5 px-2 py-0.5 rounded text-white/40 mr-2">Size: {player.tshirtSize}</span>}
                           {player.medicalInfo ? (
                              <p class="text-[10px] text-brand-coral font-medium max-w-[200px] line-clamp-2 mt-1" title={player.medicalInfo}>
                                ⚠️ {player.medicalInfo}
@@ -190,10 +188,6 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
             <div class="space-y-2">
               <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">Grade</label>
               <input type="text" name="grade" required placeholder="e.g. 7th" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" />
-            </div>
-            <div class="space-y-2">
-              <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">T-Shirt Size</label>
-              <input type="text" name="tshirtSize" placeholder="e.g. Adult M" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" />
             </div>
           </div>
 
@@ -258,7 +252,6 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
       firstName: formData.get('firstName'),
       lastName: formData.get('lastName'),
       grade: formData.get('grade'),
-      tshirtSize: formData.get('tshirtSize'),
       parentName: formData.get('parentName'),
       parentEmail: formData.get('parentEmail'),
       parentPhone: formData.get('parentPhone'),
@@ -295,7 +288,7 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
   document.getElementById('exportCsv')?.addEventListener('click', () => {
     if (!roster || roster.length === 0) return;
     
-    const headers = ['First Name', 'Last Name', 'Grade', 'Parent Name', 'Parent Email', 'Parent Phone', 'Medical Info', 'T-Shirt Size', 'Registered At'];
+    const headers = ['First Name', 'Last Name', 'Grade', 'Parent Name', 'Parent Email', 'Parent Phone', 'Medical Info', 'Registered At'];
     const csvRows = [
       headers.join(','),
       ...roster.map(row => [
@@ -306,7 +299,6 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
         row.parentEmail,
         row.parentPhone,
         row.medicalInfo || 'None',
-        row.tshirtSize || 'N/A',
         row.createdAt
       ].map(val => {
         const escaped = ('' + val).replace(/"/g, '""');
