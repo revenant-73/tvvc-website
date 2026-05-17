@@ -36,6 +36,8 @@ try {
     // Join athletes with registrations through registrationItems for this specific event
     roster = await db.select({
       id: athletes.id,
+      registrationItemId: registrationItems.id,
+      registrationId: registrations.id,
       firstName: athletes.firstName,
       lastName: athletes.lastName,
       grade: athletes.grade,
@@ -115,6 +117,7 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
                     <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Parent / Contact</th>
                     <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Details</th>
                     <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Registered</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
@@ -144,6 +147,24 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
                       </td>
                       <td class="px-6 py-5 text-[11px] text-white/40 tabular-nums">
                         {new Date(player.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                      <td class="px-6 py-5 text-right">
+                        <div class="flex flex-col items-end gap-1">
+                          <button 
+                            class="remove-item-btn text-[9px] font-bold uppercase tracking-widest text-brand-teal hover:text-white transition-colors p-1"
+                            data-item-id={player.registrationItemId}
+                            data-player-name={`${player.firstName} ${player.lastName}`}
+                          >
+                            Remove from Event
+                          </button>
+                          <button 
+                            class="cancel-btn text-[8px] font-bold uppercase tracking-widest text-white/20 hover:text-brand-coral transition-colors p-1"
+                            data-registration-id={player.registrationId}
+                            data-player-name={`${player.firstName} ${player.lastName}`}
+                          >
+                            Cancel Full Order
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -282,6 +303,66 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
       submitBtn.disabled = false;
       submitBtn.innerText = 'Add to Roster';
     }
+  });
+
+  // Remove Single Item Logic
+  document.querySelectorAll('.remove-item-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const itemId = btn.getAttribute('data-item-id');
+      const playerName = btn.getAttribute('data-player-name');
+      
+      if (confirm(`Remove ${playerName} from THIS event only?`)) {
+        try {
+          const response = await fetch('/api/admin/remove-item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              passcode: ADMIN_PASSCODE,
+              itemId: parseInt(itemId)
+            }),
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            window.location.reload();
+          } else {
+            alert(result.error || 'Failed to remove player');
+          }
+        } catch (err) {
+          alert('Network error');
+        }
+      }
+    });
+  });
+
+  // Cancel Registration Logic
+  document.querySelectorAll('.cancel-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const registrationId = btn.getAttribute('data-registration-id');
+      const playerName = btn.getAttribute('data-player-name');
+      
+      if (confirm(`Are you sure you want to cancel the registration for ${playerName}? This will remove them from ALL events in this registration and free up the spots.`)) {
+        try {
+          const response = await fetch('/api/admin/cancel-registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              passcode: ADMIN_PASSCODE,
+              registrationId
+            }),
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            window.location.reload();
+          } else {
+            alert(result.error || 'Failed to cancel registration');
+          }
+        } catch (err) {
+          alert('Network error');
+        }
+      }
+    });
   });
 
   // CSV Export Logic
