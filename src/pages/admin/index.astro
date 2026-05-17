@@ -1,0 +1,102 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
+let authenticated = false;
+let error = null;
+
+if (Astro.request.method === 'POST') {
+  try {
+    const data = await Astro.request.formData();
+    if (data.get('passcode') === ADMIN_PASSCODE) {
+      authenticated = true;
+    } else {
+      error = "Incorrect passcode.";
+    }
+  } catch (e) {
+    error = "Error processing login.";
+  }
+}
+
+if (Astro.url.searchParams.get('auth') === 'true') {
+  authenticated = true;
+}
+
+const adminFeatures = [
+  {
+    title: "Event Manager",
+    description: "Manage summer camps, clinics, and view registration rosters.",
+    link: "/admin/registrations?auth=true",
+    icon: "calendar",
+    color: "brand-teal"
+  },
+  {
+    title: "Feedback Management",
+    description: "View and manage feedback from season participants.",
+    link: "/admin/feedback?auth=true",
+    icon: "message",
+    color: "brand-coral"
+  }
+];
+---
+
+<BaseLayout title="Admin Dashboard" noindex={true}>
+  <main class="pt-32 pb-24 px-4 md:px-6">
+    <div class="max-w-4xl mx-auto">
+      {error && (
+        <div class="max-w-2xl mx-auto mb-8 bg-brand-coral/10 border border-brand-coral/20 text-brand-coral p-4 rounded-xl text-center text-sm font-bold">
+          {error}
+        </div>
+      )}
+
+      {!authenticated ? (
+        <div class="max-w-md mx-auto">
+          <div class="glass-card p-8 border-white/10 text-center">
+            <h1 class="text-2xl font-heading font-bold text-white mb-6 uppercase tracking-widest">Admin Access</h1>
+            <form method="POST" class="space-y-4">
+              <input type="password" name="passcode" placeholder="Enter Passcode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none text-center" required />
+              <button type="submit" class="btn btn-primary w-full">Login</button>
+            </form>
+          </div>
+        </div>
+      ) : (
+        <div class="space-y-12">
+          <div class="text-center space-y-4">
+            <h1 class="text-4xl md:text-6xl font-heading font-bold text-white uppercase tracking-tighter">Admin <span class="text-brand-teal italic">Dashboard</span></h1>
+            <p class="text-white/40 text-xs uppercase tracking-[0.3em] font-bold">Select a module to manage</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {adminFeatures.map(feature => (
+              <a href={feature.link} class="group glass-card border-white/10 p-8 hover:border-brand-teal transition-all duration-300">
+                <div class="space-y-4">
+                  <div class={`w-12 h-12 rounded-xl bg-${feature.color}/10 border border-${feature.color}/20 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    {feature.icon === 'calendar' ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`text-${feature.color}`}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`text-${feature.color}`}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    )}
+                  </div>
+                  <div class="space-y-2">
+                    <h2 class="text-2xl font-heading font-bold text-white uppercase">{feature.title}</h2>
+                    <p class="text-white/40 text-sm leading-relaxed">{feature.description}</p>
+                  </div>
+                  <div class={`text-xs font-bold uppercase tracking-widest text-${feature.color} pt-4 flex items-center gap-2`}>
+                    Enter Module
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transform group-hover:translate-x-1 transition-transform"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+
+          <div class="pt-12 text-center border-t border-white/5">
+            <p class="text-[10px] text-white/20 uppercase tracking-[0.2em] font-bold">TVVC Management System v1.0</p>
+          </div>
+        </div>
+      )}
+    </div>
+  </main>
+</BaseLayout>
