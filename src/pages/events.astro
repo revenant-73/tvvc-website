@@ -25,9 +25,12 @@ import ScrollReveal from '../components/ScrollReveal.astro';
         </ScrollReveal>
 
         <ScrollReveal delay={0.6}>
-          <div class="flex flex-wrap gap-4 justify-center md:justify-start">
-            <a href="https://tvvc.volleyballcentral.io/e/2026-may-shindig" target="_blank" class="btn btn-primary px-12">Register Your Team</a>
-            <span class="text-xs text-white/40 font-bold uppercase tracking-widest mt-4 md:mt-0 flex items-center">Registration opens April 10, 2026</span>
+          <div class="flex flex-wrap gap-4 justify-center md:justify-start items-center">
+            <button disabled class="btn btn-primary px-12 opacity-50 cursor-not-allowed">Registration Paused</button>
+            <div class="flex flex-col">
+              <span class="text-xs text-brand-coral font-bold uppercase tracking-widest">System Technical Issue</span>
+              <span class="text-[10px] text-white/40 font-bold uppercase tracking-widest">Expected resolution: May 17, 2026</span>
+            </div>
           </div>
         </ScrollReveal>
       </div>

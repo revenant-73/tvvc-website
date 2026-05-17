@@ -99,8 +99,8 @@ const clinicGroups = [
         <p class="text-lg text-white/60 max-w-2xl leading-relaxed mb-6">
           Game-based volleyball training for athletes entering 4th–12th grade. Camps, clinics, hitting, serving, defense, and tryout prep.
         </p>
-        <p class="text-lg text-white font-bold mb-10">
-          Limited space. One-court facility. Registration is open now.
+        <p class="text-lg text-brand-coral font-bold mb-10">
+          Registration is temporarily paused due to a technical issue. We expect to be back online by May 17, 2026.
         </p>
         <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-10">
           <a href="#camps" class="btn btn-secondary !px-8 !py-3">View Camps</a>
@@ -180,12 +180,12 @@ const clinicGroups = [
           <div class="glass-card bg-brand-teal/5 border-brand-teal/20 p-8 md:p-10 flex flex-col justify-center">
             <h3 class="text-xl font-heading font-bold mb-4">Registration Info</h3>
             <p class="text-white/60 mb-2 leading-relaxed">
-              Public registration is now <strong>OPEN</strong>.
+              Public registration is temporarily <strong>PAUSED</strong>.
             </p>
             <p class="text-brand-coral font-bold mb-8 italic">
-              Because we train in a one-court facility, each camp and clinic has limited space. Once a session fills, registration will close.
+              We are resolving a technical issue and expect to resume registrations by May 17, 2026.
             </p>
-            <a href="https://tvvc.volleyballcentral.io/events" target="_blank" class="btn btn-primary !w-full md:!w-max">Register for a Summer Camp</a>
+            <button disabled class="btn btn-primary !w-full md:!w-max opacity-50 cursor-not-allowed">Registration Paused</button>
           </div>
         </div>
       </div>
@@ -207,7 +207,7 @@ const clinicGroups = [
                   </p>
                 </div>
               </div>
-              <a href={camp.link} target="_blank" class="btn btn-secondary !w-full text-xs">Register Now</a>
+              <button disabled class="btn btn-secondary !w-full text-xs opacity-50 cursor-not-allowed">Registration Paused</button>
             </div>
           </ScrollReveal>
         ))}
@@ -238,7 +238,7 @@ const clinicGroups = [
                             <span class="text-[10px] text-white/40 font-bold block">{clinic.time}</span>
                             <span class="font-bold text-sm text-white">{clinic.name}</span>
                           </div>
-                          <a href={clinic.link} target="_blank" class={`btn !py-1.5 !px-4 text-[10px] uppercase ${group.accent === 'brand-teal' ? 'btn-primary' : '!bg-brand-coral !shadow-glow-coral'}`}>Register</a>
+                          <button disabled class={`btn !py-1.5 !px-4 text-[10px] uppercase opacity-50 cursor-not-allowed ${group.accent === 'brand-teal' ? 'btn-primary' : '!bg-brand-coral !shadow-glow-coral'}`}>Paused</button>
                        </div>
                      ))}
                   </div>
@@ -254,8 +254,9 @@ const clinicGroups = [
         <!-- Final CTA -->
         <div class="max-w-3xl mx-auto text-center glass-card border-brand-teal/20 p-12">
            <h2 class="text-3xl font-heading font-bold mb-6 text-white">Ready to train this summer?</h2>
-           <p class="text-white/60 mb-10 text-lg">Camps and clinics begin soon, and space is limited. Secure your spot today.</p>
-           <a href="https://tvvc.volleyballcentral.io/events" target="_blank" class="btn btn-primary !px-12 !py-4 mb-8">Register Now</a>
+           <p class="text-white/60 mb-6 text-lg">We are currently resolving a technical issue with our registration system.</p>
+           <p class="text-brand-coral font-bold mb-10 text-lg italic">Registration is expected to resume by May 17, 2026.</p>
+           <button disabled class="btn btn-primary !px-12 !py-4 mb-8 opacity-50 cursor-not-allowed">Registration Temporarily Paused</button>
            <p class="text-sm text-white/40">
               Questions about which camp or clinic fits your athlete? <br class="md:hidden" />
               Text or call Loren at <a href="tel:503-389-0760" class="text-brand-teal hover:underline">503-389-0760</a>

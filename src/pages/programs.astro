@@ -16,10 +16,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </p>
         
         <div class="flex flex-wrap gap-4 justify-center md:justify-start">
-          <a href="/summer-camps-clinics" class="btn btn-primary !px-6 !py-2 text-sm">Register for Summer 2026</a>
+          <a href="/summer-camps-clinics" class="btn btn-primary !px-6 !py-2 text-sm">Summer 2026 Info</a>
           <a href="#ignition" class="btn btn-secondary !px-6 !py-2 text-sm">Ignition</a>
           <a href="#playworks" class="btn btn-secondary !px-6 !py-2 text-sm">PlayWorks</a>
         </div>
+        <p class="mt-6 text-brand-coral font-bold text-sm">
+          Note: Registration is temporarily paused due to a technical issue. We expect to be back online by May 17, 2026.
+        </p>
       </div>
     </section>
 
@@ -126,7 +129,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
 
         <div class="mt-12 text-center">
-          <a href="https://tvvc.volleyballcentral.io/e/ignition" target="_blank" class="btn btn-primary !bg-brand-coral !shadow-glow-coral">Register for Ignition</a>
+          <button disabled class="btn btn-primary !bg-brand-coral !shadow-glow-coral opacity-50 cursor-not-allowed">Registration Temporarily Paused</button>
+          <p class="mt-4 text-brand-coral font-bold text-xs italic">Resuming May 17, 2026</p>
         </div>
       </div>
     </section>
@@ -178,8 +182,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                  <span class="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1 block">Registration</span>
                  <div class="text-4xl font-heading font-bold">$175 <span class="text-sm font-normal text-white/40">/ session</span></div>
                </div>
-               <p class="text-sm text-white/40 mb-8 max-w-xs">Includes program t-shirt. Sessions run 2x per week at our Hillsboro facility.</p>
-               <a href="https://tvvc.volleyballcentral.io/e/playworks" target="_blank" class="btn btn-primary">Register for PlayWorks</a>
+               <p class="text-sm text-white/40 mb-4 max-w-xs">Includes program t-shirt. Sessions run 2x per week at our Hillsboro facility.</p>
+               <button disabled class="btn btn-primary opacity-50 cursor-not-allowed mb-4">Registration Paused</button>
+               <p class="text-[10px] text-brand-coral font-bold italic uppercase tracking-widest">Resuming May 17, 2026</p>
             </div>
           </div>
        </div>
