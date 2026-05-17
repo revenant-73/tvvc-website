@@ -42,8 +42,8 @@ if (authenticated || Astro.url.searchParams.get('auth') === 'true') {
 const camps = allEvents.filter(e => e.type === 'camp');
 const clinics = allEvents.filter(e => e.type === 'clinic');
 
-// Chronological sorting for clinics
-const sortedClinics = [...clinics].sort((a, b) => {
+// Helper for chronological sorting
+const sortByDate = (a: any, b: any) => {
   const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8 };
   const getMonthDay = (info: string) => {
     const match = info.match(/(May|June|July|August)\s+(\d+)/);
@@ -51,7 +51,10 @@ const sortedClinics = [...clinics].sort((a, b) => {
     return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
   };
   return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
-});
+};
+
+const sortedCamps = [...camps].sort(sortByDate);
+const sortedClinics = [...clinics].sort(sortByDate);
 
 // Group clinics by date
 const groupedClinics = sortedClinics.reduce((acc, clinic) => {
@@ -94,7 +97,7 @@ const groupedClinics = sortedClinics.reduce((acc, clinic) => {
           <section>
             <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-brand-teal mb-6">Summer Camps</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {camps.map(event => (
+              {sortedCamps.map(event => (
                 <div class="glass-card border-white/10 p-6 space-y-4">
                   <div>
                     <h3 class="font-heading font-bold text-lg text-white leading-tight">{event.name}</h3>
