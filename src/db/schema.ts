@@ -63,3 +63,48 @@ export const feedback = sqliteTable('feedback', {
   starred: integer('starred', { mode: 'boolean' }).default(false),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 });
+
+// --- Summer 2026 Registration System ---
+
+export const events = sqliteTable('events', {
+  id: text('id').primaryKey(), // e.g., 'camp-foundations-june'
+  type: text('type').notNull(), // 'camp' or 'clinic'
+  name: text('name').notNull(),
+  description: text('description'),
+  dateInfo: text('date_info').notNull(), // e.g., 'June 15–17'
+  timeInfo: text('time_info'), // e.g., '8:00am–12:00pm'
+  price: integer('price').notNull(), // in cents (Stripe style)
+  capacity: integer('capacity').notNull(),
+  spotsFilled: integer('spots_filled').default(0),
+  active: integer('active', { mode: 'boolean' }).default(true),
+});
+
+export const registrations = sqliteTable('registrations', {
+  id: text('id').primaryKey(),
+  parentName: text('parent_name').notNull(),
+  parentEmail: text('parent_email').notNull(),
+  parentPhone: text('parent_phone').notNull(),
+  stripeSessionId: text('stripe_session_id'),
+  status: text('status').default('pending'), // pending, paid, cancelled
+  totalAmount: integer('total_amount').notNull(),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const athletes = sqliteTable('athletes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  registrationId: text('registration_id').references(() => registrations.id),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  grade: text('grade').notNull(), // Entering grade
+  medicalInfo: text('medical_info'),
+  tshirtSize: text('tshirt_size'),
+  waiverAgreed: integer('waiver_agreed', { mode: 'boolean' }).default(false),
+  photoReleaseAgreed: integer('photo_release_agreed', { mode: 'boolean' }).default(false),
+});
+
+export const registrationItems = sqliteTable('registration_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  registrationId: text('registration_id').references(() => registrations.id),
+  athleteId: integer('athlete_id').references(() => athletes.id),
+  eventId: text('event_id').references(() => events.id),
+});

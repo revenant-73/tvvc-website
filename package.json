@@ -9,6 +9,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "db:push": "drizzle-kit push",
+    "db:seed": "tsx src/db/seed.ts",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui"
@@ -22,7 +24,9 @@
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.56.1",
-    "drizzle-kit": "^0.31.10"
+    "@types/uuid": "^10.0.0",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.22.0"
   },
   "dependencies": {
     "@astrojs/netlify": "^7.0.9",
@@ -38,6 +42,8 @@
     "framer-motion": "^12.38.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "tailwindcss": "^3.4.19"
+    "stripe": "^22.1.1",
+    "tailwindcss": "^3.4.19",
+    "uuid": "^14.0.0"
   }
 }
