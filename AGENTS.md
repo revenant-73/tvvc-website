@@ -19,28 +19,39 @@ The **TVVC Website** is the official online presence for the Tualatin Valley Vol
 
 ## Structure
 - [**./src/pages/**](./src/pages/): Contains site routes (Astro components).
+- [**./src/pages/api/**](./src/pages/api/): Backend API endpoints (Registration, Webhooks).
+- [**./src/pages/admin/**](./src/pages/admin/): Passcode-protected administration tools.
 - [**./src/components/**](./src/components/): Reusable UI components (React/Astro).
+- [**./src/db/**](./src/db/): Database schema, client, and seeding scripts.
 - [**./src/layouts/**](./src/layouts/): Page templates like `BaseLayout.astro`.
 - [**./public/assets/**](./public/assets/): Static resources like images and legacy styles.
 - [**./tests/**](./tests/): Comprehensive end-to-end test suite using Playwright.
 
 ## Language & Runtime
-**Language**: JavaScript, Astro, JSX  
-**Runtime**: Node.js 18+  
-**Framework**: Astro 5.0+  
+**Language**: JavaScript, Astro, JSX, TypeScript  
+**Runtime**: Node.js 20+  
+**Framework**: Astro 6.0+  
+**Database**: Drizzle ORM + LibSQL (Turso)  
+**Payments**: Stripe SDK  
 **Styling**: Tailwind CSS  
 **Package Manager**: npm  
 **Registration Status**: Summer 2026 Registration is now **OPEN**.
 
 ## Dependencies
 **Main Dependencies**:
-- **astro**: ^6.1.6
+- **astro**: ^6.3.3
+- **drizzle-orm**: ^0.45.2
+- **@libsql/client**: ^0.17.3
+- **stripe**: ^22.1.1
 - **react**: ^19.2.5
 - **tailwindcss**: ^3.4.19
 - **framer-motion**: ^12.38.0
+- **uuid**: ^14.0.0
 
 **Development Dependencies**:
 - **@playwright/test**: ^1.56.1
+- **drizzle-kit**: ^0.31.10
+- **tsx**: ^4.22.0
 
 ## Build & Installation
 ```bash

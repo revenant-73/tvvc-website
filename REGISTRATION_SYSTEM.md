@@ -1,0 +1,99 @@
+# Native Registration System
+
+This project features a custom-built, native registration and payment system for TVVC summer camps and clinics. It replaces previous third-party solutions with a deeply integrated, high-performance architecture.
+
+## 🏗️ Architecture Overview
+
+The system is built on a modern serverless stack:
+
+- **Frontend**: React-based multi-step registration form with real-time price calculation.
+- **Backend API**: Astro API routes for registration processing and Stripe webhooks.
+- **Database**: Turso (LibSQL) managed via Drizzle ORM for resilient, edge-compatible data storage.
+- **Payments**: Stripe Checkout integration with automated capacity management via webhooks.
+
+## 🗄️ Database Schema
+
+The schema (defined in `src/db/schema.ts`) consists of four primary tables:
+
+1.  **`events`**: Stores camp and clinic details (name, price, capacity, spots filled).
+2.  **`registrations`**: Master record for each family's checkout session.
+3.  **`athletes`**: Individual athlete profiles associated with a registration (includes medical info and waivers).
+4.  **`registration_items`**: Junction table linking athletes to specific events.
+
+## 🔄 Registration Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Form as Registration Form (React)
+    participant API as API (/api/register)
+    participant Stripe as Stripe Checkout
+    participant Webhook as Webhook (/api/webhooks/stripe)
+    participant DB as Turso Database
+
+    User->>Form: Selects camps & enters athlete info
+    Form->>API: Submits registration data
+    API->>DB: Creates "pending" registration & athlete records
+    API->>Stripe: Creates Checkout Session
+    API-->>Form: Returns Stripe URL
+    Form->>Stripe: Redirects for payment
+    Stripe->>User: Completes payment
+    Stripe->>Webhook: Sends checkout.session.completed
+    Webhook->>DB: Updates registration to "paid"
+    Webhook->>DB: Increments spots_filled for each event
+```
+
+## 🔐 Administration
+
+The system includes a passcode-protected admin suite located at `/admin`.
+
+### Features:
+- **Event Manager**: View all camps/clinics, current capacity, and toggle active status.
+- **Capacity Editor**: Real-time adjustment of maximum registration caps.
+- **Roster Viewer**: Detailed lists of athletes signed up for specific events, including medical notes and contact info.
+- **CSV Export**: Generate rosters for coaches and check-in desks.
+
+## 🛠️ Maintenance & Operations
+
+### Seeding Events
+The database can be automatically populated or updated from the frontend HTML definitions:
+```bash
+npm run db:seed
+```
+
+### Refunds and Changes
+Since this is a custom system, refunds and event changes are currently handled through the Stripe Dashboard. The webhook will not automatically decrement `spots_filled` on refund; this should be adjusted manually in the Admin Panel if necessary.
+
+## 📄 Legal Agreements
+Every registration requires agreement to:
+1.  **Liability Waiver**: Full assumption of risk and release of liability.
+2.  **Media Release**: Permission to use photos/videos for promotional purposes (Optional).
+
+The content for these is sourced from `TVVC Waiver.txt` and integrated directly into the `RegistrationForm.tsx` component.
+
+## 🚀 Deployment & Environment
+
+To run the system correctly, the following environment variables must be configured.
+
+### 🔑 Required Variables
+
+| Variable | Description | Source |
+| :--- | :--- | :--- |
+| `STRIPE_SECRET_KEY` | Stripe API Secret Key | Stripe Dashboard (Developers > API Keys) |
+| `PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe API Publishable Key | Stripe Dashboard (Developers > API Keys) |
+| `STRIPE_WEBHOOK_SECRET` | Secret to verify webhook signatures | Stripe Dashboard (Webhooks > Endpoint Secret) |
+| `TURSO_DATABASE_URL` | LibSQL Database connection URL | Turso Dashboard or `turso db show` |
+| `TURSO_AUTH_TOKEN` | Turso Database access token | Turso Dashboard or `turso db tokens create` |
+| `ADMIN_PASSCODE` | Custom passcode for `/admin` access | Your choice (set in environment) |
+
+### 💻 Local Setup
+1. Create a `.env` file from `.env.example`.
+2. Use **Test Mode** keys from Stripe.
+3. For webhooks, use the Stripe CLI: `stripe listen --forward-to localhost:4321/api/webhooks/stripe`.
+
+### 🌐 Netlify Production
+1. Add the variables above in **Site Configuration > Environment variables**.
+2. **Crucial**: Use **Live Mode** keys for Stripe.
+3. Set the Webhook URL in Stripe to: `https://your-domain.com/api/webhooks/stripe`.
+4. Ensure the build command is `npm run build` and the publish directory is `dist`.
+

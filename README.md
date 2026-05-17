@@ -5,9 +5,11 @@ Official website for Tualatin Valley Volleyball Club — a high-quality, afforda
 ## 🏐 Features
 
 - **Modern UI** — Built with Astro, Tailwind CSS, and Framer Motion
+- **Native Registration System** — Integrated athlete registration and payment processing
 - **Responsive Design** — Fully optimized for mobile, tablet, and desktop
 - **Performance** — Static site generation for lightning-fast load times
 - **Interactive Schedules** — Real-time tournament tracking and team rosters
+- **Admin Dashboard** — Passcode-protected management of events and rosters
 - **SEO Optimized** — Semantic HTML and proper metadata
 
 ## 🛠️ Tech Stack
@@ -15,6 +17,8 @@ Official website for Tualatin Valley Volleyball Club — a high-quality, afforda
 - **Framework**: [Astro](https://astro.build/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Components**: [React](https://reactjs.org/) & [Framer Motion](https://www.framer.com/motion/)
+- **Database**: [Turso (LibSQL)](https://turso.tech/) with [Drizzle ORM](https://orm.drizzle.team/)
+- **Payments**: [Stripe](https://stripe.com/)
 - **Testing**: [Playwright](https://playwright.dev/)
 - **Deployment**: [Netlify](https://www.netlify.com/)
 
@@ -75,14 +79,34 @@ npm run test:ui
 .
 ├── src/
 │   ├── components/      # Reusable React/Astro components
+│   ├── db/              # Database schema and migration scripts
 │   ├── layouts/         # Page templates (BaseLayout)
-│   ├── pages/           # Site routes (index, teams, programs, faq)
+│   ├── pages/           # Site routes (including API and Admin)
 │   └── styles/          # Global CSS and Tailwind directives
 ├── public/              # Static assets (images, icons)
 ├── tests/               # Playwright E2E tests
 ├── astro.config.mjs     # Astro configuration
 ├── tailwind.config.mjs  # Tailwind configuration
+├── drizzle.config.ts    # Drizzle ORM configuration
 └── netlify.toml         # Netlify deployment configuration
+```
+
+## 🗄️ Database Management
+
+The project uses Drizzle ORM to manage the SQLite (LibSQL) database.
+
+```bash
+# Generate migrations
+npm run db:generate
+
+# Push changes to database
+npm run db:push
+
+# Open Drizzle Studio to view data
+npm run db:studio
+
+# Seed database with events from frontend
+npm run db:seed
 ```
 
 ## 🚀 Deployment
