@@ -26,10 +26,24 @@ if (Astro.url.searchParams.get('auth') === 'true') {
 
 const adminFeatures = [
   {
-    title: "Event Manager",
-    description: "Manage summer camps, clinics, and view registration rosters.",
-    link: "/admin/registrations?auth=true",
+    title: "Camps & Clinics",
+    description: "Manage summer camps and skill clinics registrations.",
+    link: "/admin/registrations?stream=camps-clinics&auth=true",
     icon: "calendar",
+    color: "brand-teal"
+  },
+  {
+    title: "In-House Training",
+    description: "Manage Ignition and Playworks training registrations.",
+    link: "/admin/registrations?stream=in-house&auth=true",
+    icon: "zap",
+    color: "brand-coral"
+  },
+  {
+    title: "Club Teams",
+    description: "Manage tryouts and seasonal team registrations.",
+    link: "/admin/registrations?stream=club-teams&auth=true",
+    icon: "users",
     color: "brand-teal"
   },
   {
@@ -44,7 +58,7 @@ const adminFeatures = [
 
 <BaseLayout title="Admin Dashboard" noindex={true}>
   <main class="pt-32 pb-24 px-4 md:px-6">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-6xl mx-auto">
       {error && (
         <div class="max-w-2xl mx-auto mb-8 bg-brand-coral/10 border border-brand-coral/20 text-brand-coral p-4 rounded-xl text-center text-sm font-bold">
           {error}
@@ -68,22 +82,29 @@ const adminFeatures = [
             <p class="text-white/40 text-xs uppercase tracking-[0.3em] font-bold">Select a module to manage</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {adminFeatures.map(feature => (
               <a href={feature.link} class="group glass-card border-white/10 p-8 hover:border-brand-teal transition-all duration-300">
                 <div class="space-y-4">
                   <div class={`w-12 h-12 rounded-xl bg-${feature.color}/10 border border-${feature.color}/20 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    {feature.icon === 'calendar' ? (
+                    {feature.icon === 'calendar' && (
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`text-${feature.color}`}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    ) : (
+                    )}
+                    {feature.icon === 'zap' && (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`text-${feature.color}`}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    )}
+                    {feature.icon === 'users' && (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`text-${feature.color}`}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    )}
+                    {feature.icon === 'message' && (
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`text-${feature.color}`}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                     )}
                   </div>
                   <div class="space-y-2">
-                    <h2 class="text-2xl font-heading font-bold text-white uppercase">{feature.title}</h2>
-                    <p class="text-white/40 text-sm leading-relaxed">{feature.description}</p>
+                    <h2 class="text-xl font-heading font-bold text-white uppercase">{feature.title}</h2>
+                    <p class="text-white/40 text-xs leading-relaxed">{feature.description}</p>
                   </div>
-                  <div class={`text-xs font-bold uppercase tracking-widest text-${feature.color} pt-4 flex items-center gap-2`}>
+                  <div class={`text-[10px] font-bold uppercase tracking-widest text-${feature.color} pt-4 flex items-center gap-2`}>
                     Enter Module
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transform group-hover:translate-x-1 transition-transform"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                   </div>
