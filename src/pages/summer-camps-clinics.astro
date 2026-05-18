@@ -96,14 +96,11 @@ const clinicGroups = [
         <h1 class="text-4xl md:text-7xl font-heading font-extrabold mb-6 leading-tight text-white">
           Summer Volleyball <span class="text-brand-teal">Camps & Clinics</span> in Hillsboro
         </h1>
-        <p class="text-lg text-white/60 max-w-2xl leading-relaxed mb-6">
+        <p class="text-lg text-white/60 max-w-2xl leading-relaxed mb-10">
           Game-based volleyball training for athletes entering 4th–12th grade. Camps, clinics, hitting, serving, defense, and tryout prep.
         </p>
-        <p class="text-lg text-brand-coral font-bold mb-10">
-          Registration is temporarily paused for system maintenance. We expect to be back online by May 17, 2026.
-        </p>
         <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-10">
-          <button disabled class="btn btn-primary !px-12 !py-3 opacity-50 cursor-not-allowed">Registration Paused</button>
+          <a href="/register" class="btn btn-primary !px-12 !py-3">Register Now</a>
           <a href="#camps" class="btn btn-secondary !px-8 !py-3">View Camps</a>
           <a href="#clinics" class="btn btn-secondary !px-8 !py-3">View Clinics</a>
         </div>
@@ -179,14 +176,11 @@ const clinicGroups = [
             </div>
           </div>
           <div class="glass-card bg-brand-teal/5 border-brand-teal/20 p-8 md:p-10 flex flex-col justify-center">
-            <h3 class="text-xl font-heading font-bold mb-4">Registration Info</h3>
-            <p class="text-white/60 mb-2 leading-relaxed">
-              Public registration is temporarily <strong>PAUSED</strong>.
+            <h3 class="text-xl font-heading font-bold mb-4 text-white">Registration Now Open</h3>
+            <p class="text-white/60 mb-8 leading-relaxed">
+              Our native registration system is now live. Secure your spot in our Summer 2026 camps and clinics today.
             </p>
-            <p class="text-brand-coral font-bold mb-8 italic">
-              We are finalizing our new registration system. We expect to be live by May 17, 2026.
-            </p>
-            <button disabled class="btn btn-primary !w-full md:!w-max opacity-50 cursor-not-allowed">Registration Paused</button>
+            <a href="/register" class="btn btn-primary !w-full md:!w-max">Go to Registration</a>
           </div>
         </div>
       </div>
@@ -208,7 +202,10 @@ const clinicGroups = [
                   </p>
                 </div>
               </div>
-              <button disabled class="btn btn-secondary !w-full text-xs opacity-50 cursor-not-allowed">Registration Paused</button>
+              <a href="/register" class="text-brand-teal font-bold text-[10px] uppercase tracking-widest hover:underline flex items-center gap-2">
+                Select in Registration Form
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+              </a>
             </div>
           </ScrollReveal>
         ))}
@@ -239,7 +236,7 @@ const clinicGroups = [
                             <span class="text-[10px] text-white/40 font-bold block">{clinic.time}</span>
                             <span class="font-bold text-sm text-white">{clinic.name}</span>
                           </div>
-                          <button disabled class={`btn !py-1.5 !px-4 text-[10px] uppercase opacity-50 cursor-not-allowed ${group.accent === 'brand-teal' ? 'btn-primary' : '!bg-brand-coral !shadow-glow-coral'}`}>Paused</button>
+                          <a href="/register" class={`text-[10px] font-bold uppercase tracking-widest hover:underline ${group.accent === 'brand-teal' ? 'text-brand-teal' : 'text-brand-coral'}`}>Select</a>
                        </div>
                      ))}
                   </div>
@@ -255,9 +252,8 @@ const clinicGroups = [
         <!-- Final CTA -->
         <div class="max-w-3xl mx-auto text-center glass-card border-brand-teal/20 p-12">
            <h2 class="text-3xl font-heading font-bold mb-6 text-white">Ready to train this summer?</h2>
-           <p class="text-white/60 mb-6 text-lg">We are currently finalizing our new registration system.</p>
-           <p class="text-brand-coral font-bold mb-10 text-lg italic">Registration is expected to resume by May 17, 2026.</p>
-           <button disabled class="btn btn-primary !px-12 !py-4 mb-8 opacity-50 cursor-not-allowed">Registration Temporarily Paused</button>
+           <p class="text-white/60 mb-10 text-lg">Secure your spot in our high-quality summer training programs today.</p>
+           <a href="/register" class="btn btn-primary !px-12 !py-4 mb-8">Secure Your Spot</a>
            <p class="text-sm text-white/40">
               Questions about which camp or clinic fits your athlete? <br class="md:hidden" />
               Text or call Loren at <a href="tel:503-389-0760" class="text-brand-teal hover:underline">503-389-0760</a>
