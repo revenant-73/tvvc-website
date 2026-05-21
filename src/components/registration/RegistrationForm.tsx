@@ -26,6 +26,7 @@ interface Athlete {
 const grades = ['4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
 
 export default function RegistrationForm({ initialEvents }: { initialEvents: Event[] }) {
+  const [currentStep, setCurrentStep] = useState(1);
   const [parentInfo, setParentInfo] = useState({
     name: '',
     email: '',
@@ -143,22 +144,46 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
     setAthletes(newAthletes);
   };
 
+  const nextStep = () => {
+    if (currentStep === 1) {
+      if (!parentInfo.name || !parentInfo.email || !parentInfo.phone) {
+        alert("Please complete all parent information.");
+        return;
+      }
+      if (athletes.some(a => !a.firstName || !a.lastName || !a.grade || !a.medicalInfo)) {
+        alert("Please complete all athlete details (names, grade, and medical info).");
+        return;
+      }
+    } else if (currentStep === 2) {
+      if (athletes.some(a => a.selectedEvents.length === 0)) {
+        alert("Please select at least one event for each athlete.");
+        return;
+      }
+    } else if (currentStep === 3) {
+      if (athletes.some(a => !a.waiverAgreed)) {
+        alert("Please sign the liability waiver for all athletes.");
+        return;
+      }
+    }
+    
+    setCurrentStep(prev => prev + 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => prev - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Validation
-    const isParentInfoComplete = parentInfo.name && parentInfo.email && parentInfo.phone;
-    const hasIncompleteAthletes = athletes.some(a => 
-      !a.firstName || !a.lastName || !a.grade || !a.medicalInfo || a.selectedEvents.length === 0 || !a.waiverAgreed
-    );
-
-    if (!isParentInfoComplete || hasIncompleteAthletes) {
-      alert("Please complete all parent information, athlete details (including medical info), select at least one event per athlete, and agree to the waivers.");
-      setIsSubmitting(false);
+    if (currentStep < 4) {
+      nextStep();
       return;
     }
 
+    setIsSubmitting(true);
+    
     try {
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -180,137 +205,355 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
 
   return (
     <form onSubmit={handleSubmit} className="space-y-12">
-      {/* Parent Contact Section */}
-      <section className="glass-card border-white/10 p-8 space-y-6">
-        <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Parent / Guardian Information</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Full Name</label>
-            <input 
-              type="text" 
-              required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
-              value={parentInfo.name}
-              onChange={e => setParentInfo({ ...parentInfo, name: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Email Address</label>
-            <input 
-              type="email" 
-              required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
-              value={parentInfo.email}
-              onChange={e => setParentInfo({ ...parentInfo, email: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Phone Number</label>
-            <input 
-              type="tel" 
-              required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
-              value={parentInfo.phone}
-              onChange={e => setParentInfo({ ...parentInfo, phone: e.target.value })}
-            />
-          </div>
+      {/* Step Indicator */}
+      <div className="max-w-4xl mx-auto mb-12">
+        <div className="flex items-center justify-between relative">
+          {[1, 2, 3, 4].map((s) => (
+            <div key={s} className="flex flex-col items-center relative z-10">
+              <div className={`
+                w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-500
+                ${currentStep >= s ? 'bg-brand-teal text-white shadow-glow-teal' : 'bg-white/5 border border-white/10 text-white/40'}
+              `}>
+                {s}
+              </div>
+              <span className={`mt-2 text-[8px] font-bold uppercase tracking-widest ${currentStep >= s ? 'text-brand-teal' : 'text-white/20'}`}>
+                {s === 1 ? 'Info' : s === 2 ? 'Events' : s === 3 ? 'Waivers' : 'Review'}
+              </span>
+            </div>
+          ))}
+          {/* Progress Line */}
+          <div className="absolute top-5 left-0 right-0 h-[2px] bg-white/5 -z-0"></div>
+          <div 
+            className="absolute top-5 left-0 h-[2px] bg-brand-teal transition-all duration-500 -z-0"
+            style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
+          ></div>
         </div>
-      </section>
+      </div>
 
-      {/* Athletes Section */}
-      {athletes.map((athlete, index) => (
-        <section key={index} className="glass-card border-brand-teal/20 p-8 space-y-8 relative">
-          {athletes.length > 1 && (
+      {currentStep === 1 && (
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* Parent Contact Section */}
+          <section className="glass-card border-white/10 p-8 space-y-6">
+            <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Parent / Guardian Information</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Full Name</label>
+                <input 
+                  type="text" 
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
+                  value={parentInfo.name}
+                  onChange={e => setParentInfo({ ...parentInfo, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Email Address</label>
+                <input 
+                  type="email" 
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
+                  value={parentInfo.email}
+                  onChange={e => setParentInfo({ ...parentInfo, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Phone Number</label>
+                <input 
+                  type="tel" 
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
+                  value={parentInfo.phone}
+                  onChange={e => setParentInfo({ ...parentInfo, phone: e.target.value })}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Athletes Section (Basic Info) */}
+          {athletes.map((athlete, index) => (
+            <section key={index} className="glass-card border-brand-teal/20 p-8 space-y-8 relative">
+              {athletes.length > 1 && (
+                <button 
+                  type="button"
+                  onClick={() => removeAthlete(index)}
+                  className="absolute top-8 right-8 text-brand-coral hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
+                >
+                  Remove Athlete
+                </button>
+              )}
+              
+              <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">
+                Athlete #{index + 1} Details
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">First Name</label>
+                  <input 
+                    type="text" required
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
+                    value={athlete.firstName}
+                    onChange={e => updateAthlete(index, 'firstName', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Last Name</label>
+                  <input 
+                    type="text" required
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
+                    value={athlete.lastName}
+                    onChange={e => updateAthlete(index, 'lastName', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Grade (Fall '26)</label>
+                  <select 
+                    required
+                    className="w-full bg-brand-charcoal border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors appearance-none cursor-pointer"
+                    value={athlete.grade}
+                    onChange={e => updateAthlete(index, 'grade', e.target.value)}
+                  >
+                    <option value="">Select Grade</option>
+                    {grades.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Medical Info / Allergies</label>
+                <textarea 
+                  required
+                  placeholder="List any critical medical information or allergies. Write 'None' if not applicable."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none min-h-[100px]"
+                  value={athlete.medicalInfo}
+                  onChange={e => updateAthlete(index, 'medicalInfo', e.target.value)}
+                />
+              </div>
+            </section>
+          ))}
+          
+          <div className="flex justify-center">
             <button 
               type="button"
-              onClick={() => removeAthlete(index)}
-              className="absolute top-8 right-8 text-brand-coral hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
+              onClick={addAthlete}
+              className="px-8 py-4 rounded-2xl border border-white/10 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-all flex items-center gap-3"
             >
-              Remove Athlete
+              <span className="text-brand-teal text-xl">+</span> Add Another Athlete
             </button>
-          )}
-          
-          <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">
-            Athlete #{index + 1} Details
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">First Name</label>
-              <input 
-                type="text" required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
-                value={athlete.firstName}
-                onChange={e => updateAthlete(index, 'firstName', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Last Name</label>
-              <input 
-                type="text" required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
-                value={athlete.lastName}
-                onChange={e => updateAthlete(index, 'lastName', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Grade (Fall '26)</label>
-              <select 
-                required
-                className="w-full bg-brand-charcoal border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors appearance-none cursor-pointer"
-                value={athlete.grade}
-                onChange={e => updateAthlete(index, 'grade', e.target.value)}
-              >
-                <option value="">Select Grade</option>
-                {grades.map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </div>
           </div>
+        </div>
+      )}
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Medical Info / Allergies</label>
-            <textarea 
-              required
-              placeholder="List any critical medical information or allergies. Write 'None' if not applicable."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none min-h-[100px]"
-              value={athlete.medicalInfo}
-              onChange={e => updateAthlete(index, 'medicalInfo', e.target.value)}
-            />
+      {currentStep === 2 && (
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-heading font-bold text-white uppercase tracking-tight">Select Events</h2>
+            <p className="text-white/40 text-sm font-medium">Choose camps and clinics for each athlete.</p>
           </div>
-
-          {/* Waivers Section (Inline Accordion) - MOVED UP */}
-          <div className="pt-6 border-t border-white/5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-brand-teal">Action Required: Waivers</h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => toggleWaiver(index)}
-              className={`
-                w-full p-4 md:p-6 rounded-2xl border transition-all flex flex-row items-center justify-between gap-4
-                ${athlete.waiverAgreed ? 'bg-brand-teal/5 border-brand-teal/30 hover:border-brand-teal' : 'bg-brand-coral/5 border-brand-coral/30 hover:border-brand-coral'}
-              `}
-            >
-              <div className="text-left">
-                <span className={`block font-bold text-xs md:text-sm uppercase tracking-widest ${athlete.waiverAgreed ? 'text-brand-teal' : 'text-brand-coral'}`}>
-                  {athlete.waiverAgreed ? '✓ Waivers Completed' : '⚠ Sign Waivers'}
-                </span>
-                <span className="block text-[8px] md:text-[10px] text-white/40 mt-1 uppercase tracking-widest font-bold">
-                  Liability Release & Media Consent for {athlete.firstName || `Athlete #${index + 1}`}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`hidden md:block px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${athlete.waiverAgreed ? 'border-brand-teal/50 text-brand-teal' : 'bg-brand-coral text-white border-transparent'}`}>
-                  {athlete.waiverAgreed ? 'Review' : 'Sign Now'}
+          {athletes.map((athlete, index) => (
+            <section key={index} className="glass-card border-brand-teal/20 p-8 space-y-8">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-brand-teal/20 flex items-center justify-center text-brand-teal font-bold">
+                  {index + 1}
                 </div>
-                <span className={`text-xl transition-transform duration-300 ${expandedWaivers[index] ? 'rotate-180' : ''}`}>
-                  {expandedWaivers[index] ? '−' : '+'}
-                </span>
+                <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">
+                  Events for {athlete.firstName || `Athlete #${index + 1}`}
+                </h3>
               </div>
-            </button>
 
-            {expandedWaivers[index] && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+              {/* Event Selection */}
+              <div className="space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                  <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                    {[
+                      { id: 'camps', label: 'Summer Camps', count: getSelectedCount(index, 'camp') },
+                      { id: 'clinics', label: 'Skills Clinics', count: getSelectedCount(index, 'clinic') }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setAthleteTab(index, tab.id)}
+                        className={`
+                          px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2
+                          ${athleteTabStates[index] === tab.id ? 'bg-brand-teal text-white shadow-lg shadow-brand-teal/20' : 'text-white/40 hover:text-white/60'}
+                        `}
+                      >
+                        {tab.label}
+                        {tab.count > 0 && (
+                          <span className={`
+                            flex items-center justify-center w-4 h-4 rounded-full text-[8px]
+                            ${athleteTabStates[index] === tab.id ? 'bg-white text-brand-teal' : 'bg-brand-teal text-white'}
+                          `}>
+                            {tab.count}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="min-h-[300px]">
+                  {/* Clinics Grouping */}
+                  {athleteTabStates[index] === 'clinics' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      {[
+                        { title: 'Hitting Clinics', pattern: 'clinic-hitting' },
+                        { title: 'Serving Clinics', pattern: 'clinic-serving' },
+                        { title: 'Defense & Receive Clinics', pattern: 'clinic-serve-receive-defense' }
+                      ].map(group => {
+                        const groupEvents = initialEvents
+                          .filter(e => e.type === 'clinic' && e.id.includes(group.pattern))
+                          .sort((a, b) => {
+                            const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8 };
+                            const getMonthDay = (info: string) => {
+                              const match = info.match(/(May|June|July|August)\s+(\d+)/);
+                              if (!match) return 0;
+                              return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
+                            };
+                            return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
+                          });
+
+                        if (groupEvents.length === 0) return null;
+
+                        return (
+                          <div key={group.title} className="space-y-3">
+                            <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {groupEvents.map(event => {
+                                const isFull = event.spotsFilled >= event.capacity;
+                                const isSelected = athlete.selectedEvents.includes(event.id);
+                                
+                                return (
+                                  <label 
+                                    key={event.id}
+                                    className={`
+                                      flex items-center justify-between p-4 rounded-xl border transition-all
+                                      ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                                      ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
+                                    `}
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <input 
+                                        type="checkbox"
+                                        disabled={isFull}
+                                        checked={isSelected}
+                                        onChange={() => toggleEvent(index, event.id)}
+                                        className="accent-brand-teal w-4 h-4"
+                                      />
+                                      <div>
+                                        <span className="block font-bold text-white text-sm">{event.name}</span>
+                                        <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                                          {event.dateInfo} • {event.timeInfo}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
+                                      {isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>}
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Camps Grouping */}
+                  {athleteTabStates[index] === 'camps' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      {[
+                        { title: 'Foundations & Performance (6th-8th Grade)', pattern: 'camp-foundations', pattern2: 'camp-performance' },
+                        { title: 'Hitting Focus Camps', pattern: 'camp-hitting' },
+                        { title: 'High School Tryout Prep', pattern: 'camp-hs-prep' },
+                        { title: 'Youth Ignition (4th-6th Grade)', pattern: 'camp-ignition' }
+                      ].map(group => {
+                        const groupEvents = initialEvents
+                          .filter(e => e.type === 'camp' && (e.id.includes(group.pattern) || (group.pattern2 && e.id.includes(group.pattern2))))
+                          .sort((a, b) => {
+                            const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8 };
+                            const getMonthDay = (info: string) => {
+                              const match = info.match(/(May|June|July|August)\s+(\d+)/);
+                              if (!match) return 0;
+                              return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
+                            };
+                            return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
+                          });
+
+                        if (groupEvents.length === 0) return null;
+
+                        return (
+                          <div key={group.title} className="space-y-3">
+                            <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {groupEvents.map(event => {
+                                const isFull = event.spotsFilled >= event.capacity;
+                                const isSelected = athlete.selectedEvents.includes(event.id);
+                                
+                                return (
+                                  <label 
+                                    key={event.id}
+                                    className={`
+                                      flex items-center justify-between p-4 rounded-xl border transition-all
+                                      ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                                      ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
+                                    `}
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <input 
+                                        type="checkbox"
+                                        disabled={isFull}
+                                        checked={isSelected}
+                                        onChange={() => toggleEvent(index, event.id)}
+                                        className="accent-brand-teal w-4 h-4"
+                                      />
+                                      <div>
+                                        <span className="block font-bold text-white text-sm">{event.name}</span>
+                                        <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                                          {event.dateInfo} • {event.timeInfo}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
+                                      {isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>}
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+
+      {currentStep === 3 && (
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-heading font-bold text-white uppercase tracking-tight">Legal Waivers</h2>
+            <p className="text-white/40 text-sm font-medium">Please review and sign the waivers for each athlete.</p>
+          </div>
+          {athletes.map((athlete, index) => (
+            <section key={index} className="glass-card border-brand-teal/20 p-8 space-y-8">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-brand-teal/20 flex items-center justify-center text-brand-teal font-bold">
+                  {index + 1}
+                </div>
+                <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">
+                  Waivers for {athlete.firstName} {athlete.lastName}
+                </h3>
+              </div>
+              
+              <div className="space-y-8">
                 <MediaRelease 
                   athleteName={athlete.firstName} 
                   agreed={athlete.photoReleaseAgreed} 
@@ -322,197 +565,106 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
                   agreed={athlete.waiverAgreed} 
                   onChange={(val) => updateAthlete(index, 'waiverAgreed', val)} 
                 />
-
-                <button
-                  type="button"
-                  onClick={() => toggleWaiver(index)}
-                  className="w-full py-4 rounded-xl bg-white/5 border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all"
-                >
-                  Minimize Waivers
-                </button>
               </div>
-            )}
+            </section>
+          ))}
+        </div>
+      )}
+
+      {currentStep === 4 && (
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-heading font-bold text-white uppercase tracking-tight">Verify Registration</h2>
+            <p className="text-white/40 text-sm font-medium">Review your details before proceeding to payment.</p>
           </div>
 
-          {/* Event Selection */}
-          <div className="space-y-6 pt-8 border-t border-white/5">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-brand-teal">Select Events for {athlete.firstName || `Athlete #${index + 1}`}</h3>
-              
-              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-                {[
-                  { id: 'camps', label: 'Summer Camps', count: getSelectedCount(index, 'camp') },
-                  { id: 'clinics', label: 'Skills Clinics', count: getSelectedCount(index, 'clinic') }
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setAthleteTab(index, tab.id)}
-                    className={`
-                      px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2
-                      ${athleteTabStates[index] === tab.id ? 'bg-brand-teal text-white shadow-lg shadow-brand-teal/20' : 'text-white/40 hover:text-white/60'}
-                    `}
-                  >
-                    {tab.label}
-                    {tab.count > 0 && (
-                      <span className={`
-                        flex items-center justify-center w-4 h-4 rounded-full text-[8px]
-                        ${athleteTabStates[index] === tab.id ? 'bg-white text-brand-teal' : 'bg-brand-teal text-white'}
-                      `}>
-                        {tab.count}
-                      </span>
-                    )}
-                  </button>
-                ))}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              {/* Parent Summary */}
+              <section className="glass-card border-white/10 p-6 space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-brand-teal">Parent / Guardian</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <span className="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Name</span>
+                    <span className="text-white font-medium">{parentInfo.name}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Email</span>
+                    <span className="text-white font-medium">{parentInfo.email}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Phone</span>
+                    <span className="text-white font-medium">{parentInfo.phone}</span>
+                  </div>
+                </div>
+              </section>
+
+              {/* Athletes Summary */}
+              {athletes.map((athlete, idx) => (
+                <section key={idx} className="glass-card border-white/10 p-6 space-y-6">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-brand-teal">Athlete: {athlete.firstName} {athlete.lastName}</h3>
+                    <span className="px-3 py-1 rounded-full bg-white/5 text-[10px] text-white/60 font-bold uppercase tracking-widest">Grade: {athlete.grade}</span>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <span className="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-2">Selected Events</span>
+                      <div className="space-y-2">
+                        {athlete.selectedEvents.map(eventId => {
+                          const event = initialEvents.find(e => e.id === eventId);
+                          return (
+                            <div key={eventId} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+                              <div>
+                                <span className="block text-sm text-white font-medium">{event?.name}</span>
+                                <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">{event?.dateInfo}</span>
+                              </div>
+                              <span className="text-brand-teal font-bold">${((event?.price || 0) / 100).toFixed(0)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ))}
+            </div>
+
+            <div className="lg:col-span-1">
+              <div className="glass-card border-brand-teal/30 p-8 sticky top-24 space-y-6">
+                <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">Order Summary</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/60">Total Athletes</span>
+                    <span className="text-white font-bold">{athletes.length}</span>
+                  </div>
+                  <div className="h-px bg-white/10"></div>
+                  <div className="flex justify-between items-end">
+                    <span className="text-white/60 text-sm">Amount Due</span>
+                    <span className="text-3xl font-heading font-bold text-brand-teal">${(total / 100).toFixed(0)}</span>
+                  </div>
+                </div>
+                
+                <div className="pt-6 space-y-4">
+                  <div className="flex items-center gap-2 text-[10px] text-white/40 leading-tight">
+                    <span className="text-brand-teal">✓</span> All waivers signed and verified
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-white/40 leading-tight">
+                    <span className="text-brand-teal">✓</span> Secure checkout via Stripe
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <div className="min-h-[300px]">
-              {/* Clinics Grouping */}
-              {athleteTabStates[index] === 'clinics' && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  {[
-                    { title: 'Hitting Clinics', pattern: 'clinic-hitting' },
-                    { title: 'Serving Clinics', pattern: 'clinic-serving' },
-                    { title: 'Defense & Receive Clinics', pattern: 'clinic-serve-receive-defense' }
-                  ].map(group => {
-                    const groupEvents = initialEvents
-                      .filter(e => e.type === 'clinic' && e.id.includes(group.pattern))
-                      .sort((a, b) => {
-                        const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8 };
-                        const getMonthDay = (info: string) => {
-                          const match = info.match(/(May|June|July|August)\s+(\d+)/);
-                          if (!match) return 0;
-                          return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
-                        };
-                        return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
-                      });
-
-                    if (groupEvents.length === 0) return null;
-
-                    return (
-                      <div key={group.title} className="space-y-3">
-                        <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {groupEvents.map(event => {
-                            const isFull = event.spotsFilled >= event.capacity;
-                            const isSelected = athlete.selectedEvents.includes(event.id);
-                            
-                            return (
-                              <label 
-                                key={event.id}
-                                className={`
-                                  flex items-center justify-between p-4 rounded-xl border transition-all
-                                  ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
-                                  ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
-                                `}
-                              >
-                                <div className="flex items-center gap-4">
-                                  <input 
-                                    type="checkbox"
-                                    disabled={isFull}
-                                    checked={isSelected}
-                                    onChange={() => toggleEvent(index, event.id)}
-                                    className="accent-brand-teal w-4 h-4"
-                                  />
-                                  <div>
-                                    <span className="block font-bold text-white text-sm">{event.name}</span>
-                                    <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                                      {event.dateInfo} • {event.timeInfo}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
-                                  {isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>}
-                                </div>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Camps Grouping */}
-              {athleteTabStates[index] === 'camps' && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  {[
-                    { title: 'Foundations & Performance (6th-8th Grade)', pattern: 'camp-foundations', pattern2: 'camp-performance' },
-                    { title: 'Hitting Focus Camps', pattern: 'camp-hitting' },
-                    { title: 'High School Tryout Prep', pattern: 'camp-hs-prep' },
-                    { title: 'Youth Ignition (4th-6th Grade)', pattern: 'camp-ignition' }
-                  ].map(group => {
-                    const groupEvents = initialEvents
-                      .filter(e => e.type === 'camp' && (e.id.includes(group.pattern) || (group.pattern2 && e.id.includes(group.pattern2))))
-                      .sort((a, b) => {
-                        const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8 };
-                        const getMonthDay = (info: string) => {
-                          const match = info.match(/(May|June|July|August)\s+(\d+)/);
-                          if (!match) return 0;
-                          return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
-                        };
-                        return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
-                      });
-
-                    if (groupEvents.length === 0) return null;
-
-                    return (
-                      <div key={group.title} className="space-y-3">
-                        <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {groupEvents.map(event => {
-                            const isFull = event.spotsFilled >= event.capacity;
-                            const isSelected = athlete.selectedEvents.includes(event.id);
-                            
-                            return (
-                              <label 
-                                key={event.id}
-                                className={`
-                                  flex items-center justify-between p-4 rounded-xl border transition-all
-                                  ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
-                                  ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
-                                `}
-                              >
-                                <div className="flex items-center gap-4">
-                                  <input 
-                                    type="checkbox"
-                                    disabled={isFull}
-                                    checked={isSelected}
-                                    onChange={() => toggleEvent(index, event.id)}
-                                    className="accent-brand-teal w-4 h-4"
-                                  />
-                                  <div>
-                                    <span className="block font-bold text-white text-sm">{event.name}</span>
-                                    <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                                      {event.dateInfo} • {event.timeInfo}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
-                                  {isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>}
-                                </div>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
-        </section>
-      ))}
+        </div>
+      )}
 
       {/* Registration Terms (Static) */}
       <div className="mt-12 pt-8 border-t border-white/5 mb-24">
         <p className="text-[10px] text-white/30 leading-relaxed max-w-lg mx-auto text-center">
-          By clicking "Secure Spot", you agree to our registration terms and will be redirected to Stripe to securely complete your payment. 
+          {currentStep === 4 
+            ? 'By clicking "Secure Spot", you agree to our registration terms and will be redirected to Stripe to securely complete your payment.' 
+            : 'Continue through the steps to complete your registration. Your spot is not reserved until payment is completed.'}
           <a href="/privacy-security" className="text-brand-teal hover:underline ml-1">Learn how we protect your data & privacy.</a>
         </p>
       </div>
@@ -522,34 +674,33 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
         <div className="max-w-4xl mx-auto pointer-events-auto">
           <div className="glass-card border-brand-teal/30 p-3 md:p-4 flex flex-row items-center justify-between gap-4 shadow-2xl backdrop-blur-xl bg-brand-charcoal/90">
             <div className="flex items-center gap-4 md:gap-8 ml-2">
-              <div className="flex flex-col md:block">
-                <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-white/40 leading-none mb-1">Athletes</span>
-                <span className="text-lg md:text-2xl font-heading font-bold text-white leading-none block md:inline md:ml-2">{athletes.length}</span>
-              </div>
-              <div className="w-px h-6 md:h-8 bg-white/10"></div>
-              <div className="flex flex-col md:block">
-                <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-white/40 leading-none mb-1">Total</span>
-                <span className="text-lg md:text-2xl font-heading font-bold text-brand-teal leading-none block md:inline md:ml-2">${(total / 100).toFixed(0)}</span>
+              {currentStep > 1 && (
+                <button 
+                  type="button"
+                  onClick={prevStep}
+                  className="px-4 py-3 rounded-lg border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all"
+                >
+                  Back
+                </button>
+              )}
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col md:block">
+                  <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-white/40 leading-none mb-1">Total</span>
+                  <span className="text-lg md:text-2xl font-heading font-bold text-brand-teal leading-none block md:inline md:ml-2">${(total / 100).toFixed(0)}</span>
+                </div>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
               <button 
-                type="button"
-                onClick={addAthlete}
-                className="hidden sm:block px-4 py-3 rounded-lg border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all whitespace-nowrap"
-              >
-                + Add Athlete
-              </button>
-              <button 
                 type="submit"
-                disabled={isSubmitting || total === 0}
+                disabled={isSubmitting || (currentStep === 2 && total === 0)}
                 className={`
-                  px-6 md:px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] transition-all shadow-lg
-                  ${isSubmitting || total === 0 ? 'bg-white/10 text-white/40 cursor-not-allowed' : 'bg-brand-teal text-white hover:shadow-glow-teal'}
+                  px-6 md:px-10 py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] transition-all shadow-lg
+                  ${isSubmitting || (currentStep === 2 && total === 0) ? 'bg-white/10 text-white/40 cursor-not-allowed' : 'bg-brand-teal text-white hover:shadow-glow-teal'}
                 `}
               >
-                {isSubmitting ? 'Wait...' : 'Secure Spot'}
+                {isSubmitting ? 'Wait...' : currentStep === 4 ? 'Secure Spot' : 'Next Step'}
               </button>
             </div>
           </div>
