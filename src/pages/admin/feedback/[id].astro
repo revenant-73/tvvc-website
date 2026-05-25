@@ -62,6 +62,87 @@ if (authenticated || Astro.url.searchParams.get('auth') === 'true') {
 }
 
 const ratingClass = (val) => val >= 4 ? 'text-brand-teal' : (val <= 2 ? 'text-brand-coral' : 'text-white/60');
+
+const sections = [
+  {
+    title: "Overall Experience",
+    color: "brand-coral",
+    fields: [
+      { key: 'overallRating', label: 'Overall Rating', type: 'rating' },
+      { key: 'bestParts', label: 'Best Parts', type: 'text' },
+      { key: 'frustratingParts', label: 'Frustrating Parts', type: 'text' },
+      { key: 'keepDoing', label: 'Keep Doing', type: 'text' },
+      { key: 'considerChanging', label: 'Consider Changing', type: 'text' },
+    ]
+  },
+  {
+    title: "Coaching & Team",
+    color: "brand-teal",
+    fields: [
+      { key: 'coachingPositive', label: 'Positive Env', type: 'rating' },
+      { key: 'coachingGrowth', label: 'Growth', type: 'rating' },
+      { key: 'practicesUseful', label: 'Practices', type: 'rating' },
+      { key: 'encouragedProblemSolving', label: 'Prob Solving', type: 'rating' },
+      { key: 'coachingWell', label: 'What Went Well', type: 'text' },
+      { key: 'coachingImprove', label: 'Areas to Improve', type: 'text' },
+      { key: 'teamEnvironment', label: 'Team Environment', type: 'text' },
+    ]
+  },
+  {
+    title: "Communication",
+    color: "brand-coral",
+    fields: [
+      { key: 'clubCommunication', label: 'Club Comm', type: 'rating' },
+      { key: 'teamCommunication', label: 'Team Comm', type: 'rating' },
+      { key: 'easyToUnderstand', label: 'Logistics Clear', type: 'rating' },
+      { key: 'communicationWell', label: 'Comm Well', type: 'text' },
+      { key: 'communicationImprove', label: 'Comm Improve', type: 'text' },
+      { key: 'confusionMoments', label: 'Moments of Confusion', type: 'text' },
+    ]
+  },
+  {
+    title: "Cost & Value",
+    color: "brand-teal",
+    fields: [
+      { key: 'goodValue', label: 'Good Value', type: 'rating' },
+      { key: 'timeCommitment', label: 'Time Commitment', type: 'rating' },
+      { key: 'tournamentSchedule', label: 'Tournament Schedule', type: 'rating' },
+      { key: 'betterValue', label: 'Better Value', type: 'text' },
+      { key: 'unclearLogistics', label: 'Unclear Logistics', type: 'text' },
+    ]
+  },
+  {
+    title: "Player Growth",
+    color: "brand-coral",
+    fields: [
+      { key: 'volleyballGrowth', label: 'VB Growth', type: 'rating' },
+      { key: 'personalGrowth', label: 'Personal Growth', type: 'rating' },
+      { key: 'noticeableGrowth', label: 'Noticeable Growth', type: 'text' },
+      { key: 'supportNeeded', label: 'Support Needed', type: 'text' },
+    ]
+  },
+  {
+    title: "Future Direction",
+    color: "brand-teal",
+    fields: [
+      { key: 'returnLikelihood', label: 'Return Likelihood', type: 'rating' },
+      { key: 'returnIncentive', label: 'Return Incentive', type: 'text' },
+      { key: 'additionalOpportunities', label: 'Opps Desired', type: 'special' },
+      { key: 'importantOpportunities', label: 'Most Important Opps', type: 'text' },
+      { key: 'futureHope', label: 'Future Hope', type: 'text' },
+    ]
+  },
+  {
+    title: "Final Thoughts",
+    color: "white",
+    fields: [
+      { key: 'leadershipUnderstanding', label: 'Leadership Advice', type: 'text' },
+      { key: 'appreciation', label: 'Appreciation', type: 'text' },
+      { key: 'advice', label: 'One Piece of Advice', type: 'text' },
+      { key: 'anythingElse', label: 'Anything Else', type: 'text' },
+    ]
+  }
+];
 ---
 
 <BaseLayout title="Feedback Detail" noindex={true}>
@@ -115,119 +196,74 @@ const ratingClass = (val) => val >= 4 ? 'text-brand-teal' : (val <= 2 ? 'text-br
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-12">
-            {/* Section 1: Ratings Overview */}
-            <section class="glass-card p-8 border-white/5">
-              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest mb-8 italic text-brand-teal">Overall Ratings</h2>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {[
-                  { label: "Overall Exp", val: response.overallRating },
-                  { label: "Communication", val: response.clubCommunication },
-                  { label: "Value", val: response.goodValue },
-                  { label: "Return Likelihood", val: response.returnLikelihood }
-                ].map(stat => (
-                  <div class="text-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                    <p class="text-[9px] uppercase font-bold text-white/30 mb-2 tracking-widest leading-tight h-8 flex items-center justify-center">{stat.label}</p>
-                    <p class={`text-3xl font-heading font-bold ${ratingClass(stat.val)}`}>{stat.val}<span class="text-xs text-white/10 ml-1">/5</span></p>
-                  </div>
-                ))}
-              </div>
-            </section>
+          <div class="space-y-16">
+            {sections.map(section => {
+              const visibleFields = section.fields.filter(field => {
+                const val = response[field.key];
+                if (field.type === 'rating') return val !== null && val !== undefined;
+                if (field.type === 'special' && field.key === 'additionalOpportunities') {
+                  try {
+                    return val && JSON.parse(val).length > 0;
+                  } catch { return false; }
+                }
+                return val && val.trim().length > 0;
+              });
 
-            {/* Section 2: Experience Details */}
-            <section class="space-y-8">
-              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest italic border-l-4 border-brand-coral pl-4">The Experience</h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-2">
-                  <p class="text-[10px] uppercase font-bold text-brand-teal tracking-widest">Best Parts</p>
-                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.bestParts || "No comment."}</p>
-                </div>
-                <div class="space-y-2">
-                  <p class="text-[10px] uppercase font-bold text-brand-coral tracking-widest">Frustrating Parts</p>
-                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.frustratingParts || "No comment."}</p>
-                </div>
-                <div class="space-y-2">
-                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Keep Doing</p>
-                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.keepDoing || "No comment."}</p>
-                </div>
-                <div class="space-y-2">
-                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Consider Changing</p>
-                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.considerChanging || "No comment."}</p>
-                </div>
-              </div>
-            </section>
+              if (visibleFields.length === 0) return null;
 
-            {/* Section 3: Coaching */}
-            <section class="space-y-8">
-              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest italic border-l-4 border-brand-teal pl-4">Coaching & Team</h2>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                {[
-                  { label: "Positive Env", val: response.coachingPositive },
-                  { label: "Growth", val: response.coachingGrowth },
-                  { label: "Practices", val: response.practicesUseful },
-                  { label: "Prob Solving", val: response.encouragedProblemSolving }
-                ].map(stat => (
-                  <div class="text-center p-3 rounded-lg bg-white/5">
-                    <p class="text-[8px] uppercase font-bold text-white/30 mb-1">{stat.label}</p>
-                    <p class="text-xl font-bold text-white">{stat.val}</p>
-                  </div>
-                ))}
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-2">
-                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">What Went Well</p>
-                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.coachingWell || "No comment."}</p>
-                </div>
-                <div class="space-y-2">
-                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Areas to Improve</p>
-                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.coachingImprove || "No comment."}</p>
-                </div>
-              </div>
-            </section>
+              const ratings = visibleFields.filter(f => f.type === 'rating');
+              const texts = visibleFields.filter(f => f.type === 'text');
+              const specials = visibleFields.filter(f => f.type === 'special');
 
-             {/* Section 4: Future */}
-             <section class="space-y-8">
-              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest italic border-l-4 border-white/20 pl-4">Future Direction</h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-2">
-                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Return Incentive</p>
-                  <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">{response.returnIncentive || "No comment."}</p>
-                </div>
-                <div class="space-y-2">
-                  <p class="text-[10px] uppercase font-bold text-white/40 tracking-widest">Opportunities Desired</p>
-                  <div class="bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px]">
-                    {response.additionalOpportunities ? (
-                      <div class="flex flex-wrap gap-2">
-                        {JSON.parse(response.additionalOpportunities).map(opt => (
-                          <span class="text-[10px] px-2 py-1 bg-brand-teal/10 text-brand-teal rounded border border-brand-teal/20 uppercase font-bold tracking-tighter">{opt}</span>
-                        ))}
-                      </div>
-                    ) : <p class="text-white/40 italic text-sm">None selected.</p>}
-                  </div>
-                </div>
-              </div>
-            </section>
+              return (
+                <section class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <h2 class={`text-xl font-heading font-bold text-white uppercase tracking-widest italic border-l-4 border-${section.color} pl-4`}>
+                    {section.title}
+                  </h2>
+                  
+                  {ratings.length > 0 && (
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      {ratings.map(f => (
+                        <div class="text-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                          <p class="text-[9px] uppercase font-bold text-white/30 mb-2 tracking-widest leading-tight h-8 flex items-center justify-center">{f.label}</p>
+                          <p class={`text-3xl font-heading font-bold ${ratingClass(response[f.key])}`}>{response[f.key]}<span class="text-xs text-white/10 ml-1">/5</span></p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-            {/* Final Thoughts */}
-            <section class="glass-card p-8 border-brand-teal/20 bg-brand-teal/[0.02]">
-              <h2 class="text-xl font-heading font-bold text-white uppercase tracking-widest mb-6 italic">Final Thoughts & Advice</h2>
-              <div class="space-y-6">
-                <div>
-                  <p class="text-[10px] uppercase font-bold text-brand-teal tracking-widest mb-2">Advice for Loren & Staff</p>
-                  <p class="text-lg text-white font-medium leading-relaxed italic">"{response.advice || "No advice provided."}"</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
-                  <div>
-                    <p class="text-[10px] uppercase font-bold text-white/30 mb-2">Appreciation</p>
-                    <p class="text-sm text-white/70 leading-relaxed">{response.appreciation || "n/a"}</p>
-                  </div>
-                  <div>
-                    <p class="text-[10px] uppercase font-bold text-white/30 mb-2">Anything Else</p>
-                    <p class="text-sm text-white/70 leading-relaxed">{response.anything_else || "n/a"}</p>
-                  </div>
-                </div>
-              </div>
-            </section>
+                  {texts.length > 0 && (
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {texts.map(f => (
+                        <div class="space-y-2">
+                          <p class={`text-[10px] uppercase font-bold text-${section.color}/60 tracking-widest`}>{f.label}</p>
+                          <p class="text-white/80 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5 min-h-[100px] whitespace-pre-wrap">{response[f.key]}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {specials.map(f => {
+                    if (f.key === 'additionalOpportunities') {
+                      const opts = JSON.parse(response[f.key]);
+                      return (
+                        <div class="space-y-2">
+                          <p class={`text-[10px] uppercase font-bold text-${section.color}/60 tracking-widest`}>{f.label}</p>
+                          <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                            <div class="flex flex-wrap gap-2">
+                              {opts.map(opt => (
+                                <span class="text-[10px] px-2 py-1 bg-brand-teal/10 text-brand-teal rounded border border-brand-teal/20 uppercase font-bold tracking-tighter">{opt}</span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
+                </section>
+              );
+            })}
           </div>
         </div>
       ) : (
