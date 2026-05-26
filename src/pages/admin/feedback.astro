@@ -20,13 +20,25 @@ const sort = Astro.url.searchParams.get('sort') || 'newest';
 if (Astro.request.method === 'POST') {
   try {
     const data = await Astro.request.formData();
-    if (data.get('passcode') === ADMIN_PASSCODE) {
+    const action = data.get('action');
+
+    if (action === 'delete') {
+      const db = getDb(
+        import.meta.env.TURSO_DATABASE_URL || '',
+        import.meta.env.TURSO_AUTH_TOKEN || ''
+      );
+      const idToDelete = data.get('id');
+      if (idToDelete) {
+        await db.delete(feedback).where(eq(feedback.id, parseInt(idToDelete)));
+      }
+      authenticated = true;
+    } else if (data.get('passcode') === ADMIN_PASSCODE) {
       authenticated = true;
     } else {
       error = "Incorrect passcode.";
     }
   } catch (e) {
-    error = "Error processing login.";
+    error = "Error processing request.";
   }
 }
 
@@ -186,38 +198,48 @@ const stats = {
             
             <div class="grid grid-cols-1 gap-3">
               {responses.map((res) => (
-                <a href={`/admin/feedback/${res.id}?auth=true`} class="glass-card border-white/10 p-4 md:p-5 hover:border-brand-teal/50 hover:bg-white/[0.02] transition-all group flex items-center justify-between gap-4">
-                  <div class="flex items-center gap-4 md:gap-6">
-                    <div class={`w-10 h-10 rounded-full bg-white/5 flex items-center justify-center font-heading font-bold border border-white/5 group-hover:border-brand-teal/30 transition-colors ${res.overallRating >= 4 ? 'text-brand-teal' : (res.overallRating <= 2 ? 'text-brand-coral' : 'text-white')}`}>
-                      {res.overallRating}
-                    </div>
-                    <div>
-                      <div class="flex items-center gap-2">
-                        <h3 class="text-sm font-heading font-bold text-white uppercase tracking-tight">
-                          {res.anonymous === 'Yes' ? 'Anonymous' : (res.name || 'Anonymous')}
-                        </h3>
-                        {res.starred && (
-                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="text-brand-teal"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        )}
+                <div class="relative group">
+                  <a href={`/admin/feedback/${res.id}?auth=true`} class="glass-card border-white/10 p-4 md:p-5 hover:border-brand-teal/50 hover:bg-white/[0.02] transition-all flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-4 md:gap-6">
+                      <div class={`w-10 h-10 rounded-full bg-white/5 flex items-center justify-center font-heading font-bold border border-white/5 group-hover:border-brand-teal/30 transition-colors ${res.overallRating >= 4 ? 'text-brand-teal' : (res.overallRating <= 2 ? 'text-brand-coral' : 'text-white')}`}>
+                        {res.overallRating}
                       </div>
-                      <p class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                        {res.team} • {res.userType}
-                      </p>
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <h3 class="text-sm font-heading font-bold text-white uppercase tracking-tight">
+                            {res.anonymous === 'Yes' ? 'Anonymous' : (res.name || 'Anonymous')}
+                          </h3>
+                          {res.starred && (
+                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="text-brand-teal"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                          )}
+                        </div>
+                        <p class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                          {res.team} • {res.userType}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                    
+                    <div class="flex items-center gap-6">
+                      <div class="hidden sm:block text-right">
+                        <p class="text-[9px] text-white/20 uppercase font-bold tracking-widest mb-0.5">Submitted</p>
+                        <p class="text-[11px] text-white/60 font-medium">
+                          {new Date(res.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                      <div class="text-white/20 group-hover:text-brand-teal transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                      </div>
+                    </div>
+                  </a>
                   
-                  <div class="flex items-center gap-6">
-                    <div class="hidden sm:block text-right">
-                      <p class="text-[9px] text-white/20 uppercase font-bold tracking-widest mb-0.5">Submitted</p>
-                      <p class="text-[11px] text-white/60 font-medium">
-                        {new Date(res.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    </div>
-                    <div class="text-white/20 group-hover:text-brand-teal transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                    </div>
-                  </div>
-                </a>
+                  <form method="POST" action="?auth=true" class="absolute right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onsubmit="return confirm('Are you sure you want to delete this feedback?')">
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="id" value={res.id} />
+                    <button type="submit" class="p-2 text-white/20 hover:text-brand-coral transition-colors" title="Delete Feedback">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                  </form>
+                </div>
               ))}
               
               {responses.length === 0 && (

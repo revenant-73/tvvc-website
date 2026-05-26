@@ -38,6 +38,19 @@ if (Astro.request.method === 'POST') {
     } catch (e) {
       console.error(e);
     }
+  } else if (action === 'delete') {
+    authenticated = true;
+    try {
+      const db = getDb(
+        import.meta.env.TURSO_DATABASE_URL || '',
+        import.meta.env.TURSO_AUTH_TOKEN || ''
+      );
+      await db.delete(feedback).where(eq(feedback.id, parseInt(id)));
+      return Astro.redirect('/admin/feedback?auth=true');
+    } catch (e) {
+      console.error(e);
+      error = "Error deleting response.";
+    }
   }
 }
 
@@ -176,6 +189,13 @@ const sections = [
                    <button type="submit" class={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border transition-all flex items-center gap-2 ${response.starred ? 'bg-brand-teal text-brand-charcoal border-brand-teal' : 'text-white/40 border-white/10 hover:border-brand-teal hover:text-brand-teal'}`}>
                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill={response.starred ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                      {response.starred ? 'Starred for Marketing' : 'Star for Marketing'}
+                   </button>
+                </form>
+                <form method="POST" onsubmit="return confirm('Are you sure you want to delete this feedback? This action cannot be undone.')">
+                   <input type="hidden" name="action" value="delete" />
+                   <button type="submit" class="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-brand-coral/20 text-brand-coral/60 hover:bg-brand-coral/10 hover:text-brand-coral transition-all flex items-center gap-2">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                     Delete
                    </button>
                 </form>
               </div>
