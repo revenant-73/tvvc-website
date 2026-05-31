@@ -2,10 +2,14 @@
 export const prerender = false;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getDb } from '../../db';
+import { registrations, registrationItems, events } from '../../db/schema';
+import { desc, eq } from 'drizzle-orm';
 
 const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
 let authenticated = false;
 let error = null;
+let latestTransactions = [];
 
 if (Astro.request.method === 'POST') {
   try {
@@ -22,6 +26,40 @@ if (Astro.request.method === 'POST') {
 
 if (Astro.url.searchParams.get('auth') === 'true') {
   authenticated = true;
+}
+
+if (authenticated) {
+  try {
+    const db = getDb(
+      import.meta.env.TURSO_DATABASE_URL || '',
+      import.meta.env.TURSO_AUTH_TOKEN || ''
+    );
+    
+    // Get latest 5 paid registrations
+    const recentRegistrations = await db.select()
+      .from(registrations)
+      .where(eq(registrations.status, 'paid'))
+      .orderBy(desc(registrations.createdAt))
+      .limit(5);
+
+    // For each registration, get its items
+    latestTransactions = await Promise.all(recentRegistrations.map(async (reg) => {
+      const items = await db.select({
+        eventName: events.name,
+        type: events.type
+      })
+      .from(registrationItems)
+      .innerJoin(events, eq(registrationItems.eventId, events.id))
+      .where(eq(registrationItems.registrationId, reg.id));
+      
+      return {
+        ...reg,
+        items
+      };
+    }));
+  } catch (e) {
+    console.error("Dashboard Transaction Error:", e);
+  }
 }
 
 const adminFeatures = [
@@ -44,6 +82,13 @@ const adminFeatures = [
     description: "Manage tryouts and seasonal team registrations.",
     link: "/admin/registrations?stream=club-teams&auth=true",
     icon: "users",
+    color: "brand-teal"
+  },
+  {
+    title: "Small Group Training",
+    description: "Manage training blocks and view session rosters.",
+    link: "/admin/training-manager?auth=true",
+    icon: "target",
     color: "brand-teal"
   },
   {
@@ -96,6 +141,9 @@ const adminFeatures = [
                     {feature.icon === 'users' && (
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`text-${feature.color}`}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     )}
+                    {feature.icon === 'target' && (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`text-${feature.color}`}><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                    )}
                     {feature.icon === 'message' && (
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`text-${feature.color}`}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                     )}
@@ -112,6 +160,65 @@ const adminFeatures = [
               </a>
             ))}
           </div>
+
+          {authenticated && latestTransactions.length > 0 && (
+            <div class="space-y-6 pt-12 border-t border-white/5">
+              <div class="flex items-center justify-between">
+                <div class="space-y-1">
+                  <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-brand-teal">Latest Transactions</h2>
+                  <p class="text-white/40 text-[10px] uppercase tracking-widest font-bold">Recent activity across all paid services</p>
+                </div>
+              </div>
+
+              <div class="glass-card border-white/10 overflow-hidden !p-0">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse">
+                    <thead>
+                      <tr class="bg-white/5 border-b border-white/10">
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Parent / Customer</th>
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Services Purchased</th>
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Amount</th>
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      {latestTransactions.map(reg => (
+                        <tr class="hover:bg-white/[0.02] transition-colors group">
+                          <td class="px-6 py-5">
+                            <div class="text-xs font-bold text-white uppercase">{reg.parentName}</div>
+                            <div class="text-[10px] text-white/40">{reg.parentEmail}</div>
+                          </td>
+                          <td class="px-6 py-5">
+                            <div class="flex flex-wrap gap-1">
+                              {reg.items.map((item: any) => (
+                                <span class={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-tighter ${
+                                  item.type === 'camp' || item.type === 'clinic' ? 'bg-brand-teal/20 text-brand-teal' : 
+                                  item.type === 'ignition' || item.type === 'playworks' ? 'bg-brand-coral/20 text-brand-coral' : 
+                                  'bg-white/10 text-white/60'
+                                }`}>
+                                  {item.eventName}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td class="px-6 py-5">
+                            <div class="text-xs font-bold text-white tabular-nums">
+                              ${(reg.totalAmount / 100).toFixed(2)}
+                            </div>
+                          </td>
+                          <td class="px-6 py-5">
+                            <div class="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                              {new Date(reg.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div class="pt-12 text-center border-t border-white/5">
             <p class="text-[10px] text-white/20 uppercase tracking-[0.2em] font-bold">TVVC Management System v1.0</p>

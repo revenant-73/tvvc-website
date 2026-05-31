@@ -62,6 +62,13 @@ const streamInfo = {
       { title: 'Tryouts', filter: (e: any) => e.type === 'tryout', display: 'grid', color: 'brand-teal' },
       { title: 'Team Registration', filter: (e: any) => e.type === 'team-registration', display: 'grid', color: 'brand-coral' }
     ]
+  },
+  'training': {
+    title: 'Small Group Training',
+    sections: [
+      { title: 'Active Blocks', filter: (e: any) => e.type === 'training-block' && e.spotsFilled < e.capacity, display: 'grid', color: 'brand-teal' },
+      { title: 'Booked Blocks', filter: (e: any) => e.type === 'training-block' && e.spotsFilled >= e.capacity, display: 'grid', color: 'brand-coral' }
+    ]
   }
 };
 
@@ -128,10 +135,15 @@ const getGroupedEvents = (events: any[]) => {
               <p class="text-white/40 text-xs uppercase tracking-[0.3em] font-bold">Revenue Stream Management</p>
             </div>
             
-            <div class="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
-              <a href="/admin/registrations?stream=camps-clinics&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${stream === 'camps-clinics' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Camps</a>
-              <a href="/admin/registrations?stream=in-house&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${stream === 'in-house' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>In-House</a>
-              <a href="/admin/registrations?stream=club-teams&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${stream === 'club-teams' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Club</a>
+            <div class="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto">
+              <a href="/admin/registrations?stream=camps-clinics&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'camps-clinics' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Camps</a>
+              <a href="/admin/registrations?stream=in-house&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'in-house' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>In-House</a>
+              <a href="/admin/registrations?stream=club-teams&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'club-teams' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Club</a>
+              <a href="/admin/registrations?stream=training&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'training' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Training</a>
+              <a href="/admin/training-manager?auth=true" class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-brand-teal hover:text-white transition-all whitespace-nowrap flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Manage Schedule
+              </a>
             </div>
           </div>
 

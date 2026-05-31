@@ -1,0 +1,164 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getDb } from '../../db';
+import { events } from '../../db/schema';
+import { desc, eq, and } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
+
+const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
+let authenticated = Astro.url.searchParams.get('auth') === 'true';
+let error = null;
+let success = null;
+
+const db = getDb(
+  import.meta.env.TURSO_DATABASE_URL || '',
+  import.meta.env.TURSO_AUTH_TOKEN || ''
+);
+
+if (Astro.request.method === 'POST') {
+  try {
+    const data = await Astro.request.formData();
+    const action = data.get('action');
+    
+    if (data.get('passcode') === ADMIN_PASSCODE || authenticated) {
+      authenticated = true;
+      
+      if (action === 'add') {
+        const date = data.get('date') as string;
+        const time = data.get('time') as string;
+        
+        if (date && time) {
+          const id = `training-block-${date.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${time.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+          await db.insert(events).values({
+            id,
+            type: 'training-block',
+            name: 'Small Group Training Block',
+            dateInfo: date,
+            timeInfo: time,
+            price: 8000,
+            capacity: 1,
+            spotsFilled: 0,
+            active: true
+          });
+          success = "Training block added.";
+        }
+      } else if (action === 'delete') {
+        const id = data.get('id') as string;
+        await db.delete(events).where(eq(events.id, id));
+        success = "Block removed.";
+      }
+    } else {
+      error = "Incorrect passcode.";
+    }
+  } catch (e) {
+    console.error(e);
+    error = "Operation failed. ID might already exist.";
+  }
+}
+
+let blocks = [];
+try {
+  const results = await db.select()
+    .from(events)
+    .where(eq(events.type, 'training-block'));
+
+  const getSortValue = (b: any) => {
+    try {
+      const datePart = b.dateInfo.split('–')[0].trim();
+      const timePart = b.timeInfo?.split('–')[0].trim();
+      const eventDate = new Date(`${datePart}, 2026 ${timePart || ''}`);
+      return eventDate.getTime();
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  blocks = results.sort((a, b) => getSortValue(a) - getSortValue(b));
+} catch (e) {
+  error = "Failed to load schedule.";
+}
+---
+
+<BaseLayout title="Manage Training Schedule" noindex={true}>
+  <main class="pt-32 pb-24 px-4 md:px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <a href="/admin?auth=true" class="text-[10px] font-bold uppercase tracking-widest text-brand-teal hover:underline mb-2 inline-block">← Dashboard</a>
+          <h1 class="text-3xl font-heading font-bold text-white uppercase tracking-tighter">Training <span class="text-brand-teal italic">Schedule</span></h1>
+        </div>
+        <a href="/admin/registrations?stream=training&auth=true" class="btn btn-secondary !py-2 !px-4 !text-[10px]">View Rosters</a>
+      </div>
+
+      {error && <div class="mb-6 bg-brand-coral/10 border border-brand-coral/20 text-brand-coral p-4 rounded-xl text-center text-sm font-bold">{error}</div>}
+      {success && <div class="mb-6 bg-brand-teal/10 border border-brand-teal/20 text-brand-teal p-4 rounded-xl text-center text-sm font-bold">{success}</div>}
+
+      {!authenticated ? (
+        <div class="glass-card p-8 border-white/10 text-center max-w-md mx-auto">
+          <h2 class="text-xl font-heading font-bold text-white mb-6 uppercase tracking-widest">Admin Access</h2>
+          <form method="POST" class="space-y-4">
+            <input type="password" name="passcode" placeholder="Enter Passcode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none text-center" required />
+            <button type="submit" class="btn btn-primary w-full">Authenticate</button>
+          </form>
+        </div>
+      ) : (
+        <div class="space-y-12">
+          <!-- Add Block Form -->
+          <section class="glass-card border-brand-teal/20 p-8">
+            <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-brand-teal mb-6">Add New Training Block</h2>
+            <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <input type="hidden" name="action" value="add" />
+              <div class="space-y-2">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">Date</label>
+                <input type="text" name="date" placeholder="e.g. June 15" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-brand-teal outline-none" required />
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">Time</label>
+                <input type="text" name="time" placeholder="e.g. 8:00am–9:30am" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-brand-teal outline-none" required />
+              </div>
+              <button type="submit" class="btn btn-primary py-3 uppercase tracking-widest text-[10px] font-bold">Add to Schedule</button>
+            </form>
+          </section>
+
+          <!-- Schedule List -->
+          <section class="space-y-6">
+            <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-white/40 px-2">Current Schedule</h2>
+            <div class="grid grid-cols-1 gap-3">
+              {blocks.map(block => (
+                <div class={`glass-card p-5 border flex items-center justify-between transition-all ${block.spotsFilled >= block.capacity ? 'border-white/5 opacity-60' : 'border-white/10'}`}>
+                  <div class="flex items-center gap-6">
+                    <div className={`w-2 h-2 rounded-full ${block.spotsFilled >= block.capacity ? 'bg-brand-coral' : 'bg-brand-teal'}`}></div>
+                    <div>
+                      <h3 class="text-white font-bold uppercase tracking-wide text-sm">{block.dateInfo}</h3>
+                      <p class="text-brand-teal text-[10px] font-bold">{block.timeInfo}</p>
+                    </div>
+                    {block.spotsFilled >= block.capacity && (
+                      <span class="text-[8px] font-bold bg-brand-coral/20 text-brand-coral px-2 py-0.5 rounded uppercase tracking-tighter">Booked</span>
+                    )}
+                  </div>
+                  
+                  <div class="flex items-center gap-4">
+                    <a href={`/admin/roster/${block.id}?auth=true`} class="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Roster</a>
+                    <form method="POST" onsubmit="return confirm('Permanently remove this block?');">
+                      <input type="hidden" name="action" value="delete" />
+                      <input type="hidden" name="id" value={block.id} />
+                      <button type="submit" class="text-[10px] font-bold uppercase tracking-widest text-brand-coral/60 hover:text-brand-coral transition-colors">Delete</button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+              
+              {blocks.length === 0 && (
+                <div class="glass-card p-12 text-center border-white/5">
+                  <p class="text-white/20 text-[10px] font-bold uppercase tracking-widest">No blocks scheduled</p>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
+    </div>
+  </main>
+</BaseLayout>
