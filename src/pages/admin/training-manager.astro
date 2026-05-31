@@ -62,7 +62,12 @@ let blocks = [];
 try {
   const results = await db.select()
     .from(events)
-    .where(eq(events.type, 'training-block'));
+    .where(
+      and(
+        eq(events.type, 'training-block'),
+        eq(events.active, true)
+      )
+    );
 
   const getSortValue = (b: any) => {
     try {
