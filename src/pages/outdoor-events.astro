@@ -6,44 +6,23 @@ import ScrollReveal from '../components/ScrollReveal.astro';
 import OutdoorRegistrationManager from '../components/registration/OutdoorRegistrationManager';
 import { getDb } from '../db';
 import { events as eventsTable } from '../db/schema';
-import { eq, or, and } from 'drizzle-orm';
 
 let dbEvents = [];
-let dbError = null;
 
 try {
   const url = import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL;
   const token = import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN;
   
-  if (!url) {
-    console.error("Missing TURSO_DATABASE_URL");
-    dbError = "Database configuration is missing. (URL is undefined)";
-  } else {
+  if (url) {
     const db = getDb(url, token);
     const allRows = await db.select().from(eventsTable);
     
-    // Filter for our specific types
     dbEvents = allRows.filter(e => 
-      e.type === 'tournament' || e.type === 'family-challenge'
+      (e.type === 'tournament' || e.type === 'family-challenge') && e.active
     );
-    
-    const rawCount = dbEvents.length;
-    // Filter active
-    dbEvents = dbEvents.filter(e => e.active);
-    
-    if (allRows.length === 0) {
-      dbError = "Connected to database, but the 'events' table is completely empty. Please run the seed script.";
-    } else if (rawCount === 0) {
-      dbError = `Found ${allRows.length} events in DB, but none with type 'tournament' or 'family-challenge'. Available types: ${[...new Set(allRows.map(r => r.type))].join(', ')}`;
-    } else if (dbEvents.length === 0) {
-      dbError = `Found ${rawCount} outdoor events, but they are all marked as inactive.`;
-    }
-    
-    console.log(`Fetched ${dbEvents.length} outdoor events from Turso (Total in DB: ${allRows.length})`);
   }
 } catch (e) {
   console.error("Outdoor Events DB Error:", e);
-  dbError = e instanceof Error ? e.message : "Failed to connect to database.";
 }
 ---
 
@@ -115,12 +94,7 @@ try {
 
     <!-- Grass Series Grid -->
     <section class="max-w-6xl mx-auto px-6 py-32" id="registration">
-       {dbError ? (
-         <div class="glass-card p-12 text-center border-brand-coral/20">
-            <p class="text-brand-coral font-bold mb-4">{dbError}</p>
-            <p class="text-white/40 text-xs uppercase tracking-widest font-bold">Please check environment variables on Netlify</p>
-         </div>
-       ) : dbEvents.length > 0 ? (
+       {dbEvents.length > 0 ? (
          <OutdoorRegistrationManager client:load events={dbEvents} />
        ) : (
          <div class="glass-card p-12 text-center border-white/5">
