@@ -186,8 +186,8 @@ export default function TournamentRegistrationForm({ event }: { event: Event }) 
 
           <section className="glass-card border-brand-teal/20 p-8 space-y-8 bg-brand-teal/5">
             <div className="text-center space-y-2">
-                <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Team Roster</h2>
-                <p className="text-brand-teal text-xs font-bold uppercase tracking-widest">Two players required for doubles tournament</p>
+                <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Doubles Team Roster</h2>
+                <p className="text-brand-teal text-xs font-bold uppercase tracking-widest">Two players required (2v2 Tournament)</p>
             </div>
 
             {/* Division Selection */}

@@ -63,8 +63,9 @@ export default function OutdoorRegistrationManager({ events }: { events: Event[]
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-100"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal to-transparent"></div>
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-4 left-4 flex gap-2">
                     <span className="bg-brand-teal text-black text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">{event.dateInfo}</span>
+                    <span className="bg-white/90 text-black text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider text-shadow-none">Doubles (2v2)</span>
                 </div>
             </div>
 
