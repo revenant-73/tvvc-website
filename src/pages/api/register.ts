@@ -3,13 +3,6 @@ import { getDb } from '../../db';
 import { registrations, athletes, registrationItems, events } from '../../db/schema';
 import { eq, inArray, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
-import { v4 as uuidv4 } from 'uuid';
-
-const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-01-27.acacia' as any,
-});
-
-export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -17,11 +10,15 @@ export const POST: APIRoute = async ({ request }) => {
     const stripeSecretKey = import.meta.env.STRIPE_SECRET_KEY;
 
     if (!databaseUrl) {
-      throw new Error('Database configuration missing (TURSO_DATABASE_URL)');
+      return new Response(JSON.stringify({ error: 'Database configuration missing (TURSO_DATABASE_URL)' }), { status: 500 });
     }
     if (!stripeSecretKey) {
-      throw new Error('Payment configuration missing (STRIPE_SECRET_KEY)');
+      return new Response(JSON.stringify({ error: 'Payment configuration missing (STRIPE_SECRET_KEY). Please add it to your .env file.' }), { status: 500 });
     }
+
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: '2025-01-27.acacia' as any,
+    });
 
     const body = await request.json();
     const { parentInfo, athletes: athleteData } = body;
@@ -34,6 +31,11 @@ export const POST: APIRoute = async ({ request }) => {
     // 1. Calculate and Verify Total
     let totalCents = 0;
     const allEventIds = athleteData.flatMap((a: any) => a.selectedEvents);
+    
+    if (allEventIds.length === 0) {
+      return new Response(JSON.stringify({ error: 'No events selected.' }), { status: 400 });
+    }
+
     const selectedEvents = await db.select().from(events).where(inArray(events.id, allEventIds));
     
     const lineItems = [];
@@ -68,7 +70,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // 2. Create internal registration record (Pending)
-    const registrationId = uuidv4();
+    const registrationId = crypto.randomUUID();
     
     await db.insert(registrations).values({
       id: registrationId,
@@ -86,8 +88,8 @@ export const POST: APIRoute = async ({ request }) => {
         lastName: a.lastName,
         grade: a.grade,
         medicalInfo: a.medicalInfo,
-        photoReleaseAgreed: a.photoReleaseAgreed,
-        waiverAgreed: a.waiverAgreed,
+        photoReleaseAgreed: a.photoReleaseAgreed || false,
+        waiverAgreed: a.waiverAgreed || false,
       }).returning({ id: athletes.id });
 
       if (!athleteResult) {
@@ -110,8 +112,8 @@ export const POST: APIRoute = async ({ request }) => {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${request.url.split('/api')[0]}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.url.split('/api')[0]}/register`,
+      success_url: `${new URL(request.url).origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${new URL(request.url).origin}/outdoor-events`,
       customer_email: parentInfo.email,
       metadata: {
         registrationId: registrationId,
@@ -131,3 +133,4 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: message }), { status: 500 });
   }
 };
+

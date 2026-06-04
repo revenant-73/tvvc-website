@@ -69,6 +69,13 @@ const streamInfo = {
       { title: 'Active Blocks', filter: (e: any) => e.type === 'training-block' && e.spotsFilled < e.capacity, display: 'grid', color: 'brand-teal' },
       { title: 'Booked Blocks', filter: (e: any) => e.type === 'training-block' && e.spotsFilled >= e.capacity, display: 'grid', color: 'brand-coral' }
     ]
+  },
+  'outdoor': {
+    title: 'Outdoor Events',
+    sections: [
+      { title: 'Grass Series', filter: (e: any) => e.type === 'tournament', display: 'grid', color: 'brand-teal' },
+      { title: 'Family Challenge', filter: (e: any) => e.type === 'family-challenge', display: 'grid', color: 'brand-coral' }
+    ]
   }
 };
 
@@ -140,6 +147,7 @@ const getGroupedEvents = (events: any[]) => {
               <a href="/admin/registrations?stream=in-house&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'in-house' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>In-House</a>
               <a href="/admin/registrations?stream=club-teams&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'club-teams' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Club</a>
               <a href="/admin/registrations?stream=training&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'training' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Training</a>
+              <a href="/admin/registrations?stream=outdoor&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'outdoor' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Outdoor</a>
               <a href="/admin/training-manager?auth=true" class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-brand-teal hover:text-white transition-all whitespace-nowrap flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 Manage Schedule
