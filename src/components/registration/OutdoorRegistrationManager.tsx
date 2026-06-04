@@ -88,8 +88,8 @@ export default function OutdoorRegistrationManager({ events }: { events: Event[]
                  </div>
                  <div className="flex justify-between text-xs font-bold text-white mb-6">
                     <span>${(event.price * 2 / 100)} per team</span>
-                    <span className={isFull ? 'text-brand-coral' : 'text-brand-teal'}>
-                        {isFull ? 'Sold Out' : `${Math.floor((event.capacity - event.spotsFilled) / 2)} Teams Left`}
+                    <span className="text-brand-teal">
+                        Max 24 Teams
                     </span>
                  </div>
                  
