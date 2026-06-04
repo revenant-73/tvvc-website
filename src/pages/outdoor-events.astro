@@ -31,11 +31,12 @@ try {
     // Filter active
     dbEvents = dbEvents.filter(e => e.active);
     
-    if (rawCount > 0 && dbEvents.length === 0) {
-      dbError = `Found ${rawCount} events, but they are all marked as inactive.`;
-    } else if (allRows.length > 0 && dbEvents.length === 0) {
-       // We found other events (camps/clinics) but not tournaments
-       console.log("Found camps/clinics, but no tournaments. Types found:", [...new Set(allRows.map(r => r.type))]);
+    if (allRows.length === 0) {
+      dbError = "Connected to database, but the 'events' table is completely empty. Please run the seed script.";
+    } else if (rawCount === 0) {
+      dbError = `Found ${allRows.length} events in DB, but none with type 'tournament' or 'family-challenge'. Available types: ${[...new Set(allRows.map(r => r.type))].join(', ')}`;
+    } else if (dbEvents.length === 0) {
+      dbError = `Found ${rawCount} outdoor events, but they are all marked as inactive.`;
     }
     
     console.log(`Fetched ${dbEvents.length} outdoor events from Turso (Total in DB: ${allRows.length})`);
