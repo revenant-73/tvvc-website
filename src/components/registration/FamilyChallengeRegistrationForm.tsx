@@ -192,7 +192,7 @@ export default function FamilyChallengeRegistrationForm({ event }: { event: Even
           <section className="glass-card border-brand-coral/20 p-8 space-y-8 bg-brand-coral/5">
             <div className="text-center space-y-2">
                 <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Participants</h2>
-                <p className="text-brand-coral text-xs font-bold uppercase tracking-widest">One Parent & One Player Duo</p>
+                <p className="text-brand-coral text-xs font-bold uppercase tracking-widest">Team Rule: One youth (18 or younger) & one adult (30 or older)</p>
             </div>
 
             {/* Division Selection */}

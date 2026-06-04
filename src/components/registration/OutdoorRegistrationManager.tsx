@@ -72,7 +72,7 @@ export default function OutdoorRegistrationManager({ events }: { events: Event[]
               <div className="flex-1">
                 <h3 className="text-2xl font-heading font-bold mb-2 text-white">{event.name}</h3>
                 <p className="text-[10px] text-brand-teal font-bold uppercase mb-4 tracking-widest">
-                  {event.type === 'family-challenge' ? 'Parent/Player Doubles (2v2)' : 'Middle School & High School (2v2)'}
+                  {event.type === 'family-challenge' ? 'Youth (18 & under) + Adult (30 & over)' : 'Middle School & High School (2v2)'}
                 </p>
                 <p className="text-sm text-white/50 leading-relaxed mb-8">
                   {event.type === 'family-challenge' 
