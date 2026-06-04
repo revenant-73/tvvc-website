@@ -7,6 +7,7 @@ import netlify from '@astrojs/netlify';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://tualatinvalleyvb.com',
+  output: 'server',
   integrations: [
     tailwind(), 
     react(), 

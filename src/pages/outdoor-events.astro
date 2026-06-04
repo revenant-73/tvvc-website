@@ -12,27 +12,33 @@ let dbEvents = [];
 let dbError = null;
 
 try {
-  const url = import.meta.env.TURSO_DATABASE_URL;
-  const token = import.meta.env.TURSO_AUTH_TOKEN;
+  const url = import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL;
+  const token = import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN;
   
   if (!url) {
     console.error("Missing TURSO_DATABASE_URL");
-    dbError = "Database configuration is missing.";
+    dbError = "Database configuration is missing. (URL is undefined)";
   } else {
     const db = getDb(url, token);
-    dbEvents = await db.select()
-      .from(eventsTable)
-      .where(
-        or(
-          eq(eventsTable.type, 'tournament'),
-          eq(eventsTable.type, 'family-challenge')
-        )
-      );
+    const allRows = await db.select().from(eventsTable);
     
-    // Filter active in JS to be safe with SQLite boolean storage
+    // Filter for our specific types
+    dbEvents = allRows.filter(e => 
+      e.type === 'tournament' || e.type === 'family-challenge'
+    );
+    
+    const rawCount = dbEvents.length;
+    // Filter active
     dbEvents = dbEvents.filter(e => e.active);
     
-    console.log(`Fetched ${dbEvents.length} outdoor events from Turso`);
+    if (rawCount > 0 && dbEvents.length === 0) {
+      dbError = `Found ${rawCount} events, but they are all marked as inactive.`;
+    } else if (allRows.length > 0 && dbEvents.length === 0) {
+       // We found other events (camps/clinics) but not tournaments
+       console.log("Found camps/clinics, but no tournaments. Types found:", [...new Set(allRows.map(r => r.type))]);
+    }
+    
+    console.log(`Fetched ${dbEvents.length} outdoor events from Turso (Total in DB: ${allRows.length})`);
   }
 } catch (e) {
   console.error("Outdoor Events DB Error:", e);

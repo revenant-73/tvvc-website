@@ -11,8 +11,9 @@ const outdoorEvents = [
     name: 'Summer Grass Series #1',
     dateInfo: 'June 27, 2026',
     timeInfo: '9:00am–4:00pm',
-    price: 1500, // $15 per player
-    capacity: 48, // 24 teams
+    price: 1500,
+    capacity: 48,
+    active: true,
   },
   {
     id: 'tournament-grass-series-2',
@@ -20,8 +21,9 @@ const outdoorEvents = [
     name: 'Summer Grass Series #2',
     dateInfo: 'July 18, 2026',
     timeInfo: '9:00am–4:00pm',
-    price: 1500, // $15 per player
-    capacity: 48, // 24 teams
+    price: 1500,
+    capacity: 48,
+    active: true,
   },
   {
     id: 'tournament-family-challenge',
@@ -29,20 +31,21 @@ const outdoorEvents = [
     name: 'Family Grass Challenge',
     dateInfo: 'August 8, 2026',
     timeInfo: '9:00am–2:00pm',
-    price: 1500, // $15 per player ($30 per team)
-    capacity: 48, // 24 teams
+    price: 1500,
+    capacity: 48,
+    active: true,
   }
 ];
 
 async function seed() {
-  console.log('Seeding outdoor events...');
+  console.log('Force-syncing outdoor events to Turso...');
   for (const event of outdoorEvents) {
     await db.insert(events).values(event).onConflictDoUpdate({
       target: events.id,
       set: event
     });
   }
-  console.log('Outdoor seed completed successfully!');
+  console.log('Outdoor events synced to Turso successfully!');
 }
 
 seed().catch(console.error);
