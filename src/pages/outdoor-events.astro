@@ -8,26 +8,35 @@ import { getDb } from '../db';
 import { events as eventsTable } from '../db/schema';
 import { eq, or, and } from 'drizzle-orm';
 
-const db = getDb(
-  import.meta.env.TURSO_DATABASE_URL || '',
-  import.meta.env.TURSO_AUTH_TOKEN || ''
-);
-
 let dbEvents = [];
+let dbError = null;
+
 try {
-  dbEvents = await db.select()
-    .from(eventsTable)
-    .where(
-      and(
-        eq(eventsTable.active, true),
+  const url = import.meta.env.TURSO_DATABASE_URL;
+  const token = import.meta.env.TURSO_AUTH_TOKEN;
+  
+  if (!url) {
+    console.error("Missing TURSO_DATABASE_URL");
+    dbError = "Database configuration is missing.";
+  } else {
+    const db = getDb(url, token);
+    dbEvents = await db.select()
+      .from(eventsTable)
+      .where(
         or(
           eq(eventsTable.type, 'tournament'),
           eq(eventsTable.type, 'family-challenge')
         )
-      )
-    );
+      );
+    
+    // Filter active in JS to be safe with SQLite boolean storage
+    dbEvents = dbEvents.filter(e => e.active);
+    
+    console.log(`Fetched ${dbEvents.length} outdoor events from Turso`);
+  }
 } catch (e) {
   console.error("Outdoor Events DB Error:", e);
+  dbError = e instanceof Error ? e.message : "Failed to connect to database.";
 }
 ---
 
@@ -99,7 +108,12 @@ try {
 
     <!-- Grass Series Grid -->
     <section class="max-w-6xl mx-auto px-6 py-32" id="registration">
-       {dbEvents.length > 0 ? (
+       {dbError ? (
+         <div class="glass-card p-12 text-center border-brand-coral/20">
+            <p class="text-brand-coral font-bold mb-4">{dbError}</p>
+            <p class="text-white/40 text-xs uppercase tracking-widest font-bold">Please check environment variables on Netlify</p>
+         </div>
+       ) : dbEvents.length > 0 ? (
          <OutdoorRegistrationManager client:load events={dbEvents} />
        ) : (
          <div class="glass-card p-12 text-center border-white/5">
