@@ -26,6 +26,8 @@ export default function TournamentRegistrationForm({ event }: { event: Event }) 
     phone: '',
   });
 
+  const [division, setDivision] = useState('');
+
   const [players, setPlayers] = useState<Player[]>([
     { firstName: '', lastName: '', grade: '', medicalInfo: '' },
     { firstName: '', lastName: '', grade: '', medicalInfo: '' },
@@ -58,6 +60,10 @@ export default function TournamentRegistrationForm({ event }: { event: Event }) 
     if (currentStep === 1) {
       if (!parentInfo.name || !parentInfo.email || !parentInfo.phone) {
         alert("Please complete all parent information.");
+        return;
+      }
+      if (!division) {
+        alert("Please select a tournament division.");
         return;
       }
       if (players.some(p => !p.firstName || !p.lastName || !p.grade)) {
@@ -93,6 +99,7 @@ export default function TournamentRegistrationForm({ event }: { event: Event }) 
       // Map players to athletes for the existing API
       const athletes = players.map(p => ({
         ...p,
+        division: division,
         selectedEvents: [event.id],
         photoReleaseAgreed: true, // Defaulting for tournament
         waiverAgreed: waiverAgreed
@@ -183,6 +190,24 @@ export default function TournamentRegistrationForm({ event }: { event: Event }) 
                 <p className="text-brand-teal text-xs font-bold uppercase tracking-widest">Two players required for doubles tournament</p>
             </div>
 
+            {/* Division Selection */}
+            <div className="max-w-md mx-auto space-y-4 p-6 rounded-2xl border border-white/10 bg-black/40 mb-8">
+               <label className="text-[10px] font-bold uppercase tracking-widest text-brand-teal block text-center">Select Tournament Division</label>
+               <select 
+                  required
+                  className="w-full bg-brand-charcoal border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-brand-teal outline-none transition-all"
+                  value={division}
+                  onChange={e => setDivision(e.target.value)}
+               >
+                  <option value="">-- Choose Division --</option>
+                  <option value="A Division (Competitive)">A Division (Competitive)</option>
+                  <option value="B Division (Developmental)">B Division (Developmental)</option>
+               </select>
+               <p className="text-[10px] text-white/40 italic text-center leading-relaxed">
+                  Refer to the descriptions on the main page if you are unsure which to choose.
+               </p>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {players.map((player, i) => (
                 <div key={i} className="space-y-6 p-6 rounded-2xl border border-white/5 bg-black/20">
@@ -257,6 +282,10 @@ export default function TournamentRegistrationForm({ event }: { event: Event }) 
               <div className="flex justify-between border-b border-white/5 pb-2">
                 <span className="text-white/40 text-xs uppercase font-bold">Event</span>
                 <span className="text-white text-xs font-bold uppercase">{event.name}</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-2">
+                <span className="text-white/40 text-xs uppercase font-bold">Division</span>
+                <span className="text-white text-xs font-bold uppercase">{division}</span>
               </div>
               <div className="flex justify-between border-b border-white/5 pb-2">
                 <span className="text-white/40 text-xs uppercase font-bold">Players</span>

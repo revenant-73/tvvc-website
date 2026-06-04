@@ -76,8 +76,8 @@ export default function OutdoorRegistrationManager({ events }: { events: Event[]
                 </p>
                 <p className="text-sm text-white/50 leading-relaxed mb-8">
                   {event.type === 'family-challenge' 
-                    ? 'A lighthearted and memorable event focused on connection and community. Expect music, friendly competition, and family fun.'
-                    : 'Pool play into Gold & Silver brackets. Seeded matches ensure every team continues competing after pool results are finalized.'}
+                    ? 'Includes Competitive and Fun Family divisions. Focused on connection, community, and family fun on the grass.'
+                    : 'Featuring A (Competitive) and B (Developmental) divisions. Pool play into brackets ensures plenty of matches for all skill levels.'}
                 </p>
               </div>
               

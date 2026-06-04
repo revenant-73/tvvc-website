@@ -27,6 +27,8 @@ export default function FamilyChallengeRegistrationForm({ event }: { event: Even
     phone: '',
   });
 
+  const [division, setDivision] = useState('');
+
   const [participants, setParticipants] = useState<Participant[]>([
     { firstName: '', lastName: '', role: 'parent', grade: 'Adult', medicalInfo: '' },
     { firstName: '', lastName: '', role: 'player', grade: '', medicalInfo: '' },
@@ -72,6 +74,10 @@ export default function FamilyChallengeRegistrationForm({ event }: { event: Even
         alert("Please complete all contact information.");
         return;
       }
+      if (!division) {
+        alert("Please select a tournament division.");
+        return;
+      }
       if (participants.some(p => !p.firstName || !p.lastName || (p.role === 'player' && !p.grade))) {
         alert("Please complete all participant details.");
         return;
@@ -106,6 +112,7 @@ export default function FamilyChallengeRegistrationForm({ event }: { event: Even
         firstName: p.firstName,
         lastName: p.lastName,
         grade: p.grade,
+        division: division,
         medicalInfo: p.medicalInfo,
         waiverAgreed: waiverAgreed,
         selectedEvents: [event.id],
@@ -186,6 +193,24 @@ export default function FamilyChallengeRegistrationForm({ event }: { event: Even
             <div className="text-center space-y-2">
                 <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Participants</h2>
                 <p className="text-brand-coral text-xs font-bold uppercase tracking-widest">One Parent & One Player Duo</p>
+            </div>
+
+            {/* Division Selection */}
+            <div className="max-w-md mx-auto space-y-4 p-6 rounded-2xl border border-white/10 bg-black/40 mb-8">
+               <label className="text-[10px] font-bold uppercase tracking-widest text-brand-coral block text-center">Select Family Division</label>
+               <select 
+                  required
+                  className="w-full bg-brand-charcoal border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-brand-coral outline-none transition-all"
+                  value={division}
+                  onChange={e => setDivision(e.target.value)}
+               >
+                  <option value="">-- Choose Division --</option>
+                  <option value="Competitive Family Division">Competitive Family Division</option>
+                  <option value="Fun Family Division">Fun Family Division</option>
+               </select>
+               <p className="text-[10px] text-white/40 italic text-center leading-relaxed">
+                  Refer to the descriptions on the main page if you are unsure which to choose.
+               </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -295,6 +320,10 @@ export default function FamilyChallengeRegistrationForm({ event }: { event: Even
               <div className="flex justify-between border-b border-white/5 pb-2">
                 <span className="text-white/40 text-xs uppercase font-bold">Event</span>
                 <span className="text-white text-xs font-bold uppercase">{event.name}</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-2">
+                <span className="text-white/40 text-xs uppercase font-bold">Division</span>
+                <span className="text-white text-xs font-bold uppercase">{division}</span>
               </div>
               <div className="flex justify-between border-b border-white/5 pb-2">
                 <span className="text-white/40 text-xs uppercase font-bold">Team</span>

@@ -92,6 +92,93 @@ try {
       </div>
     </section>
 
+    <!-- Division Descriptions -->
+    <section class="max-w-6xl mx-auto px-6 py-24 border-t border-white/5">
+       <div class="mb-16">
+          <span class="text-brand-teal font-bold uppercase tracking-widest text-[10px] mb-4 block">Event Details</span>
+          <h2 class="text-3xl md:text-5xl font-heading text-white mb-6 leading-tight">Tournament <span class="text-brand-teal italic text-4xl">Divisions</span></h2>
+          <p class="text-white/60 text-lg max-w-2xl leading-relaxed">
+             To ensure the best experience for everyone, we offer multiple divisions based on skill level rather than just grade. All events begin at <strong class="text-white">8:00 AM</strong> at <strong class="text-white">Century High School</strong>.
+          </p>
+       </div>
+
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <!-- Summer Series -->
+          <div class="glass-card p-10 border-white/5 bg-white/5 h-full">
+             <div class="flex items-center gap-4 mb-8">
+                <div class="w-12 h-12 rounded-xl bg-brand-teal/20 flex items-center justify-center text-brand-teal">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                </div>
+                <div>
+                   <h3 class="text-xl font-heading font-bold text-white">Summer Grass Series</h3>
+                   <p class="text-[10px] text-brand-teal font-bold uppercase tracking-widest">Players entering 7th-12th Grade</p>
+                </div>
+             </div>
+
+             <div class="space-y-8">
+                <div>
+                   <h4 class="text-white font-bold mb-3 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-brand-teal"></span>
+                      A Division — Competitive
+                   </h4>
+                   <p class="text-sm text-white/50 leading-relaxed">
+                      For experienced players with club or high school experience looking for a faster, more competitive environment. Best for those who can serve consistently and want a high-level challenge.
+                   </p>
+                </div>
+                <div>
+                   <h4 class="text-white font-bold mb-3 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-brand-teal/40"></span>
+                      B Division — Developmental
+                   </h4>
+                   <p class="text-sm text-white/50 leading-relaxed">
+                      For newer or developing players who want a fun, competitive environment with less pressure. Perfect for building confidence and learning grass volleyball.
+                   </p>
+                </div>
+             </div>
+          </div>
+
+          <!-- Family Challenge -->
+          <div class="glass-card p-10 border-white/5 bg-white/5 h-full">
+             <div class="flex items-center gap-4 mb-8">
+                <div class="w-12 h-12 rounded-xl bg-brand-teal/20 flex items-center justify-center text-brand-teal">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div>
+                   <h3 class="text-xl font-heading font-bold text-white">Family Challenge</h3>
+                   <p class="text-[10px] text-brand-teal font-bold uppercase tracking-widest">Youth Player & Family Member</p>
+                </div>
+             </div>
+
+             <div class="space-y-8">
+                <div>
+                   <h4 class="text-white font-bold mb-3 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-brand-teal"></span>
+                      Competitive Family Division
+                   </h4>
+                   <p class="text-sm text-white/50 leading-relaxed">
+                      For teams ready to play hard and chase the win. Best when both players have athletic experience and want a serious competitive environment.
+                   </p>
+                </div>
+                <div>
+                   <h4 class="text-white font-bold mb-3 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-brand-teal/40"></span>
+                      Fun Family Division
+                   </h4>
+                   <p class="text-sm text-white/50 leading-relaxed">
+                      For teams who want a relaxed, lighthearted experience built around laughter and playing together. Winning matters less than the shared experience.
+                   </p>
+                </div>
+             </div>
+          </div>
+       </div>
+       
+       <div class="mt-12 p-6 rounded-2xl bg-brand-teal/5 border border-brand-teal/10">
+          <p class="text-xs text-white/50 italic text-center">
+             <strong>Note:</strong> Players should register for the division that best matches their current experience level. TVVC may adjust teams or divisions if needed to create the best tournament experience.
+          </p>
+       </div>
+    </section>
+
     <!-- Grass Series Grid -->
     <section class="max-w-6xl mx-auto px-6 py-32" id="registration">
        {dbEvents.length > 0 ? (
