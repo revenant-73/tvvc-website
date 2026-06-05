@@ -41,6 +41,7 @@ export const POST: APIRoute = async ({ request }) => {
       firstName: athlete.firstName,
       lastName: athlete.lastName,
       grade: athlete.grade,
+      division: athlete.division || null,
       medicalInfo: athlete.medicalInfo || '',
       photoReleaseAgreed: true,
       waiverAgreed: true,

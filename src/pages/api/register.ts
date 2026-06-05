@@ -87,6 +87,7 @@ export const POST: APIRoute = async ({ request }) => {
         firstName: a.firstName,
         lastName: a.lastName,
         grade: a.grade,
+        division: a.division || null,
         medicalInfo: a.medicalInfo,
         photoReleaseAgreed: a.photoReleaseAgreed || false,
         waiverAgreed: a.waiverAgreed || false,
