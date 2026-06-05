@@ -1,6 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';
+import { Image, getImage } from 'astro:assets';
+import heroImage from '../assets/images/hero-volleyball-action.jpg';
+import teamTealImage from '../assets/images/14 Teal.jpg';
+import teamWhiteImage from '../assets/images/14 White.jpeg';
+import playersActionImage from '../assets/images/16 teeal 2.jpeg';
+
+const optimizedHero = await getImage({ src: heroImage, format: 'webp', width: 1920 });
 
 const valueGroups = [
   {
@@ -38,15 +45,20 @@ const valueGroups = [
 ---
 
 <BaseLayout title="Home">
+  <link rel="preload" as="image" href={optimizedHero.src} fetchpriority="high" slot="head" />
   <main class="relative overflow-hidden pt-32">
     <!-- Hero Section -->
     <section class="min-h-[90vh] flex items-center justify-center px-6 py-20 relative overflow-hidden">
       <!-- Hero Image with Filter & Overlay -->
       <div class="absolute inset-0 z-0">
-        <img 
-          src="/assets/images/hero-volleyball-action.jpg" 
+        <Image 
+          src={heroImage} 
           alt="Volleyball net in focus" 
           class="w-full h-full object-cover mix-blend-luminosity opacity-40 grayscale contrast-125"
+          loading="eager"
+          fetchpriority="high"
+          width={1920}
+          height={1080}
         />
         <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal/80 via-brand-charcoal/60 to-brand-charcoal"></div>
         <div class="absolute inset-0 bg-brand-teal/10 mix-blend-color"></div>
@@ -98,10 +110,13 @@ const valueGroups = [
         <div class="md:col-span-2 md:row-span-2 glass-card flex flex-col justify-between group overflow-hidden border-brand-teal/20 p-0">
           <ScrollReveal direction="left" className="h-full flex flex-col">
             <div class="relative h-48 md:h-64 overflow-hidden">
-              <img 
-                src="/assets/images/14 Teal.jpg" 
+              <Image 
+                src={teamTealImage} 
                 alt="14 Teal team in action" 
                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 mix-blend-luminosity hover:mix-blend-normal hover:opacity-100 transition-all"
+                loading="lazy"
+                width={800}
+                height={600}
               />
               <div class="absolute inset-0 bg-gradient-to-t from-brand-charcoal via-brand-charcoal/20 to-transparent"></div>
             </div>
@@ -189,10 +204,13 @@ const valueGroups = [
           <ScrollReveal direction="right">
             <div class="relative group">
               <div class="glass-card p-0 overflow-hidden border-white/10 relative transition-all duration-500 group-hover:border-brand-teal/30">
-                <img 
-                  src="/assets/images/14 White.jpeg" 
+                <Image 
+                  src={teamWhiteImage} 
                   alt="TVVC athletes huddle" 
                   class="w-full h-auto object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+                  loading="lazy"
+                  width={600}
+                  height={400}
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-brand-charcoal/80 via-transparent to-transparent"></div>
                 <div class="absolute bottom-6 left-6 right-6">
@@ -210,10 +228,13 @@ const valueGroups = [
 
     <!-- Section Break Image -->
     <section class="relative h-64 md:h-[400px] overflow-hidden my-12 group">
-      <img 
-        src="/assets/images/16 teeal 2.jpeg" 
+      <Image 
+        src={playersActionImage} 
         alt="TVVC players in action" 
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]"
+        loading="lazy"
+        width={1200}
+        height={400}
       />
       <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal via-transparent to-brand-charcoal"></div>
       <div class="absolute inset-0 flex items-center justify-center">
