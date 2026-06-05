@@ -7,6 +7,7 @@ const db = getDb(process.env.TURSO_DATABASE_URL!, process.env.TURSO_AUTH_TOKEN);
 const camps = [
   {
     id: 'camp-foundations-june-15',
+    parentId: 'camp-foundations',
     type: 'camp',
     name: '6th-8th Grade Volleyball Foundations Camp',
     dateInfo: 'June 15–17',
@@ -16,6 +17,7 @@ const camps = [
   },
   {
     id: 'camp-hitting-foundations-june-22',
+    parentId: 'camp-hitting-foundations',
     type: 'camp',
     name: 'Hitting Foundations Camp',
     dateInfo: 'June 22–24',
@@ -25,6 +27,7 @@ const camps = [
   },
   {
     id: 'camp-performance-july-06',
+    parentId: 'camp-performance',
     type: 'camp',
     name: '6th-8th Grade Volleyball Performance Camp',
     dateInfo: 'July 6–8',
@@ -34,6 +37,7 @@ const camps = [
   },
   {
     id: 'camp-ignition-july-13',
+    parentId: 'camp-ignition',
     type: 'camp',
     name: 'Ignition Camp – 4th–6th Grade',
     dateInfo: 'July 13–15',
@@ -43,6 +47,7 @@ const camps = [
   },
   {
     id: 'camp-hitting-performance-july-20',
+    parentId: 'camp-hitting-performance',
     type: 'camp',
     name: 'Hitting Performance Camp',
     dateInfo: 'July 20–22',
@@ -52,6 +57,7 @@ const camps = [
   },
   {
     id: 'camp-foundations-july-27',
+    parentId: 'camp-foundations',
     type: 'camp',
     name: '6th-8th Grade Volleyball Foundations Camp',
     dateInfo: 'July 27–29',
@@ -61,6 +67,7 @@ const camps = [
   },
   {
     id: 'camp-hs-prep-1-aug-03',
+    parentId: 'camp-hs-prep',
     type: 'camp',
     name: 'High School Tryout Prep Camp #1',
     dateInfo: 'August 3–5',
@@ -70,6 +77,7 @@ const camps = [
   },
   {
     id: 'camp-hs-prep-2-aug-10',
+    parentId: 'camp-hs-prep',
     type: 'camp',
     name: 'High School Tryout Prep Camp #2',
     dateInfo: 'August 10–12',
@@ -106,6 +114,7 @@ async function seed() {
         const id = `clinic-${type.name.toLowerCase().replace(/[\/\s]+/g, '-')}-${date.toLowerCase().replace(/\s+/g, '-')}`;
         const clinic = {
           id,
+          parentId: `clinic-${type.name.toLowerCase().replace(/[\/\s]+/g, '-')}`,
           type: 'clinic',
           name: `${type.name} Clinic`,
           dateInfo: date,

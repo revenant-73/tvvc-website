@@ -5,7 +5,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';
 import FeedbackForm from '../components/feedback/FeedbackForm';
 import { getDb } from '../db';
-import { feedback } from '../db/schema';
+import { feedback, feedbackAnswers } from '../db/schema';
 
 let submitted = false;
 let error = null;
@@ -23,47 +23,76 @@ if (Astro.request.method === 'POST') {
     const opps = data.getAll('additional_opportunities');
     const oppsString = JSON.stringify(opps);
 
-    await db.insert(feedback).values({
-      userType: data.get('user_type') as string,
-      team: data.get('team') as string,
-      anonymous: "No",
-      name: data.get('name') as string,
-      overallRating: parseInt(data.get('overall_rating') as string),
-      bestParts: data.get('best_parts') as string,
-      frustratingParts: data.get('frustrating_parts') as string,
-      keepDoing: data.get('keep_doing') as string,
-      considerChanging: data.get('consider_changing') as string,
-      coachingPositive: parseInt(data.get('coaching_positive') as string),
-      coachingGrowth: parseInt(data.get('coaching_growth') as string),
-      practicesUseful: parseInt(data.get('practices_useful') as string),
-      encouragedProblemSolving: parseInt(data.get('encouraged_problem_solving') as string),
-      coachingWell: data.get('coaching_well') as string,
-      coachingImprove: data.get('coaching_improve') as string,
-      teamEnvironment: data.get('team_environment') as string,
-      clubCommunication: parseInt(data.get('club_communication') as string),
-      teamCommunication: parseInt(data.get('team_communication') as string),
-      easyToUnderstand: parseInt(data.get('easy_to_understand') as string),
-      communicationWell: data.get('communication_well') as string,
-      communicationImprove: data.get('communication_improve') as string,
-      confusionMoments: data.get('confusion_moments') as string,
-      goodValue: parseInt(data.get('good_value') as string),
-      timeCommitment: parseInt(data.get('time_commitment') as string),
-      tournamentSchedule: parseInt(data.get('tournament_schedule') as string),
-      betterValue: data.get('better_value') as string,
-      unclearLogistics: data.get('unclear_logistics') as string,
-      volleyballGrowth: parseInt(data.get('volleyball_growth') as string),
-      personalGrowth: parseInt(data.get('personal_growth') as string),
-      noticeableGrowth: data.get('noticeable_growth') as string,
-      supportNeeded: data.get('support_needed') as string,
-      returnLikelihood: parseInt(data.get('return_likelihood') as string),
-      returnIncentive: data.get('return_incentive') as string,
-      additionalOpportunities: oppsString,
-      importantOpportunities: data.get('important_opportunities') as string,
-      futureHope: data.get('future_hope') as string,
-      leadershipUnderstanding: data.get('leadership_understanding') as string,
-      appreciation: data.get('appreciation') as string,
-      advice: data.get('advice') as string,
-      anythingElse: data.get('anything_else') as string,
+    // Collect all data for normalized storage
+    const allAnswers: Record<string, string> = {};
+    for (const [key, value] of data.entries()) {
+      if (key === 'additional_opportunities') continue; // Handled separately
+      allAnswers[key] = value.toString();
+    }
+
+    await db.transaction(async (tx) => {
+      const [newFeedback] = await tx.insert(feedback).values({
+        userType: data.get('user_type') as string,
+        team: data.get('team') as string,
+        anonymous: "No",
+        name: data.get('name') as string,
+        overallRating: parseInt(data.get('overall_rating') as string),
+        bestParts: data.get('best_parts') as string,
+        frustratingParts: data.get('frustrating_parts') as string,
+        keepDoing: data.get('keep_doing') as string,
+        considerChanging: data.get('consider_changing') as string,
+        coachingPositive: parseInt(data.get('coaching_positive') as string),
+        coachingGrowth: parseInt(data.get('coaching_growth') as string),
+        practicesUseful: parseInt(data.get('practices_useful') as string),
+        encouragedProblemSolving: parseInt(data.get('encouraged_problem_solving') as string),
+        coachingWell: data.get('coaching_well') as string,
+        coachingImprove: data.get('coaching_improve') as string,
+        teamEnvironment: data.get('team_environment') as string,
+        clubCommunication: parseInt(data.get('club_communication') as string),
+        teamCommunication: parseInt(data.get('team_communication') as string),
+        easyToUnderstand: parseInt(data.get('easy_to_understand') as string),
+        communicationWell: data.get('communication_well') as string,
+        communicationImprove: data.get('communication_improve') as string,
+        confusionMoments: data.get('confusion_moments') as string,
+        goodValue: parseInt(data.get('good_value') as string),
+        timeCommitment: parseInt(data.get('time_commitment') as string),
+        tournamentSchedule: parseInt(data.get('tournament_schedule') as string),
+        betterValue: data.get('better_value') as string,
+        unclearLogistics: data.get('unclear_logistics') as string,
+        volleyballGrowth: parseInt(data.get('volleyball_growth') as string),
+        personalGrowth: parseInt(data.get('personal_growth') as string),
+        noticeableGrowth: data.get('noticeable_growth') as string,
+        supportNeeded: data.get('support_needed') as string,
+        returnLikelihood: parseInt(data.get('return_likelihood') as string),
+        returnIncentive: data.get('return_incentive') as string,
+        additionalOpportunities: oppsString,
+        importantOpportunities: data.get('important_opportunities') as string,
+        futureHope: data.get('future_hope') as string,
+        leadershipUnderstanding: data.get('leadership_understanding') as string,
+        appreciation: data.get('appreciation') as string,
+        advice: data.get('advice') as string,
+        anythingElse: data.get('anything_else') as string,
+        metadata: JSON.stringify(allAnswers),
+      }).returning({ id: feedback.id });
+
+      if (newFeedback) {
+        // Insert normalized answers
+        for (const [key, value] of Object.entries(allAnswers)) {
+          await tx.insert(feedbackAnswers).values({
+            feedbackId: newFeedback.id,
+            questionKey: key,
+            answerValue: value,
+          });
+        }
+        // Also insert the checkboxes
+        if (opps.length > 0) {
+          await tx.insert(feedbackAnswers).values({
+            feedbackId: newFeedback.id,
+            questionKey: 'additional_opportunities',
+            answerValue: oppsString,
+          });
+        }
+      }
     });
 
     submitted = true;

@@ -60,15 +60,26 @@ export const feedback = sqliteTable('feedback', {
   advice: text('advice'),
   anythingElse: text('anything_else'),
   
+  metadata: text('metadata'), // JSON blob for extensible data
   starred: integer('starred', { mode: 'boolean' }).default(false),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+// New table for more granular feedback analysis
+export const feedbackAnswers = sqliteTable('feedback_answers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  feedbackId: integer('feedback_id').references(() => feedback.id),
+  questionKey: text('question_key').notNull(),
+  answerValue: text('answer_value').notNull(),
+  category: text('category'), // e.g., 'coaching', 'communication'
 });
 
 // --- Summer 2026 Registration System ---
 
 export const events = sqliteTable('events', {
   id: text('id').primaryKey(), // e.g., 'camp-foundations-june'
-  type: text('type').notNull(), // 'camp' or 'clinic'
+  parentId: text('parent_id'), // For grouping related events (e.g., all Small Group Training blocks)
+  type: text('type').notNull(), // 'camp', 'clinic', 'tournament', 'training-block'
   name: text('name').notNull(),
   description: text('description'),
   dateInfo: text('date_info').notNull(), // e.g., 'June 15–17'
@@ -77,6 +88,7 @@ export const events = sqliteTable('events', {
   capacity: integer('capacity').notNull(),
   spotsFilled: integer('spots_filled').default(0),
   active: integer('active', { mode: 'boolean' }).default(true),
+  metadata: text('metadata'), // For any event-specific config
 });
 
 export const registrations = sqliteTable('registrations', {
@@ -87,6 +99,7 @@ export const registrations = sqliteTable('registrations', {
   stripeSessionId: text('stripe_session_id'),
   status: text('status').default('pending'), // pending, paid, cancelled
   totalAmount: integer('total_amount').notNull(),
+  metadata: text('metadata'), // For storing promo codes or other info
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -101,6 +114,7 @@ export const athletes = sqliteTable('athletes', {
   medicalInfo: text('medical_info'),
   waiverAgreed: integer('waiver_agreed', { mode: 'boolean' }).default(false),
   photoReleaseAgreed: integer('photo_release_agreed', { mode: 'boolean' }).default(false),
+  metadata: text('metadata'), // JSON blob for extensible data (Jersey Size, Partner Name, etc.)
 });
 
 export const registrationItems = sqliteTable('registration_items', {

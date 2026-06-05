@@ -39,94 +39,100 @@ export const POST: APIRoute = async ({ request }) => {
     const selectedEvents = await db.select().from(events).where(inArray(events.id, allEventIds));
     
     const lineItems = [];
+    const registrationId = crypto.randomUUID();
 
-    for (const athlete of athleteData) {
-      for (const eventId of athlete.selectedEvents) {
-        const event = selectedEvents.find(e => e.id === eventId);
-        if (!event) continue;
-        
-        // Verify capacity
-        if (event.spotsFilled! >= event.capacity!) {
-          return new Response(JSON.stringify({ error: `The event "${event.name}" is full.` }), { status: 400 });
+    // Perform all DB operations inside a transaction
+    const sessionUrl = await db.transaction(async (tx) => {
+      for (const athlete of athleteData) {
+        for (const eventId of athlete.selectedEvents) {
+          const event = selectedEvents.find(e => e.id === eventId);
+          if (!event) continue;
+          
+          // Verify capacity
+          if (event.spotsFilled! >= event.capacity!) {
+            throw new Error(`The event "${event.name}" is full.`);
+          }
+
+          totalCents += event.price;
+          lineItems.push({
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `${event.name} - ${athlete.firstName} ${athlete.lastName}`,
+                description: `${event.dateInfo} | ${event.timeInfo}`,
+              },
+              unit_amount: event.price,
+            },
+            quantity: 1,
+          });
+        }
+      }
+
+      if (totalCents === 0) {
+        throw new Error('No events selected.');
+      }
+
+      // 2. Create internal registration record (Pending)
+      await tx.insert(registrations).values({
+        id: registrationId,
+        parentName: parentInfo.name,
+        parentEmail: parentInfo.email,
+        parentPhone: parentInfo.phone,
+        status: 'pending',
+        totalAmount: totalCents,
+        metadata: body.metadata ? JSON.stringify(body.metadata) : null,
+      });
+
+      for (const a of athleteData) {
+        const [athleteResult] = await tx.insert(athletes).values({
+          registrationId: registrationId,
+          firstName: a.firstName,
+          lastName: a.lastName,
+          grade: a.grade,
+          division: a.division || null,
+          medicalInfo: a.medicalInfo,
+          photoReleaseAgreed: a.photoReleaseAgreed || false,
+          waiverAgreed: a.waiverAgreed || false,
+          metadata: a.metadata ? JSON.stringify(a.metadata) : null,
+        }).returning({ id: athletes.id });
+
+        if (!athleteResult) {
+          throw new Error('Failed to create athlete record');
         }
 
-        totalCents += event.price;
-        lineItems.push({
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `${event.name} - ${athlete.firstName} ${athlete.lastName}`,
-              description: `${event.dateInfo} | ${event.timeInfo}`,
-            },
-            unit_amount: event.price,
-          },
-          quantity: 1,
-        });
+        const athleteId = athleteResult.id;
+
+        for (const eventId of a.selectedEvents) {
+          await tx.insert(registrationItems).values({
+            registrationId,
+            athleteId,
+            eventId,
+          });
+        }
       }
-    }
 
-    if (totalCents === 0) {
-      return new Response(JSON.stringify({ error: 'No events selected.' }), { status: 400 });
-    }
+      // 3. Create Stripe Checkout Session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: lineItems,
+        mode: 'payment',
+        success_url: `${new URL(request.url).origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${new URL(request.url).origin}/outdoor-events`,
+        customer_email: parentInfo.email,
+        metadata: {
+          registrationId: registrationId,
+        },
+      });
 
-    // 2. Create internal registration record (Pending)
-    const registrationId = crypto.randomUUID();
-    
-    await db.insert(registrations).values({
-      id: registrationId,
-      parentName: parentInfo.name,
-      parentEmail: parentInfo.email,
-      parentPhone: parentInfo.phone,
-      status: 'pending',
-      totalAmount: totalCents,
+      // Update registration with Stripe session ID
+      await tx.update(registrations)
+        .set({ stripeSessionId: session.id })
+        .where(eq(registrations.id, registrationId));
+
+      return session.url;
     });
 
-    for (const a of athleteData) {
-      const [athleteResult] = await db.insert(athletes).values({
-        registrationId: registrationId,
-        firstName: a.firstName,
-        lastName: a.lastName,
-        grade: a.grade,
-        division: a.division || null,
-        medicalInfo: a.medicalInfo,
-        photoReleaseAgreed: a.photoReleaseAgreed || false,
-        waiverAgreed: a.waiverAgreed || false,
-      }).returning({ id: athletes.id });
-
-      if (!athleteResult) {
-        throw new Error('Failed to create athlete record');
-      }
-
-      const athleteId = athleteResult.id;
-
-      for (const eventId of a.selectedEvents) {
-        await db.insert(registrationItems).values({
-          registrationId,
-          athleteId,
-          eventId,
-        });
-      }
-    }
-
-    // 3. Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: lineItems,
-      mode: 'payment',
-      success_url: `${new URL(request.url).origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${new URL(request.url).origin}/outdoor-events`,
-      customer_email: parentInfo.email,
-      metadata: {
-        registrationId: registrationId,
-      },
-    });
-
-    // Update registration with Stripe session ID
-    await db.update(registrations)
-      .set({ stripeSessionId: session.id })
-      .where(eq(registrations.id, registrationId));
-
-    return new Response(JSON.stringify({ url: session.url }), { status: 200 });
+    return new Response(JSON.stringify({ url: sessionUrl }), { status: 200 });
 
   } catch (err) {
     console.error('Registration API Error:', err);

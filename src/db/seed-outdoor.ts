@@ -7,6 +7,7 @@ const db = getDb(process.env.TURSO_DATABASE_URL!, process.env.TURSO_AUTH_TOKEN);
 const outdoorEvents = [
   {
     id: 'tournament-grass-series-1',
+    parentId: 'summer-grass-series',
     type: 'tournament',
     name: 'Summer Grass Series #1',
     dateInfo: 'June 27, 2026',
@@ -17,6 +18,7 @@ const outdoorEvents = [
   },
   {
     id: 'tournament-grass-series-2',
+    parentId: 'summer-grass-series',
     type: 'tournament',
     name: 'Summer Grass Series #2',
     dateInfo: 'July 18, 2026',
@@ -27,6 +29,7 @@ const outdoorEvents = [
   },
   {
     id: 'tournament-family-challenge',
+    parentId: 'family-challenge',
     type: 'family-challenge',
     name: 'Family Grass Challenge',
     dateInfo: 'August 8, 2026',

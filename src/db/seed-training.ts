@@ -19,6 +19,7 @@ for (const date of dates) {
     const id = `training-block-${date.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${time.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     trainingBlocks.push({
       id,
+      parentId: 'small-group-training',
       type: 'training-block',
       name: 'Small Group Training Block',
       dateInfo: date,

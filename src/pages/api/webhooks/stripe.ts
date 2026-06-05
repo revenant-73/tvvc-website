@@ -50,31 +50,34 @@ export const POST: APIRoute = async ({ request }) => {
       console.log(`Processing successful registration: ${registrationId}`);
       
       try {
-        // 1. Update Registration Status
-        const updateReg = await db.update(registrations)
-          .set({ status: 'paid' })
-          .where(eq(registrations.id, registrationId))
-          .returning();
-        
-        if (updateReg.length === 0) {
-          console.warn(`Registration ${registrationId} not found in database during webhook processing.`);
-        } else {
-          console.log(`Registration ${registrationId} status updated to "paid".`);
-        }
-
-        // 2. Increment Spots Filled for each event in this registration
-        const items = await db.select().from(registrationItems).where(eq(registrationItems.registrationId, registrationId));
-        
-        console.log(`Found ${items.length} registration items to process.`);
-        
-        for (const item of items) {
-          if (item.eventId) {
-            await db.update(events)
-              .set({ spotsFilled: sql`${events.spotsFilled} + 1` })
-              .where(eq(events.id, item.eventId));
-            console.log(`Incremented spotsFilled for event: ${item.eventId}`);
+        await db.transaction(async (tx) => {
+          // 1. Update Registration Status
+          const updateReg = await tx.update(registrations)
+            .set({ status: 'paid' })
+            .where(eq(registrations.id, registrationId))
+            .returning();
+          
+          if (updateReg.length === 0) {
+            console.warn(`Registration ${registrationId} not found in database during webhook processing.`);
+            return;
           }
-        }
+
+          console.log(`Registration ${registrationId} status updated to "paid".`);
+
+          // 2. Increment Spots Filled for each event in this registration
+          const items = await tx.select().from(registrationItems).where(eq(registrationItems.registrationId, registrationId));
+          
+          console.log(`Found ${items.length} registration items to process.`);
+          
+          for (const item of items) {
+            if (item.eventId) {
+              await tx.update(events)
+                .set({ spotsFilled: sql`${events.spotsFilled} + 1` })
+                .where(eq(events.id, item.eventId));
+              console.log(`Incremented spotsFilled for event: ${item.eventId}`);
+            }
+          }
+        });
         
         console.log(`Registration ${registrationId} fully finalized.`);
       } catch (dbErr) {
