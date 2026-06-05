@@ -97,6 +97,7 @@ export const athletes = sqliteTable('athletes', {
   lastName: text('last_name').notNull(),
   grade: text('grade').notNull(), // Entering grade
   division: text('division'), // New field for outdoor tournaments
+  tshirtSize: text('tshirt_size'), // Present in DB
   medicalInfo: text('medical_info'),
   waiverAgreed: integer('waiver_agreed', { mode: 'boolean' }).default(false),
   photoReleaseAgreed: integer('photo_release_agreed', { mode: 'boolean' }).default(false),

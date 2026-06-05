@@ -69,7 +69,18 @@ Every registration requires agreement to:
 1.  **Liability Waiver**: Full assumption of risk and release of liability.
 2.  **Media Release**: Permission to use photos/videos for promotional purposes (Optional).
 
-The content for these is sourced from `TVVC Waiver.txt` and integrated directly into the `RegistrationForm.tsx` component.
+The system content content for these is sourced from `TVVC Waiver.txt` and integrated directly into the `RegistrationForm.tsx` component.
+
+## 🛠️ Adding New Fields
+
+When adding new information to a registration form (e.g., adding a "Division" or "Jersey Size" field), you **must** follow these steps to ensure data is saved correctly:
+
+1.  **Update Schema**: Add the new column to the relevant table in `src/db/schema.ts`.
+2.  **Sync Database**: Run `npm run db:push` to apply the change to the production Turso database.
+3.  **Update API**: Update the insertion logic in `src/pages/api/register.ts` to include the new field in the `.values()` call.
+4.  **Update Frontend**: Ensure the React form component (e.g., `TournamentRegistrationForm.tsx`) is sending the field in the POST request body.
+
+**Warning**: If a field is added to the frontend but not the database schema, the insertion will either ignore the data or fail with a "no such column" error if the API tries to insert it.
 
 ## 🚀 Deployment & Environment
 
