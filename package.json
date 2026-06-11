@@ -29,6 +29,9 @@
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.22.0"
   },
+  "overrides": {
+    "esbuild": "^0.28.0"
+  },
   "dependencies": {
     "@astrojs/netlify": "^7.0.9",
     "@astrojs/react": "^5.0.5",
