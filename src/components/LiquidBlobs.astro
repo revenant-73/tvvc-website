@@ -1,0 +1,42 @@
+---
+interface Props {
+  className?: string;
+  color?: string;
+}
+
+const { className = "", color = "bg-brand-teal" } = Astro.props;
+---
+
+<div class={`liquid-blobs-container absolute pointer-events-none -z-10 ${className}`} style="filter: url('#goo');">
+  <div class="blob-1 absolute w-64 h-64 rounded-full opacity-30 blur-2xl animate-liquid-1" class:list={[color]}></div>
+  <div class="blob-2 absolute w-48 h-48 rounded-full opacity-40 blur-2xl animate-liquid-2" class:list={[color]}></div>
+</div>
+
+<style>
+  @keyframes liquid-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+  }
+  
+  @keyframes liquid-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-40px, 30px) scale(0.9); }
+    66% { transform: translate(40px, -20px) scale(1.1); }
+  }
+
+  .animate-liquid-1 {
+    animation: liquid-1 10s ease-in-out infinite;
+  }
+
+  .animate-liquid-2 {
+    animation: liquid-2 12s ease-in-out infinite;
+    animation-delay: -2s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-liquid-1, .animate-liquid-2 {
+      animation: none;
+    }
+  }
+</style>

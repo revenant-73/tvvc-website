@@ -5,21 +5,22 @@ export default {
     extend: {
       colors: {
         brand: {
-          teal: '#009695',
-          'teal-dark': '#007A79',
-          coral: '#E85D4E',
-          'coral-dark': '#D14030',
+          teal: '#008281',
+          'teal-dark': '#006B6A',
+          coral: '#C13D2F',
+          'coral-dark': '#A03226',
           charcoal: '#0B0E14', // Deeper, more "tech" charcoal
           navy: '#0F172A',
         },
       },
       fontFamily: {
         heading: ['Outfit', 'sans-serif'],
+        syne: ['Syne', 'sans-serif'],
         body: ['Inter', 'sans-serif'],
       },
       boxShadow: {
-        'glow-teal': '0 0 20px rgba(0, 150, 149, 0.3)',
-        'glow-coral': '0 0 20px rgba(232, 93, 78, 0.3)',
+        'glow-teal': '0 0 20px rgba(0, 130, 129, 0.3)',
+        'glow-coral': '0 0 20px rgba(193, 61, 47, 0.3)',
       },
     },
   },

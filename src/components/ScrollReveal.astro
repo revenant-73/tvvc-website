@@ -31,9 +31,15 @@ const y = direction === 'up' ? offset : direction === 'down' ? -offset : 0;
           const target = entry.target as HTMLElement;
           const delay = target.getAttribute('data-delay') || '0';
           
-          target.style.transition = `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`;
-          target.style.opacity = '1';
-          target.style.transform = 'translate(0, 0)';
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            target.style.transition = 'none';
+            target.style.opacity = '1';
+            target.style.transform = 'none';
+          } else {
+            target.style.transition = `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`;
+            target.style.opacity = '1';
+            target.style.transform = 'translate(0, 0)';
+          }
           observer.unobserve(target);
         }
       });
@@ -44,12 +50,17 @@ const y = direction === 'up' ? offset : direction === 'down' ? -offset : 0;
       // If already revealed (e.g. on back navigation), don't hide again
       if (target.style.opacity === '1') return;
 
-      const x = target.getAttribute('data-x') || '0';
-      const y = target.getAttribute('data-y') || '0';
-      
-      target.style.opacity = '0';
-      target.style.transform = `translate(${x}px, ${y}px)`;
-      observer.observe(target);
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        target.style.opacity = '1';
+        target.style.transform = 'none';
+      } else {
+        const x = target.getAttribute('data-x') || '0';
+        const y = target.getAttribute('data-y') || '0';
+        
+        target.style.opacity = '0';
+        target.style.transform = `translate(${x}px, ${y}px)`;
+        observer.observe(target);
+      }
     });
   }
 

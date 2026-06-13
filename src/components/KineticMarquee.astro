@@ -1,0 +1,71 @@
+---
+interface Props {
+  text: string;
+  speed?: number;
+  direction?: 'left' | 'right';
+  className?: string;
+  outline?: boolean;
+}
+
+const { 
+  text, 
+  speed = 0.5, 
+  direction = 'left', 
+  className = "",
+  outline = false
+} = Astro.props;
+---
+
+<div class={`kinetic-marquee-container overflow-hidden whitespace-nowrap pointer-events-none select-none ${className}`} data-speed={speed} data-direction={direction}>
+  <div class="kinetic-marquee-inner inline-block">
+    <span class={`text-[12rem] md:text-[20rem] font-syne font-black uppercase tracking-tighter leading-none ${outline ? 'text-transparent stroke-white/10' : 'text-white/5'}`} style={outline ? "-webkit-text-stroke: 1px rgba(255,255,255,0.05)" : ""}>
+      {text} {text} {text} {text}
+    </span>
+  </div>
+</div>
+
+<script>
+  function initKineticMarquee() {
+    const containers = document.querySelectorAll('.kinetic-marquee-container');
+    let ticking = false;
+    
+    window.addEventListener('scroll', () => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          
+          containers.forEach(container => {
+            const rect = container.getBoundingClientRect();
+            // Only animate if in viewport
+            if (rect.top < window.innerHeight && rect.bottom > 0) {
+              const speed = parseFloat(container.getAttribute('data-speed') || '0.5');
+              const direction = container.getAttribute('data-direction') === 'right' ? 1 : -1;
+              const inner = container.querySelector('.kinetic-marquee-inner') as HTMLElement;
+              
+              if (inner) {
+                const xPos = (scrollY * speed * direction) % 1000;
+                inner.style.transform = `translateX(${xPos}px)`;
+              }
+            }
+          });
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  }
+
+  // Run on initial load
+  initKineticMarquee();
+
+  // Run on Astro page load (for View Transitions)
+  document.addEventListener('astro:page-load', initKineticMarquee);
+</script>
+
+<style>
+  .kinetic-marquee-container {
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+  }
+</style>
