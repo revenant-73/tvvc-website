@@ -449,7 +449,15 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
                                     </div>
                                     <div className="text-right">
                                       <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
-                                      {isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>}
+                                      {isFull ? (
+                                        <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
+                                      ) : (
+                                        event.capacity - (event.spotsFilled || 0) <= 5 && (
+                                          <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
+                                            Only {event.capacity - (event.spotsFilled || 0)} spots left!
+                                          </span>
+                                        )
+                                      )}
                                     </div>
                                   </label>
                                 );
@@ -518,7 +526,15 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
                                     </div>
                                     <div className="text-right">
                                       <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
-                                      {isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>}
+                                      {isFull ? (
+                                        <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
+                                      ) : (
+                                        event.capacity - (event.spotsFilled || 0) <= 5 && (
+                                          <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
+                                            Only {event.capacity - (event.spotsFilled || 0)} spots left!
+                                          </span>
+                                        )
+                                      )}
                                     </div>
                                   </label>
                                 );
