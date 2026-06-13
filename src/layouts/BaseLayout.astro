@@ -60,23 +60,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://tualatin
     <slot name="head" />
   </head>
   <body class="bg-brand-charcoal text-white selection:bg-brand-teal/30 antialiased font-body relative">
-    <!-- Global Grain/Texture Overlay -->
-    <div class="fixed inset-0 pointer-events-none z-[9999] opacity-[0.03] mix-blend-overlay noise-bg"></div>
-    <svg class="hidden">
-      <filter id="noiseFilter">
-        <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" stitchTiles="stitch" />
-      </filter>
-      <filter id="goo">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
-        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-      </filter>
-      <filter id="tornFilter">
-        <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="noise" />
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" />
-      </filter>
-    </svg>
-    
     <div class="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-teal via-brand-coral to-brand-teal z-[1001]"></div>
     
     <Header />
