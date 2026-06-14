@@ -30,7 +30,7 @@
     "tsx": "^4.22.0"
   },
   "overrides": {
-    "esbuild": "^0.28.0"
+    "esbuild": "^0.28.1"
   },
   "dependencies": {
     "@astrojs/netlify": "^7.0.9",
