@@ -26,11 +26,7 @@ import ScrollReveal from '../components/ScrollReveal.astro';
 
         <ScrollReveal delay={0.6}>
           <div class="flex flex-wrap gap-4 justify-center md:justify-start items-center">
-            <button disabled class="btn btn-primary px-12 opacity-50 cursor-not-allowed">Registration Paused</button>
-            <div class="flex flex-col">
-              <span class="text-xs text-brand-coral font-bold uppercase tracking-widest">System Maintenance</span>
-              <span class="text-[10px] text-white/40 font-bold uppercase tracking-widest">Expected resolution: May 17, 2026</span>
-            </div>
+            <a href="mailto:info@tualatinvalleyvb.com" class="btn btn-primary px-12">Inquire for 2027</a>
           </div>
         </ScrollReveal>
       </div>
@@ -40,8 +36,6 @@ import ScrollReveal from '../components/ScrollReveal.astro';
     <section class="max-w-6xl mx-auto px-6 py-24 scroll-mt-32 border-y border-white/5">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: '14U Division', desc: 'Saturday, May 9', sub: 'Max 12 teams', accent: 'brand-teal' },
-          { title: '16U Division', desc: 'Sunday, May 10', sub: 'Max 12 teams', accent: 'brand-teal' },
           { title: 'Location', desc: 'Century High', sub: 'Doors 7 AM | Match 8 AM', accent: 'white' },
           { title: 'Fees', desc: '$100 per team', sub: '$5 per spectator', accent: 'brand-coral' }
         ].map((item, i) => (

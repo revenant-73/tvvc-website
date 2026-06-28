@@ -43,29 +43,63 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Perform all DB operations inside a transaction
     const sessionUrl = await db.transaction(async (tx) => {
+      // For training blocks, we charge once per unique block across all athletes in the request
+      const uniqueTrainingBlockIds = new Set(
+        athleteData.flatMap((a: any) => a.selectedEvents)
+          .filter((id: string) => {
+            const event = selectedEvents.find(e => e.id === id);
+            return event?.type === 'training-block';
+          })
+      );
+
+      // Handle other events normally (per-athlete charge)
       for (const athlete of athleteData) {
         for (const eventId of athlete.selectedEvents) {
           const event = selectedEvents.find(e => e.id === eventId);
           if (!event) continue;
-          
-          // Verify capacity
+
+          // If it's a training block, we already verified unique IDs for pricing
+          // But we still need to check capacity for EACH athlete joining it
           if (event.spotsFilled! >= event.capacity!) {
             throw new Error(`The event "${event.name}" is full.`);
           }
 
-          totalCents += event.price;
-          lineItems.push({
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: `${event.name} - ${athlete.firstName} ${athlete.lastName}`,
-                description: `${event.dateInfo} | ${event.timeInfo}`,
+          // ONLY add to total and line items if NOT a training block 
+          // (or if we want to handle training blocks separately below)
+          if (event.type !== 'training-block') {
+            totalCents += event.price;
+            lineItems.push({
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: `${event.name} - ${athlete.firstName} ${athlete.lastName}`,
+                  description: `${event.dateInfo} | ${event.timeInfo}`,
+                },
+                unit_amount: event.price,
               },
-              unit_amount: event.price,
-            },
-            quantity: 1,
-          });
+              quantity: 1,
+            });
+          }
         }
+      }
+
+      // Now add the flat-fee training blocks to the total
+      for (const blockId of Array.from(uniqueTrainingBlockIds)) {
+        const event = selectedEvents.find(e => e.id === blockId);
+        if (!event) continue;
+
+        totalCents += event.price;
+        lineItems.push({
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `${event.name}`,
+              description: `${event.dateInfo} | ${event.timeInfo} (Group Registration)`,
+            },
+            unit_amount: event.price,
+          },
+          quantity: 1,
+        });
       }
 
       if (totalCents === 0) {

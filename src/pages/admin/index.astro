@@ -31,8 +31,8 @@ if (Astro.url.searchParams.get('auth') === 'true') {
 if (authenticated) {
   try {
     const db = getDb(
-      import.meta.env.TURSO_DATABASE_URL || '',
-      import.meta.env.TURSO_AUTH_TOKEN || ''
+      import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL || '',
+      import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || ''
     );
     
     // Get latest 5 paid registrations

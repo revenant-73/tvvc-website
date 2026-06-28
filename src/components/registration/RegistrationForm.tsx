@@ -98,12 +98,27 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
   // Calculate total whenever athletes or event selection changes
   useEffect(() => {
     let newTotal = 0;
+    const uniqueTrainingBlockIds = new Set<string>();
+
     athletes.forEach(athlete => {
       athlete.selectedEvents.forEach(eventId => {
         const event = initialEvents.find(e => e.id === eventId);
-        if (event) newTotal += event.price;
+        if (!event) return;
+
+        if (event.type === 'training-block') {
+          uniqueTrainingBlockIds.add(eventId);
+        } else {
+          newTotal += event.price;
+        }
       });
     });
+
+    // Add unique training blocks once (flat fee)
+    uniqueTrainingBlockIds.forEach(id => {
+      const event = initialEvents.find(e => e.id === id);
+      if (event) newTotal += event.price;
+    });
+
     setTotal(newTotal);
   }, [athletes, initialEvents]);
 

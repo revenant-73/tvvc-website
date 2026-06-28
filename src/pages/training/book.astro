@@ -8,20 +8,33 @@ import { events } from '../../db/schema';
 import { asc, and, eq, lt } from 'drizzle-orm';
 
 const db = getDb(
-  import.meta.env.TURSO_DATABASE_URL || '',
-  import.meta.env.TURSO_AUTH_TOKEN || ''
+  import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL || '',
+  import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || ''
 );
 
 const now = new Date();
+const currentYear = 2026;
 
 let trainingBlocks = [];
 let error = null;
 
 const getSortValue = (b: any) => {
   try {
-    const datePart = b.dateInfo.split('–')[0].trim();
-    const timePart = b.timeInfo?.split('–')[0].trim();
-    const eventDate = new Date(`${datePart}, 2026 ${timePart || ''}`);
+    // Handle both en-dash and hyphen
+    const datePart = b.dateInfo.split(/[–-]/)[0].trim();
+    const timePart = b.timeInfo?.split(/[–-]/)[0].trim();
+    
+    // Clean time string (remove am/pm for a moment to check if it's just the time)
+    const timeClean = timePart?.replace(/(am|pm)/i, '').trim();
+    const isPM = /pm/i.test(timePart || '');
+    
+    const eventDate = new Date(`${datePart}, ${currentYear} ${timePart || ''}`);
+    
+    // If the above fails or produces an invalid date, try a simpler version
+    if (isNaN(eventDate.getTime())) {
+      return new Date(`${datePart}, ${currentYear}`).getTime();
+    }
+    
     return eventDate.getTime();
   } catch (e) {
     return 0;
@@ -48,9 +61,11 @@ try {
 
       // 2. Check if in the past
       try {
-        const eventDate = new Date(getSortValue(b));
-        if (isNaN(eventDate.getTime())) return true;
-        return eventDate > now;
+        const eventTime = getSortValue(b);
+        if (eventTime === 0) return true; // Keep if we really can't parse it
+        
+        // Hide if the event time is before "now"
+        return eventTime > now.getTime();
       } catch (e) {
         return true;
       }

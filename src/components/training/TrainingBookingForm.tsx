@@ -31,6 +31,7 @@ export default function TrainingBookingForm({ availableBlocks }: TrainingBooking
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedBlocks = availableBlocks.filter(b => selectedBlockIds.includes(b.id));
+  // Total is calculated once per block, regardless of athlete count (flat fee)
   const totalAmount = selectedBlocks.reduce((sum, b) => sum + b.price, 0);
 
   const toggleBlock = (id: string) => {
