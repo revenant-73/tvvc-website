@@ -161,6 +161,9 @@ export const registrations = sqliteTable('registrations', {
   parentName: text('parent_name').notNull(),
   parentEmail: text('parent_email').notNull(),
   parentPhone: text('parent_phone').notNull(),
+  secondaryParentName: text('secondary_parent_name'),
+  secondaryParentEmail: text('secondary_parent_email'),
+  secondaryParentPhone: text('secondary_parent_phone'),
   emergencyPhone: text('emergency_phone'),
   stripeSessionId: text('stripe_session_id'),
   stripeCustomerId: text('stripe_customer_id'), // Store Stripe customer ID directly on registration too
@@ -176,9 +179,17 @@ export const athletes = sqliteTable('athletes', {
   parentId: text('parent_id').references(() => users.id), // Link athlete to parent account for long-term profile
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
+  preferredName: text('preferred_name'),
+  dateOfBirth: text('date_of_birth'),
+  gender: text('gender'),
   grade: text('grade').notNull(), // Entering grade
+  school: text('school'),
+  gradYear: text('grad_year'),
   division: text('division'), // New field for outdoor tournaments
   tshirtSize: text('tshirt_size'), // Present in DB
+  jerseySize: text('jersey_size'),
+  experience: text('experience'),
+  positions: text('positions'),
   medicalInfo: text('medical_info'),
   waiverAgreed: integer('waiver_agreed', { mode: 'boolean' }).default(false),
   photoReleaseAgreed: integer('photo_release_agreed', { mode: 'boolean' }).default(false),
