@@ -6,15 +6,15 @@ import Resend from '@auth/core/providers/resend';
 import Credentials from '@auth/core/providers/credentials';
 
 export default defineConfig({
-  adapter: DrizzleAdapter(db, {
+  adapter: db ? DrizzleAdapter(db, {
     usersTable: schema.users,
     accountsTable: schema.accounts,
     sessionsTable: schema.sessions,
     verificationTokensTable: schema.verificationTokens,
-  }),
+  }) : undefined,
   providers: [
     Resend({
-      apiKey: import.meta.env.RESEND_API_KEY,
+      apiKey: import.meta.env.RESEND_API_KEY || process.env.RESEND_API_KEY,
       from: 'TVVC <no-reply@mail.tualatinvalleyvb.com>',
     }),
   ],

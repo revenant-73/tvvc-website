@@ -3,7 +3,12 @@ import { getSession } from 'auth-astro/server';
 const { pathname } = Astro.url;
 const normalizedPath = pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
 
-const session = await getSession(Astro.request);
+let session = null;
+try {
+  session = await getSession(Astro.request);
+} catch (e) {
+  console.error('Failed to get session:', e);
+}
 
 const navLinks = [
   { href: '/teams', label: 'Club Teams' },
