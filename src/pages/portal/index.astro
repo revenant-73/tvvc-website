@@ -1,0 +1,11 @@
+---
+import { getSession } from 'auth-astro/server';
+
+const session = await getSession(Astro.request);
+
+if (session) {
+  return Astro.redirect('/portal/dashboard');
+} else {
+  return Astro.redirect('/portal/login');
+}
+---

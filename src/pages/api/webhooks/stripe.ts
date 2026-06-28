@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
-import { registrations, events, registrationItems } from '../../../db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { registrations, events, registrationItems, users } from '../../../db/schema';
+import { eq, sql, and } from 'drizzle-orm';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || '', {
@@ -43,6 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     const registrationId = session.metadata?.registrationId;
+    const stripeCustomerId = session.customer as string;
 
     console.log('Received checkout.session.completed for registration:', registrationId);
 
@@ -51,15 +52,28 @@ export const POST: APIRoute = async ({ request }) => {
       
       try {
         await db.transaction(async (tx) => {
-          // 1. Update Registration Status
+          // 1. Update Registration Status and store Customer ID
           const updateReg = await tx.update(registrations)
-            .set({ status: 'paid' })
+            .set({ 
+              status: 'paid',
+              stripeCustomerId: stripeCustomerId
+            })
             .where(eq(registrations.id, registrationId))
             .returning();
           
           if (updateReg.length === 0) {
             console.warn(`Registration ${registrationId} not found in database during webhook processing.`);
             return;
+          }
+
+          // 2. Link Stripe Customer ID to User if not already set
+          if (updateReg[0].userId) {
+            await tx.update(users)
+              .set({ stripeCustomerId: stripeCustomerId })
+              .where(and(
+                eq(users.id, updateReg[0].userId),
+                sql`${users.stripeCustomerId} IS NULL`
+              ));
           }
 
           console.log(`Registration ${registrationId} status updated to "paid".`);

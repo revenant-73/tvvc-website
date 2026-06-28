@@ -1,0 +1,156 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+
+const session = await getSession(Astro.request);
+
+if (session) {
+  return Astro.redirect('/portal/dashboard');
+}
+---
+
+<BaseLayout title="Login to My TVVC" noindex={true}>
+  <main class="min-h-screen flex items-center justify-center pt-24 pb-12 px-4">
+    <div class="w-full max-w-md">
+      <div class="text-center mb-10">
+        <h1 class="text-4xl font-heading font-black mb-2 uppercase tracking-tight">
+          My <span class="text-brand-teal">TV</span>VC
+        </h1>
+        <p class="text-white/60 font-medium">Customer Portal</p>
+      </div>
+
+      <div class="glass p-8 rounded-3xl border-white/5 shadow-2xl relative overflow-hidden group">
+        <!-- Decorative blob -->
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-brand-teal/10 rounded-full blur-3xl group-hover:bg-brand-teal/20 transition-all duration-700"></div>
+        
+        <h2 class="text-2xl font-heading font-bold mb-6 text-center relative z-10">Welcome Back</h2>
+        
+        <div class="space-y-4 relative z-10">
+          <div id="email-form">
+            <label for="email" class="block text-xs uppercase tracking-widest font-bold text-white/40 mb-2 ml-1">
+              Email Address
+            </label>
+            <input 
+              type="email" 
+              name="email" 
+              id="email" 
+              required 
+              placeholder="coach@tvvc.com"
+              class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-teal transition-colors placeholder:text-white/20"
+            />
+            
+            <button 
+              id="login-btn"
+              class="w-full bg-brand-teal hover:bg-brand-teal/80 text-brand-charcoal font-bold py-4 rounded-2xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-brand-teal/20 mt-6 flex items-center justify-center gap-2"
+            >
+              <span id="btn-text">Send Login Link</span>
+              <div id="btn-loader" class="hidden w-5 h-5 border-2 border-brand-charcoal/30 border-t-brand-charcoal rounded-full animate-spin"></div>
+            </button>
+          </div>
+
+          <div id="success-msg" class="hidden text-center py-8">
+            <div class="w-20 h-20 bg-brand-teal/20 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-teal shadow-lg shadow-brand-teal/10">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="animate-bounce-subtle"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            </div>
+            <h3 class="text-2xl font-heading font-bold mb-3">Check your inbox!</h3>
+            <p class="text-white/60 text-base leading-relaxed mb-6">
+              We just sent a magic login link to your email. Click the link in that message and we'll get you right into your dashboard.
+            </p>
+            <div class="bg-white/5 rounded-2xl p-4 mb-8">
+              <p class="text-xs text-white/40 uppercase tracking-widest font-bold mb-1">Didn't see it?</p>
+              <p class="text-sm text-white/60">Check your spam folder just in case—sometimes it likes to hide there.</p>
+            </div>
+            <button id="reset-btn" class="text-xs uppercase tracking-widest font-bold text-brand-teal hover:text-white transition-colors border-b border-brand-teal/30 pb-1">Use a different email</button>
+          </div>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-white/10 text-center relative z-10">
+          <p class="text-sm text-white/40">
+            Don't have an account? 
+            <span class="text-white/60">One will be created automatically when you first sign in.</span>
+          </p>
+        </div>
+      </div>
+      
+      <div class="mt-8 text-center">
+        <a href="/" class="text-white/40 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest">
+          &larr; Back to Website
+        </a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  import { signIn } from 'auth-astro/client';
+
+  const emailInput = document.getElementById('email') as HTMLInputElement;
+  const loginBtn = document.getElementById('login-btn');
+  const btnText = document.getElementById('btn-text');
+  const btnLoader = document.getElementById('btn-loader');
+  const emailForm = document.getElementById('email-form');
+  const successMsg = document.getElementById('success-msg');
+  const resetBtn = document.getElementById('reset-btn');
+
+  // Check if we just sent an email or if we're coming back from a redirect
+  const urlParams = new URLSearchParams(window.location.search);
+  const isVerify = urlParams.has('verifyRequest') || 
+                   urlParams.has('verify-request') || 
+                   window.location.search.includes('verify') ||
+                   sessionStorage.getItem('tvvc_login_pending') === 'true';
+                   
+  if (isVerify) {
+    emailForm?.classList.add('hidden');
+    successMsg?.classList.remove('hidden');
+  }
+
+  loginBtn?.addEventListener('click', async () => {
+    const email = emailInput?.value;
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    // UI Feedback
+    if (loginBtn) (loginBtn as HTMLButtonElement).disabled = true;
+    btnText?.classList.add('hidden');
+    btnLoader?.classList.remove('hidden');
+
+    try {
+      // Set the flag before signing in
+      sessionStorage.setItem('tvvc_login_pending', 'true');
+      
+      // We call signIn. If it redirects, the flag is already set.
+      // If it doesn't redirect, we show the UI manually.
+      const result = await signIn('resend', { email, redirect: false });
+      
+      if (!result?.error) {
+        emailForm?.classList.add('hidden');
+        successMsg?.classList.remove('hidden');
+      } else {
+        sessionStorage.removeItem('tvvc_login_pending');
+        alert('Something went wrong. Please try again.');
+        if (loginBtn) (loginBtn as HTMLButtonElement).disabled = false;
+        btnText?.classList.remove('hidden');
+        btnLoader?.classList.add('hidden');
+      }
+    } catch (e) {
+      // Even if it throws, it often actually sent the email
+      // We'll keep the success UI visible just in case
+      emailForm?.classList.add('hidden');
+      successMsg?.classList.remove('hidden');
+      console.error('Sign in error:', e);
+    }
+  });
+
+  resetBtn?.addEventListener('click', () => {
+    sessionStorage.removeItem('tvvc_login_pending');
+    // Also clear query params
+    window.history.replaceState({}, '', window.location.pathname);
+    emailForm?.classList.remove('hidden');
+    successMsg?.classList.add('hidden');
+    if (loginBtn) (loginBtn as HTMLButtonElement).disabled = false;
+    btnText?.classList.remove('hidden');
+    btnLoader?.classList.add('hidden');
+  });
+</script>

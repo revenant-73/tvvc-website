@@ -25,12 +25,32 @@ interface Athlete {
 
 const grades = ['4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
 
-export default function RegistrationForm({ initialEvents }: { initialEvents: Event[] }) {
+interface SavedAthlete {
+  id: number;
+  firstName: string;
+  lastName: string;
+  grade: string;
+  medicalInfo: string;
+  tshirtSize?: string;
+  waiverAgreed: boolean;
+  photoReleaseAgreed: boolean;
+}
+
+export default function RegistrationForm({ 
+  initialEvents, 
+  userAthletes = [], 
+  currentUser 
+}: { 
+  initialEvents: Event[],
+  userAthletes?: SavedAthlete[],
+  currentUser?: any
+}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [parentInfo, setParentInfo] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    name: currentUser?.name || '',
+    email: currentUser?.email || '',
+    phone: '', // This is the parent's general contact phone
+    emergencyPhone: currentUser?.emergencyPhone || '', // Pre-fill with emergency contact from profile
   });
 
   const [athletes, setAthletes] = useState<Athlete[]>([
@@ -161,8 +181,8 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
 
   const nextStep = () => {
     if (currentStep === 1) {
-      if (!parentInfo.name || !parentInfo.email || !parentInfo.phone) {
-        alert("Please complete all parent information.");
+      if (!parentInfo.name || !parentInfo.email || !parentInfo.phone || !parentInfo.emergencyPhone) {
+        alert("Please complete all parent and emergency contact information.");
         return;
       }
       if (athletes.some(a => !a.firstName || !a.lastName || !a.grade || !a.medicalInfo)) {
@@ -250,7 +270,7 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
           {/* Parent Contact Section */}
           <section className="glass-card border-white/10 p-8 space-y-6">
             <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Parent / Guardian Information</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Full Name</label>
                 <input 
@@ -272,13 +292,24 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Phone Number</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Your Phone</label>
                 <input 
                   type="tel" 
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
                   value={parentInfo.phone}
                   onChange={e => setParentInfo({ ...parentInfo, phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 text-brand-teal">Emergency Phone</label>
+                <input 
+                  type="tel" 
+                  required
+                  placeholder="503-555-0123"
+                  className="w-full bg-brand-teal/5 border border-brand-teal/20 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors placeholder:text-white/20"
+                  value={parentInfo.emergencyPhone}
+                  onChange={e => setParentInfo({ ...parentInfo, emergencyPhone: e.target.value })}
                 />
               </div>
             </div>
@@ -300,6 +331,31 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
               <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">
                 Athlete #{index + 1} Details
               </h2>
+
+              {userAthletes.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Quick Select Saved Player</p>
+                  <div className="flex flex-wrap gap-2">
+                    {userAthletes.map(sa => (
+                      <button
+                        key={sa.id}
+                        type="button"
+                        onClick={() => {
+                          updateAthlete(index, 'firstName', sa.firstName);
+                          updateAthlete(index, 'lastName', sa.lastName);
+                          updateAthlete(index, 'grade', sa.grade);
+                          updateAthlete(index, 'medicalInfo', sa.medicalInfo || '');
+                          updateAthlete(index, 'waiverAgreed', sa.waiverAgreed || false);
+                          updateAthlete(index, 'photoReleaseAgreed', sa.photoReleaseAgreed || false);
+                        }}
+                        className="bg-white/5 hover:bg-brand-teal/20 border border-white/10 hover:border-brand-teal/50 rounded-xl px-4 py-2 text-xs font-bold transition-all"
+                      >
+                        {sa.firstName} {sa.lastName}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 <div className="space-y-2">
@@ -614,7 +670,7 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
               {/* Parent Summary */}
               <section className="glass-card border-white/10 p-6 space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-brand-teal">Parent / Guardian</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <span className="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Name</span>
                     <span className="text-white font-medium">{parentInfo.name}</span>
@@ -626,6 +682,10 @@ export default function RegistrationForm({ initialEvents }: { initialEvents: Eve
                   <div>
                     <span className="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Phone</span>
                     <span className="text-white font-medium">{parentInfo.phone}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Emergency</span>
+                    <span className="text-brand-teal font-bold">{parentInfo.emergencyPhone}</span>
                   </div>
                 </div>
               </section>

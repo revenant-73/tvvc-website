@@ -1,0 +1,216 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import { db } from '../../../db/db';
+import { athletes, registrations, users } from '../../../db/schema';
+import { eq, or, and } from 'drizzle-orm';
+
+const { id } = Astro.params;
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect('/portal/login');
+}
+
+if (!id) {
+  return Astro.redirect('/portal/dashboard');
+}
+
+const user = session.user;
+
+// Fetch athlete and verify ownership
+// We check if parentId matches user.id OR if the linked registration email matches user.email
+const athleteData = await db.select({
+  athlete: athletes,
+  registration: registrations
+})
+.from(athletes)
+.leftJoin(registrations, eq(athletes.registrationId, registrations.id))
+.where(eq(athletes.id, parseInt(id)))
+.limit(1);
+
+const record = athleteData[0];
+
+if (!record) {
+  return Astro.redirect('/portal/dashboard');
+}
+
+// Security check
+const isOwner = (record.athlete.parentId === (user as any).id) || 
+                (record.registration?.parentEmail === user.email);
+
+if (!isOwner) {
+  return Astro.redirect('/portal/dashboard');
+}
+
+const athlete = record.athlete;
+---
+
+<BaseLayout title={`Edit Player: ${athlete.firstName}`} noindex={true}>
+  <main class="pt-32 pb-20 px-4 max-w-4xl mx-auto">
+    <div class="mb-8">
+      <a href="/portal/dashboard" class="text-white/40 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Back to Dashboard
+      </a>
+    </div>
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+      <div>
+        <h1 class="text-4xl font-heading font-black uppercase tracking-tight mb-2">
+          Edit <span class="text-brand-teal">Player Profile</span>
+        </h1>
+        <p class="text-white/40 font-medium">Update details for {athlete.firstName} {athlete.lastName}.</p>
+      </div>
+    </div>
+
+    <div class="grid gap-8">
+      <section class="glass rounded-3xl p-8 border-white/5">
+        <h2 class="text-2xl font-heading font-bold mb-6 uppercase tracking-tight flex items-center gap-3">
+          <span class="w-2 h-8 bg-brand-teal rounded-full"></span>
+          Player Details
+        </h2>
+
+        <form id="athlete-form" class="space-y-6">
+          <input type="hidden" name="id" value={athlete.id} />
+          
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="firstName" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1">
+                First Name
+              </label>
+              <input 
+                type="text" 
+                name="firstName" 
+                id="firstName" 
+                value={athlete.firstName} 
+                required
+                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-teal transition-colors"
+              />
+            </div>
+            <div class="space-y-2">
+              <label for="lastName" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1">
+                Last Name
+              </label>
+              <input 
+                type="text" 
+                name="lastName" 
+                id="lastName" 
+                value={athlete.lastName} 
+                required
+                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-teal transition-colors"
+              />
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="grade" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1">
+                Grade (Fall 2026)
+              </label>
+              <div class="relative">
+                <select 
+                  name="grade" 
+                  id="grade" 
+                  class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-teal transition-colors appearance-none cursor-pointer"
+                >
+                  {['3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'].map((g) => (
+                    <option value={g} selected={athlete.grade === g} class="bg-[#1a1a1a] text-white">{g} Grade</option>
+                  ))}
+                </select>
+                <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/20">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label for="tshirtSize" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1">
+                T-Shirt Size
+              </label>
+              <div class="relative">
+                <select 
+                  name="tshirtSize" 
+                  id="tshirtSize" 
+                  class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-teal transition-colors appearance-none cursor-pointer"
+                >
+                  {['Youth S', 'Youth M', 'Youth L', 'Adult S', 'Adult M', 'Adult L', 'Adult XL'].map((s) => (
+                    <option value={s} selected={athlete.tshirtSize === s} class="bg-[#1a1a1a] text-white">{s}</option>
+                  ))}
+                </select>
+                <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/20">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label for="medicalInfo" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1">
+              Medical Info / Allergies
+            </label>
+            <textarea 
+              name="medicalInfo" 
+              id="medicalInfo" 
+              rows="3"
+              placeholder="List any medical conditions or allergies we should know about..."
+              class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-teal transition-colors resize-none placeholder:text-white/20"
+            >{athlete.medicalInfo}</textarea>
+          </div>
+
+          <div class="flex justify-end pt-4">
+            <button 
+              type="submit" 
+              id="save-athlete"
+              class="bg-brand-teal hover:bg-brand-teal/80 text-brand-charcoal font-bold py-4 px-8 rounded-2xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-brand-teal/20 flex items-center gap-2"
+            >
+              <span id="btn-text">Update Profile</span>
+              <div id="btn-loader" class="hidden w-5 h-5 border-2 border-brand-charcoal/30 border-t-brand-charcoal rounded-full animate-spin"></div>
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  const athleteForm = document.getElementById('athlete-form') as HTMLFormElement;
+  const saveBtn = document.getElementById('save-athlete') as HTMLButtonElement;
+  const btnText = document.getElementById('btn-text');
+  const btnLoader = document.getElementById('btn-loader');
+
+  athleteForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(athleteForm);
+    const data = Object.fromEntries(formData.entries());
+
+    saveBtn.disabled = true;
+    btnText?.classList.add('hidden');
+    btnLoader?.classList.remove('hidden');
+
+    try {
+      const response = await fetch('/api/portal/update-athlete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        alert('Player profile updated successfully!');
+        window.location.href = '/portal/dashboard';
+      } else {
+        const result = await response.json();
+        alert(result.error || 'Failed to update profile');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred');
+    } finally {
+      saveBtn.disabled = false;
+      btnText?.classList.remove('hidden');
+      btnLoader?.classList.add('hidden');
+    }
+  });
+</script>

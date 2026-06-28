@@ -1,5 +1,65 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+
+// --- Authentication Tables (Auth.js) ---
+
+export const users = sqliteTable('user', {
+  id: text('id').primaryKey(),
+  name: text('name'),
+  email: text('email').notNull(),
+  emailVerified: integer('email_verified', { mode: 'timestamp_ms' }),
+  image: text('image'),
+  role: text('role').default('user'), // 'user', 'admin'
+  stripeCustomerId: text('stripe_customer_id'),
+  emergencyPhone: text('emergency_phone'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const accounts = sqliteTable(
+  'account',
+  {
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    provider: text('provider').notNull(),
+    providerAccountId: text('provider_account_id').notNull(),
+    refresh_token: text('refresh_token'),
+    access_token: text('access_token'),
+    expires_at: integer('expires_at'),
+    token_type: text('token_type'),
+    scope: text('scope'),
+    id_token: text('id_token'),
+    session_state: text('session_state'),
+  },
+  (account) => ({
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+  })
+);
+
+export const sessions = sqliteTable('session', {
+  sessionToken: text('session_token').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  expires: integer('expires', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const verificationTokens = sqliteTable(
+  'verification_token',
+  {
+    identifier: text('identifier').notNull(),
+    token: text('token').notNull(),
+    expires: integer('expires', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (vt) => ({
+    compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
+  })
+);
+
+// --- Core Site Tables ---
 
 export const feedback = sqliteTable('feedback', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -60,6 +120,8 @@ export const feedback = sqliteTable('feedback', {
   advice: text('advice'),
   anythingElse: text('anything_else'),
   
+  // Metadata & Status
+  userId: text('user_id').references(() => users.id), // Link feedback to user if logged in
   metadata: text('metadata'), // JSON blob for extensible data
   starred: integer('starred', { mode: 'boolean' }).default(false),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
@@ -84,6 +146,8 @@ export const events = sqliteTable('events', {
   description: text('description'),
   dateInfo: text('date_info').notNull(), // e.g., 'June 15–17'
   timeInfo: text('time_info'), // e.g., '8:00am–12:00pm'
+  startDate: text('start_date'), // YYYY-MM-DD for sorting/scheduling
+  endDate: text('end_date'), // YYYY-MM-DD
   price: integer('price').notNull(), // in cents (Stripe style)
   capacity: integer('capacity').notNull(),
   spotsFilled: integer('spots_filled').default(0),
@@ -93,10 +157,13 @@ export const events = sqliteTable('events', {
 
 export const registrations = sqliteTable('registrations', {
   id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id), // Link registration to parent account
   parentName: text('parent_name').notNull(),
   parentEmail: text('parent_email').notNull(),
   parentPhone: text('parent_phone').notNull(),
+  emergencyPhone: text('emergency_phone'),
   stripeSessionId: text('stripe_session_id'),
+  stripeCustomerId: text('stripe_customer_id'), // Store Stripe customer ID directly on registration too
   status: text('status').default('pending'), // pending, paid, cancelled
   totalAmount: integer('total_amount').notNull(),
   metadata: text('metadata'), // For storing promo codes or other info
@@ -106,6 +173,7 @@ export const registrations = sqliteTable('registrations', {
 export const athletes = sqliteTable('athletes', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   registrationId: text('registration_id').references(() => registrations.id),
+  parentId: text('parent_id').references(() => users.id), // Link athlete to parent account for long-term profile
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   grade: text('grade').notNull(), // Entering grade
@@ -123,3 +191,4 @@ export const registrationItems = sqliteTable('registration_items', {
   athleteId: integer('athlete_id').references(() => athletes.id),
   eventId: text('event_id').references(() => events.id),
 });
+

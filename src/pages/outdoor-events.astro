@@ -4,22 +4,55 @@ export const prerender = false;
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';
 import OutdoorRegistrationManager from '../components/registration/OutdoorRegistrationManager';
-import { getDb } from '../db';
-import { events as eventsTable } from '../db/schema';
+import { getSession } from 'auth-astro/server';
+import { db } from '../db/db';
+import { events as eventsTable, athletes, registrations, users } from '../db/schema';
+import { eq, or } from 'drizzle-orm';
+
+const session = await getSession(Astro.request);
 
 let dbEvents = [];
+let userAthletes = [];
 
 try {
-  const url = import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL;
-  const token = import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN;
+  const allRows = await db.select().from(eventsTable);
   
-  if (url) {
-    const db = getDb(url, token);
-    const allRows = await db.select().from(eventsTable);
-    
-    dbEvents = allRows.filter(e => 
-      (e.type === 'tournament' || e.type === 'family-challenge') && e.active
-    );
+  dbEvents = allRows.filter(e => 
+    (e.type === 'tournament' || e.type === 'family-challenge') && e.active
+  );
+
+  if (session?.user?.email) {
+    // Fetch user profile for pre-filling contact info
+    const [userProfile] = await db.select({
+      emergencyPhone: users.emergencyPhone,
+    })
+    .from(users)
+    .where(eq(users.email, session.user.email))
+    .limit(1);
+
+    if (userProfile?.emergencyPhone) {
+      (session.user as any).emergencyPhone = userProfile.emergencyPhone;
+    }
+
+    userAthletes = await db.select({
+      id: athletes.id,
+      firstName: athletes.firstName,
+      lastName: athletes.lastName,
+      grade: athletes.grade,
+      medicalInfo: athletes.medicalInfo,
+      tshirtSize: athletes.tshirtSize,
+      waiverAgreed: athletes.waiverAgreed,
+      photoReleaseAgreed: athletes.photoReleaseAgreed,
+    })
+    .from(athletes)
+    .leftJoin(registrations, eq(athletes.registrationId, registrations.id))
+    .where(
+      or(
+        eq(registrations.parentEmail, session.user.email),
+        eq(athletes.parentId, (session.user as any).id)
+      )
+    )
+    .groupBy(athletes.id);
   }
 } catch (e) {
   console.error("Outdoor Events DB Error:", e);
@@ -181,8 +214,27 @@ try {
 
     <!-- Grass Series Grid -->
     <section class="max-w-6xl mx-auto px-6 py-32" id="registration">
+       {/* 
+       {!session && (
+          <div class="glass-card mb-12 p-6 flex flex-col md:flex-row items-center justify-between gap-6 border-brand-teal/20 bg-brand-teal/5">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-brand-teal/20 flex items-center justify-center text-brand-teal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-white uppercase tracking-tight">Already have an account?</h3>
+                <p class="text-white/40 text-sm">Log in to auto-fill your info and select saved players.</p>
+              </div>
+            </div>
+            <a href="/portal/login" class="bg-brand-teal hover:bg-brand-teal/80 text-brand-charcoal font-black py-3 px-8 rounded-xl transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-brand-teal/10">
+              Login to Save Time
+            </a>
+          </div>
+       )}
+       */}
+
        {dbEvents.length > 0 ? (
-         <OutdoorRegistrationManager client:load events={dbEvents} />
+         <OutdoorRegistrationManager client:load events={dbEvents} userAthletes={userAthletes} currentUser={session?.user} />
        ) : (
          <div class="glass-card p-12 text-center border-white/5">
             <p class="text-white/20 uppercase tracking-widest font-bold text-xs">No active tournaments found. Check back soon!</p>

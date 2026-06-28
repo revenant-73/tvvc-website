@@ -18,19 +18,34 @@ interface Participant {
   medicalInfo: string;
 }
 
-export default function FamilyChallengeRegistrationForm({ event }: { event: Event }) {
+interface FamilyChallengeRegistrationFormProps {
+  event: Event;
+  userAthletes?: any[];
+  currentUser?: any;
+}
+
+export default function FamilyChallengeRegistrationForm({ 
+  event, 
+  userAthletes = [], 
+  currentUser 
+}: FamilyChallengeRegistrationFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [currentStep, setCurrentStep] = useState(1);
+  
+  const initialParentName = currentUser?.name || '';
+  const first = initialParentName.split(' ')[0] || '';
+  const last = initialParentName.split(' ').slice(1).join(' ') || '';
+
   const [parentInfo, setParentInfo] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    name: initialParentName,
+    email: currentUser?.email || '',
+    phone: currentUser?.emergencyPhone || '',
   });
 
   const [division, setDivision] = useState('');
 
   const [participants, setParticipants] = useState<Participant[]>([
-    { firstName: '', lastName: '', role: 'parent', grade: 'Adult', medicalInfo: '' },
+    { firstName: first, lastName: last, role: 'parent', grade: 'Adult', medicalInfo: '' },
     { firstName: '', lastName: '', role: 'player', grade: '', medicalInfo: '' },
   ]);
 
@@ -251,6 +266,30 @@ export default function FamilyChallengeRegistrationForm({ event }: { event: Even
                 {/* Player Participant */}
                 <div className="space-y-6 p-6 rounded-2xl border border-white/5 bg-black/20">
                   <h3 className="text-lg font-heading font-bold text-white uppercase">Player</h3>
+                  
+                  {userAthletes.length > 0 && (
+                    <div className="space-y-3">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Quick Select Saved Player</p>
+                      <div className="flex flex-wrap gap-2">
+                        {userAthletes.map(sa => (
+                          <button
+                            key={sa.id}
+                            type="button"
+                            onClick={() => {
+                              updateParticipant(1, 'firstName', sa.firstName);
+                              updateParticipant(1, 'lastName', sa.lastName);
+                              updateParticipant(1, 'grade', sa.grade);
+                              updateParticipant(1, 'medicalInfo', sa.medicalInfo || '');
+                            }}
+                            className="bg-white/5 hover:bg-brand-coral/20 border border-white/10 hover:border-brand-coral/50 rounded-xl px-3 py-1.5 text-[10px] font-bold transition-all"
+                          >
+                            {sa.firstName}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">First Name</label>

@@ -14,16 +14,22 @@ interface Event {
 
 interface TrainingBookingFormProps {
   availableBlocks: Event[];
+  userAthletes?: any[];
+  currentUser?: any;
 }
 
-export default function TrainingBookingForm({ availableBlocks }: TrainingBookingFormProps) {
+export default function TrainingBookingForm({ 
+  availableBlocks, 
+  userAthletes = [], 
+  currentUser 
+}: TrainingBookingFormProps) {
   const [step, setStep] = useState(1);
   const [showAll, setShowAll] = useState(false);
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
   const [parentInfo, setParentInfo] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    name: currentUser?.name || '',
+    email: currentUser?.email || '',
+    phone: currentUser?.emergencyPhone || '',
   });
   const [athletes, setAthletes] = useState([
     { firstName: '', lastName: '', grade: 'N/A', medicalInfo: '' }
@@ -243,26 +249,55 @@ export default function TrainingBookingForm({ availableBlocks }: TrainingBooking
 
               <div className="space-y-6">
                 {athletes.map((athlete, idx) => (
-                  <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-bold uppercase tracking-widest text-white/30">Athlete #{idx + 1} First Name</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-teal outline-none"
-                        value={athlete.firstName}
-                        onChange={e => updateAthlete(idx, 'firstName', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-bold uppercase tracking-widest text-white/30">Athlete #{idx + 1} Last Name</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-teal outline-none"
-                        value={athlete.lastName}
-                        onChange={e => updateAthlete(idx, 'lastName', e.target.value)}
-                      />
+                  <div key={idx} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-4">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-brand-teal">Athlete #{idx + 1}</h4>
+                    
+                    {userAthletes.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[8px] font-bold uppercase tracking-widest text-white/30">Quick Select Saved Player</p>
+                        <div className="flex flex-wrap gap-2">
+                          {userAthletes.map(sa => (
+                            <button
+                              key={sa.id}
+                              type="button"
+                              onClick={() => {
+                                updateAthlete(idx, 'firstName', sa.firstName);
+                                updateAthlete(idx, 'lastName', sa.lastName);
+                                // For training blocks, we also sync medical info to the group if it's the first one selected
+                                if (idx === 0 || !athletes[0].medicalInfo) {
+                                    setAthletes(prev => prev.map(a => ({ ...a, medicalInfo: sa.medicalInfo || '' })));
+                                }
+                              }}
+                              className="bg-white/5 hover:bg-brand-teal/20 border border-white/10 hover:border-brand-teal/50 rounded-lg px-3 py-1 text-[9px] font-bold transition-all"
+                            >
+                              {sa.firstName}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-bold uppercase tracking-widest text-white/30">First Name</label>
+                        <input
+                          type="text"
+                          required
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-teal outline-none"
+                          value={athlete.firstName}
+                          onChange={e => updateAthlete(idx, 'firstName', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-bold uppercase tracking-widest text-white/30">Last Name</label>
+                        <input
+                          type="text"
+                          required
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-teal outline-none"
+                          value={athlete.lastName}
+                          onChange={e => updateAthlete(idx, 'lastName', e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}

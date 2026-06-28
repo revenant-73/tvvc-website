@@ -3,6 +3,7 @@ import { getDb } from '../../db';
 import { registrations, athletes, registrationItems, events } from '../../db/schema';
 import { eq, inArray, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
+import { getSession } from 'auth-astro/server';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -15,6 +16,9 @@ export const POST: APIRoute = async ({ request }) => {
     if (!stripeSecretKey) {
       return new Response(JSON.stringify({ error: 'Payment configuration missing (STRIPE_SECRET_KEY). Please add it to your .env file.' }), { status: 500 });
     }
+
+    const session = await getSession(request);
+    const userId = (session?.user as any)?.id;
 
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2025-01-27.acacia' as any,
@@ -109,9 +113,11 @@ export const POST: APIRoute = async ({ request }) => {
       // 2. Create internal registration record (Pending)
       await tx.insert(registrations).values({
         id: registrationId,
+        userId: userId || null,
         parentName: parentInfo.name,
         parentEmail: parentInfo.email,
         parentPhone: parentInfo.phone,
+        emergencyPhone: parentInfo.emergencyPhone,
         status: 'pending',
         totalAmount: totalCents,
         metadata: body.metadata ? JSON.stringify(body.metadata) : null,
@@ -120,6 +126,7 @@ export const POST: APIRoute = async ({ request }) => {
       for (const a of athleteData) {
         const [athleteResult] = await tx.insert(athletes).values({
           registrationId: registrationId,
+          parentId: userId || null,
           firstName: a.firstName,
           lastName: a.lastName,
           grade: a.grade,
@@ -146,17 +153,27 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       // 3. Create Stripe Checkout Session
-      const session = await stripe.checkout.sessions.create({
+      // If we have a stripeCustomerId for the user, use it
+      let stripeCustomerId = (session?.user as any)?.stripeCustomerId;
+      
+      const stripeSessionParams: Stripe.Checkout.SessionCreateParams = {
         payment_method_types: ['card'],
         line_items: lineItems,
         mode: 'payment',
         success_url: `${new URL(request.url).origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${new URL(request.url).origin}/outdoor-events`,
-        customer_email: parentInfo.email,
         metadata: {
           registrationId: registrationId,
         },
-      });
+      };
+
+      if (stripeCustomerId) {
+        stripeSessionParams.customer = stripeCustomerId;
+      } else {
+        stripeSessionParams.customer_email = parentInfo.email;
+      }
+
+      const session = await stripe.checkout.sessions.create(stripeSessionParams);
 
       // Update registration with Stripe session ID
       await tx.update(registrations)

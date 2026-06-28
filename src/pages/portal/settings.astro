@@ -1,0 +1,173 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import { db } from '../../db/db';
+import { users } from '../../db/schema';
+import { eq } from 'drizzle-orm';
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect('/portal/login');
+}
+
+const user = session.user;
+
+// Fetch full user record from DB
+const [dbUser] = await db.select()
+  .from(users)
+  .where(eq(users.email, user.email!))
+  .limit(1);
+
+if (!dbUser) {
+  return Astro.redirect('/portal/login');
+}
+---
+
+<BaseLayout title="Account Settings" noindex={true}>
+  <main class="pt-32 pb-20 px-4 max-w-4xl mx-auto">
+    <div class="mb-8">
+      <a href="/portal/dashboard" class="text-white/40 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Back to Dashboard
+      </a>
+    </div>
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+      <div>
+        <h1 class="text-4xl font-heading font-black uppercase tracking-tight mb-2">
+          Account <span class="text-brand-teal">Settings</span>
+        </h1>
+        <p class="text-white/40 font-medium">Manage your personal information and preferences.</p>
+      </div>
+    </div>
+
+    <div class="grid gap-8">
+      <!-- Profile Section -->
+      <section class="glass rounded-3xl p-8 border-white/5">
+        <h2 class="text-2xl font-heading font-bold mb-6 uppercase tracking-tight flex items-center gap-3">
+          <span class="w-2 h-8 bg-brand-teal rounded-full"></span>
+          Profile Information
+        </h2>
+
+        <form id="profile-form" class="space-y-6">
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="name" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1">
+                Display Name
+              </label>
+              <input 
+                type="text" 
+                name="name" 
+                id="name" 
+                value={dbUser.name || ''} 
+                placeholder="Your Name"
+                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-teal transition-colors placeholder:text-white/20"
+              />
+            </div>
+            <div class="space-y-2">
+              <label for="email" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1">
+                Email Address
+              </label>
+              <input 
+                type="email" 
+                id="email" 
+                value={dbUser.email} 
+                disabled
+                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white/40 cursor-not-allowed"
+              />
+              <p class="text-[10px] text-white/20 ml-1">Email cannot be changed as it's linked to your login.</p>
+            </div>
+            <div class="space-y-2">
+              <label for="emergencyPhone" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1">
+                Emergency Contact Phone
+              </label>
+              <input 
+                type="tel" 
+                name="emergencyPhone" 
+                id="emergencyPhone" 
+                value={dbUser.emergencyPhone || ''} 
+                placeholder="503-555-0123"
+                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-teal transition-colors placeholder:text-white/20"
+              />
+              <p class="text-[10px] text-white/20 ml-1">Used to auto-fill registration forms for your athletes.</p>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-4">
+            <button 
+              type="submit" 
+              id="save-profile"
+              class="bg-brand-teal hover:bg-brand-teal/80 text-brand-charcoal font-bold py-4 px-8 rounded-2xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-brand-teal/20 flex items-center gap-2"
+            >
+              <span id="btn-text">Save Changes</span>
+              <div id="btn-loader" class="hidden w-5 h-5 border-2 border-brand-charcoal/30 border-t-brand-charcoal rounded-full animate-spin"></div>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Advanced Section -->
+      <section class="glass rounded-3xl p-8 border-white/5">
+        <h2 class="text-2xl font-heading font-bold mb-6 uppercase tracking-tight flex items-center gap-3">
+          <span class="w-2 h-8 bg-brand-coral rounded-full"></span>
+          Danger Zone
+        </h2>
+        
+        <div class="bg-brand-coral/10 border border-brand-coral/20 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div>
+            <h3 class="font-bold text-brand-coral mb-1">Sign Out Everywhere</h3>
+            <p class="text-sm text-white/60">Log out of all devices and active sessions.</p>
+          </div>
+          <button id="signout-all" class="bg-brand-coral hover:bg-brand-coral/80 text-white font-bold py-3 px-6 rounded-xl transition-all whitespace-nowrap">
+            Sign Out
+          </button>
+        </div>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  const profileForm = document.getElementById('profile-form') as HTMLFormElement;
+  const saveBtn = document.getElementById('save-profile') as HTMLButtonElement;
+  const btnText = document.getElementById('btn-text');
+  const btnLoader = document.getElementById('btn-loader');
+
+  profileForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(profileForm);
+    const name = formData.get('name');
+    const emergencyPhone = formData.get('emergencyPhone');
+
+    saveBtn.disabled = true;
+    btnText?.classList.add('hidden');
+    btnLoader?.classList.remove('hidden');
+
+    try {
+      const response = await fetch('/api/portal/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, emergencyPhone })
+      });
+
+      if (response.ok) {
+        alert('Profile updated successfully!');
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to update profile');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred');
+    } finally {
+      saveBtn.disabled = false;
+      btnText?.classList.remove('hidden');
+      btnLoader?.classList.add('hidden');
+    }
+  });
+
+  const { signOut } = await import('auth-astro/client');
+  document.getElementById('signout-all')?.addEventListener('click', () => signOut());
+</script>

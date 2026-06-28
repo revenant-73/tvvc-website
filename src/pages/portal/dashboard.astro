@@ -1,0 +1,264 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import { db } from '../../db/db';
+import { registrations, registrationItems, events, athletes, users } from '../../db/schema';
+import { eq, desc, and, sql, or } from 'drizzle-orm';
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect('/portal/login');
+}
+
+const user = session.user;
+
+// Get the actual user record from DB to ensure we have the correct ID and stripeCustomerId
+const dbUser = await db.select().from(users).where(eq(users.email, user.email!)).limit(1);
+const currentUser = dbUser[0];
+const userId = currentUser?.id || (user as any).id;
+
+// Fetch purchase history for the logged-in user
+const userRegistrations = await db.select({
+  id: registrations.id,
+  parentName: registrations.parentName,
+  status: registrations.status,
+  totalAmount: registrations.totalAmount,
+  createdAt: registrations.createdAt,
+})
+.from(registrations)
+.where(eq(registrations.parentEmail, user.email!))
+.orderBy(desc(registrations.createdAt));
+
+// Fetch upcoming events for this user's athletes
+const upcomingEvents = await db.select({
+  id: events.id,
+  name: events.name,
+  type: events.type,
+  dateInfo: events.dateInfo,
+  timeInfo: events.timeInfo,
+  startDate: events.startDate,
+  athleteFirstName: athletes.firstName,
+  athleteLastName: athletes.lastName,
+})
+.from(registrationItems)
+.innerJoin(events, eq(registrationItems.eventId, events.id))
+.innerJoin(registrations, eq(registrationItems.registrationId, registrations.id))
+.innerJoin(athletes, eq(registrationItems.athleteId, athletes.id))
+.where(
+  and(
+    eq(registrations.parentEmail, user.email!),
+    eq(registrations.status, 'paid')
+  )
+)
+.orderBy(events.startDate);
+
+// Fetch athletes linked to this user/email
+// Includes athletes from past registrations (via email) AND athletes added directly via portal (via parentId)
+const userAthletes = await db.select({
+  id: athletes.id,
+  firstName: athletes.firstName,
+  lastName: athletes.lastName,
+  grade: athletes.grade,
+})
+.from(athletes)
+.leftJoin(registrations, eq(athletes.registrationId, registrations.id))
+.where(
+  or(
+    eq(registrations.parentEmail, user.email!),
+    eq(athletes.parentId, userId)
+  )
+)
+.groupBy(athletes.id); // Prevent duplicates if an athlete has both
+
+const formatCurrency = (cents: number) => {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+};
+
+const formatDate = (dateStr: string | null) => {
+  if (!dateStr) return 'N/A';
+  return new Date(dateStr).toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+};
+---
+
+<BaseLayout title="Customer Dashboard" noindex={true}>
+  <main class="pt-32 pb-20 px-4 max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+      <div>
+        <h1 class="text-4xl font-heading font-black uppercase tracking-tight mb-2">
+          Welcome, <span class="text-brand-teal">{user.name || user.email?.split('@')[0]}</span>
+        </h1>
+        <p class="text-white/40 font-medium">Manage your registrations and player profiles.</p>
+      </div>
+      
+      <div class="flex gap-4">
+        {(user as any).role === 'admin' && (
+          <a href="/admin" class="bg-brand-teal text-brand-charcoal px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-brand-teal/80 transition-colors">
+            Admin Portal
+          </a>
+        )}
+        <a href="/portal/settings" class="glass px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-colors">
+          Settings
+        </a>
+        <button id="signout" class="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-brand-coral hover:border-brand-coral transition-all">
+          Sign Out
+        </button>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+      <!-- Left Column: Registration History -->
+      <div class="lg:col-span-2 space-y-8">
+        <section class="glass rounded-3xl p-8 border-white/5">
+          <h2 class="text-2xl font-heading font-bold mb-6 uppercase tracking-tight flex items-center gap-3">
+            <span class="w-2 h-8 bg-brand-teal rounded-full"></span>
+            Purchase History
+          </h2>
+
+          {userRegistrations.length > 0 ? (
+            <div class="space-y-4">
+              {userRegistrations.map((reg) => (
+                <div class="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-white/10 transition-all flex justify-between items-center group">
+                  <div>
+                    <div class="flex items-center gap-3 mb-1">
+                      <span class="font-bold text-lg group-hover:text-brand-teal transition-colors">Order #{reg.id.slice(0, 8).toUpperCase()}</span>
+                      <span class:list={[
+                        "text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full font-bold",
+                        reg.status === 'paid' ? "bg-brand-teal/20 text-brand-teal" : "bg-brand-coral/20 text-brand-coral"
+                      ]}>
+                        {reg.status}
+                      </span>
+                    </div>
+                    <p class="text-white/40 text-sm">{formatDate(reg.createdAt)}</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-black text-xl">{formatCurrency(reg.totalAmount)}</p>
+                    <a href={`/portal/orders/${reg.id}`} class="text-xs uppercase tracking-widest font-bold text-brand-teal hover:underline mt-1 block">View Details</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div class="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+              <p class="text-white/40 mb-4">You haven't made any purchases yet.</p>
+              <a href="/outdoor-events" class="text-brand-teal font-bold hover:underline uppercase tracking-widest text-sm">Browse Events &rarr;</a>
+            </div>
+          )}
+        </section>
+
+        <!-- Feature 3: My Schedule -->
+        <section class="glass rounded-3xl p-8 border-white/5">
+          <h2 class="text-2xl font-heading font-bold mb-6 uppercase tracking-tight flex items-center gap-3">
+            <span class="w-2 h-8 bg-brand-coral rounded-full"></span>
+            Upcoming Events
+          </h2>
+          
+          {upcomingEvents.length > 0 ? (
+            <div class="space-y-4">
+              {upcomingEvents.map((event) => (
+                <div class="bg-white/5 rounded-2xl p-6 border border-white/5 flex gap-6 items-center">
+                  <div class="flex-shrink-0 w-16 h-16 bg-brand-coral/10 rounded-2xl flex flex-col items-center justify-center text-brand-coral">
+                    <span class="text-xs uppercase font-black tracking-widest">{event.dateInfo.split(' ')[0]}</span>
+                    <span class="text-2xl font-black">{event.dateInfo.split(' ')[1]?.replace(/\D/g, '') || '??'}</span>
+                  </div>
+                  <div class="flex-grow">
+                    <h3 class="font-bold text-lg leading-tight mb-1">{event.name}</h3>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/40 font-medium">
+                      <span class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {event.timeInfo}
+                      </span>
+                      <span class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        {event.athleteFirstName}
+                      </span>
+                      <span class="bg-white/10 px-2 rounded text-[10px] uppercase tracking-widest font-bold self-center">{event.type}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div class="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+              <p class="text-white/40 mb-4">You have no upcoming confirmed events.</p>
+              <a href="/outdoor-events" class="text-brand-coral font-bold hover:underline uppercase tracking-widest text-sm">Find Events &rarr;</a>
+            </div>
+          )}
+        </section>
+      </div>
+
+      <!-- Right Column: Player Profiles -->
+      <div class="space-y-8">
+        <section class="glass rounded-3xl p-8 border-white/5">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-heading font-bold uppercase tracking-tight">Players</h2>
+            <a href="/portal/athletes/new" class="text-brand-teal hover:text-brand-teal/80 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            </a>
+          </div>
+
+          <div class="space-y-4">
+            {userAthletes.length > 0 ? (
+              userAthletes.map((athlete) => (
+                <a href={`/portal/athletes/${athlete.id}`} class="bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 hover:border-brand-teal/30 transition-all group">
+                  <div class="w-12 h-12 bg-brand-teal/20 rounded-full flex items-center justify-center text-brand-teal font-black text-xl group-hover:scale-110 transition-transform">
+                    {athlete.firstName[0]}
+                  </div>
+                  <div class="flex-grow">
+                    <p class="font-bold group-hover:text-brand-teal transition-colors">{athlete.firstName} {athlete.lastName}</p>
+                    <p class="text-xs text-white/40 uppercase tracking-widest font-bold">Grade: {athlete.grade}</p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/20 group-hover:text-brand-teal transition-colors"><path d="m9 18 6-6-6-6"/></svg>
+                </a>
+              ))
+            ) : (
+              <p class="text-white/40 text-sm text-center py-4">No players added yet.</p>
+            )}
+          </div>
+        </section>
+
+        <!-- Feature 4: Billing & Payments -->
+        <section class="glass rounded-3xl p-8 border-white/5 bg-gradient-to-br from-white/5 to-transparent">
+          <h2 class="text-xl font-heading font-bold mb-4 uppercase tracking-tight">Billing</h2>
+          <p class="text-sm text-white/40 mb-6">Update your payment methods and download tax receipts via our secure payment partner.</p>
+          <button id="manage-billing" class="w-full bg-white text-brand-charcoal font-black py-4 rounded-2xl hover:bg-brand-teal transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed">
+            Manage via Stripe
+          </button>
+        </section>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  const { signOut } = await import('auth-astro/client');
+  document.getElementById('signout')?.addEventListener('click', () => signOut());
+
+  document.getElementById('manage-billing')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget as HTMLButtonElement;
+    btn.disabled = true;
+    btn.textContent = 'Opening...';
+
+    try {
+      const response = await fetch('/api/stripe/portal', { method: 'POST' });
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Failed to open billing portal');
+        btn.disabled = false;
+        btn.textContent = 'Manage via Stripe';
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred');
+      btn.disabled = false;
+      btn.textContent = 'Manage via Stripe';
+    }
+  });
+</script>

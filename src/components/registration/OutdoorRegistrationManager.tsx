@@ -13,7 +13,17 @@ interface Event {
   spotsFilled: number;
 }
 
-export default function OutdoorRegistrationManager({ events }: { events: Event[] }) {
+interface OutdoorRegistrationManagerProps {
+  events: Event[];
+  userAthletes?: any[];
+  currentUser?: any;
+}
+
+export default function OutdoorRegistrationManager({ 
+  events, 
+  userAthletes = [], 
+  currentUser 
+}: OutdoorRegistrationManagerProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const selectedEvent = events.find(e => e.id === selectedEventId);
@@ -36,9 +46,9 @@ export default function OutdoorRegistrationManager({ events }: { events: Event[]
         </div>
 
         {selectedEvent.type === 'family-challenge' ? (
-            <FamilyChallengeRegistrationForm event={selectedEvent} />
+            <FamilyChallengeRegistrationForm event={selectedEvent} userAthletes={userAthletes} currentUser={currentUser} />
         ) : (
-            <TournamentRegistrationForm event={selectedEvent} />
+            <TournamentRegistrationForm event={selectedEvent} userAthletes={userAthletes} currentUser={currentUser} />
         )}
       </div>
     );

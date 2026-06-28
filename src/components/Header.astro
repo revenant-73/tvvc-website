@@ -1,6 +1,9 @@
 ---
+import { getSession } from 'auth-astro/server';
 const { pathname } = Astro.url;
 const normalizedPath = pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+
+const session = await getSession(Astro.request);
 
 const navLinks = [
   { href: '/teams', label: 'Club Teams' },
@@ -37,6 +40,18 @@ const isHome = normalizedPath === '/';
           {link.label}
         </a>
       ))}
+      
+      {/* 
+      <a 
+        href="/portal" 
+        class:list={[
+          "ml-2 px-4 py-2 rounded-full border border-white/10 hover:border-brand-teal hover:text-brand-teal transition-all",
+          normalizedPath.startsWith('/portal') ? "border-brand-teal text-brand-teal" : ""
+        ]}
+      >
+        {session ? 'My TVVC' : 'Login'}
+      </a>
+      */}
     </div>
 
     <!-- Mobile/Small Desktop Toggle -->
@@ -59,6 +74,17 @@ const isHome = normalizedPath === '/';
         {link.label}
       </a>
     ))}
+    {/* 
+    <a 
+      href="/portal" 
+      class:list={[
+        "text-lg font-heading font-bold py-3 px-6 rounded-2xl bg-brand-teal text-brand-charcoal text-center mt-4",
+        normalizedPath.startsWith('/portal') ? "ring-2 ring-white" : ""
+      ]}
+    >
+      {session ? 'Go to My TVVC' : 'Login to My TVVC'}
+    </a>
+    */}
   </div>
 </header>
 

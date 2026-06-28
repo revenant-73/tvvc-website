@@ -58,4 +58,13 @@
   .noise-bg {
     filter: url(#noiseFilter);
   }
+
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-8px) rotate(2deg); }
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 3s ease-in-out infinite;
+  }
 }
