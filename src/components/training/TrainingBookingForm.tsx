@@ -148,11 +148,6 @@ export default function TrainingBookingForm({ availableBlocks }: TrainingBooking
                       </div>
                       <div className="text-right">
                         <p className="text-white font-heading font-bold text-sm">${(block.price / 100).toFixed(2)}</p>
-                        {block.capacity - (block.spotsFilled || 0) <= 5 && (
-                          <p className="text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse mt-1">
-                            Only {block.capacity - (block.spotsFilled || 0)} left!
-                          </p>
-                        )}
                       </div>
                     </button>
                   ))
