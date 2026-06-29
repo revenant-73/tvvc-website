@@ -9,7 +9,12 @@ import { db } from '../db/db';
 import { events as eventsTable, athletes, registrations, users } from '../db/schema';
 import { eq, or } from 'drizzle-orm';
 
-const session = await getSession(Astro.request);
+let session = null;
+try {
+  session = await getSession(Astro.request);
+} catch (e) {
+  console.error('Failed to get session:', e);
+}
 
 let dbEvents = [];
 let userAthletes = [];
