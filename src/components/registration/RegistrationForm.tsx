@@ -670,7 +670,7 @@ export default function RegistrationForm({
               {/* Parent Summary */}
               <section className="glass-card border-white/10 p-6 space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-brand-teal">Parent / Guardian</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <span className="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Name</span>
                     <span className="text-white font-medium">{parentInfo.name}</span>
