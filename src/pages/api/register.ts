@@ -32,6 +32,9 @@ export const POST: APIRoute = async ({ request }) => {
       apiVersion: '2025-01-27.acacia' as any,
     });
 
+    // If we have a stripeCustomerId for the user, use it
+    let stripeCustomerId = (session?.user as any)?.stripeCustomerId;
+
     const body = await request.json();
     const { parentInfo, athletes: athleteData } = body;
 
@@ -174,9 +177,6 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       // 3. Create Stripe Checkout Session
-      // If we have a stripeCustomerId for the user, use it
-      let stripeCustomerId = (session?.user as any)?.stripeCustomerId;
-      
       const stripeSessionParams: Stripe.Checkout.SessionCreateParams = {
         payment_method_types: ['card'],
         line_items: lineItems,
