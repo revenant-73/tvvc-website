@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, primaryKey, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // --- Authentication Tables (Auth.js) ---
@@ -13,6 +13,10 @@ export const users = sqliteTable('user', {
   stripeCustomerId: text('stripe_customer_id'),
   emergencyPhone: text('emergency_phone'),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    emailIdx: index('user_email_idx').on(table.email),
+  };
 });
 
 export const accounts = sqliteTable(
@@ -125,6 +129,10 @@ export const feedback = sqliteTable('feedback', {
   metadata: text('metadata'), // JSON blob for extensible data
   starred: integer('starred', { mode: 'boolean' }).default(false),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    userIdIdx: index('feedback_user_id_idx').on(table.userId),
+  };
 });
 
 // New table for more granular feedback analysis
@@ -134,6 +142,10 @@ export const feedbackAnswers = sqliteTable('feedback_answers', {
   questionKey: text('question_key').notNull(),
   answerValue: text('answer_value').notNull(),
   category: text('category'), // e.g., 'coaching', 'communication'
+}, (table) => {
+  return {
+    feedbackIdIdx: index('feedback_answers_feedback_id_idx').on(table.feedbackId),
+  };
 });
 
 // --- Summer 2026 Registration System ---
@@ -153,6 +165,12 @@ export const events = sqliteTable('events', {
   spotsFilled: integer('spots_filled').default(0),
   active: integer('active', { mode: 'boolean' }).default(true),
   metadata: text('metadata'), // For any event-specific config
+}, (table) => {
+  return {
+    parentIdIdx: index('events_parent_id_idx').on(table.parentId),
+    typeIdx: index('events_type_idx').on(table.type),
+    startDateIdx: index('events_start_date_idx').on(table.startDate),
+  };
 });
 
 export const registrations = sqliteTable('registrations', {
@@ -171,6 +189,12 @@ export const registrations = sqliteTable('registrations', {
   totalAmount: integer('total_amount').notNull(),
   metadata: text('metadata'), // For storing promo codes or other info
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    parentEmailIdx: index('registrations_parent_email_idx').on(table.parentEmail),
+    userIdIdx: index('registrations_user_id_idx').on(table.userId),
+    stripeSessionIdIdx: index('registrations_stripe_session_id_idx').on(table.stripeSessionId),
+  };
 });
 
 export const athletes = sqliteTable('athletes', {
@@ -194,6 +218,11 @@ export const athletes = sqliteTable('athletes', {
   waiverAgreed: integer('waiver_agreed', { mode: 'boolean' }).default(false),
   photoReleaseAgreed: integer('photo_release_agreed', { mode: 'boolean' }).default(false),
   metadata: text('metadata'), // JSON blob for extensible data (Jersey Size, Partner Name, etc.)
+}, (table) => {
+  return {
+    parentIdIdx: index('athletes_parent_id_idx').on(table.parentId),
+    registrationIdIdx: index('athletes_registration_id_idx').on(table.registrationId),
+  };
 });
 
 export const registrationItems = sqliteTable('registration_items', {
@@ -201,5 +230,11 @@ export const registrationItems = sqliteTable('registration_items', {
   registrationId: text('registration_id').references(() => registrations.id),
   athleteId: integer('athlete_id').references(() => athletes.id),
   eventId: text('event_id').references(() => events.id),
+}, (table) => {
+  return {
+    registrationIdIdx: index('registration_items_registration_id_idx').on(table.registrationId),
+    athleteIdIdx: index('registration_items_athlete_id_idx').on(table.athleteId),
+    eventIdIdx: index('registration_items_event_id_idx').on(table.eventId),
+  };
 });
 

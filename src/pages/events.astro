@@ -5,7 +5,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';
 ---
 
-<BaseLayout title="Events" description="Explore TVVC's volleyball events including the May ShinDig, an end-of-season tournament for 14U and 16U teams.">
+<BaseLayout 
+  title="Events" 
+  description="Explore TVVC's volleyball events including the May ShinDig, an end-of-season tournament for 14U and 16U teams."
+  og={{
+    title: "May ShinDig 2026",
+    description: "End-of-season tournament in Hillsboro, OR.",
+    badge: "Tournament"
+  }}
+>
   <main class="pt-32">
     <!-- Hero Section -->
     <section class="px-6 py-20 relative text-center md:text-left">

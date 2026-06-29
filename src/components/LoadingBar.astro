@@ -1,0 +1,68 @@
+---
+---
+<div id="global-loading-bar" class="fixed top-0 left-0 h-1 bg-gradient-to-r from-brand-teal via-brand-coral to-brand-teal z-[9999] w-0 transition-all duration-300 ease-out opacity-0 pointer-events-none"></div>
+
+<script>
+  let progress = 0;
+  let interval: any;
+  const bar = document.getElementById('global-loading-bar');
+
+  function startLoading() {
+    if (!bar) return;
+    progress = 0;
+    bar.style.width = '0%';
+    bar.style.opacity = '1';
+    
+    clearInterval(interval);
+    interval = setInterval(() => {
+      progress += Math.random() * 10;
+      if (progress > 90) {
+        progress = 90;
+        clearInterval(interval);
+      }
+      bar.style.width = `${progress}%`;
+    }, 200);
+  }
+
+  function stopLoading() {
+    if (!bar) return;
+    clearInterval(interval);
+    bar.style.width = '100%';
+    setTimeout(() => {
+      bar.style.opacity = '0';
+      setTimeout(() => {
+        bar.style.width = '0%';
+      }, 300);
+    }, 200);
+  }
+
+  // Intercept all link clicks for internal navigation
+  document.addEventListener('click', (e) => {
+    const link = (e.target as HTMLElement).closest('a');
+    if (
+      link && 
+      link.href && 
+      link.origin === window.location.origin && 
+      !link.hasAttribute('download') && 
+      link.target !== '_blank' &&
+      !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey
+    ) {
+      startLoading();
+    }
+  });
+
+  // Handle back/forward navigation
+  window.addEventListener('popstate', () => {
+    startLoading();
+    // Since we don't have a specific "finish" event for standard MPA loads, 
+    // we rely on the next page load to clear it, or a timeout.
+    setTimeout(stopLoading, 1000);
+  });
+
+  // If using View Transitions (Astro 3.0+), we can use these events
+  document.addEventListener('astro:before-preparation', startLoading);
+  document.addEventListener('astro:after-preparation', stopLoading);
+  
+  // Stop loading when page is fully loaded
+  window.addEventListener('load', stopLoading);
+</script>

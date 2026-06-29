@@ -1,0 +1,78 @@
+---
+---
+<script>
+  /**
+   * Global Form Persistence
+   * Automatically saves form field values to localStorage as the user types
+   * and restores them when the page is reloaded.
+   * 
+   * It uses the page pathname + form ID (or index) as a key.
+   */
+
+  function initFormPersistence() {
+    const forms = document.querySelectorAll('form');
+    
+    forms.forEach((form, index) => {
+      const formId = form.id || `form-${index}`;
+      const storageKey = `form_data_${window.location.pathname}_${formId}`;
+
+      // 1. Restore data on load
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        try {
+          const data = JSON.parse(savedData);
+          Object.entries(data).forEach(([name, value]) => {
+            const input = form.querySelector(`[name="${name}"]`) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+            if (input) {
+              if (input.type === 'checkbox') {
+                (input as HTMLInputElement).checked = value === true;
+              } else if (input.type === 'radio') {
+                const radio = form.querySelector(`[name="${name}"][value="${value}"]`) as HTMLInputElement;
+                if (radio) radio.checked = true;
+              } else {
+                input.value = value as string;
+              }
+              
+              // Trigger change event for React/other frameworks to pick up the change
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          });
+        } catch (e) {
+          console.error('Failed to restore form data:', e);
+        }
+      }
+
+      // 2. Save data on input
+      form.addEventListener('input', (e) => {
+        const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+        if (!target.name) return;
+
+        const currentData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        
+        if (target.type === 'checkbox') {
+          currentData[target.name] = (target as HTMLInputElement).checked;
+        } else {
+          currentData[target.name] = target.value;
+        }
+
+        localStorage.setItem(storageKey, JSON.stringify(currentData));
+      });
+
+      // 3. Clear data on successful submission
+      // Note: This relies on the form actually submitting or us intercepting the 'submit' event
+      form.addEventListener('submit', () => {
+        // We delay clearing slightly to ensure the submission has started
+        setTimeout(() => {
+          localStorage.removeItem(storageKey);
+        }, 100);
+      });
+    });
+  }
+
+  // Run on initial load
+  initFormPersistence();
+
+  // Handle Astro View Transitions
+  document.addEventListener('astro:page-load', initFormPersistence);
+</script>

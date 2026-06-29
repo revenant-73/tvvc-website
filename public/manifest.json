@@ -1,0 +1,30 @@
+{
+  "name": "TVVC Portal",
+  "short_name": "TVVC",
+  "description": "Tualatin Valley Volleyball Club Customer Portal",
+  "start_url": "/portal",
+  "display": "standalone",
+  "background_color": "#0B0E14",
+  "theme_color": "#009695",
+  "icons": [
+    {
+      "src": "/assets/images/tvvc-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/tvvc-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/tvvc-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "orientation": "portrait"
+}

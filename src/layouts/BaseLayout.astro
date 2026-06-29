@@ -1,21 +1,48 @@
 ---
 import '../styles/global.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/outfit/500.css';
+import '@fontsource/outfit/700.css';
+import '@fontsource/outfit/800.css';
+import '@fontsource/syne/400.css';
+import '@fontsource/syne/700.css';
+import '@fontsource/syne/800.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import LoadingBar from '../components/LoadingBar.astro';
+import FormPersistence from '../components/FormPersistence.astro';
 
 interface Props {
   title: string;
   description?: string;
   image?: string;
   noindex?: boolean;
+  og?: {
+    title: string;
+    description: string;
+    badge?: string;
+  };
 }
 
 const { 
   title, 
   description = "Tualatin Valley Volleyball Club. High-quality, affordable volleyball club in Hillsboro, OR. Smarter training, not just more reps.",
-  image = "/assets/images/og-image.jpg", // Default OG image path
-  noindex = false
+  image: propImage,
+  noindex = false,
+  og
 } = Astro.props;
+
+// Generate OG image URL
+let image = propImage || "/assets/images/og-image.jpg";
+if (og) {
+  const ogUrl = new URL('/api/og.png', 'https://tualatinvalleyvb.com');
+  ogUrl.searchParams.set('title', og.title);
+  ogUrl.searchParams.set('description', og.description);
+  if (og.badge) ogUrl.searchParams.set('badge', og.badge);
+  image = ogUrl.toString();
+}
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://tualatinvalleyvb.com');
 ---
@@ -28,6 +55,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://tualatin
     <link rel="icon" type="image/png" href="/assets/images/tvvc-logo.png" />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#009695" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/assets/images/tvvc-logo.png" />
     
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     
@@ -51,21 +80,25 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://tualatin
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={new URL(image, Astro.url)} />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-    
     <slot name="head" />
   </head>
   <body class="bg-brand-charcoal text-white selection:bg-brand-teal/30 antialiased font-body relative">
-    <div class="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-teal via-brand-coral to-brand-teal z-[1001]"></div>
+    <LoadingBar />
+    <FormPersistence />
     
     <Header />
 
     <slot />
 
     <Footer />
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

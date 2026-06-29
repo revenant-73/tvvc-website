@@ -45,17 +45,18 @@ const MediaRelease: React.FC<MediaReleaseProps> = ({ athleteName, agreed, onChan
         <button
           type="button"
           onClick={() => onChange(true)}
+          aria-pressed={agreed}
           className={`
             flex items-center gap-3 p-4 rounded-xl border transition-all text-left
             ${agreed ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal/20' : 'bg-white/5 border-white/10 hover:border-white/20'}
           `}
         >
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${agreed ? 'border-brand-teal bg-brand-teal' : 'border-white/20'}`}>
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${agreed ? 'border-brand-teal bg-brand-teal' : 'border-white/20'}`} aria-hidden="true">
             {agreed && <span className="text-white text-[10px]">✓</span>}
           </div>
           <div>
             <span className="block font-bold text-white text-sm">Agree</span>
-            <span className="block text-[9px] text-white/40 leading-tight">
+            <span className="block text-[9px] text-white/50 leading-tight">
               Permission granted
             </span>
           </div>
@@ -64,17 +65,18 @@ const MediaRelease: React.FC<MediaReleaseProps> = ({ athleteName, agreed, onChan
         <button
           type="button"
           onClick={() => onChange(false)}
+          aria-pressed={!agreed}
           className={`
             flex items-center gap-3 p-4 rounded-xl border transition-all text-left
             ${!agreed ? 'bg-brand-coral/10 border-brand-coral shadow-glow-coral/20' : 'bg-white/5 border-white/10 hover:border-white/20'}
           `}
         >
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${!agreed ? 'border-brand-coral bg-brand-coral' : 'border-white/20'}`}>
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${!agreed ? 'border-brand-coral bg-brand-coral' : 'border-white/20'}`} aria-hidden="true">
             {!agreed && <span className="text-white text-[10px]">✓</span>}
           </div>
           <div>
             <span className="block font-bold text-white text-sm">Decline</span>
-            <span className="block text-[9px] text-white/40 leading-tight">
+            <span className="block text-[9px] text-white/50 leading-tight">
               No public media
             </span>
           </div>

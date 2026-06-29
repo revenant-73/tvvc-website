@@ -272,9 +272,11 @@ export default function RegistrationForm({
             <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Parent / Guardian Information</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Full Name</label>
+                <label htmlFor="parentName" className="text-[10px] font-bold uppercase tracking-widest text-white/50">Full Name</label>
                 <input 
+                  id="parentName"
                   type="text" 
+                  name="parentName"
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
                   value={parentInfo.name}
@@ -282,9 +284,11 @@ export default function RegistrationForm({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Email Address</label>
+                <label htmlFor="parentEmail" className="text-[10px] font-bold uppercase tracking-widest text-white/50">Email Address</label>
                 <input 
+                  id="parentEmail"
                   type="email" 
+                  name="parentEmail"
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
                   value={parentInfo.email}
@@ -292,9 +296,11 @@ export default function RegistrationForm({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Your Phone</label>
+                <label htmlFor="parentPhone" className="text-[10px] font-bold uppercase tracking-widest text-white/50">Your Phone</label>
                 <input 
+                  id="parentPhone"
                   type="tel" 
+                  name="parentPhone"
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
                   value={parentInfo.phone}
@@ -302,9 +308,11 @@ export default function RegistrationForm({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 text-brand-teal">Emergency Phone</label>
+                <label htmlFor="emergencyPhone" className="text-[10px] font-bold uppercase tracking-widest text-white/60 text-brand-teal">Emergency Phone</label>
                 <input 
+                  id="emergencyPhone"
                   type="tel" 
+                  name="emergencyPhone"
                   required
                   placeholder="503-555-0123"
                   className="w-full bg-brand-teal/5 border border-brand-teal/20 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors placeholder:text-white/20"
@@ -334,7 +342,7 @@ export default function RegistrationForm({
 
               {userAthletes.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Quick Select Saved Player</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Quick Select Saved Player</p>
                   <div className="flex flex-wrap gap-2">
                     {userAthletes.map(sa => (
                       <button
@@ -359,8 +367,9 @@ export default function RegistrationForm({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">First Name</label>
+                  <label htmlFor={`athlete-${index}-firstName`} className="text-[10px] font-bold uppercase tracking-widest text-white/50">First Name</label>
                   <input 
+                    id={`athlete-${index}-firstName`}
                     type="text" required
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
                     value={athlete.firstName}
@@ -368,8 +377,9 @@ export default function RegistrationForm({
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Last Name</label>
+                  <label htmlFor={`athlete-${index}-lastName`} className="text-[10px] font-bold uppercase tracking-widest text-white/50">Last Name</label>
                   <input 
+                    id={`athlete-${index}-lastName`}
                     type="text" required
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
                     value={athlete.lastName}
@@ -377,8 +387,9 @@ export default function RegistrationForm({
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Grade (Fall '26)</label>
+                  <label htmlFor={`athlete-${index}-grade`} className="text-[10px] font-bold uppercase tracking-widest text-white/50">Grade (Fall '26)</label>
                   <select 
+                    id={`athlete-${index}-grade`}
                     required
                     className="w-full bg-brand-charcoal border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors appearance-none cursor-pointer"
                     value={athlete.grade}
@@ -391,8 +402,9 @@ export default function RegistrationForm({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Medical Info / Allergies</label>
+                <label htmlFor={`athlete-${index}-medicalInfo`} className="text-[10px] font-bold uppercase tracking-widest text-white/50">Medical Info / Allergies</label>
                 <textarea 
+                  id={`athlete-${index}-medicalInfo`}
                   required
                   placeholder="List any critical medical information or allergies. Write 'None' if not applicable."
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none min-h-[100px]"

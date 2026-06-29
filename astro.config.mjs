@@ -9,6 +9,10 @@ import auth from 'auth-astro';
 export default defineConfig({
   site: 'https://tualatinvalleyvb.com',
   output: 'server',
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover'
+  },
   integrations: [
     tailwind(), 
     react(), 

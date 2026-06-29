@@ -9,7 +9,7 @@ import teamTealImage from '../assets/images/14 Teal.jpg';
 import teamWhiteImage from '../assets/images/14 White.jpeg';
 import playersActionImage from '../assets/images/16 teeal 2.jpeg';
 
-const optimizedHero = await getImage({ src: heroImage, format: 'webp', width: 1920, height: 1080 });
+const optimizedHero = await getImage({ src: heroImage, format: 'avif', width: 1920, height: 1080 });
 
 const valueGroups = [
   {
@@ -61,7 +61,7 @@ const valueGroups = [
           fetchpriority="high"
           width={1920}
           height={1080}
-          format="webp"
+          format="avif"
         />
         <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal/90 via-brand-charcoal/40 to-brand-charcoal"></div>
         <div class="absolute inset-0 bg-brand-teal/20 mix-blend-overlay"></div>

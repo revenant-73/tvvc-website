@@ -81,7 +81,7 @@ const LiabilityWaiver: React.FC<LiabilityWaiverProps> = ({ athleteName, agreed, 
           />
           <div>
             <span className="block font-bold text-white text-base">I Agree to the Liability Waiver</span>
-            <span className="block text-xs text-white/40 leading-tight mt-1">
+            <span className="block text-xs text-white/50 leading-tight mt-1">
               Required for {athleteName || 'this athlete'} to participate in TVVC programs.
             </span>
           </div>
