@@ -17,8 +17,16 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Payment configuration missing (STRIPE_SECRET_KEY). Please add it to your .env file.' }), { status: 500 });
     }
 
-    const session = await getSession(request);
-    const userId = (session?.user as any)?.id;
+    let session = null;
+    try {
+      session = await getSession(request);
+    } catch (authErr) {
+      console.error('Auth Session Error (non-fatal):', authErr);
+    }
+    
+    // Ensure userId is either a valid string or null (never empty string)
+    const rawUserId = (session?.user as any)?.id;
+    const userId = (typeof rawUserId === 'string' && rawUserId.trim() !== '') ? rawUserId : null;
 
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2025-01-27.acacia' as any,
@@ -117,9 +125,13 @@ export const POST: APIRoute = async ({ request }) => {
         parentName: parentInfo.name,
         parentEmail: parentInfo.email,
         parentPhone: parentInfo.phone,
+        secondaryParentName: parentInfo.secondaryParentName || null,
+        secondaryParentEmail: parentInfo.secondaryParentEmail || null,
+        secondaryParentPhone: parentInfo.secondaryParentPhone || null,
         emergencyPhone: parentInfo.emergencyPhone,
         status: 'pending',
         totalAmount: totalCents,
+        stripeCustomerId: stripeCustomerId || null,
         metadata: body.metadata ? JSON.stringify(body.metadata) : null,
       });
 
@@ -129,8 +141,17 @@ export const POST: APIRoute = async ({ request }) => {
           parentId: userId || null,
           firstName: a.firstName,
           lastName: a.lastName,
+          preferredName: a.preferredName || null,
+          dateOfBirth: a.dateOfBirth || null,
+          gender: a.gender || null,
           grade: a.grade,
+          school: a.school || null,
+          gradYear: a.gradYear || null,
           division: a.division || null,
+          tshirtSize: a.tshirtSize || null,
+          jerseySize: a.jerseySize || null,
+          experience: a.experience || null,
+          positions: a.positions || null,
           medicalInfo: a.medicalInfo,
           photoReleaseAgreed: a.photoReleaseAgreed || false,
           waiverAgreed: a.waiverAgreed || false,
