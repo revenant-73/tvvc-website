@@ -143,7 +143,7 @@ export default function RegistrationForm({
   }, [athletes, initialEvents]);
 
   const addAthlete = () => {
-    setAthletes([...athletes, {
+    setAthletes(prev => [...prev, {
       firstName: '',
       lastName: '',
       grade: '',
@@ -155,28 +155,33 @@ export default function RegistrationForm({
   };
 
   const removeAthlete = (index: number) => {
-    if (athletes.length > 1) {
-      const newAthletes = [...athletes];
-      newAthletes.splice(index, 1);
-      setAthletes(newAthletes);
-    }
+    setAthletes(prev => {
+      if (prev.length <= 1) return prev;
+      const next = [...prev];
+      next.splice(index, 1);
+      return next;
+    });
   };
 
   const updateAthlete = (index: number, field: keyof Athlete, value: any) => {
-    const newAthletes = [...athletes];
-    newAthletes[index] = { ...newAthletes[index], [field]: value };
-    setAthletes(newAthletes);
+    setAthletes(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
   };
 
   const toggleEvent = (athleteIndex: number, eventId: string) => {
-    const newAthletes = [...athletes];
-    const eventList = newAthletes[athleteIndex].selectedEvents;
-    if (eventList.includes(eventId)) {
-      newAthletes[athleteIndex].selectedEvents = eventList.filter(id => id !== eventId);
-    } else {
-      newAthletes[athleteIndex].selectedEvents = [...eventList, eventId];
-    }
-    setAthletes(newAthletes);
+    setAthletes(prev => {
+      const next = [...prev];
+      const eventList = next[athleteIndex].selectedEvents;
+      if (eventList.includes(eventId)) {
+        next[athleteIndex].selectedEvents = eventList.filter(id => id !== eventId);
+      } else {
+        next[athleteIndex].selectedEvents = [...eventList, eventId];
+      }
+      return next;
+    });
   };
 
   const nextStep = () => {
@@ -280,7 +285,7 @@ export default function RegistrationForm({
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
                   value={parentInfo.name}
-                  onChange={e => setParentInfo({ ...parentInfo, name: e.target.value })}
+                  onChange={e => setParentInfo(prev => ({ ...prev, name: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -292,7 +297,7 @@ export default function RegistrationForm({
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
                   value={parentInfo.email}
-                  onChange={e => setParentInfo({ ...parentInfo, email: e.target.value })}
+                  onChange={e => setParentInfo(prev => ({ ...prev, email: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -304,7 +309,7 @@ export default function RegistrationForm({
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors"
                   value={parentInfo.phone}
-                  onChange={e => setParentInfo({ ...parentInfo, phone: e.target.value })}
+                  onChange={e => setParentInfo(prev => ({ ...prev, phone: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -317,7 +322,7 @@ export default function RegistrationForm({
                   placeholder="503-555-0123"
                   className="w-full bg-brand-teal/5 border border-brand-teal/20 rounded-xl px-4 py-3 text-white text-base md:text-sm focus:border-brand-teal outline-none transition-colors placeholder:text-white/20"
                   value={parentInfo.emergencyPhone}
-                  onChange={e => setParentInfo({ ...parentInfo, emergencyPhone: e.target.value })}
+                  onChange={e => setParentInfo(prev => ({ ...prev, emergencyPhone: e.target.value }))}
                 />
               </div>
             </div>

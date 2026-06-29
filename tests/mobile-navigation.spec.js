@@ -30,15 +30,15 @@ test.describe('Mobile Navigation Menu', () => {
 
         // Navigation items should be visible
         const navLinks = headerNav.locator('a');
-        await expect(navLinks).toHaveCount(6); // 5 links + Dashboard button
+        await expect(navLinks).toHaveCount(6);
 
         // Check nav items
         await expect(navLinks.nth(0)).toContainText('Club Teams');
-        await expect(navLinks.nth(1)).toContainText('In-House Programs');
-        await expect(navLinks.nth(2)).toContainText('Summer Camps & Clinics');
-        await expect(navLinks.nth(3)).toContainText('Outdoor Events');
-        await expect(navLinks.nth(4)).toContainText('FAQ');
-        await expect(navLinks.nth(5)).toContainText('Dashboard');
+        await expect(navLinks.nth(1)).toContainText('Small Group Training');
+        await expect(navLinks.nth(2)).toContainText('In-House Programs');
+        await expect(navLinks.nth(3)).toContainText('Summer Camps & Clinics');
+        await expect(navLinks.nth(4)).toContainText('Outdoor Events');
+        await expect(navLinks.nth(5)).toContainText('FAQ');
       });
 
       test('mobile: hamburger icon displays at breakpoint', async ({ page }) => {
@@ -93,32 +93,13 @@ test.describe('Mobile Navigation Menu', () => {
 
         // Navigation items should be visible
         const navLinks = mobileMenu.locator('a');
-        await expect(navLinks).toHaveCount(6); // 5 + Parent Dashboard
+        await expect(navLinks).toHaveCount(6);
 
-        const expectedItems = ['Club Teams', 'In-House Programs', 'Summer Camps & Clinics', 'Outdoor Events', 'FAQ', 'Parent Dashboard'];
+        const expectedItems = ['Club Teams', 'Small Group Training', 'In-House Programs', 'Summer Camps & Clinics', 'Outdoor Events', 'FAQ'];
         for (let i = 0; i < expectedItems.length; i++) {
           await expect(navLinks.nth(i)).toBeVisible();
           await expect(navLinks.nth(i)).toContainText(expectedItems[i]);
         }
-      });
-
-      test('mobile: Parent Dashboard button has proper styling', async ({ page }) => {
-        await page.setViewportSize({ width: 375, height: 812 });
-        await page.goto(`${BASE_URL}${pageData.url}`);
-
-        const menuToggle = page.locator('#mobile-menu-toggle');
-        await menuToggle.click();
-
-        // Find Parent Dashboard button
-        const dashboardBtn = page.locator('#mobile-menu a').filter({ hasText: 'Parent Dashboard' });
-        await expect(dashboardBtn).toBeVisible();
-
-        // Should have teal background color (btn-primary in new theme)
-        const bgColor = await dashboardBtn.evaluate(el => 
-          window.getComputedStyle(el).backgroundColor
-        );
-        // Teal is #009695 which is rgb(0, 150, 149)
-        expect(bgColor).toBe('rgb(0, 150, 149)');
       });
 
       test('mobile: hamburger button has proper accessibility attributes', async ({ page }) => {
@@ -173,7 +154,7 @@ test.describe('Mobile Navigation Menu', () => {
           await page.waitForTimeout(200);
 
           // Color should change to primary teal on hover
-          await expect(targetLink).toHaveCSS('color', 'rgb(0, 150, 149)');
+          await expect(targetLink).toHaveCSS('color', 'rgb(0, 130, 129)');
         }
       });
     });
@@ -192,18 +173,5 @@ test.describe('Mobile Navigation Menu', () => {
     await page.locator('header nav a').filter({ hasText: 'FAQ' }).first().click();
     await page.waitForURL(/\/faq/);
     await expect(page.url()).toContain('faq');
-  });
-
-  test('Parent Dashboard button opens external link in new tab', async ({ page, context }) => {
-    await page.setViewportSize({ width: 1400, height: 900 });
-    await page.goto(`${BASE_URL}/`);
-
-    const dashboardBtn = page.locator('header nav a:has-text("Dashboard")');
-
-    // Should have target="_blank"
-    await expect(dashboardBtn).toHaveAttribute('target', '_blank');
-
-    // Should link to volleyball central
-    await expect(dashboardBtn).toHaveAttribute('href', /volleyballcentral/);
   });
 });

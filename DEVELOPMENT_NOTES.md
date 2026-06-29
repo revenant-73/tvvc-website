@@ -33,3 +33,23 @@ To activate tryouts:
 1. Add events to the Turso database with `type: 'tryout'`.
 2. Ensure `active: true` is set for the sessions to appear on the form.
 3. Verify that `AUTH_SECRET` and `RESEND_API_KEY` are present in Netlify environment variables.
+
+# Development Notes - June 29, 2026
+
+## 1. Registration System Refactor (Race Condition Fix)
+Refactored `.\src\components\registration\RegistrationForm.tsx` to handle high-concurrency state updates, resolving issues discovered during E2E testing.
+
+- **Functional State Updates**: Converted all `setParentInfo` and `setAthletes` calls to the functional update pattern (`prev => ({...prev})`). This prevents state overwrites when rapid-fire events (like automated typing) occur.
+- **Bug Fix**: Resolved a casing mismatch in the `emergencyPhone` input validation that prevented form advancement.
+
+## 2. Playwright Test Suite Maintenance
+Comprehensive update to the E2E test suite to align with the latest registration flow and site structure.
+
+- **Registration Spec**: Updated `.\tests\registration.spec.js` to handle the new 4-step wizard (Info, Events, Waivers, Review). Added robust checks to ensure state has updated before proceeding.
+- **Navigation Spec**: Updated `.\tests\mobile-navigation.spec.js` to reflect header changes, including the addition of "Small Group Training" and relocation of the "Parent Portal".
+- **Tournament Schedule Spec**: Updated `.\tests\tournament-schedule.spec.js` for the Summer 2026 season, validating "Coming October 2026" placeholders and division naming conventions.
+- **Config**: Capped local test workers at 4 in `.\playwright.config.js` to ensure stability on dev machines.
+
+## 3. Registration Launch Readiness
+Verified that Summer 2026 registration is fully functional. 
+- **Requirement**: Use `npm run db:seed` to populate local database with active events before running registration tests.
