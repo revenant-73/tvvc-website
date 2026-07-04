@@ -105,10 +105,16 @@ export default function RegistrationForm({
     setAthleteTabStates(next);
   };
 
-  const getSelectedCount = (athleteIndex: number, type: 'camp' | 'clinic') => {
+  const getSelectedCount = (athleteIndex: number, tabId: string) => {
     return athletes[athleteIndex].selectedEvents.filter(id => {
       const event = initialEvents.find(e => e.id === id);
-      return event?.type === type;
+      if (!event) return false;
+      
+      if (tabId === 'camps') return event.type === 'camp';
+      if (tabId === 'tryout-prep') return event.type === 'clinic' && event.id.includes('clinic-tryout-prep');
+      if (tabId === 'clinics') return event.type === 'clinic' && !event.id.includes('clinic-tryout-prep');
+      
+      return false;
     }).length;
   };
 
@@ -454,8 +460,9 @@ export default function RegistrationForm({
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
                   <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
                     {[
-                      { id: 'camps', label: 'Summer Camps', count: getSelectedCount(index, 'camp') },
-                      { id: 'clinics', label: 'Skills Clinics', count: getSelectedCount(index, 'clinic') }
+                      { id: 'camps', label: 'Summer Camps', count: getSelectedCount(index, 'camps') },
+                      { id: 'clinics', label: 'Skills Clinics', count: getSelectedCount(index, 'clinics') },
+                      { id: 'tryout-prep', label: 'Tryout Prep', count: getSelectedCount(index, 'tryout-prep') }
                     ].map(tab => (
                       <button
                         key={tab.id}
@@ -485,7 +492,6 @@ export default function RegistrationForm({
                   {athleteTabStates[index] === 'clinics' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       {[
-                        { title: 'Tryout Prep Clinics', pattern: 'clinic-tryout-prep' },
                         { title: 'Hitting Clinics', pattern: 'clinic-hitting' },
                         { title: 'Serving Clinics', pattern: 'clinic-serving' },
                         { title: 'Defense & Receive Clinics', pattern: 'clinic-serve-receive-defense' }
@@ -503,6 +509,84 @@ export default function RegistrationForm({
                           });
 
                         if (groupEvents.length === 0) return null;
+
+                        return (
+                          <div key={group.title} className="space-y-3">
+                            <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {groupEvents.map(event => {
+                                const isFull = event.spotsFilled >= event.capacity;
+                                const isSelected = athlete.selectedEvents.includes(event.id);
+                                
+                                return (
+                                  <label 
+                                    key={event.id}
+                                    className={`
+                                      flex items-center justify-between p-4 rounded-xl border transition-all
+                                      ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                                      ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
+                                    `}
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <input 
+                                        type="checkbox"
+                                        disabled={isFull}
+                                        checked={isSelected}
+                                        onChange={() => toggleEvent(index, event.id)}
+                                        className="accent-brand-teal w-4 h-4"
+                                      />
+                                      <div>
+                                        <span className="block font-bold text-white text-sm">{event.name}</span>
+                                        <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                                          {event.dateInfo} • {event.timeInfo}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
+                                      {isFull ? (
+                                        <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
+                                      ) : (
+                                        event.capacity - (event.spotsFilled || 0) <= 5 && (
+                                          <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
+                                            Only {event.capacity - (event.spotsFilled || 0)} spots left!
+                                          </span>
+                                        )
+                                      )}
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Tryout Prep Grouping */}
+                  {athleteTabStates[index] === 'tryout-prep' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      {[
+                        { title: 'Tryout Prep Clinics', pattern: 'clinic-tryout-prep' }
+                      ].map(group => {
+                        const groupEvents = initialEvents
+                          .filter(e => e.type === 'clinic' && e.id.includes(group.pattern))
+                          .sort((a, b) => {
+                            const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8, 'October': 10, 'November': 11 };
+                            const getMonthDay = (info: string) => {
+                              const match = info.match(/(May|June|July|August|October|November)\s+(\d+)/);
+                              if (!match) return 0;
+                              return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
+                            };
+                            return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
+                          });
+
+                        if (groupEvents.length === 0) return (
+                          <div key={group.title} className="p-12 text-center glass-card border-white/5">
+                            <p className="text-white/40 text-sm italic">No tryout prep clinics are currently available for registration.</p>
+                          </div>
+                        );
 
                         return (
                           <div key={group.title} className="space-y-3">
