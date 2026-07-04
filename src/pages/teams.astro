@@ -180,11 +180,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       
       <div class="glass rounded-[2rem] border-white/10 overflow-hidden shadow-2xl">
         <!-- Tab Navigation -->
-        <div class="flex flex-wrap border-b border-white/10 bg-white/5">
-          <button class="flex-1 py-4 px-6 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-white/5 schedule-tab active" data-tab="12u">11 & 12U</button>
-          <button class="flex-1 py-4 px-6 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-white/5 schedule-tab" data-tab="14u">13 & 14U</button>
-          <button class="flex-1 py-4 px-6 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-white/5 schedule-tab" data-tab="16u">15 & 16U</button>
-          <button class="flex-1 py-4 px-6 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-white/5 schedule-tab" data-tab="18u">17 & 18U</button>
+        <div class="grid grid-cols-2 sm:grid-cols-4 border-b border-white/10 bg-white/5">
+          <button class="py-4 px-2 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-white/5 schedule-tab active" data-tab="12u">11 & 12U</button>
+          <button class="py-4 px-2 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-white/5 schedule-tab border-l border-white/10 sm:border-l" data-tab="14u">13 & 14U</button>
+          <button class="py-4 px-2 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-white/5 schedule-tab border-t border-white/10 sm:border-t-0 sm:border-l" data-tab="16u">15 & 16U</button>
+          <button class="py-4 px-2 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-white/5 schedule-tab border-t border-white/10 border-l border-white/10 sm:border-t-0 sm:border-l" data-tab="18u">17 & 18U</button>
         </div>
 
         <div class="p-4 md:p-8">

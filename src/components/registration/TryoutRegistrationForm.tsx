@@ -23,7 +23,6 @@ interface Athlete {
   gradYear: string;
   experience: string;
   positions: string[];
-  jerseySize: string;
   medicalInfo: string;
   selectedEvents: string[];
   waiverAgreed: boolean;
@@ -32,7 +31,6 @@ interface Athlete {
 const grades = ['5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th', 'Other'];
 const gradYears = ['2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', 'Other'];
 const positions = ['Setter', 'Outside Hitter', 'Middle Blocker', 'Opposite Hitter', 'Libero / DS', 'Unsure'];
-const jerseySizes = ['Youth S', 'Youth M', 'Youth L', 'Adult XS', 'Adult S', 'Adult M', 'Adult L', 'Adult XL'];
 
 interface SavedAthlete {
   id: number;
@@ -46,7 +44,6 @@ interface SavedAthlete {
   gradYear?: string;
   experience?: string;
   positions?: string; // Stored as comma-separated or JSON
-  jerseySize?: string;
   medicalInfo: string;
   waiverAgreed: boolean;
 }
@@ -83,7 +80,6 @@ export default function TryoutRegistrationForm({
       gradYear: '',
       experience: '',
       positions: [],
-      jerseySize: '',
       medicalInfo: '',
       selectedEvents: [],
       waiverAgreed: false,
@@ -138,7 +134,6 @@ export default function TryoutRegistrationForm({
       gradYear: '',
       experience: '',
       positions: [],
-      jerseySize: '',
       medicalInfo: '',
       selectedEvents: [],
       waiverAgreed: false,
@@ -188,8 +183,8 @@ export default function TryoutRegistrationForm({
         return;
       }
     } else if (currentStep === 2) {
-      if (athletes.some(a => !a.firstName || !a.lastName || !a.dateOfBirth || !a.grade || !a.school)) {
-        alert("Please complete all required athlete details.");
+      if (athletes.some(a => !a.firstName || !a.lastName || !a.dateOfBirth || !a.grade || !a.school || !a.gradYear || !a.experience || a.positions.length === 0)) {
+        alert("Please complete all required athlete details, including graduation year, experience, and positions.");
         return;
       }
     } else if (currentStep === 3) {
@@ -394,7 +389,6 @@ export default function TryoutRegistrationForm({
                           updateAthlete(index, 'school', sa.school || '');
                           updateAthlete(index, 'gradYear', sa.gradYear || '');
                           updateAthlete(index, 'experience', sa.experience || '');
-                          updateAthlete(index, 'jerseySize', sa.jerseySize || '');
                           updateAthlete(index, 'medicalInfo', sa.medicalInfo || '');
                         }}
                         className="bg-white/5 hover:bg-brand-teal/20 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold transition-all"
@@ -435,8 +429,8 @@ export default function TryoutRegistrationForm({
                   <input type="text" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" value={athlete.school} onChange={e => updateAthlete(index, 'school', e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Graduation Year</label>
-                  <select className="w-full bg-brand-charcoal border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" value={athlete.gradYear} onChange={e => updateAthlete(index, 'gradYear', e.target.value)}>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">High School Graduation Year *</label>
+                  <select required className="w-full bg-brand-charcoal border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" value={athlete.gradYear} onChange={e => updateAthlete(index, 'gradYear', e.target.value)}>
                     <option value="">Select Year</option>
                     {gradYears.map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
@@ -449,17 +443,10 @@ export default function TryoutRegistrationForm({
                     <option value="Other">Other / Contact Club</option>
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Jersey Size *</label>
-                  <select required className="w-full bg-brand-charcoal border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" value={athlete.jerseySize} onChange={e => updateAthlete(index, 'jerseySize', e.target.value)}>
-                    <option value="">Select Size</option>
-                    {jerseySizes.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
               </div>
 
               <div className="space-y-4">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Primary Position(s) Interested In</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Primary Position(s) Interested In *</label>
                 <div className="flex flex-wrap gap-3">
                   {positions.map(p => (
                     <button
@@ -475,8 +462,9 @@ export default function TryoutRegistrationForm({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Volleyball Background / Experience</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Volleyball Background / Experience *</label>
                 <textarea 
+                  required
                   placeholder="Tell us about previous club experience, school teams, or years played."
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none min-h-[100px]"
                   value={athlete.experience}

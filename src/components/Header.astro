@@ -47,7 +47,7 @@ const isHome = normalizedPath === '/';
   </nav>
 
   <!-- Mobile Menu Backdrop -->
-  <div id="mobile-menu" class="hidden absolute top-16 left-0 w-full glass rounded-3xl p-8 flex flex-col gap-6 lg:hidden border-white/10 shadow-2xl transition-all duration-300 opacity-0 -translate-y-4">
+  <div id="mobile-menu" class="hidden absolute top-16 left-0 w-full glass rounded-3xl p-8 flex flex-col gap-6 lg:hidden border-white/10 shadow-2xl transition-all duration-300 opacity-0 -translate-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto">
     {navLinks.map(link => (
       <a 
         href={link.href} 

@@ -23,11 +23,18 @@ const currentYear = new Date().getFullYear();
     </div>
 
     <div>
-      <h3 class="font-bold mb-4 uppercase text-xs tracking-widest text-brand-teal">Contact</h3>
-      <ul class="space-y-2 text-sm text-white/60">
-        <li>(503) 389-0760</li>
-        <li>info@tualatinvalleyvb.com</li>
-        <li class="pt-2">
+      <h3 class="font-bold mb-4 uppercase text-xs tracking-widest text-brand-teal">Contact & Location</h3>
+      <ul class="space-y-4 text-sm text-white/60">
+        <li>
+          <span class="block text-white font-bold text-[10px] uppercase tracking-wider mb-1">Email</span>
+          <a href="mailto:info@tualatinvalleyvb.com" class="hover:text-white transition-colors">info@tualatinvalleyvb.com</a>
+        </li>
+        <li>
+          <span class="block text-white font-bold text-[10px] uppercase tracking-wider mb-1">Text or Call</span>
+          <a href="tel:503-389-0760" class="hover:text-white transition-colors">(503) 389-0760</a>
+        </li>
+        <li>
+          <span class="block text-white font-bold text-[10px] uppercase tracking-wider mb-1">Address</span>
           <a 
             href="https://www.google.com/maps/search/?api=1&query=2820+SE+58th+Court,+Hillsboro,+OR+97123" 
             target="_blank" 
@@ -37,16 +44,12 @@ const currentYear = new Date().getFullYear();
             Hillsboro, OR 97123
           </a>
         </li>
-        <li class="pt-4"><a href="/privacy-policy" class="text-[10px] uppercase tracking-widest hover:text-white transition-colors">Privacy Policy</a></li>
+        <li><a href="/privacy-policy" class="text-[10px] uppercase tracking-widest hover:text-white transition-colors">Privacy Policy</a></li>
       </ul>
     </div>
 
-    <div>
-      <h3 class="font-bold mb-4 uppercase text-xs tracking-widest text-brand-teal">Location</h3>
-      <p class="text-sm text-white/60 mb-4">
-        2820 SE 58th Court<br/>
-        Hillsboro, OR 97123
-      </p>
+    <div class="md:col-span-1">
+      <h3 class="font-bold mb-4 uppercase text-xs tracking-widest text-brand-teal">Find Us</h3>
       <div class="rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50 h-32 w-full">
         <iframe 
           title="Tualatin Valley Volleyball Club Location Map"
