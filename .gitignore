@@ -46,5 +46,7 @@ tmp/
 # Data exports and temporary files
 *.txt
 update_stylesheets.py
+local.db
+*.db
 # Local Netlify folder
 .netlify

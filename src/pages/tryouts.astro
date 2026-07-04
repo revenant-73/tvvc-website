@@ -1,0 +1,225 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ScrollReveal from '../components/ScrollReveal.astro';
+
+const clinics = [
+  {
+    age: '12U–14U',
+    dates: 'Oct 25 & Nov 1',
+    time: '3:00pm–5:30pm',
+    cost: '$30',
+  },
+  {
+    age: '15U–18U',
+    dates: 'Oct 25 & Nov 1',
+    time: '6:00pm–8:30pm',
+    cost: '$30',
+  }
+];
+
+const tryouts = [
+  {
+    age: '12U',
+    date: 'Nov 8, 2026',
+    time: '1:00pm–2:30pm',
+    cost: '$25',
+  },
+  {
+    age: '13U–14U',
+    date: 'Nov 8, 2026',
+    time: '3:00pm–5:30pm',
+    cost: '$25',
+  },
+  {
+    age: '15U',
+    date: 'Nov 15, 2026',
+    time: '1:00pm–3:00pm',
+    cost: '$25',
+  },
+  {
+    age: '16U',
+    date: 'Nov 15, 2026',
+    time: '3:30pm–5:30pm',
+    cost: '$25',
+  },
+  {
+    age: '17U–18U',
+    date: 'Nov 15, 2026',
+    time: '6:00pm–8:00pm',
+    cost: '$25',
+  }
+];
+---
+
+<BaseLayout 
+  title="Tryouts & Prep Clinics" 
+  description="Register for TVVC 2026 Club Season tryouts and pre-tryout prep clinics in Hillsboro, OR."
+  og={{
+    title: "Club Tryouts 2026",
+    description: "Tryout dates, prep clinics, and registration details.",
+    badge: "Registration Open"
+  }}
+>
+  <main class="pt-32 pb-24">
+    <!-- Hero Section -->
+    <section class="max-w-6xl mx-auto px-6 mb-20 text-center md:text-left">
+      <ScrollReveal>
+        <span class="text-brand-teal font-bold uppercase tracking-widest text-[10px] mb-4 block">2026 Club Season</span>
+        <h1 class="text-5xl md:text-8xl font-heading font-extrabold text-white uppercase mb-8 leading-tight tracking-tighter">
+          Ready to <span class="text-brand-teal italic">Compete?</span>
+        </h1>
+        <p class="text-xl text-white/60 max-w-2xl leading-relaxed mb-10">
+          Join Tualatin Valley Volleyball Club for our 2026 season. Experience high-quality training focused on athlete growth, decision-making, and joy.
+        </p>
+        <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+          <a href="/tryouts/register" class="btn btn-primary !px-10 !py-4">Register for Tryouts</a>
+          <a href="/register" class="btn btn-secondary !px-10 !py-4">Register for Clinics</a>
+        </div>
+      </ScrollReveal>
+    </section>
+
+    <!-- Prep Clinics Section -->
+    <section class="max-w-6xl mx-auto px-6 py-20 border-t border-white/5">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+        <ScrollReveal direction="left">
+          <div>
+            <h2 class="text-3xl font-heading font-bold text-white uppercase tracking-tight mb-8">
+              TVVC Tryout <span class="text-brand-teal italic">Prep Clinics</span>
+            </h2>
+            <div class="space-y-6 text-white/70 leading-relaxed">
+              <p>
+                Our Tryout Prep Clinics are designed for players who want extra court time before club tryouts and a chance to experience how we train at TVVC.
+              </p>
+              <p>
+                These clinics give athletes an opportunity to work with our staff, sharpen their skills, play in game-like situations, and better understand the kind of learning environment we create. Players will be challenged to notice what is happening in the game, adapt to the problem in front of them, and commit to their next action.
+              </p>
+              <p>
+                This is a good fit for players who want to prepare for upcoming tryouts, get more comfortable before stepping into the tryout environment, or simply see whether TVVC feels like the right club for them.
+              </p>
+              <p>
+                Clinics will include a mix of skill work, competitive play, decision-making, and guided feedback. Participation in a clinic does not guarantee placement on a TVVC team, but it can help players feel more prepared, confident, and familiar with our staff and training style.
+              </p>
+              <p class="text-brand-teal font-bold italic">
+                Come ready to compete, learn, ask questions, make mistakes, and solve the game.
+              </p>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal direction="right">
+          <div class="glass-card border-brand-teal/20 p-8 md:p-10 space-y-8">
+            <h3 class="text-xl font-heading font-bold text-white uppercase tracking-wider">Clinic Schedule</h3>
+            <div class="space-y-4">
+              {clinics.map((c) => (
+                <div class="flex items-center justify-between p-5 glass rounded-2xl border-white/5 hover:border-brand-teal/20 transition-all">
+                  <div>
+                    <span class="text-[10px] text-brand-teal font-bold uppercase tracking-widest block mb-1">{c.age} Division</span>
+                    <span class="text-lg font-bold text-white block">{c.dates}</span>
+                    <span class="text-sm text-white/40">{c.time}</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xl font-bold text-white block mb-2">{c.cost}</span>
+                    <a href="/register" class="text-[10px] font-bold text-brand-teal uppercase tracking-widest hover:underline">Select Session</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div class="pt-6 border-t border-white/5">
+              <p class="text-sm text-white/50 mb-6">Prep clinics are held at the TVVC Facility in Hillsboro.</p>
+              <a href="/register" class="btn btn-primary !w-full text-center">Register for Clinics</a>
+            </div>
+          </div>
+        </ScrollReveal>
+      </div>
+    </section>
+
+    <!-- Club Tryouts Section -->
+    <section class="max-w-6xl mx-auto px-6 py-32 border-t border-white/5">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+        <ScrollReveal direction="left" className="order-2 lg:order-1">
+          <div class="glass-card border-brand-coral/20 p-8 md:p-10 space-y-8 bg-brand-coral/5">
+            <h3 class="text-xl font-heading font-bold text-white uppercase tracking-wider">Tryout Schedule</h3>
+            <div class="space-y-4">
+              {tryouts.map((t) => (
+                <div class="flex items-center justify-between p-5 glass rounded-2xl border-white/5 hover:border-brand-coral/20 transition-all">
+                  <div>
+                    <span class="text-[10px] text-brand-coral font-bold uppercase tracking-widest block mb-1">{t.age} Tryout</span>
+                    <span class="text-lg font-bold text-white block">{t.date}</span>
+                    <span class="text-sm text-white/40">{t.time}</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xl font-bold text-white block mb-2">{t.cost}</span>
+                    <a href="/tryouts/register" class="text-[10px] font-bold text-brand-coral uppercase tracking-widest hover:underline">Register</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div class="pt-6 border-t border-white/5">
+              <p class="text-sm text-white/50 mb-6 font-medium">All tryouts are held at the TVVC Facility (Hillsboro).</p>
+              <a href="/tryouts/register" class="btn btn-primary bg-brand-coral hover:bg-brand-coral-dark border-none !w-full text-center">Register for Tryouts</a>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal direction="right" className="order-1 lg:order-2">
+          <div>
+            <h2 class="text-3xl font-heading font-bold text-white uppercase tracking-tight mb-8">
+              TVVC Club <span class="text-brand-coral italic">Tryouts</span>
+            </h2>
+            <div class="space-y-6 text-white/70 leading-relaxed">
+              <p>
+                TVVC tryouts are designed to help our staff evaluate players in realistic volleyball situations while giving athletes a chance to show how they compete, communicate, learn, and solve problems on the court.
+              </p>
+              <p>
+                Players should expect a mix of game-like activities, small-sided play, larger team situations, and competitive volleyball. We are not only looking at isolated skills. We are watching how players read the game, make decisions, respond to mistakes, support teammates, and adapt as the level of play changes.
+              </p>
+              <p>
+                Our goal is to place players in an environment where they can grow, contribute, and have a positive club volleyball experience. Team placement decisions will be based on overall fit, including skill level, competitive readiness, coachability, attitude, positional needs, and roster balance.
+              </p>
+              <p>
+                Tryouts can feel stressful, but players do not need to be perfect. We want athletes to compete hard, communicate, stay engaged, and keep playing the next ball.
+              </p>
+              <p class="text-brand-coral font-bold italic">
+                Come ready to work, learn, compete, and show us how you play the game.
+              </p>
+            </div>
+
+            <div class="mt-12 bg-white/5 border border-white/10 rounded-3xl p-8">
+              <h4 class="text-white font-bold uppercase tracking-widest text-xs mb-6 flex items-center gap-3">
+                <span class="text-brand-coral text-xl">!</span> What to Bring
+              </h4>
+              <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  "Knee pads & proper athletic shoes",
+                  "Large water bottle",
+                  "Standard USAV/CEVA Medical Release Form",
+                  "A positive, competitive attitude",
+                  "USAV/CEVA Membership Card (Printed or Digital)"
+                ].map((item) => (
+                  <li class="flex items-center gap-3 text-sm text-white/60">
+                    <svg class="text-brand-coral shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </ScrollReveal>
+      </div>
+    </section>
+
+    <!-- FAQ CTA -->
+    <section class="max-w-4xl mx-auto px-6 py-20">
+      <div class="glass-card text-center p-12 border-white/10">
+        <h3 class="text-2xl font-heading font-bold text-white mb-6">Have more questions about the season?</h3>
+        <p class="text-white/60 mb-10 leading-relaxed">Check out our FAQ page for more information about commitment, costs, and team structure.</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/faq" class="btn btn-secondary !px-12">Visit FAQ</a>
+          <a href="/teams" class="btn btn-secondary !px-12">About Our Teams</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

@@ -485,6 +485,7 @@ export default function RegistrationForm({
                   {athleteTabStates[index] === 'clinics' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       {[
+                        { title: 'Tryout Prep Clinics', pattern: 'clinic-tryout-prep' },
                         { title: 'Hitting Clinics', pattern: 'clinic-hitting' },
                         { title: 'Serving Clinics', pattern: 'clinic-serving' },
                         { title: 'Defense & Receive Clinics', pattern: 'clinic-serve-receive-defense' }
@@ -492,9 +493,9 @@ export default function RegistrationForm({
                         const groupEvents = initialEvents
                           .filter(e => e.type === 'clinic' && e.id.includes(group.pattern))
                           .sort((a, b) => {
-                            const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8 };
+                            const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8, 'October': 10, 'November': 11 };
                             const getMonthDay = (info: string) => {
-                              const match = info.match(/(May|June|July|August)\s+(\d+)/);
+                              const match = info.match(/(May|June|July|August|October|November)\s+(\d+)/);
                               if (!match) return 0;
                               return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
                             };
