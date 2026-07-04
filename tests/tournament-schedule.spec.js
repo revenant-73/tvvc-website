@@ -6,8 +6,8 @@ test.describe('Tournament Schedule Feature', () => {
   });
 
   test.describe('Schedule Section Rendering', () => {
-    test('should render the 2026 Tournament Schedule heading', async ({ page }) => {
-      const heading = page.locator('h2').filter({ hasText: '2026 Tournament Schedule' });
+    test('should render the 2026-2027 Tournament Schedule heading', async ({ page }) => {
+      const heading = page.locator('h2').filter({ hasText: '2026-2027 Tournament Schedule' });
       await expect(heading).toBeVisible();
     });
 
