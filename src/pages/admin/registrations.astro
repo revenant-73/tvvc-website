@@ -3,10 +3,10 @@ export const prerender = false;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getDb } from '../../db';
-import { events } from '../../db/schema';
-import { desc, asc, eq } from 'drizzle-orm';
+import { events, registrationItems, registrations, athletes } from '../../db/schema';
+import { desc, asc, eq, inArray, and } from 'drizzle-orm';
 
-const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
+const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || process.env.ADMIN_PASSCODE || 'tvvc2024';
 let authenticated = false;
 let allEvents = [];
 let error = null;
@@ -32,7 +32,35 @@ if (authenticated || Astro.url.searchParams.get('auth') === 'true') {
       import.meta.env.TURSO_AUTH_TOKEN || ''
     );
     
-    allEvents = await db.select().from(events).orderBy(asc(events.type), asc(events.dateInfo));
+    const eventsData = await db.select().from(events).orderBy(asc(events.type), asc(events.dateInfo));
+    
+    // Fetch emails for each event
+    const eventIds = eventsData.map(e => e.id);
+    const emailResults = eventIds.length > 0 ? await db.select({
+      eventId: registrationItems.eventId,
+      parentEmail: registrations.parentEmail
+    })
+    .from(registrationItems)
+    .innerJoin(registrations, eq(registrationItems.registrationId, registrations.id))
+    .where(and(
+      inArray(registrationItems.eventId, eventIds),
+      eq(registrations.status, 'paid')
+    )) : [];
+
+    const emailMap: Record<string, string[]> = {};
+    emailResults.forEach(r => {
+      if (r.eventId) {
+        if (!emailMap[r.eventId]) emailMap[r.eventId] = [];
+        if (!emailMap[r.eventId].includes(r.parentEmail)) {
+          emailMap[r.eventId].push(r.parentEmail);
+        }
+      }
+    });
+
+    allEvents = eventsData.map(e => ({
+      ...e,
+      emails: emailMap[e.id] || []
+    }));
   } catch (e) {
     console.error("Dashboard Database Error:", e);
     error = "Database error. Check connection.";
@@ -191,41 +219,69 @@ const getGroupedEvents = (events: any[]) => {
 
                         <div class="flex gap-2">
                           <a href={`/admin/roster/${event.id}?auth=true`} class="btn btn-secondary !py-2 !px-4 !text-[10px] flex-1 text-center">Roster</a>
+                          <button 
+                            class="copy-emails-btn btn border border-white/10 hover:border-brand-teal transition-colors !py-2 !px-4 !text-[10px] text-center"
+                            data-emails={event.emails.join(', ')}
+                            title={event.emails.length > 0 ? `Copy ${event.emails.length} emails` : "No emails to copy"}
+                          >
+                            Copy Emails
+                          </button>
                           <a href={`/admin/events/${event.id}?auth=true`} class="btn border border-white/10 hover:border-brand-teal transition-colors !py-2 !px-4 !text-[10px] text-center">Edit Cap</a>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div class="space-y-8">
-                    {Object.entries(getGroupedEvents(sectionEvents)).map(([date, eventsForDate]) => (
-                      <div class="space-y-4">
-                        <h3 class="text-[10px] font-bold uppercase tracking-widest text-white/40 border-b border-white/5 pb-2">{date}</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                          {eventsForDate.map(event => (
-                            <div class="glass-card border-white/10 p-5 space-y-4">
-                              <div>
-                                <h3 class="font-heading font-bold text-sm text-white leading-tight">{event.name}</h3>
-                                <p class="text-[9px] text-white/40 uppercase tracking-widest font-bold mt-1">{event.timeInfo}</p>
-                              </div>
-                              
-                              <div class="flex items-center justify-between">
-                                <p class="text-lg font-heading font-bold text-white">{event.spotsFilled} / <span class="text-white/40 text-sm">{event.capacity}</span></p>
-                                <div class="h-1 w-16 bg-white/5 rounded-full overflow-hidden">
-                                  <div class={`h-full ${event.spotsFilled >= event.capacity ? 'bg-brand-coral' : 'bg-brand-coral/50'} rounded-full`} style={`width: ${Math.min((event.spotsFilled / event.capacity) * 100, 100)}%`}></div>
+                  <div class="space-y-6">
+                    {Object.entries(getGroupedEvents(sectionEvents)).map(([date, eventsForDate]) => {
+                      const allEmails = [...new Set(eventsForDate.flatMap(e => e.emails))].join(', ');
+                      return (
+                        <div class="glass-card border-white/10 p-6 space-y-6">
+                          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+                            <div>
+                              <h3 class="text-xl font-heading font-bold text-white uppercase tracking-tight">{date}</h3>
+                              <p class="text-[10px] text-brand-coral font-bold uppercase tracking-[0.2em] mt-1">Daily Clinic Bundle</p>
+                            </div>
+                            <button 
+                              class="copy-emails-btn btn btn-primary !py-2 !px-6 !text-[10px] uppercase tracking-widest"
+                              data-emails={allEmails}
+                              title={allEmails.length > 0 ? `Copy emails for all ${eventsForDate.length} clinics` : "No emails to copy"}
+                            >
+                              Copy All Emails for Day
+                            </button>
+                          </div>
+
+                          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {eventsForDate.map(event => (
+                              <div class="space-y-3 p-4 bg-white/5 rounded-xl border border-white/5">
+                                <div class="flex items-center justify-between gap-2">
+                                  <h4 class="font-heading font-bold text-xs text-white uppercase">{event.name}</h4>
+                                  <p class="text-[9px] text-white/40 font-bold uppercase tracking-widest">{event.timeInfo}</p>
+                                </div>
+                                
+                                <div class="flex items-center justify-between py-2 border-y border-white/5">
+                                  <p class="text-sm font-heading font-bold text-white">{event.spotsFilled} / <span class="text-white/40 text-xs">{event.capacity}</span></p>
+                                  <div class="h-1 w-20 bg-white/10 rounded-full overflow-hidden">
+                                    <div class={`h-full ${event.spotsFilled >= event.capacity ? 'bg-brand-coral' : 'bg-brand-teal'} rounded-full`} style={`width: ${Math.min((event.spotsFilled / event.capacity) * 100, 100)}%`}></div>
+                                  </div>
+                                </div>
+
+                                <div class="flex flex-wrap gap-2 pt-1">
+                                  <a href={`/admin/roster/${event.id}?auth=true`} class="text-[9px] font-bold uppercase tracking-widest text-brand-teal hover:underline">Roster</a>
+                                  <button 
+                                    class="copy-emails-btn text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                    data-emails={event.emails.join(', ')}
+                                  >
+                                    Copy Emails
+                                  </button>
+                                  <a href={`/admin/events/${event.id}?auth=true`} class="text-[9px] font-bold uppercase tracking-widest text-white/20 hover:text-white transition-colors ml-auto">Edit</a>
                                 </div>
                               </div>
-
-                              <div class="flex gap-2 pt-2">
-                                <a href={`/admin/roster/${event.id}?auth=true`} class="text-[9px] font-bold uppercase tracking-widest text-brand-teal hover:underline">Roster</a>
-                                <span class="text-white/10">•</span>
-                                <a href={`/admin/events/${event.id}?auth=true`} class="text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Edit</a>
-                              </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </section>
@@ -236,3 +292,30 @@ const getGroupedEvents = (events: any[]) => {
     </div>
   </main>
 </BaseLayout>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.copy-emails-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const emails = btn.getAttribute('data-emails');
+        if (!emails) {
+          alert('No emails to copy.');
+          return;
+        }
+        
+        navigator.clipboard.writeText(emails).then(() => {
+          const originalText = btn.innerText;
+          btn.innerText = 'Copied!';
+          btn.classList.add('!text-brand-teal');
+          setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.remove('!text-brand-teal');
+          }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy emails: ', err);
+          alert('Failed to copy to clipboard.');
+        });
+      });
+    });
+  });
+</script>
