@@ -74,7 +74,7 @@ const streamInfo = {
     title: 'Camps & Clinics',
     sections: [
       { title: 'Summer Camps', filter: (e: any) => e.type === 'camp', display: 'grid', color: 'brand-teal' },
-      { title: 'Summer Clinics', filter: (e: any) => e.type === 'clinic', display: 'grouped', color: 'brand-coral' }
+      { title: 'Summer Clinics', filter: (e: any) => e.type === 'clinic' && !e.id.includes('clinic-tryout-prep'), display: 'grouped', color: 'brand-coral' }
     ]
   },
   'in-house': {
@@ -87,6 +87,7 @@ const streamInfo = {
   'club-teams': {
     title: 'Club Teams',
     sections: [
+      { title: 'Tryout Prep Clinics', filter: (e: any) => e.type === 'clinic' && e.id.includes('clinic-tryout-prep'), display: 'grid', color: 'brand-teal' },
       { title: 'Tryouts', filter: (e: any) => e.type === 'tryout', display: 'grid', color: 'brand-teal' },
       { title: 'Team Registration', filter: (e: any) => e.type === 'team-registration', display: 'grid', color: 'brand-coral' }
     ]

@@ -70,8 +70,10 @@ const clinicGroups = [
     who: '12U–18U Athletes',
     accent: 'brand-teal',
     clinics: [
-      { time: '3:00–5:30pm', name: '12U–14U Tryout Prep' },
-      { time: '6:00–8:30pm', name: '15U–18U Tryout Prep' }
+      { id: 'clinic-tryout-prep-12u-14u-oct-25', time: '3:00–5:30pm', name: '12U–14U Tryout Prep' },
+      { id: 'clinic-tryout-prep-12u-14u-nov-01', time: '3:00–5:30pm', name: '12U–14U Tryout Prep' },
+      { id: 'clinic-tryout-prep-15u-18u-oct-25', time: '6:00–8:30pm', name: '15U–18U Tryout Prep' },
+      { id: 'clinic-tryout-prep-15u-18u-nov-01', time: '6:00–8:30pm', name: '15U–18U Tryout Prep' }
     ]
   },
   {
@@ -260,15 +262,33 @@ const clinicGroups = [
                   <p class="text-sm text-white/40 mb-8">{group.who}</p>
                   
                   <div class="space-y-4">
-                     {group.clinics.map((clinic) => (
-                       <div class="flex items-center justify-between p-4 glass rounded-xl border-white/5 hover:border-white/10 transition-colors">
-                          <div>
-                            <span class="text-[10px] text-white/40 font-bold block">{clinic.time}</span>
-                            <span class="font-bold text-sm text-white">{clinic.name}</span>
-                          </div>
-                          <a href="/register" class={`text-[10px] font-bold uppercase tracking-widest hover:underline ${group.accent === 'brand-teal' ? 'text-brand-teal' : 'text-brand-coral'}`}>Select</a>
-                       </div>
-                     ))}
+                     {group.clinics.map((clinic) => {
+                       const availability = clinic.id ? allEvents.find(e => e.id === clinic.id) : null;
+                       const filled = availability ? (availability.spotsFilled || 0) + (availability.pendingSpots || 0) : 0;
+                       const isFull = availability ? filled >= availability.capacity : false;
+                       
+                       return (
+                         <div class={`flex items-center justify-between p-4 glass rounded-xl border transition-colors ${isFull ? 'opacity-50 border-white/5' : 'border-white/5 hover:border-white/10'}`}>
+                            <div class="flex-1">
+                              <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[10px] text-white/40 font-bold block">{clinic.time}</span>
+                                {availability && (
+                                  <span class="text-[8px] text-white/20 font-bold uppercase tracking-widest tabular-nums">{filled}/{availability.capacity}</span>
+                                )}
+                              </div>
+                              <span class="font-bold text-sm text-white">
+                                {clinic.name}
+                                {clinic.id?.includes('oct-25') ? ' (Oct 25)' : clinic.id?.includes('nov-01') ? ' (Nov 1)' : ''}
+                              </span>
+                            </div>
+                            {isFull ? (
+                              <span class="text-[8px] font-black text-brand-coral uppercase tracking-widest italic">Full</span>
+                            ) : (
+                              <a href="/register" class={`text-[10px] font-bold uppercase tracking-widest hover:underline ${group.accent === 'brand-teal' ? 'text-brand-teal' : 'text-brand-coral'}`}>Select</a>
+                            )}
+                         </div>
+                       );
+                     })}
                   </div>
                </div>
              </ScrollReveal>

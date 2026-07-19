@@ -1,19 +1,51 @@
 ---
-export const prerender = true;
+export const prerender = false;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';
+import { db } from '../db/db';
+import { events } from '../db/schema';
+import { eq, and, like } from 'drizzle-orm';
 
-const clinics = [
+// Fetch all prep clinics to show real-time availability
+const allPrepClinics = await db.select().from(events).where(
+  and(
+    eq(events.type, 'clinic'),
+    like(events.id, 'clinic-tryout-prep%'),
+    eq(events.active, true)
+  )
+);
+
+const getAvailability = (id: string) => {
+  const event = allPrepClinics.find(e => e.id === id);
+  if (!event) return null;
+  const filled = (event.spotsFilled || 0) + (event.pendingSpots || 0);
+  return {
+    filled,
+    capacity: event.capacity,
+    isFull: filled >= event.capacity,
+    spotsLeft: Math.max(0, event.capacity - filled)
+  };
+};
+
+const clinicGroups = [
   {
     age: '12U–14U',
     dates: 'Oct 25 & Nov 1',
+    sessions: [
+      { id: 'clinic-tryout-prep-12u-14u-oct-25', date: 'Oct 25' },
+      { id: 'clinic-tryout-prep-12u-14u-nov-01', date: 'Nov 1' }
+    ],
     time: '3:00pm–5:30pm',
     cost: '$30',
   },
   {
     age: '15U–18U',
     dates: 'Oct 25 & Nov 1',
+    sessions: [
+      { id: 'clinic-tryout-prep-15u-18u-oct-25', date: 'Oct 25' },
+      { id: 'clinic-tryout-prep-15u-18u-nov-01', date: 'Nov 1' }
+    ],
     time: '6:00pm–8:30pm',
     cost: '$30',
   }
@@ -75,7 +107,7 @@ const tryouts = [
         </p>
         <div class="flex flex-wrap gap-4 justify-center md:justify-start">
           <a href="/tryouts/register" class="btn btn-primary !px-10 !py-4">Register for Tryouts</a>
-          <a href="/register" class="btn btn-secondary !px-10 !py-4">Register for Clinics</a>
+          <a href="/register?tab=tryout-prep" class="btn btn-secondary !px-10 !py-4">Register for Clinics</a>
         </div>
       </ScrollReveal>
     </section>
@@ -112,16 +144,49 @@ const tryouts = [
           <div class="glass-card border-brand-teal/20 p-8 md:p-10 space-y-8">
             <h3 class="text-xl font-heading font-bold text-white uppercase tracking-wider">Clinic Schedule</h3>
             <div class="space-y-4">
-              {clinics.map((c) => (
-                <div class="flex items-center justify-between p-5 glass rounded-2xl border-white/5 hover:border-brand-teal/20 transition-all">
-                  <div>
-                    <span class="text-[10px] text-brand-teal font-bold uppercase tracking-widest block mb-1">{c.age} Division</span>
-                    <span class="text-lg font-bold text-white block">{c.dates}</span>
-                    <span class="text-sm text-white/40">{c.time}</span>
+              {clinicGroups.map((group) => (
+                <div class="p-5 glass rounded-2xl border-white/5 hover:border-brand-teal/20 transition-all space-y-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <span class="text-[10px] text-brand-teal font-bold uppercase tracking-widest block mb-1">{group.age} Division</span>
+                      <span class="text-lg font-bold text-white block">{group.dates}</span>
+                      <span class="text-sm text-white/40">{group.time}</span>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-xl font-bold text-white block mb-2">{group.cost}</span>
+                      <a href="/register?tab=tryout-prep" class="btn btn-primary !py-2 !px-4 !text-[10px] uppercase tracking-widest">Register Now</a>
+                    </div>
                   </div>
-                  <div class="text-right">
-                    <span class="text-xl font-bold text-white block mb-2">{c.cost}</span>
-                    <a href="/register" class="text-[10px] font-bold text-brand-teal uppercase tracking-widest hover:underline">Select Session</a>
+                  
+                  <div class="grid grid-cols-2 gap-3 pt-2">
+                    {group.sessions.map(session => {
+                      const availability = getAvailability(session.id);
+                      return (
+                        <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+                          <div class="flex items-center justify-between mb-1">
+                            <span class="text-[10px] font-bold text-white/60 uppercase">{session.date}</span>
+                            {availability && (
+                              availability.isFull ? (
+                                <span class="text-[8px] font-black text-brand-coral uppercase tracking-tighter">Sold Out</span>
+                              ) : availability.spotsLeft <= 5 ? (
+                                <span class="text-[8px] font-black text-brand-teal uppercase tracking-tighter animate-pulse">{availability.spotsLeft} Left!</span>
+                              ) : null
+                            )}
+                          </div>
+                          {availability && (
+                            <div class="flex items-center gap-2">
+                              <div class="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                                <div 
+                                  class={`h-full rounded-full ${availability.isFull ? 'bg-brand-coral' : 'bg-brand-teal'}`}
+                                  style={`width: ${Math.min((availability.filled / availability.capacity) * 100, 100)}%`}
+                                ></div>
+                              </div>
+                              <span class="text-[8px] font-bold text-white/30 tabular-nums">{availability.filled}/{availability.capacity}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -130,7 +195,7 @@ const tryouts = [
               <p className="text-sm text-brand-teal mb-2 font-bold uppercase tracking-widest text-[10px]">Location & Parking</p>
               <p className="text-sm text-white/50 mb-2 font-medium">Century High School — Main Gym</p>
               <p className="text-xs text-white/40 mb-6 leading-relaxed">Please park in the <strong>North Parking Lot</strong>. We recommend arriving <strong>15+ minutes early</strong> to facilitate check-in.</p>
-              <a href="/register" className="btn btn-primary !w-full text-center">Register for Clinics</a>
+              <a href="/register?tab=tryout-prep" className="btn btn-primary !w-full text-center">Register for Clinics</a>
             </div>
           </div>
         </ScrollReveal>

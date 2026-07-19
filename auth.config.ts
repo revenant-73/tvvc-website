@@ -6,6 +6,7 @@ import Resend from '@auth/core/providers/resend';
 import Credentials from '@auth/core/providers/credentials';
 
 export default defineConfig({
+  secret: import.meta.env.AUTH_SECRET || process.env.AUTH_SECRET,
   adapter: db ? DrizzleAdapter(db, {
     usersTable: schema.users,
     accountsTable: schema.accounts,

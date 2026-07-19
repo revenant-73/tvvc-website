@@ -40,11 +40,13 @@ interface SavedAthlete {
 export default function RegistrationForm({ 
   initialEvents, 
   userAthletes = [], 
-  currentUser 
+  currentUser,
+  initialTab = 'camps'
 }: { 
   initialEvents: Event[],
   userAthletes?: SavedAthlete[],
-  currentUser?: any
+  currentUser?: any,
+  initialTab?: string
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [parentInfo, setParentInfo] = useState({
@@ -66,7 +68,9 @@ export default function RegistrationForm({
     }
   ]);
 
-  const [athleteTabStates, setAthleteTabStates] = useState<string[]>(['camps']);
+  const [athleteTabStates, setAthleteTabStates] = useState<string[]>(
+    ['camps'].map(() => ['camps', 'clinics', 'tryout-prep'].includes(initialTab) ? initialTab : 'camps')
+  );
   const [expandedWaivers, setExpandedWaivers] = useState<boolean[]>([false]);
 
   // Update states if athletes are added/removed
@@ -74,8 +78,10 @@ export default function RegistrationForm({
     if (athleteTabStates.length !== athletes.length) {
       setAthleteTabStates(prev => {
         const next = [...prev];
+        const tabToUse = ['camps', 'clinics', 'tryout-prep'].includes(initialTab) ? initialTab : 'camps';
+        
         if (athletes.length > prev.length) {
-          for (let i = prev.length; i < athletes.length; i++) next.push('camps');
+          for (let i = prev.length; i < athletes.length; i++) next.push(tabToUse);
         } else {
           next.splice(athletes.length);
         }
@@ -279,6 +285,14 @@ export default function RegistrationForm({
 
       {currentStep === 1 && (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {initialTab === 'tryout-prep' && (
+            <div className="glass-card border-brand-teal/20 bg-brand-teal/5 p-6 text-center">
+              <p className="text-brand-teal font-bold uppercase tracking-widest text-[10px] mb-2">Registration Started</p>
+              <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">Tryout Prep Clinics</h3>
+              <p className="text-white/40 text-xs mt-2 italic">Fill out your contact info below to select your clinic sessions in the next step.</p>
+            </div>
+          )}
+
           {/* Parent Contact Section */}
           <section className="glass-card border-white/10 p-8 space-y-6">
             <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Parent / Guardian Information</h2>
@@ -496,72 +510,84 @@ export default function RegistrationForm({
                         { title: 'Hitting Clinics', pattern: 'clinic-hitting' },
                         { title: 'Serving Clinics', pattern: 'clinic-serving' },
                         { title: 'Defense & Receive Clinics', pattern: 'clinic-serve-receive-defense' }
-                      ].map(group => {
-                        const groupEvents = initialEvents
-                          .filter(e => e.type === 'clinic' && e.id.includes(group.pattern))
-                          .sort((a, b) => {
-                            const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8, 'October': 10, 'November': 11 };
-                            const getMonthDay = (info: string) => {
-                              const match = info.match(/(May|June|July|August|October|November)\s+(\d+)/);
-                              if (!match) return 0;
-                              return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
-                            };
-                            return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
-                          });
+                      ].filter(group => {
+                        return initialEvents.some(e => e.type === 'clinic' && e.id.includes(group.pattern));
+                      }).length === 0 ? (
+                        <div className="p-12 text-center glass-card border-white/5">
+                          <p className="text-white/40 text-sm italic">No skill clinics are currently available for registration.</p>
+                        </div>
+                      ) : (
+                        [
+                          { title: 'Hitting Clinics', pattern: 'clinic-hitting' },
+                          { title: 'Serving Clinics', pattern: 'clinic-serving' },
+                          { title: 'Defense & Receive Clinics', pattern: 'clinic-serve-receive-defense' }
+                        ].map(group => {
+                          const groupEvents = initialEvents
+                            .filter(e => e.type === 'clinic' && e.id.includes(group.pattern))
+                            .sort((a, b) => {
+                              const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8, 'October': 10, 'November': 11 };
+                              const getMonthDay = (info: string) => {
+                                const match = info.match(/(May|June|July|August|October|November)\s+(\d+)/);
+                                if (!match) return 0;
+                                return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
+                              };
+                              return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
+                            });
 
-                        if (groupEvents.length === 0) return null;
+                          if (groupEvents.length === 0) return null;
 
-                        return (
-                          <div key={group.title} className="space-y-3">
-                            <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {groupEvents.map(event => {
-                                const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
-                                const isSelected = athlete.selectedEvents.includes(event.id);
-                                
-                                return (
-                                  <label 
-                                    key={event.id}
-                                    className={`
-                                      flex items-center justify-between p-4 rounded-xl border transition-all
-                                      ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
-                                      ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
-                                    `}
-                                  >
-                                    <div className="flex items-center gap-4">
-                                      <input 
-                                        type="checkbox"
-                                        disabled={isFull}
-                                        checked={isSelected}
-                                        onChange={() => toggleEvent(index, event.id)}
-                                        className="accent-brand-teal w-4 h-4"
-                                      />
-                                      <div>
-                                        <span className="block font-bold text-white text-sm">{event.name}</span>
-                                        <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                                          {event.dateInfo} • {event.timeInfo}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="text-right">
-                                      <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
-                                      {isFull ? (
-                                        <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
-                                      ) : (
-                                        event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0)) <= 5 && (
-                                          <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
-                                            Only {event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0))} spots left!
+                          return (
+                            <div key={group.title} className="space-y-3">
+                              <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {groupEvents.map(event => {
+                                  const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
+                                  const isSelected = athlete.selectedEvents.includes(event.id);
+                                  
+                                  return (
+                                    <label 
+                                      key={event.id}
+                                      className={`
+                                        flex items-center justify-between p-4 rounded-xl border transition-all
+                                        ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                                        ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
+                                      `}
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <input 
+                                          type="checkbox"
+                                          disabled={isFull}
+                                          checked={isSelected}
+                                          onChange={() => toggleEvent(index, event.id)}
+                                          className="accent-brand-teal w-4 h-4"
+                                        />
+                                        <div>
+                                          <span className="block font-bold text-white text-sm">{event.name}</span>
+                                          <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                                            {event.dateInfo} • {event.timeInfo}
                                           </span>
-                                        )
-                                      )}
-                                    </div>
-                                  </label>
-                                );
-                              })}
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
+                                        {isFull ? (
+                                          <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
+                                        ) : (
+                                          event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0)) <= 5 && (
+                                            <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
+                                              Only {event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0))} spots left!
+                                            </span>
+                                          )
+                                        )}
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                     </div>
                   )}
 
@@ -651,72 +677,85 @@ export default function RegistrationForm({
                         { title: 'Hitting Focus Camps', pattern: 'camp-hitting' },
                         { title: 'High School Tryout Prep', pattern: 'camp-hs-prep' },
                         { title: 'Youth Ignition (4th-6th Grade)', pattern: 'camp-ignition' }
-                      ].map(group => {
-                        const groupEvents = initialEvents
-                          .filter(e => e.type === 'camp' && (e.id.includes(group.pattern) || (group.pattern2 && e.id.includes(group.pattern2))))
-                          .sort((a, b) => {
-                            const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8 };
-                            const getMonthDay = (info: string) => {
-                              const match = info.match(/(May|June|July|August)\s+(\d+)/);
-                              if (!match) return 0;
-                              return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
-                            };
-                            return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
-                          });
+                      ].filter(group => {
+                        return initialEvents.some(e => e.type === 'camp' && (e.id.includes(group.pattern) || (group.pattern2 && e.id.includes(group.pattern2))));
+                      }).length === 0 ? (
+                        <div className="p-12 text-center glass-card border-white/5">
+                          <p className="text-white/40 text-sm italic">No summer camps are currently available for registration.</p>
+                        </div>
+                      ) : (
+                        [
+                          { title: 'Foundations & Performance (6th-8th Grade)', pattern: 'camp-foundations', pattern2: 'camp-performance' },
+                          { title: 'Hitting Focus Camps', pattern: 'camp-hitting' },
+                          { title: 'High School Tryout Prep', pattern: 'camp-hs-prep' },
+                          { title: 'Youth Ignition (4th-6th Grade)', pattern: 'camp-ignition' }
+                        ].map(group => {
+                          const groupEvents = initialEvents
+                            .filter(e => e.type === 'camp' && (e.id.includes(group.pattern) || (group.pattern2 && e.id.includes(group.pattern2))))
+                            .sort((a, b) => {
+                              const months = { 'May': 5, 'June': 6, 'July': 7, 'August': 8 };
+                              const getMonthDay = (info: string) => {
+                                const match = info.match(/(May|June|July|August)\s+(\d+)/);
+                                if (!match) return 0;
+                                return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
+                              };
+                              return getMonthDay(a.dateInfo) - getMonthDay(b.dateInfo);
+                            });
 
-                        if (groupEvents.length === 0) return null;
+                          if (groupEvents.length === 0) return null;
 
-                        return (
-                          <div key={group.title} className="space-y-3">
-                            <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {groupEvents.map(event => {
-                                const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
-                                const isSelected = athlete.selectedEvents.includes(event.id);
-                                
-                                return (
-                                  <label 
-                                    key={event.id}
-                                    className={`
-                                      flex items-center justify-between p-4 rounded-xl border transition-all
-                                      ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
-                                      ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
-                                    `}
-                                  >
-                                    <div className="flex items-center gap-4">
-                                      <input 
-                                        type="checkbox"
-                                        disabled={isFull}
-                                        checked={isSelected}
-                                        onChange={() => toggleEvent(index, event.id)}
-                                        className="accent-brand-teal w-4 h-4"
-                                      />
-                                      <div>
-                                        <span className="block font-bold text-white text-sm">{event.name}</span>
-                                        <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                                          {event.dateInfo} • {event.timeInfo}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="text-right">
-                                      <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
-                                      {isFull ? (
-                                        <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
-                                      ) : (
-                                        event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0)) <= 5 && (
-                                          <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
-                                            Only {event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0))} spots left!
+                          return (
+                            <div key={group.title} className="space-y-3">
+                              <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {groupEvents.map(event => {
+                                  const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
+                                  const isSelected = athlete.selectedEvents.includes(event.id);
+                                  
+                                  return (
+                                    <label 
+                                      key={event.id}
+                                      className={`
+                                        flex items-center justify-between p-4 rounded-xl border transition-all
+                                        ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                                        ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
+                                      `}
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <input 
+                                          type="checkbox"
+                                          disabled={isFull}
+                                          checked={isSelected}
+                                          onChange={() => toggleEvent(index, event.id)}
+                                          className="accent-brand-teal w-4 h-4"
+                                        />
+                                        <div>
+                                          <span className="block font-bold text-white text-sm">{event.name}</span>
+                                          <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                                            {event.dateInfo} • {event.timeInfo}
                                           </span>
-                                        )
-                                      )}
-                                    </div>
-                                  </label>
-                                );
-                              })}
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
+                                        {isFull ? (
+                                          <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
+                                        ) : (
+                                          event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0)) <= 5 && (
+                                            <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
+                                              Only {event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0))} spots left!
+                                            </span>
+                                          )
+                                        )}
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                     </div>
                   )}
                 </div>

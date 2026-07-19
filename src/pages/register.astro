@@ -90,18 +90,20 @@ try {
   console.error("Database Error:", e);
   error = "We're experiencing a technical issue loading the registration data. Please try again later or contact Loren at 503-389-0760.";
 }
+
+const requestedTab = Astro.url.searchParams.get('tab') || 'camps';
 ---
 
-<BaseLayout title="Summer Registration" description="Register for TVVC Summer 2026 Volleyball Camps and Clinics in Hillsboro, OR.">
+<BaseLayout title="Event Registration" description="Register for TVVC camps, clinics, and tryout prep in Hillsboro, OR.">
   <main class="pt-32 pb-24 px-4 md:px-6">
     <div class="max-w-4xl mx-auto">
       <div class="text-center mb-16">
-        <span class="text-brand-teal font-bold uppercase tracking-[0.2em] text-[10px] mb-4 block">Summer 2026</span>
+        <span class="text-brand-teal font-bold uppercase tracking-[0.2em] text-[10px] mb-4 block">2026-2027 Season</span>
         <h1 class="text-4xl md:text-7xl font-heading font-extrabold text-white uppercase mb-6 leading-tight">
           Secure Your <span class="text-brand-teal italic text-5xl md:text-8xl">Spot</span>
         </h1>
         <p class="text-white/60 text-lg leading-relaxed max-w-2xl mx-auto">
-          Complete the form below to register your athlete(s) for our summer training programs.
+          Complete the form below to register your athlete(s) for our upcoming training programs.
         </p>
       </div>
 
@@ -130,7 +132,13 @@ try {
           <a href="/" class="btn btn-secondary">Back to Home</a>
         </div>
       ) : (
-        <RegistrationForm client:load initialEvents={allEvents} userAthletes={userAthletes} currentUser={session?.user} />
+        <RegistrationForm 
+          client:load 
+          initialEvents={allEvents} 
+          userAthletes={userAthletes} 
+          currentUser={session?.user} 
+          initialTab={requestedTab}
+        />
       )}
     </div>
   </main>
