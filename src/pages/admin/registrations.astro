@@ -200,36 +200,44 @@ const getGroupedEvents = (events: any[]) => {
                 
                 {section.display === 'grid' ? (
                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {sectionEvents.sort(sortByDate).map(event => (
-                      <div class="glass-card border-white/10 p-6 space-y-4">
-                        <div>
-                          <h3 class="font-heading font-bold text-lg text-white leading-tight">{event.name}</h3>
-                          <p class="text-[10px] text-white/40 uppercase tracking-widest font-bold mt-1">{event.dateInfo} • {event.timeInfo}</p>
-                        </div>
-                        
-                        <div class="flex items-center justify-between py-4 border-y border-white/5">
-                          <div>
-                            <p class="text-[8px] font-bold uppercase text-white/30 tracking-widest mb-1">Enrolled</p>
-                            <p class="text-2xl font-heading font-bold text-white">{event.spotsFilled} / <span class="text-white/40 text-lg">{event.capacity}</span></p>
+                    {sectionEvents.sort(sortByDate).map(event => {
+                      const isOverEnrolled = event.spotsFilled > event.capacity;
+                      return (
+                        <div class={`glass-card border-white/10 p-6 space-y-4 ${isOverEnrolled ? 'border-brand-coral/50 bg-brand-coral/5' : ''}`}>
+                          <div class="flex justify-between items-start gap-4">
+                            <div>
+                              <h3 class="font-heading font-bold text-lg text-white leading-tight">{event.name}</h3>
+                              <p class="text-[10px] text-white/40 uppercase tracking-widest font-bold mt-1">{event.dateInfo} • {event.timeInfo}</p>
+                            </div>
+                            {isOverEnrolled && (
+                              <span class="bg-brand-coral text-white text-[8px] font-black px-2 py-1 rounded uppercase tracking-tighter animate-pulse">Review Needed</span>
+                            )}
                           </div>
-                          <div class="h-1.5 w-24 bg-white/5 rounded-full overflow-hidden">
-                            <div class={`h-full ${event.spotsFilled >= event.capacity ? 'bg-brand-coral' : 'bg-brand-teal'} rounded-full`} style={`width: ${Math.min((event.spotsFilled / event.capacity) * 100, 100)}%`}></div>
+                          
+                          <div class="flex items-center justify-between py-4 border-y border-white/5">
+                            <div>
+                              <p class="text-[8px] font-bold uppercase text-white/30 tracking-widest mb-1">Enrolled</p>
+                              <p class={`text-2xl font-heading font-bold ${isOverEnrolled ? 'text-brand-coral' : 'text-white'}`}>{event.spotsFilled} / <span class="text-white/40 text-lg">{event.capacity}</span></p>
+                            </div>
+                            <div class="h-1.5 w-24 bg-white/5 rounded-full overflow-hidden">
+                              <div class={`h-full ${event.spotsFilled >= event.capacity ? 'bg-brand-coral' : 'bg-brand-teal'} rounded-full`} style={`width: ${Math.min((event.spotsFilled / event.capacity) * 100, 100)}%`}></div>
+                            </div>
                           </div>
-                        </div>
 
-                        <div class="flex gap-2">
-                          <a href={`/admin/roster/${event.id}?auth=true`} class="btn btn-secondary !py-2 !px-4 !text-[10px] flex-1 text-center">Roster</a>
-                          <button 
-                            class="copy-emails-btn btn border border-white/10 hover:border-brand-teal transition-colors !py-2 !px-4 !text-[10px] text-center"
-                            data-emails={event.emails.join(', ')}
-                            title={event.emails.length > 0 ? `Copy ${event.emails.length} emails` : "No emails to copy"}
-                          >
-                            Copy Emails
-                          </button>
-                          <a href={`/admin/events/${event.id}?auth=true`} class="btn border border-white/10 hover:border-brand-teal transition-colors !py-2 !px-4 !text-[10px] text-center">Edit Event</a>
+                          <div class="flex gap-2">
+                            <a href={`/admin/roster/${event.id}?auth=true`} class="btn btn-secondary !py-2 !px-4 !text-[10px] flex-1 text-center">Roster</a>
+                            <button 
+                              class="copy-emails-btn btn border border-white/10 hover:border-brand-teal transition-colors !py-2 !px-4 !text-[10px] text-center"
+                              data-emails={event.emails.join(', ')}
+                              title={event.emails.length > 0 ? `Copy ${event.emails.length} emails` : "No emails to copy"}
+                            >
+                              Copy Emails
+                            </button>
+                            <a href={`/admin/events/${event.id}?auth=true`} class="btn border border-white/10 hover:border-brand-teal transition-colors !py-2 !px-4 !text-[10px] text-center">Edit Event</a>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div class="space-y-6">

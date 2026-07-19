@@ -73,14 +73,17 @@ export const POST: APIRoute = async ({ request }) => {
           const event = selectedEvents.find(e => e.id === eventId);
           if (!event) continue;
 
-          // If it's a training block, we already verified unique IDs for pricing
-          // But we still need to check capacity for EACH athlete joining it
-          if (event.spotsFilled! >= event.capacity!) {
+          // Check combined capacity (Filled + Pending)
+          if ((event.spotsFilled || 0) + (event.pendingSpots || 0) >= (event.capacity || 0)) {
             throw new Error(`The event "${event.name}" is full.`);
           }
 
+          // Increment pending spots immediately to "reserve" it
+          await tx.update(events)
+            .set({ pendingSpots: sql`${events.pendingSpots} + 1` })
+            .where(eq(events.id, eventId));
+
           // ONLY add to total and line items if NOT a training block 
-          // (or if we want to handle training blocks separately below)
           if (event.type !== 'training-block') {
             totalCents += event.price;
             lineItems.push({
@@ -135,6 +138,7 @@ export const POST: APIRoute = async ({ request }) => {
         status: 'pending',
         totalAmount: totalCents,
         stripeCustomerId: stripeCustomerId || null,
+        expiresAt: Date.now() + 30 * 60 * 1000, // 30 minute reservation
         metadata: body.metadata ? JSON.stringify(body.metadata) : null,
       });
 

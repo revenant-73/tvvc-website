@@ -80,17 +80,54 @@ export const POST: APIRoute = async ({ request }) => {
 
           console.log(`Registration ${registrationId} status updated to "paid".`);
 
-          // 2. Increment Spots Filled for each event in this registration
+          // 2. Increment Spots Filled, Decrement Pending Spots
           const items = await tx.select().from(registrationItems).where(eq(registrationItems.registrationId, registrationId));
           
           console.log(`Found ${items.length} registration items to process.`);
           
+          let overCapacity = false;
+
           for (const item of items) {
             if (item.eventId) {
-              await tx.update(events)
-                .set({ spotsFilled: sql`${events.spotsFilled} + 1` })
-                .where(eq(events.id, item.eventId));
-              console.log(`Incremented spotsFilled for event: ${item.eventId}`);
+              // Atomically update both counters
+              const [updatedEvent] = await tx.update(events)
+                .set({ 
+                  spotsFilled: sql`${events.spotsFilled} + 1`,
+                  pendingSpots: sql`MAX(0, ${events.pendingSpots} - 1)`
+                })
+                .where(eq(events.id, item.eventId))
+                .returning();
+
+              if (updatedEvent && updatedEvent.spotsFilled! > updatedEvent.capacity!) {
+                console.warn(`Event ${item.eventId} is now OVER CAPACITY (${updatedEvent.spotsFilled}/${updatedEvent.capacity})`);
+                overCapacity = true;
+              }
+
+              console.log(`Updated spots for event: ${item.eventId}`);
+            }
+          }
+
+          if (overCapacity) {
+            await tx.update(registrations)
+              .set({ needsReview: true })
+              .where(eq(registrations.id, registrationId));
+            
+            // Notify Admin
+            try {
+              await sendEmail({
+                to: 'loren@tualatinvalleyvb.com',
+                subject: '🚨 OVER-ENROLLMENT ALERT: Review Required',
+                html: `
+                  <div style="font-family: sans-serif; padding: 20px; border: 2px solid #E85D4E; border-radius: 8px;">
+                    <h2 style="color: #E85D4E;">Action Required: Over-Enrollment</h2>
+                    <p>Registration <strong>${registrationId}</strong> has resulted in an event exceeding its capacity.</p>
+                    <p><strong>Parent:</strong> ${updateReg[0].parentName} (${updateReg[0].parentEmail})</p>
+                    <p>Please check the <a href="${new URL(request.url).origin}/admin/registrations?auth=true">Admin Dashboard</a> to manage this registration.</p>
+                  </div>
+                `
+              });
+            } catch (notifyErr) {
+              console.error('Failed to send admin alert email:', notifyErr);
             }
           }
         });

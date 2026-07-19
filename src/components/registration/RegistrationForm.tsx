@@ -11,6 +11,7 @@ interface Event {
   price: number;
   capacity: number;
   spotsFilled: number;
+  pendingSpots: number;
 }
 
 interface Athlete {
@@ -515,7 +516,7 @@ export default function RegistrationForm({
                             <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {groupEvents.map(event => {
-                                const isFull = event.spotsFilled >= event.capacity;
+                                const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
                                 const isSelected = athlete.selectedEvents.includes(event.id);
                                 
                                 return (
@@ -547,9 +548,9 @@ export default function RegistrationForm({
                                       {isFull ? (
                                         <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
                                       ) : (
-                                        event.capacity - (event.spotsFilled || 0) <= 5 && (
+                                        event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0)) <= 5 && (
                                           <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
-                                            Only {event.capacity - (event.spotsFilled || 0)} spots left!
+                                            Only {event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0))} spots left!
                                           </span>
                                         )
                                       )}
@@ -593,7 +594,7 @@ export default function RegistrationForm({
                             <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {groupEvents.map(event => {
-                                const isFull = event.spotsFilled >= event.capacity;
+                                const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
                                 const isSelected = athlete.selectedEvents.includes(event.id);
                                 
                                 return (
@@ -625,9 +626,9 @@ export default function RegistrationForm({
                                       {isFull ? (
                                         <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
                                       ) : (
-                                        event.capacity - (event.spotsFilled || 0) <= 5 && (
+                                        event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0)) <= 5 && (
                                           <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
-                                            Only {event.capacity - (event.spotsFilled || 0)} spots left!
+                                            Only {event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0))} spots left!
                                           </span>
                                         )
                                       )}
@@ -670,7 +671,7 @@ export default function RegistrationForm({
                             <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest px-2">{group.title}</h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {groupEvents.map(event => {
-                                const isFull = event.spotsFilled >= event.capacity;
+                                const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
                                 const isSelected = athlete.selectedEvents.includes(event.id);
                                 
                                 return (
@@ -702,9 +703,9 @@ export default function RegistrationForm({
                                       {isFull ? (
                                         <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
                                       ) : (
-                                        event.capacity - (event.spotsFilled || 0) <= 5 && (
+                                        event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0)) <= 5 && (
                                           <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
-                                            Only {event.capacity - (event.spotsFilled || 0)} spots left!
+                                            Only {event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0))} spots left!
                                           </span>
                                         )
                                       )}

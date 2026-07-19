@@ -163,6 +163,7 @@ export const events = sqliteTable('events', {
   price: integer('price').notNull(), // in cents (Stripe style)
   capacity: integer('capacity').notNull(),
   spotsFilled: integer('spots_filled').default(0),
+  pendingSpots: integer('pending_spots').default(0),
   active: integer('active', { mode: 'boolean' }).default(true),
   emailDetails: text('email_details'), // Custom details for registration emails
   metadata: text('metadata'), // For any event-specific config
@@ -187,8 +188,10 @@ export const registrations = sqliteTable('registrations', {
   stripeSessionId: text('stripe_session_id'),
   stripeCustomerId: text('stripe_customer_id'), // Store Stripe customer ID directly on registration too
   status: text('status').default('pending'), // pending, paid, cancelled
+  needsReview: integer('needs_review', { mode: 'boolean' }).default(false),
   totalAmount: integer('total_amount').notNull(),
   metadata: text('metadata'), // For storing promo codes or other info
+  expiresAt: integer('expires_at', { mode: 'timestamp_ms' }),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 }, (table) => {
   return {

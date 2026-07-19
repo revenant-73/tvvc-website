@@ -1,8 +1,28 @@
 ---
-export const prerender = true;
+export const prerender = false;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';
+import { db } from '../db/db';
+import { events } from '../db/schema';
+import { eq } from 'drizzle-orm';
+
+// Fetch all events to show real-time availability
+const allEvents = await db.select().from(events).where(eq(events.active, true));
+
+const getAvailability = (name: string, date: string) => {
+  const event = allEvents.find(e => 
+    e.name.toLowerCase().includes(name.toLowerCase()) && 
+    e.dateInfo.toLowerCase().includes(date.toLowerCase().split('–')[0])
+  );
+  if (!event) return null;
+  return {
+    spotsFilled: event.spotsFilled || 0,
+    pendingSpots: event.pendingSpots || 0,
+    capacity: event.capacity,
+    isFull: (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity
+  };
+};
 
 const camps = [
   {
@@ -175,29 +195,50 @@ const clinicGroups = [
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {camps.map((camp, i) => (
-          <ScrollReveal delay={i * 0.1}>
-            <div class="glass-card h-full flex flex-col justify-between group hover:border-brand-teal/30">
-              <div>
-                <span class="bg-brand-teal text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-6 inline-block">{camp.date}</span>
-                <h3 class="text-xl font-heading font-bold mb-6 text-white leading-tight">{camp.title}</h3>
-                
-                <div class="space-y-4 mb-8">
-                  <p class="text-sm text-white/70">
-                    <strong class="text-brand-teal">Best for:</strong> {camp.bestFor}
-                  </p>
-                  <p class="text-sm text-white/70">
-                    <strong class="text-brand-teal">Focus:</strong> {camp.focus}
-                  </p>
+        {camps.map((camp, i) => {
+          const availability = getAvailability(camp.title, camp.date);
+          const spotsLeft = availability ? availability.capacity - (availability.spotsFilled + availability.pendingSpots) : null;
+          
+          return (
+            <ScrollReveal delay={i * 0.1}>
+              <div class={`glass-card h-full flex flex-col justify-between group transition-all duration-300 ${availability?.isFull ? 'opacity-70 grayscale-[0.5]' : 'hover:border-brand-teal/30'}`}>
+                <div>
+                  <div class="flex items-center justify-between mb-6">
+                    <span class="bg-brand-teal text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block">{camp.date}</span>
+                    {availability && (
+                      availability.isFull ? (
+                        <span class="text-brand-coral font-black text-[10px] uppercase tracking-widest italic">Sold Out</span>
+                      ) : spotsLeft !== null && spotsLeft <= 5 ? (
+                        <span class="text-brand-teal font-black text-[10px] uppercase tracking-widest animate-pulse italic">Only {spotsLeft} Left!</span>
+                      ) : null
+                    )}
+                  </div>
+                  <h3 class="text-xl font-heading font-bold mb-6 text-white leading-tight">{camp.title}</h3>
+                  
+                  <div class="space-y-4 mb-8">
+                    <p class="text-sm text-white/70">
+                      <strong class="text-brand-teal">Best for:</strong> {camp.bestFor}
+                    </p>
+                    <p class="text-sm text-white/70">
+                      <strong class="text-brand-teal">Focus:</strong> {camp.focus}
+                    </p>
+                  </div>
                 </div>
+                
+                {availability?.isFull ? (
+                  <div class="bg-brand-coral/10 border border-brand-coral/20 rounded-xl p-3 text-center">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-brand-coral">Registration Closed</span>
+                  </div>
+                ) : (
+                  <a href="/register" class="text-brand-teal font-bold text-[10px] uppercase tracking-widest hover:underline flex items-center gap-2">
+                    Select in Registration Form
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+                  </a>
+                )}
               </div>
-              <a href="/register" class="text-brand-teal font-bold text-[10px] uppercase tracking-widest hover:underline flex items-center gap-2">
-                Select in Registration Form
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
-              </a>
-            </div>
-          </ScrollReveal>
-        ))}
+            </ScrollReveal>
+          );
+        })}
       </div>
     </section>
 
