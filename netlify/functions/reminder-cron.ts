@@ -1,4 +1,3 @@
-import { schedule } from '@netlify/functions';
 import { getDb } from '../../src/db';
 import { events, registrations, registrationItems, athletes } from '../../src/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
@@ -86,60 +85,78 @@ const handler = async (event: any, context: any) => {
         const subject = `Reminder: ${eventItem.name} starts in 2 days!`;
         
         const html = `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden; color: #333;">
-            <div style="background-color: #009695; color: white; padding: 20px; text-align: center;">
-              <h1 style="margin: 0; font-size: 24px;">TVVC Event Reminder</h1>
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden; color: #334155; line-height: 1.6; background-color: #ffffff;">
+            <div style="background-color: #009695; height: 6px;"></div>
+            
+            <div style="padding: 40px 32px 32px; text-align: center;">
+              <div style="display: inline-block; background-color: #fff7ed; color: #ea580c; padding: 6px 16px; border-radius: 100px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; border: 1px solid #ffedd5;">
+                Upcoming Event
+              </div>
+              <h1 style="color: #0f172a; margin: 0; font-size: 32px; font-weight: 800; text-transform: uppercase; letter-spacing: -1px; line-height: 1.1;">Event<br><span style="color: #009695;">Reminder</span></h1>
             </div>
-            <div style="padding: 30px; line-height: 1.6;">
-              <p>Hi everyone,</p>
-              <p>This is a reminder that <strong>${eventItem.name}</strong> starts in two days.</p>
+
+            <div style="padding: 0 32px 48px;">
+              <p style="font-size: 16px; color: #1e293b; margin-bottom: 24px;">Hi ${athleteNames} and family,</p>
+              <p style="font-size: 15px; margin-bottom: 32px;">This is a quick reminder that <strong>${eventItem.name}</strong> starts in just two days! We're excited to have you on the court.</p>
               
-              <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #E85D4E;">
-                <h2 style="margin-top: 0; font-size: 18px; color: #1A1A1A;">Event Details</h2>
-                <p style="margin: 5px 0;"><strong>Athletes:</strong> ${athleteNames}</p>
-                <p style="margin: 5px 0;"><strong>Date:</strong> ${eventItem.dateInfo}</p>
-                <p style="margin: 5px 0;"><strong>Time:</strong> ${eventItem.timeInfo}</p>
-                <p style="margin: 15px 0 5px 0;"><strong>Location:</strong><br>
-                Tualatin Valley Volleyball Club<br>
-                2820 SE 58th Court, #400<br>
-                Hillsboro, OR<br>
-                <span style="color: #666; font-size: 0.9em;">(Behind Floors with Flair)</span></p>
+              <div style="margin-bottom: 32px; padding: 24px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; border-left: 4px solid #009695;">
+                <h2 style="margin: 0 0 16px 0; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #64748b;">Event Schedule</h2>
+                <div style="display: grid; gap: 12px;">
+                  <p style="margin: 0; font-size: 14px; color: #1e293b;"><strong>Athletes:</strong> ${athleteNames}</p>
+                  <p style="margin: 4px 0; font-size: 14px; color: #1e293b;"><strong>Date:</strong> ${eventItem.dateInfo}</p>
+                  <p style="margin: 4px 0; font-size: 14px; color: #1e293b;"><strong>Time:</strong> ${eventItem.timeInfo}</p>
+                  <p style="margin: 12px 0 0 0; font-size: 14px; color: #1e293b; line-height: 1.5;">
+                    <strong style="color: #64748b; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Location</strong>
+                    Tualatin Valley Volleyball Club<br>
+                    2820 SE 58th Court, #400<br>
+                    Hillsboro, OR <span style="color: #64748b; font-size: 12px;">(Behind Floors with Flair)</span>
+                  </p>
+                </div>
               </div>
 
-              <h3 style="color: #009695; margin-bottom: 10px;">Parking Instructions:</h3>
-              <p style="margin-top: 0;">Please park in the <strong>Regal Movies at Home</strong> lot and use the pathway leading to our gym doors. You may drop players off near the entrance, but please do not park in the small lot directly outside the gym.</p>
-
-              <h3 style="color: #009695; margin-bottom: 10px;">Players should bring:</h3>
-              <ul style="padding-left: 20px; margin-top: 0;">
-                <li>Volleyball shoes or clean, non-marking court shoes</li>
-                <li>Knee pads</li>
-                <li>A full water bottle</li>
-                <li>A snack or light lunch for the break</li>
-                <li>Comfortable athletic clothing</li>
-                <li>Any personal items they may need</li>
-              </ul>
-
-              <h3 style="color: #009695; margin-bottom: 10px;">Arrival:</h3>
-              <p style="margin-top: 0;">Please arrive a few minutes early so players can check in and be ready to begin at the scheduled start time.</p>
-
-              ${eventItem.description ? `
-              <div style="margin: 25px 0; padding: 15px; background-color: #f0fafa; border-radius: 8px; border: 1px solid #009695;">
-                <p style="margin: 0; font-style: italic;">${eventItem.description}</p>
+              ${eventItem.emailDetails ? `
+              <div style="margin-bottom: 32px; padding: 24px; background-color: #f0fdfa; border-radius: 12px; border: 1px solid #ccfbf1; border-left: 4px solid #009695;">
+                <h3 style="color: #009695; margin-top: 0; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;">Specific Instructions</h3>
+                <div style="font-size: 14px; color: #0f172a;">${eventItem.emailDetails}</div>
               </div>
-              ` : ''}
+              ` : `
+              <div style="margin-bottom: 32px; display: grid; gap: 24px;">
+                <div>
+                  <h3 style="color: #0f172a; margin: 0 0 8px 0; font-size: 14px; font-weight: 700;">Parking Instructions</h3>
+                  <p style="margin: 0; font-size: 14px; color: #475569;">Please park in the <strong>Regal Movies at Home</strong> lot and use the pathway leading to our gym doors. You may drop players off near the entrance, but please do not park in the small lot directly outside the gym.</p>
+                </div>
 
-              <p>We’re looking forward to seeing everyone on the court!</p>
-              
-              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                <p style="margin: 0;"><strong>Loren Anderson</strong> | he/him | Director</p>
-                <p style="margin: 0;">Tualatin Valley Volleyball Club</p>
-                <p style="margin: 0;"><a href="mailto:loren@tualatinvalleyvb.com" style="color: #009695;">loren@tualatinvalleyvb.com</a></p>
-                <p style="margin: 0;">(503) 389-0760</p>
-                <p style="margin: 0;"><a href="https://tualatinvalleyvb.com" style="color: #009695;">tualatinvalleyvb.com</a></p>
+                <div>
+                  <h3 style="color: #0f172a; margin: 0 0 8px 0; font-size: 14px; font-weight: 700;">Players should bring</h3>
+                  <ul style="padding-left: 20px; margin: 0; font-size: 14px; color: #475569; display: grid; gap: 4px;">
+                    <li>Volleyball shoes or clean, non-marking court shoes</li>
+                    <li>Knee pads</li>
+                    <li>A full water bottle</li>
+                    <li>A snack or light lunch for the break</li>
+                    <li>Comfortable athletic clothing</li>
+                  </ul>
+                </div>
+              </div>
+              `}
+
+              <div style="padding: 20px; background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; margin-bottom: 40px;">
+                <p style="margin: 0; font-size: 14px; color: #92400e; font-weight: 600;">Arrival: Please arrive a few minutes early so players can check in and be ready to begin at the scheduled start time.</p>
+              </div>
+
+              <div style="padding-top: 32px; border-top: 1px solid #f1f5f9;">
+                <p style="margin: 0; font-size: 15px; color: #0f172a; font-weight: 700; margin-bottom: 16px;">See you on the court!</p>
+                <div style="flex: 1;">
+                  <p style="margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;">Loren Anderson</p>
+                  <p style="margin: 0; font-size: 12px; color: #64748b; margin-bottom: 8px;">Director • TVVC</p>
+                  <p style="margin: 0; font-size: 13px;"><a href="mailto:loren@tualatinvalleyvb.com" style="color: #009695; text-decoration: none; font-weight: 600;">loren@tualatinvalleyvb.com</a></p>
+                  <p style="margin: 2px 0; font-size: 13px; color: #475569;">(503) 389-0760</p>
+                  <p style="margin: 0; font-size: 13px;"><a href="https://tualatinvalleyvb.com" style="color: #009695; text-decoration: none; font-weight: 600;">tualatinvalleyvb.com</a></p>
+                </div>
               </div>
             </div>
-            <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #777;">
-              &copy; 2026 Tualatin Valley Volleyball Club
+            
+            <div style="background-color: #f8fafc; padding: 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9;">
+              &copy; ${new Date().getFullYear()} Tualatin Valley Volleyball Club
             </div>
           </div>
         `;

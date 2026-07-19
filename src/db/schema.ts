@@ -164,6 +164,7 @@ export const events = sqliteTable('events', {
   capacity: integer('capacity').notNull(),
   spotsFilled: integer('spots_filled').default(0),
   active: integer('active', { mode: 'boolean' }).default(true),
+  emailDetails: text('email_details'), // Custom details for registration emails
   metadata: text('metadata'), // For any event-specific config
 }, (table) => {
   return {

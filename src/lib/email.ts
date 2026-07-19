@@ -16,7 +16,8 @@ export async function sendEmail({ to, subject, html }: EmailPayload) {
 
   try {
     const data = await resend.emails.send({
-      from: 'TVVC Volleyball <reminders@tualatinvalleyvb.com>',
+      from: 'TVVC Volleyball <reminders@mail.tualatinvalleyvb.com>',
+      reply_to: 'loren@tualatinvalleyvb.com',
       to,
       subject,
       html,

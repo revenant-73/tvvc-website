@@ -1,8 +1,10 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
-import { registrations, events, registrationItems, users } from '../../../db/schema';
+import { registrations, events, registrationItems, users, athletes } from '../../../db/schema';
 import { eq, sql, and } from 'drizzle-orm';
 import Stripe from 'stripe';
+import { sendEmail } from '../../../lib/email';
+import { generateRegistrationEmail } from '../../../lib/email-templates';
 
 const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-01-27.acacia' as any,
@@ -93,7 +95,36 @@ export const POST: APIRoute = async ({ request }) => {
           }
         });
         
-        console.log(`Registration ${registrationId} fully finalized.`);
+        console.log(`Registration ${registrationId} fully finalized. Preparing confirmation email...`);
+
+        // Send Confirmation Email
+        try {
+          const [registration] = await db.select().from(registrations).where(eq(registrations.id, registrationId));
+          const itemsWithData = await db.select({
+            athlete: athletes,
+            event: events
+          })
+          .from(registrationItems)
+          .innerJoin(athletes, eq(registrationItems.athleteId, athletes.id))
+          .innerJoin(events, eq(registrationItems.eventId, events.id))
+          .where(eq(registrationItems.registrationId, registrationId));
+
+          if (registration && itemsWithData.length > 0) {
+            const emailHtml = generateRegistrationEmail(registration, itemsWithData);
+            const eventNames = [...new Set(itemsWithData.map(i => i.event.name))].join(', ');
+            
+            await sendEmail({
+              to: registration.parentEmail,
+              subject: `TVVC Registration Confirmed: ${eventNames}`,
+              html: emailHtml
+            });
+            console.log(`Confirmation email sent to ${registration.parentEmail} for registration ${registrationId}`);
+          }
+        } catch (emailErr) {
+          console.error('Error sending confirmation email:', emailErr);
+          // Don't return 500 here, the registration itself was successful
+        }
+
       } catch (dbErr) {
         console.error('Database Error during webhook processing:', dbErr);
         return new Response('Database error', { status: 500 });

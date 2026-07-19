@@ -12,6 +12,7 @@ const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || process.env.ADMIN_PASSC
 let authenticated = Astro.url.searchParams.get('auth') === 'true';
 let eventData = null;
 let roster = [];
+let allActiveEvents = [];
 let error = null;
 
 const db = getDb(
@@ -56,6 +57,12 @@ try {
       eq(registrationItems.eventId, id as string),
       eq(registrations.status, 'paid') // Only show paid registrations in the roster
     ));
+
+    // Fetch all active events for the transfer selection
+    allActiveEvents = await db.select()
+      .from(events)
+      .where(eq(events.active, true))
+      .orderBy(events.type, events.startDate);
   }
 } catch (e) {
   console.error(e);
@@ -171,7 +178,14 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
                       <td class="px-6 py-5 text-right">
                         <div class="flex flex-col items-end gap-1">
                           <button 
-                            class="remove-item-btn text-[9px] font-bold uppercase tracking-widest text-brand-teal hover:text-white transition-colors p-1"
+                            class="transfer-btn text-[9px] font-bold uppercase tracking-widest text-brand-teal hover:text-white transition-colors p-1"
+                            data-item-id={player.registrationItemId}
+                            data-player-name={`${player.firstName} ${player.lastName}`}
+                          >
+                            Transfer Event
+                          </button>
+                          <button 
+                            class="remove-item-btn text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-brand-teal transition-colors p-1"
                             data-item-id={player.registrationItemId}
                             data-player-name={`${player.firstName} ${player.lastName}`}
                           >
@@ -253,6 +267,55 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
         </form>
       </div>
     </div>
+
+    <!-- Transfer Registration Modal -->
+    <div id="transferModal" class="fixed inset-0 z-[100] hidden items-center justify-center px-4 bg-brand-charcoal/80 backdrop-blur-md">
+      <div class="glass-card border-white/10 w-full max-w-xl p-8 relative animate-in fade-in zoom-in duration-300">
+        <button id="closeTransferModalBtn" class="absolute top-6 right-6 text-white/40 hover:text-white transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <div class="mb-8">
+          <h2 class="text-2xl font-heading font-bold text-white uppercase tracking-tight">Transfer <span class="text-brand-teal italic">Registration</span></h2>
+          <p id="transferPlayerName" class="text-white/40 text-[10px] uppercase tracking-widest font-bold mt-2"></p>
+        </div>
+
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-white/40">Select New Event</label>
+            <select id="newEventSelect" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none appearance-none cursor-pointer">
+              <option value="" class="bg-brand-charcoal">-- Select Event --</option>
+              {Object.entries(
+                allActiveEvents.reduce((acc, event) => {
+                  if (!acc[event.type]) acc[event.type] = [];
+                  acc[event.type].push(event);
+                  return acc;
+                }, {} as Record<string, typeof allActiveEvents>)
+              ).map(([type, typeEvents]) => (
+                <optgroup label={type.toUpperCase()} class="bg-brand-charcoal text-white font-bold">
+                  {typeEvents.filter(e => e.id !== id).map(e => (
+                    <option value={e.id} class="bg-brand-charcoal text-white/80" disabled={e.spotsFilled >= e.capacity}>
+                      {e.name} ({e.dateInfo}) {e.spotsFilled >= e.capacity ? '- FULL' : ''} - ${e.price / 100}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
+          <div class="p-4 bg-brand-teal/5 border border-brand-teal/10 rounded-xl">
+            <p class="text-[10px] text-white/60 leading-relaxed">
+              <strong>Note:</strong> Transferring will update the roster and adjust available spots. If prices differ, additional charges or refunds must be handled manually in Stripe.
+            </p>
+          </div>
+
+          <div class="pt-4 flex gap-4">
+             <button type="button" id="cancelTransferBtn" class="flex-1 py-4 border border-white/10 rounded-xl text-white/60 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all">Cancel</button>
+             <button type="button" id="submitTransferBtn" class="flex-[2] btn btn-primary py-4 text-[10px] uppercase tracking-widest font-bold">Transfer Player</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </BaseLayout>
 
@@ -263,6 +326,15 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
   const closeBtn = document.getElementById('closeModalBtn');
   const cancelBtn = document.getElementById('cancelBtn');
   const addForm = document.getElementById('addPlayerForm');
+
+  const transferModal = document.getElementById('transferModal');
+  const closeTransferBtn = document.getElementById('closeTransferModalBtn');
+  const cancelTransferBtn = document.getElementById('cancelTransferBtn');
+  const submitTransferBtn = document.getElementById('submitTransferBtn');
+  const newEventSelect = document.getElementById('newEventSelect');
+  const transferPlayerNameEl = document.getElementById('transferPlayerName');
+  
+  let currentTransferItemId = null;
 
   const openModal = () => {
     modal.classList.remove('hidden');
@@ -277,9 +349,73 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
     addForm.reset();
   };
 
+  const openTransferModal = (itemId, playerName) => {
+    currentTransferItemId = itemId;
+    transferPlayerNameEl.innerText = `Transferring ${playerName} to a different event`;
+    transferModal.classList.remove('hidden');
+    transferModal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeTransferModal = () => {
+    transferModal.classList.add('hidden');
+    transferModal.classList.remove('flex');
+    document.body.style.overflow = 'auto';
+    currentTransferItemId = null;
+    newEventSelect.value = '';
+  };
+
   addBtn?.addEventListener('click', openModal);
   closeBtn?.addEventListener('click', closeModal);
   cancelBtn?.addEventListener('click', closeModal);
+
+  closeTransferBtn?.addEventListener('click', closeTransferModal);
+  cancelTransferBtn?.addEventListener('click', closeTransferModal);
+
+  // Transfer Logic
+  document.querySelectorAll('.transfer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const itemId = btn.getAttribute('data-item-id');
+      const playerName = btn.getAttribute('data-player-name');
+      openTransferModal(itemId, playerName);
+    });
+  });
+
+  submitTransferBtn?.addEventListener('click', async () => {
+    const newEventId = newEventSelect.value;
+    if (!newEventId) {
+      alert('Please select a new event.');
+      return;
+    }
+
+    submitTransferBtn.disabled = true;
+    submitTransferBtn.innerText = 'Transferring...';
+
+    try {
+      const response = await fetch('/api/admin/transfer-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passcode: ADMIN_PASSCODE,
+          itemId: parseInt(currentTransferItemId),
+          newEventId
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        window.location.reload();
+      } else {
+        alert(result.error || 'Failed to transfer registration');
+        submitTransferBtn.disabled = false;
+        submitTransferBtn.innerText = 'Transfer Player';
+      }
+    } catch (err) {
+      alert('Network error');
+      submitTransferBtn.disabled = false;
+      submitTransferBtn.innerText = 'Transfer Player';
+    }
+  });
 
   // Form Submission
   addForm?.addEventListener('submit', async (e) => {

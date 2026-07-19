@@ -3,6 +3,8 @@ import { getDb } from '../../../db';
 import { registrations, athletes, registrationItems, events } from '../../../db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { sendEmail } from '../../../lib/email';
+import { generateRegistrationEmail } from '../../../lib/email-templates';
 
 export const prerender = false;
 
@@ -26,14 +28,14 @@ export const POST: APIRoute = async ({ request }) => {
 
     // 1. Create a manual registration record
     const registrationId = `manual_${uuidv4()}`;
-    await db.insert(registrations).values({
+    const [regResult] = await db.insert(registrations).values({
       id: registrationId,
       parentName: athlete.parentName || 'Manual Entry',
-      parentEmail: athlete.parentEmail || 'manual@example.com',
-      parentPhone: athlete.parentPhone || '000-000-0000',
+      parentEmail: athlete.parentEmail || '',
+      parentPhone: athlete.parentPhone || '',
       status: 'paid', // Manual entries are considered paid
       totalAmount: 0, // Assume 0 or handled externally
-    });
+    }).returning();
 
     // 2. Create athlete record
     const [athleteResult] = await db.insert(athletes).values({
@@ -62,6 +64,25 @@ export const POST: APIRoute = async ({ request }) => {
     await db.update(events)
       .set({ spotsFilled: sql`${events.spotsFilled} + 1` })
       .where(eq(events.id, eventId));
+
+    // 5. Send confirmation email if email is provided
+    if (regResult && regResult.parentEmail && regResult.parentEmail.includes('@')) {
+      try {
+        const [eventData] = await db.select().from(events).where(eq(events.id, eventId));
+        const [athleteData] = await db.select().from(athletes).where(eq(athletes.id, athleteResult.id));
+        
+        if (eventData && athleteData) {
+          const emailHtml = generateRegistrationEmail(regResult, [{ athlete: athleteData, event: eventData }]);
+          await sendEmail({
+            to: regResult.parentEmail,
+            subject: `TVVC Registration Confirmed: ${eventData.name}`,
+            html: emailHtml
+          });
+        }
+      } catch (emailErr) {
+        console.error('Manual Registration Email Error:', emailErr);
+      }
+    }
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
 
