@@ -76,20 +76,20 @@ async function testReminder() {
         </div>
 
         <h3 style="color: #009695; margin-bottom: 10px;">Parking Instructions:</h3>
-        <p style="margin-top: 0;">Please park in the <strong>Regal Movies at Home</strong> lot and use the pathway leading to our gym doors. You may drop players off near the entrance, but please do not park in the small lot directly outside the gym.</p>
+        <p style="margin-top: 0;">${(item.eventName.toLowerCase().includes('tryout') && !item.eventName.toLowerCase().includes('camp')) ? 'Please park in the <strong>North Parking Lot</strong> at Century High School.' : 'Please park in the <strong>Regal Movies at Home</strong> lot and use the pathway leading to our gym doors. You may drop players off near the entrance, but please do not park in the small lot directly outside the gym.'}</p>
 
         <h3 style="color: #009695; margin-bottom: 10px;">Players should bring:</h3>
         <ul style="padding-left: 20px; margin-top: 0;">
           <li>Volleyball shoes or clean, non-marking court shoes</li>
           <li>Knee pads</li>
           <li>A full water bottle</li>
-          <li>A snack or light lunch for the break</li>
+          ${(item.eventName.toLowerCase().includes('tryout') && !item.eventName.toLowerCase().includes('camp')) ? '<li>Standard USAV/CEVA Medical Release Form</li><li>USAV/CEVA Membership Card</li>' : '<li>A snack or light lunch for the break</li>'}
           <li>Comfortable athletic clothing</li>
           <li>Any personal items they may need</li>
         </ul>
 
         <h3 style="color: #009695; margin-bottom: 10px;">Arrival:</h3>
-        <p style="margin-top: 0;">Please arrive a few minutes early so players can check in and be ready to begin at the scheduled start time.</p>
+        <p style="margin-top: 0;">Please arrive ${(item.eventName.toLowerCase().includes('tryout') && !item.eventName.toLowerCase().includes('camp')) ? 'at least 15 minutes early' : 'a few minutes early'} so players can check in and be ready to begin at the scheduled start time.</p>
 
         ${item.description ? `
         <div style="margin: 25px 0; padding: 15px; background-color: #f0fafa; border-radius: 8px; border: 1px solid #009695;">

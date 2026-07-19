@@ -16,6 +16,7 @@ export function generateRegistrationEmail(
       <div style="display: grid; gap: 8px;">
         <p style="margin: 0; font-size: 13px; color: #64748b;"><strong style="color: #1A1A1A; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Athlete</strong><br>${athlete.firstName} ${athlete.lastName}</p>
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #64748b;"><strong style="color: #1A1A1A; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Schedule</strong><br>${event.dateInfo} • ${event.timeInfo || 'TBA'}</p>
+        <p style="margin: 8px 0 0 0; font-size: 13px; color: #64748b;"><strong style="color: #1A1A1A; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Location</strong><br>${(event.type === 'tryout' || (event.type === 'clinic' && event.name.toLowerCase().includes('tryout'))) ? 'Century High School (Main Gym)' : 'TVVC Gym'}</p>
       </div>
       ${
         event.emailDetails

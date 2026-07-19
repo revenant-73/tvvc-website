@@ -107,9 +107,9 @@ const handler = async (event: any, context: any) => {
                   <p style="margin: 4px 0; font-size: 14px; color: #1e293b;"><strong>Time:</strong> ${eventItem.timeInfo}</p>
                   <p style="margin: 12px 0 0 0; font-size: 14px; color: #1e293b; line-height: 1.5;">
                     <strong style="color: #64748b; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Location</strong>
-                    Tualatin Valley Volleyball Club<br>
-                    2820 SE 58th Court, #400<br>
-                    Hillsboro, OR <span style="color: #64748b; font-size: 12px;">(Behind Floors with Flair)</span>
+                    ${(eventItem.type === 'tryout' || (eventItem.type === 'clinic' && eventItem.name.toLowerCase().includes('tryout')))
+                      ? 'Century High School — Main Gym<br>Hillsboro, OR' 
+                      : 'Tualatin Valley Volleyball Club<br>2820 SE 58th Court, #400<br>Hillsboro, OR <span style="color: #64748b; font-size: 12px;">(Behind Floors with Flair)</span>'}
                   </p>
                 </div>
               </div>
@@ -123,7 +123,11 @@ const handler = async (event: any, context: any) => {
               <div style="margin-bottom: 32px; display: grid; gap: 24px;">
                 <div>
                   <h3 style="color: #0f172a; margin: 0 0 8px 0; font-size: 14px; font-weight: 700;">Parking Instructions</h3>
-                  <p style="margin: 0; font-size: 14px; color: #475569;">Please park in the <strong>Regal Movies at Home</strong> lot and use the pathway leading to our gym doors. You may drop players off near the entrance, but please do not park in the small lot directly outside the gym.</p>
+                  <p style="margin: 0; font-size: 14px; color: #475569;">
+                    ${(eventItem.type === 'tryout' || (eventItem.type === 'clinic' && eventItem.name.toLowerCase().includes('tryout')))
+                      ? 'Please park in the <strong>North Parking Lot</strong> at Century High School.'
+                      : 'Please park in the <strong>Regal Movies at Home</strong> lot and use the pathway leading to our gym doors. You may drop players off near the entrance, but please do not park in the small lot directly outside the gym.'}
+                  </p>
                 </div>
 
                 <div>
@@ -140,7 +144,7 @@ const handler = async (event: any, context: any) => {
               `}
 
               <div style="padding: 20px; background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; margin-bottom: 40px;">
-                <p style="margin: 0; font-size: 14px; color: #92400e; font-weight: 600;">Arrival: Please arrive a few minutes early so players can check in and be ready to begin at the scheduled start time.</p>
+                <p style="margin: 0; font-size: 14px; color: #92400e; font-weight: 600;">Arrival: Please arrive ${(eventItem.type === 'tryout' || (eventItem.type === 'clinic' && eventItem.name.toLowerCase().includes('tryout'))) ? 'at least 15 minutes early' : 'a few minutes early'} so players can check in and be ready to begin at the scheduled start time.</p>
               </div>
 
               <div style="padding-top: 32px; border-top: 1px solid #f1f5f9;">
