@@ -12,6 +12,7 @@ const camps = [
     name: '6th-8th Grade Volleyball Foundations Camp',
     dateInfo: 'June 15–17',
     timeInfo: '8:00am–12:00pm',
+    startDate: '2026-06-15',
     price: 18500,
     capacity: 12,
   },
@@ -22,6 +23,7 @@ const camps = [
     name: 'Hitting Foundations Camp',
     dateInfo: 'June 22–24',
     timeInfo: '8:00am–12:00pm',
+    startDate: '2026-06-22',
     price: 18500,
     capacity: 12,
   },
@@ -32,6 +34,7 @@ const camps = [
     name: '6th-8th Grade Volleyball Performance Camp',
     dateInfo: 'July 6–8',
     timeInfo: '8:00am–12:00pm',
+    startDate: '2026-07-06',
     price: 18500,
     capacity: 12,
   },
@@ -42,6 +45,7 @@ const camps = [
     name: 'Ignition Camp – 4th–6th Grade',
     dateInfo: 'July 13–15',
     timeInfo: '8:00am–12:00pm',
+    startDate: '2026-07-13',
     price: 18500,
     capacity: 12,
   },
@@ -50,8 +54,10 @@ const camps = [
     parentId: 'camp-hitting-performance',
     type: 'camp',
     name: 'Hitting Performance Camp',
+    description: 'Throughout the camp, players will work on attacking with purpose by reading the set, block, and defense; creating different attacking solutions; and applying those skills in game-like situations.',
     dateInfo: 'July 20–22',
     timeInfo: '8:00am–12:00pm',
+    startDate: '2026-07-20',
     price: 18500,
     capacity: 12,
   },
@@ -62,6 +68,7 @@ const camps = [
     name: '6th-8th Grade Volleyball Foundations Camp',
     dateInfo: 'July 27–29',
     timeInfo: '8:00am–12:00pm',
+    startDate: '2026-07-27',
     price: 18500,
     capacity: 12,
   },
@@ -72,6 +79,7 @@ const camps = [
     name: 'High School Tryout Prep Camp #1',
     dateInfo: 'August 3–5',
     timeInfo: '8:00am–12:00pm',
+    startDate: '2026-08-03',
     price: 18500,
     capacity: 12,
   },
@@ -82,6 +90,7 @@ const camps = [
     name: 'High School Tryout Prep Camp #2',
     dateInfo: 'August 10–12',
     timeInfo: '8:00am–12:00pm',
+    startDate: '2026-08-10',
     price: 18500,
     capacity: 12,
   },
@@ -112,6 +121,16 @@ async function seed() {
     for (const date of group.dates) {
       for (const type of clinicTypes) {
         const id = `clinic-${type.name.toLowerCase().replace(/[\/\s]+/g, '-')}-${date.toLowerCase().replace(/\s+/g, '-')}`;
+        
+        // Parse "May 16" to "2026-05-16"
+        const [monthName, day] = date.split(' ');
+        const monthMap: { [key: string]: string } = {
+          'May': '05', 'June': '06', 'July': '07', 'August': '08'
+        };
+        const month = monthMap[monthName];
+        const formattedDay = day.padStart(2, '0');
+        const startDate = `2026-${month}-${formattedDay}`;
+
         const clinic = {
           id,
           parentId: `clinic-${type.name.toLowerCase().replace(/[\/\s]+/g, '-')}`,
@@ -119,6 +138,7 @@ async function seed() {
           name: `${type.name} Clinic`,
           dateInfo: date,
           timeInfo: type.times[group.timePrefix as keyof typeof type.times],
+          startDate,
           price: 3000,
           capacity: 12,
         };
