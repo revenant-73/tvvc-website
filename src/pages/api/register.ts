@@ -138,7 +138,7 @@ export const POST: APIRoute = async ({ request }) => {
         status: 'pending',
         totalAmount: totalCents,
         stripeCustomerId: stripeCustomerId || null,
-        expiresAt: Date.now() + 30 * 60 * 1000, // 30 minute reservation
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minute reservation
         metadata: body.metadata ? JSON.stringify(body.metadata) : null,
       });
 

@@ -23,7 +23,7 @@ export const POST: APIRoute = async ({ request }) => {
       import.meta.env.TURSO_AUTH_TOKEN || ''
     );
 
-    const now = Date.now();
+    const now = new Date();
 
     // 1. Find expired pending registrations
     const expiredRegistrations = await db.select({
