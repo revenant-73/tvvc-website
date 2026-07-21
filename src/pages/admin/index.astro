@@ -5,30 +5,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getDb } from '../../db';
 import { registrations, registrationItems, events } from '../../db/schema';
 import { desc, eq } from 'drizzle-orm';
+import { getSession } from 'auth-astro/server';
 
-const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || process.env.ADMIN_PASSCODE || 'tvvc2024';
-let authenticated = false;
+const session = await getSession(Astro.request);
+const user = session?.user as any;
+const isAdmin = user?.role === 'admin';
+
 let error = null;
 let latestTransactions = [];
 
-if (Astro.request.method === 'POST') {
-  try {
-    const data = await Astro.request.formData();
-    if (data.get('passcode') === ADMIN_PASSCODE) {
-      authenticated = true;
-    } else {
-      error = "Incorrect passcode.";
-    }
-  } catch (e) {
-    error = "Error processing login.";
-  }
-}
-
-if (Astro.url.searchParams.get('auth') === 'true') {
-  authenticated = true;
-}
-
-if (authenticated) {
+if (isAdmin) {
   try {
     const db = getDb(
       import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL || '',
@@ -66,42 +52,42 @@ const adminFeatures = [
   {
     title: "Camps & Clinics",
     description: "Manage summer camps and skill clinics registrations.",
-    link: "/admin/registrations?stream=camps-clinics&auth=true",
+    link: "/admin/registrations?stream=camps-clinics",
     icon: "calendar",
     color: "brand-teal"
   },
   {
     title: "In-House Training",
     description: "Manage Ignition and Playworks training registrations.",
-    link: "/admin/registrations?stream=in-house&auth=true",
+    link: "/admin/registrations?stream=in-house",
     icon: "zap",
     color: "brand-coral"
   },
   {
     title: "Club Teams",
     description: "Manage tryouts and seasonal team registrations.",
-    link: "/admin/registrations?stream=club-teams&auth=true",
+    link: "/admin/registrations?stream=club-teams",
     icon: "users",
     color: "brand-teal"
   },
   {
     title: "Small Group Training",
     description: "Manage training blocks and view session rosters.",
-    link: "/admin/training-manager?auth=true",
+    link: "/admin/training-manager",
     icon: "target",
     color: "brand-teal"
   },
   {
     title: "Outdoor Events",
     description: "Manage grass series tournaments and family challenges.",
-    link: "/admin/registrations?stream=outdoor&auth=true",
+    link: "/admin/registrations?stream=outdoor",
     icon: "sun",
     color: "brand-teal"
   },
   {
     title: "Feedback Management",
     description: "View and manage feedback from season participants.",
-    link: "/admin/feedback?auth=true",
+    link: "/admin/feedback",
     icon: "message",
     color: "brand-coral"
   }
@@ -117,14 +103,12 @@ const adminFeatures = [
         </div>
       )}
 
-      {!authenticated ? (
+      {!isAdmin ? (
         <div class="max-w-md mx-auto">
-          <div class="glass-card p-8 border-white/10 text-center">
-            <h1 class="text-2xl font-heading font-bold text-white mb-6 uppercase tracking-widest">Admin Access</h1>
-            <form method="POST" class="space-y-4">
-              <input type="password" name="passcode" placeholder="Enter Passcode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none text-center" required />
-              <button type="submit" class="btn btn-primary w-full">Login</button>
-            </form>
+          <div class="glass-card p-8 border-white/10 text-center space-y-6">
+            <h1 class="text-2xl font-heading font-bold text-white uppercase tracking-widest">Admin Access Restricted</h1>
+            <p class="text-white/40 text-sm">You do not have permission to view this page. Please sign in with an administrator account.</p>
+            <a href="/portal/login" class="btn btn-primary w-full">Sign In</a>
           </div>
         </div>
       ) : (
@@ -171,7 +155,7 @@ const adminFeatures = [
             ))}
           </div>
 
-          {authenticated && latestTransactions.length > 0 && (
+          {isAdmin && latestTransactions.length > 0 && (
             <div class="space-y-6 pt-12 border-t border-white/5">
               <div class="flex items-center justify-between">
                 <div class="space-y-1">

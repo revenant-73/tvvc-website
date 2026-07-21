@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 const teams = [
   "14 White", "14 Black", "14 Coral", "14 Teal",
@@ -90,12 +91,12 @@ export default function FeedbackForm() {
     // Basic validation for required fields in current step
     if (currentStep === 1) {
       if (!formData.user_type || !formData.team || !formData.name) {
-        alert("Please answer the required questions before continuing.");
+        toast.error("Please answer the required questions before continuing.");
         return;
       }
     }
     if (currentStep === 2 && !formData.overall_rating) {
-       alert("Please provide an overall rating.");
+       toast.error("Please provide an overall rating.");
        return;
     }
     // Add more validation if needed

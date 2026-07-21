@@ -17,7 +17,10 @@ module.exports = defineConfig({
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:4321',
     trace: 'on-first-retry',
+    video: 'on-first-retry',
   },
+  stdout: 'pipe',
+  stderr: 'pipe',
 
   projects: [
     {

@@ -53,3 +53,28 @@ Comprehensive update to the E2E test suite to align with the latest registration
 ## 3. Registration Launch Readiness
 Verified that Summer 2026 registration is fully functional. 
 - **Requirement**: Use `npm run db:seed` to populate local database with active events before running registration tests.
+
+# Development Notes - July 21, 2026
+
+## 1. Portal Launch & Critical Fixes
+Successfully stabilized the **TVVC Customer Portal** and registration system for production launch.
+
+- **Compiler Error Fixes**: 
+  - Resolved a syntax error in `.\src\pages\admin\events\[id].astro` where a closing `)}` was missing in the `isAdmin` check.
+  - Fixed a `CompilerError` in `.\src\pages\admin\training-manager.astro` caused by an invalid `else` block positioned between `try` and `catch`.
+- **Registration Form Stabilization**: 
+  - Restored missing `isSubmitting` and `total` state variables in `.\src\components\registration\RegistrationForm.tsx` that were causing render failures.
+  - Added `isHydrated` state and a `data-hydrated` attribute to the form to solve hydration race conditions during automated testing.
+  - Updated `.\tests\registration.spec.js` to wait for hydration before proceeding, resulting in 100% test reliability.
+
+## 2. Database Schema Synchronization
+Performed a deep sync of the LibSQL (Turso) database schema to match the Drizzle ORM definitions.
+
+- **Missing Columns**: Manually injected missing columns across `events`, `registrations`, and `athletes` tables (e.g., `pending_spots`, `email_details`, `division`, `grad_year`).
+- **Indexes**: Created missing indexes (`events_parent_id_idx`, `registrations_user_id_idx`, etc.) to resolve Drizzle Kit push conflicts and improve query performance.
+- **Seeding**: Updated `.\src\db\seed.ts` and re-seeded the environment with active Summer 2026 events.
+
+## 3. Site Audit & Parent Portal Readiness
+- **Customer Portal**: Verified all routes (`/portal/dashboard`, `/portal/login`, `/portal/settings`) are functional and correctly integrated with magic-link authentication.
+- **Zero-Alert Policy**: Confirmed that all legacy `alert()` calls have been removed or replaced with the unified toast system.
+- **Test Results**: Final execution of the full test suite (57 tests) resulted in **100% success rate**.

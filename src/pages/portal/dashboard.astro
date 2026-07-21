@@ -258,14 +258,14 @@ const formatDate = (dateStr: string | null) => {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || 'Failed to open billing portal');
+        window.toast.error(data.error || 'Failed to open billing portal');
         btn.disabled = false;
         if (text) text.textContent = 'Manage via Stripe';
         if (spinner) spinner.classList.add('hidden');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred');
+      window.toast.error('An error occurred');
       btn.disabled = false;
       if (text) text.textContent = 'Manage via Stripe';
       if (spinner) spinner.classList.add('hidden');

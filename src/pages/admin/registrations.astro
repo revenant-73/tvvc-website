@@ -5,27 +5,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getDb } from '../../db';
 import { events, registrationItems, registrations, athletes } from '../../db/schema';
 import { desc, asc, eq, inArray, and } from 'drizzle-orm';
+import { getSession } from 'auth-astro/server';
 
-const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || process.env.ADMIN_PASSCODE || 'tvvc2024';
-let authenticated = false;
+const session = await getSession(Astro.request);
+const user = session?.user as any;
+const isAdmin = user?.role === 'admin';
+
 let allEvents = [];
 let error = null;
 
-if (Astro.request.method === 'POST') {
-  try {
-    const data = await Astro.request.formData();
-    if (data.get('passcode') === ADMIN_PASSCODE) {
-      authenticated = true;
-    } else {
-      error = "Incorrect passcode.";
-    }
-  } catch (e) {
-    error = "Error processing login.";
-  }
-}
-
-if (authenticated || Astro.url.searchParams.get('auth') === 'true') {
-  authenticated = true;
+if (isAdmin) {
   try {
     const db = getDb(
       import.meta.env.TURSO_DATABASE_URL || '',
@@ -147,14 +136,12 @@ const getGroupedEvents = (events: any[]) => {
         </div>
       )}
 
-      {!authenticated ? (
+      {!isAdmin ? (
         <div class="max-w-md mx-auto">
-          <div class="glass-card p-8 border-white/10 text-center">
-            <h1 class="text-2xl font-heading font-bold text-white mb-6 uppercase tracking-widest">Admin Access</h1>
-            <form method="POST" class="space-y-4">
-              <input type="password" name="passcode" placeholder="Enter Passcode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none text-center" required />
-              <button type="submit" class="btn btn-primary w-full">Login</button>
-            </form>
+          <div class="glass-card p-8 border-white/10 text-center space-y-6">
+            <h1 class="text-2xl font-heading font-bold text-white uppercase tracking-widest">Admin Access Restricted</h1>
+            <p class="text-white/40 text-sm">You do not have permission to view this page. Please sign in with an administrator account.</p>
+            <a href="/portal/login" class="btn btn-primary w-full">Sign In</a>
           </div>
         </div>
       ) : (
@@ -162,7 +149,7 @@ const getGroupedEvents = (events: any[]) => {
           <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8 border-b border-white/5 pb-8">
             <div class="space-y-2">
               <div class="flex items-center gap-3 mb-2">
-                <a href="/admin?auth=true" class="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-brand-teal transition-colors flex items-center gap-1">
+                <a href="/admin" class="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-brand-teal transition-colors flex items-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                   Dashboard
                 </a>
@@ -172,12 +159,12 @@ const getGroupedEvents = (events: any[]) => {
             </div>
             
             <div class="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto">
-              <a href="/admin/registrations?stream=camps-clinics&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'camps-clinics' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Camps</a>
-              <a href="/admin/registrations?stream=in-house&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'in-house' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>In-House</a>
-              <a href="/admin/registrations?stream=club-teams&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'club-teams' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Club</a>
-              <a href="/admin/registrations?stream=training&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'training' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Training</a>
-              <a href="/admin/registrations?stream=outdoor&auth=true" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'outdoor' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Outdoor</a>
-              <a href="/admin/training-manager?auth=true" class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-brand-teal hover:text-white transition-all whitespace-nowrap flex items-center gap-2">
+              <a href="/admin/registrations?stream=camps-clinics" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'camps-clinics' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Camps</a>
+              <a href="/admin/registrations?stream=in-house" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'in-house' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>In-House</a>
+              <a href="/admin/registrations?stream=club-teams" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'club-teams' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Club</a>
+              <a href="/admin/registrations?stream=training" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'training' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Training</a>
+              <a href="/admin/registrations?stream=outdoor" class={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${stream === 'outdoor' ? 'bg-brand-teal text-black' : 'text-white/40 hover:text-white'}`}>Outdoor</a>
+              <a href="/admin/training-manager" class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-brand-teal hover:text-white transition-all whitespace-nowrap flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 Manage Schedule
               </a>
@@ -226,7 +213,7 @@ const getGroupedEvents = (events: any[]) => {
                           </div>
 
                           <div class="flex gap-2">
-                            <a href={`/admin/roster/${event.id}?auth=true`} class="btn btn-secondary !py-2 !px-4 !text-[10px] flex-1 text-center">Roster</a>
+                            <a href={`/admin/roster/${event.id}`} class="btn btn-secondary !py-2 !px-4 !text-[10px] flex-1 text-center">Roster</a>
                             <button 
                               class="copy-emails-btn btn border border-white/10 hover:border-brand-teal transition-colors !py-2 !px-4 !text-[10px] text-center"
                               data-emails={event.emails.join(', ')}
@@ -234,7 +221,7 @@ const getGroupedEvents = (events: any[]) => {
                             >
                               Copy Emails
                             </button>
-                            <a href={`/admin/events/${event.id}?auth=true`} class="btn border border-white/10 hover:border-brand-teal transition-colors !py-2 !px-4 !text-[10px] text-center">Edit Event</a>
+                            <a href={`/admin/events/${event.id}`} class="btn border border-white/10 hover:border-brand-teal transition-colors !py-2 !px-4 !text-[10px] text-center">Edit Event</a>
                           </div>
                         </div>
                       );
@@ -276,14 +263,14 @@ const getGroupedEvents = (events: any[]) => {
                                 </div>
 
                                 <div class="flex flex-wrap gap-2 pt-1">
-                                  <a href={`/admin/roster/${event.id}?auth=true`} class="text-[9px] font-bold uppercase tracking-widest text-brand-teal hover:underline">Roster</a>
+                                  <a href={`/admin/roster/${event.id}`} class="text-[9px] font-bold uppercase tracking-widest text-brand-teal hover:underline">Roster</a>
                                   <button 
                                     class="copy-emails-btn text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
                                     data-emails={event.emails.join(', ')}
                                   >
                                     Copy Emails
                                   </button>
-                                  <a href={`/admin/events/${event.id}?auth=true`} class="text-[9px] font-bold uppercase tracking-widest text-white/20 hover:text-white transition-colors ml-auto">Edit Event</a>
+                                  <a href={`/admin/events/${event.id}`} class="text-[9px] font-bold uppercase tracking-widest text-white/20 hover:text-white transition-colors ml-auto">Edit Event</a>
                                 </div>
                               </div>
                             ))}
@@ -308,7 +295,7 @@ const getGroupedEvents = (events: any[]) => {
       btn.addEventListener('click', () => {
         const emails = btn.getAttribute('data-emails');
         if (!emails) {
-          alert('No emails to copy.');
+          window.toast.error('No emails to copy.');
           return;
         }
         
@@ -322,7 +309,7 @@ const getGroupedEvents = (events: any[]) => {
           }, 2000);
         }).catch(err => {
           console.error('Failed to copy emails: ', err);
-          alert('Failed to copy to clipboard.');
+          window.toast.error('Failed to copy to clipboard.');
         });
       });
     });

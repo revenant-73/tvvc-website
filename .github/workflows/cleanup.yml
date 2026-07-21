@@ -1,0 +1,15 @@
+name: Scheduled Cleanup
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Every 30 minutes
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Cleanup API
+        run: |
+          curl -X POST "${{ secrets.SITE_URL }}/api/admin/cleanup-expired" \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+          -H "Content-Type: application/json"

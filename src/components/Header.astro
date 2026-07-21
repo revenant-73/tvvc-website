@@ -12,6 +12,8 @@ const navLinks = [
   { href: '/faq', label: 'FAQ' },
 ];
 
+const portalLink = { href: '/portal', label: 'My Portal', class: 'lg:bg-brand-teal lg:text-brand-charcoal lg:px-4 lg:py-2 lg:rounded-full lg:hover:bg-brand-teal/80 lg:shadow-lg lg:shadow-brand-teal/20' };
+
 const isHome = normalizedPath === '/';
 ---
 
@@ -31,13 +33,23 @@ const isHome = normalizedPath === '/';
           href={link.href} 
           class:list={[
             "hover:text-brand-teal transition-colors",
-            link.class,
             normalizedPath === link.href ? "text-brand-teal" : ""
           ]}
         >
           {link.label}
         </a>
       ))}
+      <div class="w-px h-4 bg-white/10 ml-2 mr-2"></div>
+      <a 
+        href={portalLink.href} 
+        class:list={[
+          "transition-all transform hover:scale-105 active:scale-95",
+          portalLink.class,
+          normalizedPath.startsWith('/portal') ? "lg:bg-white" : ""
+        ]}
+      >
+        {portalLink.label}
+      </a>
     </div>
 
     <!-- Mobile/Small Desktop Toggle -->
@@ -53,13 +65,23 @@ const isHome = normalizedPath === '/';
         href={link.href} 
         class:list={[
           "text-lg font-heading font-bold",
-          link.class,
           normalizedPath === link.href ? "text-brand-teal" : ""
         ]}
       >
         {link.label}
       </a>
     ))}
+    <div class="h-px w-full bg-white/10 my-2"></div>
+    <a 
+      href={portalLink.href} 
+      class:list={[
+        "text-lg font-heading font-bold text-brand-teal flex items-center gap-2",
+        normalizedPath.startsWith('/portal') ? "text-white" : ""
+      ]}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      {portalLink.label}
+    </a>
   </div>
 </header>
 

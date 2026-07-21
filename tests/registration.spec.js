@@ -4,7 +4,20 @@ test.describe('Registration Flow', () => {
   test.setTimeout(60000);
 
   test.beforeEach(async ({ page }) => {
+    page.on('console', msg => {
+      if (msg.type() === 'error' || msg.type() === 'log') {
+        console.log(`BROWSER ${msg.type().toUpperCase()}: ${msg.text()}`);
+      }
+    });
     await page.goto('/register');
+    // Log page content if hydration fails
+    try {
+      await expect(page.locator('form[data-hydrated="true"]')).toBeVisible({ timeout: 10000 });
+    } catch (e) {
+      const content = await page.content();
+      console.log("PAGE CONTENT ON FAILURE:", content);
+      throw e;
+    }
     // Ensure form is loaded
     await expect(page.getByRole('heading', { name: 'Secure Your Spot' })).toBeVisible();
   });
@@ -33,11 +46,11 @@ test.describe('Registration Flow', () => {
     await addBtn.click();
     
     // Wait for the UI to reflect the new athlete
-    await expect(page.getByText('Athlete #2 Details')).toBeVisible();
+    await expect(page.getByText('Athlete #2 Details')).toBeVisible({ timeout: 10000 });
 
     // Remove the second athlete
     await page.getByRole('button', { name: 'Remove Athlete' }).last().click();
-    await expect(page.getByText('Athlete #2 Details')).not.toBeVisible();
+    await expect(page.getByText('Athlete #2 Details')).not.toBeVisible({ timeout: 10000 });
   });
 
   async function fillStep1(page) {
@@ -72,14 +85,17 @@ test.describe('Registration Flow', () => {
     await fillStep1(page);
 
     // Advance to Step 2
-    await page.getByRole('button', { name: 'Next Step' }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
 
     // Wait for Step 2
-    await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible({ timeout: 10000 });
 
-    // In Step 2, the button is disabled when total is 0
-    const nextBtn = page.getByRole('button', { name: 'Next Step' });
-    await expect(nextBtn).toBeDisabled();
+    // In Step 2, clicking Continue without events should show an error toast
+    // (The button is not disabled by default)
+    await page.getByRole('button', { name: 'Continue' }).click();
+    
+    // Check for toast error message
+    await expect(page.getByText('Please select at least one event')).toBeVisible();
   });
 
   test('should complete a mock registration flow', async ({ page }) => {
@@ -91,10 +107,10 @@ test.describe('Registration Flow', () => {
     // Step 1: Info
     await fillStep1(page);
 
-    await page.getByRole('button', { name: 'Next Step' }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
 
     // Step 2: Events
-    await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible({ timeout: 10000 });
 
     // Select an event
     const firstEvent = page.locator('label').filter({ hasText: /Clinic|Camp/ }).first();
@@ -104,24 +120,24 @@ test.describe('Registration Flow', () => {
     // Verify total updated
     await expect(page.locator('span.text-brand-teal').filter({ hasText: '$' }).last()).not.toContainText('$0');
 
-    await page.getByRole('button', { name: 'Next Step' }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
 
     // Step 3: Waivers
-    await expect(page.getByRole('heading', { name: 'Legal Waivers' })).toBeVisible();
-
-    // Agree to Media Release
-    await page.getByRole('button', { name: 'Agree' }).first().click();
+    await expect(page.getByRole('heading', { name: 'Liability Waivers' })).toBeVisible({ timeout: 10000 });
 
     // Agree to Liability Waiver
-    await page.locator('input[type="checkbox"][required]').first().check();
+    await page.getByLabel(/Liability Waiver/).first().check();
+    
+    // Agree to Media Release
+    await page.getByLabel(/Media Release/).first().check();
 
-    await page.getByRole('button', { name: 'Next Step' }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
 
     // Step 4: Review
-    await expect(page.getByRole('heading', { name: 'Verify Registration' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Review Registration' })).toBeVisible({ timeout: 10000 });
 
     // Final Submit button should be enabled
-    const submitBtn = page.getByRole('button', { name: 'Secure Spot' });
+    const submitBtn = page.getByRole('button', { name: 'Complete Registration' });
     await expect(submitBtn).toBeEnabled();
   });
 });

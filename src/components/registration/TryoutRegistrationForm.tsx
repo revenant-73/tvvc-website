@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import LiabilityWaiver from './LiabilityWaiver';
 
 interface Event {
@@ -87,6 +88,11 @@ export default function TryoutRegistrationForm({
   ]);
 
   const [expandedWaivers, setExpandedWaivers] = useState<boolean[]>([false]);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (expandedWaivers.length !== athletes.length) {
@@ -123,7 +129,7 @@ export default function TryoutRegistrationForm({
   }, [athletes, initialEvents]);
 
   const addAthlete = () => {
-    setAthletes([...athletes, {
+    setAthletes(prev => [...prev, {
       firstName: '',
       lastName: '',
       preferredName: '',
@@ -141,60 +147,67 @@ export default function TryoutRegistrationForm({
   };
 
   const removeAthlete = (index: number) => {
-    if (athletes.length > 1) {
-      const newAthletes = [...athletes];
-      newAthletes.splice(index, 1);
-      setAthletes(newAthletes);
-    }
+    setAthletes(prev => {
+      if (prev.length <= 1) return prev;
+      const next = [...prev];
+      next.splice(index, 1);
+      return next;
+    });
   };
 
   const updateAthlete = (index: number, field: keyof Athlete, value: any) => {
-    const newAthletes = [...athletes];
-    newAthletes[index] = { ...newAthletes[index], [field]: value };
-    setAthletes(newAthletes);
+    setAthletes(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
   };
 
   const togglePosition = (athleteIndex: number, position: string) => {
-    const newAthletes = [...athletes];
-    const currentPositions = newAthletes[athleteIndex].positions;
-    if (currentPositions.includes(position)) {
-      newAthletes[athleteIndex].positions = currentPositions.filter(p => p !== position);
-    } else {
-      newAthletes[athleteIndex].positions = [...currentPositions, position];
-    }
-    setAthletes(newAthletes);
+    setAthletes(prev => {
+      const next = [...prev];
+      const currentPositions = next[athleteIndex].positions;
+      if (currentPositions.includes(position)) {
+        next[athleteIndex].positions = currentPositions.filter(p => p !== position);
+      } else {
+        next[athleteIndex].positions = [...currentPositions, position];
+      }
+      return next;
+    });
   };
 
   const toggleEvent = (athleteIndex: number, eventId: string) => {
-    const newAthletes = [...athletes];
-    const eventList = newAthletes[athleteIndex].selectedEvents;
-    if (eventList.includes(eventId)) {
-      newAthletes[athleteIndex].selectedEvents = eventList.filter(id => id !== eventId);
-    } else {
-      newAthletes[athleteIndex].selectedEvents = [...eventList, eventId];
-    }
-    setAthletes(newAthletes);
+    setAthletes(prev => {
+      const next = [...prev];
+      const eventList = next[athleteIndex].selectedEvents;
+      if (eventList.includes(eventId)) {
+        next[athleteIndex].selectedEvents = eventList.filter(id => id !== eventId);
+      } else {
+        next[athleteIndex].selectedEvents = [...eventList, eventId];
+      }
+      return next;
+    });
   };
 
   const nextStep = () => {
     if (currentStep === 1) {
       if (!parentInfo.name || !parentInfo.email || !parentInfo.phone || !parentInfo.emergencyPhone) {
-        alert("Please complete all required parent and emergency contact information.");
+        toast.error("Please complete all required parent and emergency contact information.");
         return;
       }
     } else if (currentStep === 2) {
       if (athletes.some(a => !a.firstName || !a.lastName || !a.dateOfBirth || !a.grade || !a.school || !a.gradYear || !a.experience || a.positions.length === 0)) {
-        alert("Please complete all required athlete details, including graduation year, experience, and positions.");
+        toast.error("Please complete all required athlete details, including graduation year, experience, and positions.");
         return;
       }
     } else if (currentStep === 3) {
       if (athletes.some(a => a.selectedEvents.length === 0)) {
-        alert("Please select at least one tryout session for each athlete.");
+        toast.error("Please select at least one tryout session for each athlete.");
         return;
       }
     } else if (currentStep === 4) {
       if (athletes.some(a => !a.waiverAgreed)) {
-        alert("Please sign the liability waiver for all athletes.");
+        toast.error("Please sign the liability waiver for all athletes.");
         return;
       }
     }
@@ -245,13 +258,13 @@ export default function TryoutRegistrationForm({
         throw new Error(data.error || 'Registration failed');
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Something went wrong');
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12">
+    <form onSubmit={handleSubmit} className="space-y-12" data-hydrated={isHydrated}>
       {/* Step Indicator */}
       <div className="max-w-4xl mx-auto mb-12">
         <div className="flex items-center justify-between relative">

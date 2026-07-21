@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { toast } from 'react-hot-toast';
 import LiabilityWaiver from './LiabilityWaiver';
 
 interface Event {
@@ -69,20 +70,20 @@ export default function TournamentRegistrationForm({
   const nextStep = () => {
     if (currentStep === 1) {
       if (!parentInfo.name || !parentInfo.email || !parentInfo.phone) {
-        alert("Please complete all parent information.");
+        toast.error("Please complete all parent information.");
         return;
       }
       if (!division) {
-        alert("Please select a tournament division.");
+        toast.error("Please select a tournament division.");
         return;
       }
       if (players.some(p => !p.firstName || !p.lastName || !p.grade)) {
-        alert("Please complete all player names and grades.");
+        toast.error("Please complete all player names and grades.");
         return;
       }
     } else if (currentStep === 2) {
       if (!waiverAgreed) {
-        alert("You must agree to the liability waiver.");
+        toast.error("You must agree to the liability waiver.");
         return;
       }
     }
@@ -128,7 +129,7 @@ export default function TournamentRegistrationForm({
         throw new Error(data.error || 'Registration failed');
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Something went wrong');
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
       setIsSubmitting(false);
     }
   };

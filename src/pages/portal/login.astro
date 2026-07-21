@@ -107,7 +107,7 @@ if (session) {
   loginBtn?.addEventListener('click', async () => {
     const email = emailInput?.value;
     if (!email || !email.includes('@')) {
-      alert('Please enter a valid email address.');
+      window.toast.error('Please enter a valid email address.');
       return;
     }
 
@@ -129,7 +129,7 @@ if (session) {
         successMsg?.classList.remove('hidden');
       } else {
         sessionStorage.removeItem('tvvc_login_pending');
-        alert('Something went wrong. Please try again.');
+        window.toast.error('Something went wrong. Please try again.');
         if (loginBtn) (loginBtn as HTMLButtonElement).disabled = false;
         btnText?.classList.remove('hidden');
         btnLoader?.classList.add('hidden');

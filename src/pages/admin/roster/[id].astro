@@ -5,11 +5,14 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getDb } from '../../../db';
 import { events, athletes, registrations, registrationItems } from '../../../db/schema';
 import { eq, and } from 'drizzle-orm';
+import { getSession } from 'auth-astro/server';
 
 const { id } = Astro.params;
 
-const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || process.env.ADMIN_PASSCODE || 'tvvc2024';
-let authenticated = Astro.url.searchParams.get('auth') === 'true';
+const session = await getSession(Astro.request);
+const user = session?.user as any;
+const isAdmin = user?.role === 'admin';
+
 let eventData = null;
 let roster = [];
 let allActiveEvents = [];
@@ -20,20 +23,11 @@ const db = getDb(
   import.meta.env.TURSO_AUTH_TOKEN || ''
 );
 
-if (Astro.request.method === 'POST') {
-  const data = await Astro.request.formData();
-  if (data.get('passcode') === ADMIN_PASSCODE) {
-    authenticated = true;
-  } else {
-    error = "Incorrect passcode.";
-  }
-}
-
 try {
   const results = await db.select().from(events).where(eq(events.id, id as string));
   eventData = results[0];
 
-  if (authenticated && eventData) {
+  if (isAdmin && eventData) {
     // Join athletes with registrations through registrationItems for this specific event
     roster = await db.select({
       id: athletes.id,
@@ -69,22 +63,26 @@ try {
   error = "Database error.";
 }
 
-if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
+if (eventData && !isAdmin) {
+    // Show restricted
+} else if (!eventData) {
+    return Astro.redirect('/admin/registrations');
+}
 ---
 
-<BaseLayout title={`Roster: ${eventData.name}`} noindex={true}>
+<BaseLayout title={`Roster: ${eventData?.name || 'Event'}`} noindex={true}>
   <main class="pt-32 pb-24 px-4 md:px-6">
     <div class="max-w-7xl mx-auto">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
         <div>
-          <a href="/admin/registrations?auth=true" class="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal hover:underline mb-4 inline-block">← Back to Manager</a>
+          <a href="/admin/registrations" class="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-teal hover:underline mb-4 inline-block">← Back to Manager</a>
           <h1 class="text-3xl md:text-5xl font-heading font-bold text-white leading-tight uppercase tracking-tighter">
             Event <span class="text-brand-teal italic">Roster</span>
           </h1>
           <p class="text-white/40 text-xs uppercase tracking-[0.3em] font-bold mt-2">{eventData.name}</p>
         </div>
 
-        {authenticated && (
+        {isAdmin && (
            <div class="flex flex-wrap gap-3">
              <div class="glass-card px-6 py-3 border-white/5 text-center min-w-[120px]">
                <p class="text-[8px] font-bold uppercase text-white/30 tracking-widest mb-1">Enrolled</p>
@@ -106,15 +104,12 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
         )}
       </div>
 
-      {!authenticated ? (
+      {!isAdmin ? (
         <div class="max-w-md mx-auto">
-          <div class="glass-card p-8 border-white/10 text-center">
-            <h1 class="text-2xl font-heading font-bold text-white mb-6 uppercase tracking-widest">Admin Access</h1>
-            {error && <p class="text-brand-coral text-xs mb-4">{error}</p>}
-            <form method="POST" class="space-y-4">
-              <input type="password" name="passcode" placeholder="Enter Passcode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none text-center" required />
-              <button type="submit" class="btn btn-primary w-full">View Roster</button>
-            </form>
+          <div class="glass-card p-8 border-white/10 text-center space-y-6">
+            <h1 class="text-2xl font-heading font-bold text-white uppercase tracking-widest">Admin Access Restricted</h1>
+            <p class="text-white/40 text-sm">You do not have permission to view this roster. Please sign in with an administrator account.</p>
+            <a href="/portal/login" class="btn btn-primary w-full">Sign In</a>
           </div>
         </div>
       ) : (
@@ -384,7 +379,7 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
   submitTransferBtn?.addEventListener('click', async () => {
     const newEventId = newEventSelect.value;
     if (!newEventId) {
-      alert('Please select a new event.');
+      window.toast.error('Please select a new event.');
       return;
     }
 
@@ -406,12 +401,12 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
       if (result.success) {
         window.location.reload();
       } else {
-        alert(result.error || 'Failed to transfer registration');
+        window.toast.error(result.error || 'Failed to transfer registration');
         submitTransferBtn.disabled = false;
         submitTransferBtn.innerText = 'Transfer Player';
       }
     } catch (err) {
-      alert('Network error');
+      window.toast.error('Network error');
       submitTransferBtn.disabled = false;
       submitTransferBtn.innerText = 'Transfer Player';
     }
@@ -450,12 +445,12 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
       if (result.success) {
         window.location.reload();
       } else {
-        alert(result.error || 'Failed to add player');
+        window.toast.error(result.error || 'Failed to add player');
         submitBtn.disabled = false;
         submitBtn.innerText = 'Add to Roster';
       }
     } catch (err) {
-      alert('Network error');
+      window.toast.error('Network error');
       submitBtn.disabled = false;
       submitBtn.innerText = 'Add to Roster';
     }
@@ -482,10 +477,10 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
           if (result.success) {
             window.location.reload();
           } else {
-            alert(result.error || 'Failed to remove player');
+            window.toast.error(result.error || 'Failed to remove player');
           }
         } catch (err) {
-          alert('Network error');
+          window.toast.error('Network error');
         }
       }
     });
@@ -512,10 +507,10 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
           if (result.success) {
             window.location.reload();
           } else {
-            alert(result.error || 'Failed to cancel registration');
+            window.toast.error(result.error || 'Failed to cancel registration');
           }
         } catch (err) {
-          alert('Network error');
+          window.toast.error('Network error');
         }
       }
     });
@@ -558,7 +553,7 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
   // Copy Emails Logic
   document.getElementById('copyEmailsBtn')?.addEventListener('click', () => {
     if (!roster || roster.length === 0) {
-      alert('No emails to copy.');
+      window.toast.error('No emails to copy.');
       return;
     }
     
@@ -574,7 +569,7 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
       }, 2000);
     }).catch(err => {
       console.error('Failed to copy emails: ', err);
-      alert('Failed to copy to clipboard.');
+      window.toast.error('Failed to copy to clipboard.');
     });
   });
 </script>

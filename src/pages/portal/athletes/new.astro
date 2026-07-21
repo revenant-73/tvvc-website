@@ -158,15 +158,15 @@ if (!session) {
       });
 
       if (response.ok) {
-        alert('Player profile added successfully!');
+        window.toast.success('Player profile added successfully!');
         window.location.href = '/portal/dashboard';
       } else {
         const result = await response.json();
-        alert(result.error || 'Failed to add player');
+        window.toast.error(result.error || 'Failed to add player');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred');
+      window.toast.error('An error occurred');
     } finally {
       saveBtn.disabled = false;
       btnText?.classList.remove('hidden');

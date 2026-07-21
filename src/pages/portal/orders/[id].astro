@@ -177,6 +177,6 @@ const formatDate = (dateStr: string | null) => {
   // Receipt download logic could be added here if needed, 
   // though typically it would redirect to Stripe receipt or generate PDF.
   document.getElementById('download-receipt')?.addEventListener('click', () => {
-    alert('This will redirect to your Stripe receipt or open a PDF viewer.');
+    window.toast.success('Redirecting to your Stripe receipt...');
   });
 </script>

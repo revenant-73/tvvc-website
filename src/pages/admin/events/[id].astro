@@ -5,11 +5,14 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getDb } from '../../../db';
 import { events } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
+import { getSession } from 'auth-astro/server';
 
 const { id } = Astro.params;
 
-const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
-let authenticated = Astro.url.searchParams.get('auth') === 'true';
+const session = await getSession(Astro.request);
+const user = session?.user as any;
+const isAdmin = user?.role === 'admin';
+
 let eventData = null;
 let error = null;
 let success = null;
@@ -19,27 +22,22 @@ const db = getDb(
   import.meta.env.TURSO_AUTH_TOKEN || ''
 );
 
-if (Astro.request.method === 'POST') {
+if (isAdmin && Astro.request.method === 'POST') {
   try {
     const data = await Astro.request.formData();
-    if (data.get('passcode') === ADMIN_PASSCODE || authenticated) {
-      authenticated = true;
-      const newCapacity = parseInt(data.get('capacity') as string);
-      const newSpotsFilled = parseInt(data.get('spotsFilled') as string);
-      const emailDetails = data.get('emailDetails') as string;
-      
-      if (!isNaN(newCapacity) && !isNaN(newSpotsFilled)) {
-        await db.update(events)
-          .set({ 
-            capacity: newCapacity,
-            spotsFilled: newSpotsFilled,
-            emailDetails: emailDetails
-          })
-          .where(eq(events.id, id as string));
-        success = "Event updated successfully.";
-      }
-    } else {
-      error = "Incorrect passcode.";
+    const newCapacity = parseInt(data.get('capacity') as string);
+    const newSpotsFilled = parseInt(data.get('spotsFilled') as string);
+    const emailDetails = data.get('emailDetails') as string;
+    
+    if (!isNaN(newCapacity) && !isNaN(newSpotsFilled)) {
+      await db.update(events)
+        .set({ 
+          capacity: newCapacity,
+          spotsFilled: newSpotsFilled,
+          emailDetails: emailDetails
+        })
+        .where(eq(events.id, id as string));
+      success = "Event updated successfully.";
     }
   } catch (e) {
     error = "Error processing update.";
@@ -53,13 +51,18 @@ try {
   error = "Could not load event data.";
 }
 
-if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
+if (!isAdmin && !eventData) return Astro.redirect('/admin/registrations');
+if (eventData && !isAdmin) {
+    // We allow loading the page but will show restricted message
+} else if (!eventData) {
+    return Astro.redirect('/admin/registrations');
+}
 ---
 
-<BaseLayout title={`Edit ${eventData.name}`} noindex={true}>
+<BaseLayout title={`Edit ${eventData?.name || 'Event'}`} noindex={true}>
   <main class="pt-32 pb-24 px-4 md:px-6">
     <div class="max-w-2xl mx-auto">
-      <a href="/admin/registrations?auth=true" class="text-xs font-bold uppercase tracking-widest text-brand-teal hover:underline mb-8 inline-block">← Back to Dashboard</a>
+      <a href="/admin/registrations" class="text-xs font-bold uppercase tracking-widest text-brand-teal hover:underline mb-8 inline-block">← Back to Dashboard</a>
 
       {error && (
         <div class="mb-8 bg-brand-coral/10 border border-brand-coral/20 text-brand-coral p-4 rounded-xl text-center text-sm font-bold">
@@ -73,20 +76,20 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
         </div>
       )}
 
-      <div class="glass-card p-8 md:p-12 border-white/10">
-        <span class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-4 block">Manage Event</span>
-        <h1 class="text-3xl font-heading font-bold text-white mb-2 leading-tight">{eventData.name}</h1>
-        <p class="text-xs text-white/40 uppercase tracking-widest font-bold mb-8">{eventData.dateInfo} • {eventData.timeInfo}</p>
+      {!isAdmin ? (
+        <div class="glass-card p-8 border-white/10 text-center space-y-6">
+          <h1 class="text-2xl font-heading font-bold text-white uppercase tracking-widest">Admin Access Restricted</h1>
+          <p class="text-white/40 text-sm">You do not have permission to edit this event. Please sign in with an administrator account.</p>
+          <a href="/portal/login" class="btn btn-primary w-full">Sign In</a>
+        </div>
+      ) : (
+        <div class="glass-card p-8 md:p-12 border-white/10">
+          <span class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-4 block">Manage Event</span>
+          <h1 class="text-3xl font-heading font-bold text-white mb-2 leading-tight">{eventData.name}</h1>
+          <p class="text-xs text-white/40 uppercase tracking-widest font-bold mb-8">{eventData.dateInfo} • {eventData.timeInfo}</p>
 
-        <form method="POST" class="space-y-8">
-          {!authenticated && (
-            <div class="space-y-3">
-              <label class="text-[10px] font-bold uppercase tracking-widest text-white/50">Admin Passcode</label>
-              <input type="password" name="passcode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none" required />
-            </div>
-          )}
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <form method="POST" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="space-y-3">
               <label class="text-[10px] font-bold uppercase tracking-widest text-white/50">Maximum Capacity</label>
               <input 
@@ -126,6 +129,7 @@ if (!eventData) return Astro.redirect('/admin/registrations?auth=true');
           <button type="submit" class="btn btn-primary w-full py-4 text-sm uppercase tracking-widest font-bold">Update Event Details</button>
         </form>
       </div>
+    )}
     </div>
   </main>
 </BaseLayout>

@@ -5,48 +5,43 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getDb } from '../../../db';
 import { feedback } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
+import { getSession } from 'auth-astro/server';
 
 const { id } = Astro.params;
-const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
-let authenticated = false;
+const session = await getSession(Astro.request);
+const user = session?.user as any;
+const isAdmin = user?.role === 'admin';
+
 let response = null;
 let error = null;
 
-if (Astro.request.method === 'POST') {
+if (isAdmin && Astro.request.method === 'POST') {
   const data = await Astro.request.formData();
   const action = data.get('action');
 
-  if (action === 'login') {
-    if (data.get('passcode') === ADMIN_PASSCODE) {
-      authenticated = true;
-    } else {
-      error = "Incorrect passcode.";
-    }
-  } else if (action === 'toggle-star') {
-    authenticated = true; // Assume authenticated if they are acting on a specific record
+  if (action === 'toggle-star') {
     try {
       const db = getDb(
         import.meta.env.TURSO_DATABASE_URL || '',
         import.meta.env.TURSO_AUTH_TOKEN || ''
       );
-      const current = await db.select().from(feedback).where(eq(feedback.id, parseInt(id)));
+      const current = await db.select().from(feedback).where(eq(feedback.id, parseInt(id as string)));
       if (current[0]) {
         await db.update(feedback)
           .set({ starred: !current[0].starred })
-          .where(eq(feedback.id, parseInt(id)));
+          .where(eq(feedback.id, parseInt(id as string)));
       }
     } catch (e) {
       console.error(e);
     }
   } else if (action === 'delete') {
-    authenticated = true;
     try {
       const db = getDb(
         import.meta.env.TURSO_DATABASE_URL || '',
         import.meta.env.TURSO_AUTH_TOKEN || ''
       );
-      await db.delete(feedback).where(eq(feedback.id, parseInt(id)));
-      return Astro.redirect('/admin/feedback?auth=true');
+      await db.delete(feedback).where(eq(feedback.id, parseInt(id as string)));
+      return Astro.redirect('/admin/feedback');
     } catch (e) {
       console.error(e);
       error = "Error deleting response.";
@@ -54,15 +49,13 @@ if (Astro.request.method === 'POST') {
   }
 }
 
-// Simple auth check via query param for navigation from the list page
-if (authenticated || Astro.url.searchParams.get('auth') === 'true') {
-  authenticated = true;
+if (isAdmin) {
   try {
     const db = getDb(
       import.meta.env.TURSO_DATABASE_URL || '',
       import.meta.env.TURSO_AUTH_TOKEN || ''
     );
-    const results = await db.select().from(feedback).where(eq(feedback.id, parseInt(id)));
+    const results = await db.select().from(feedback).where(eq(feedback.id, parseInt(id as string)));
     response = results[0];
     
     if (!response) {
@@ -161,20 +154,17 @@ const sections = [
 <BaseLayout title="Feedback Detail" noindex={true}>
   <main class="pt-32 pb-24 px-4 md:px-6">
     <div class="max-w-4xl mx-auto">
-      <a href="/admin/feedback?auth=true" class="inline-flex items-center gap-2 text-white/40 hover:text-brand-teal transition-colors mb-8 uppercase tracking-widest text-[10px] font-bold">
+      <a href="/admin/feedback" class="inline-flex items-center gap-2 text-white/40 hover:text-brand-teal transition-colors mb-8 uppercase tracking-widest text-[10px] font-bold">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         Back to List
       </a>
 
-      {!authenticated ? (
+      {!isAdmin ? (
         <div class="max-w-md mx-auto">
-          <div class="glass-card p-8 border-white/10 text-center">
-            <h1 class="text-2xl font-heading font-bold text-white mb-6 uppercase tracking-widest">Admin Access</h1>
-            <form method="POST" class="space-y-4">
-              <input type="hidden" name="action" value="login" />
-              <input type="password" name="passcode" placeholder="Enter Passcode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-teal outline-none text-center" required />
-              <button type="submit" class="btn btn-primary w-full">Login</button>
-            </form>
+          <div class="glass-card p-8 border-white/10 text-center space-y-6">
+            <h1 class="text-2xl font-heading font-bold text-white uppercase tracking-widest">Admin Access Restricted</h1>
+            <p class="text-white/40 text-sm">You do not have permission to view this page. Please sign in with an administrator account.</p>
+            <a href="/portal/login" class="btn btn-primary w-full">Sign In</a>
           </div>
         </div>
       ) : response ? (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 interface Event {
   id: string;
@@ -96,7 +97,7 @@ export default function TrainingBookingForm({
         throw new Error(data.error || 'Booking failed');
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Something went wrong');
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
       setIsSubmitting(false);
     }
   };

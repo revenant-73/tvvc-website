@@ -153,14 +153,14 @@ if (!dbUser) {
       });
 
       if (response.ok) {
-        alert('Profile updated successfully!');
+        window.toast.success('Profile updated successfully!');
       } else {
         const data = await response.json();
-        alert(data.error || 'Failed to update profile');
+        window.toast.error(data.error || 'Failed to update profile');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred');
+      window.toast.error('An error occurred');
     } finally {
       saveBtn.disabled = false;
       btnText?.classList.remove('hidden');

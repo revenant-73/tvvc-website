@@ -5,6 +5,8 @@ import { eq, inArray, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
 
+import { registrationSchema } from '../../lib/schemas';
+
 export const POST: APIRoute = async ({ request }) => {
   try {
     const databaseUrl = import.meta.env.TURSO_DATABASE_URL;
@@ -36,7 +38,17 @@ export const POST: APIRoute = async ({ request }) => {
     let stripeCustomerId = (session?.user as any)?.stripeCustomerId;
 
     const body = await request.json();
-    const { parentInfo, athletes: athleteData } = body;
+    
+    // Validate request body
+    const validation = registrationSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ 
+        error: 'Validation failed', 
+        details: validation.error.flatten().fieldErrors 
+      }), { status: 400 });
+    }
+
+    const { parentInfo, athletes: athleteData } = validation.data;
 
     const db = getDb(
       databaseUrl,
