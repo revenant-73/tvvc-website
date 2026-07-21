@@ -1,7 +1,7 @@
 name: Scheduled Cleanup
 on:
   schedule:
-    - cron: '*/30 * * * *' # Every 30 minutes
+    - cron: '0 12 * * *' # 5:00 AM Pacific Time (PDT)
   workflow_dispatch: # Allow manual trigger
 
 jobs:
