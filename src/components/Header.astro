@@ -8,7 +8,6 @@ const navLinks = [
   { href: '/training', label: 'Small Group Training' },
   { href: '/programs', label: 'In-House Programs' },
   { href: '/summer-camps-clinics', label: 'Summer Camps & Clinics' },
-  { href: '/outdoor-events', label: 'Outdoor Events' },
   { href: '/faq', label: 'FAQ' },
 ];
 
@@ -26,46 +25,20 @@ const isHome = normalizedPath === '/';
       <span class="text-[10px] uppercase tracking-widest text-white/50 font-bold -mt-1">Hillsboro, OR</span>
     </a>
 
-    <!-- Desktop Navigation -->
-    <div class="hidden lg:flex items-center gap-6 text-[11px] uppercase tracking-[0.15em] font-bold">
-      {navLinks.map(link => (
-        <a 
-          href={link.href} 
-          class:list={[
-            "hover:text-brand-teal transition-colors",
-            normalizedPath === link.href ? "text-brand-teal" : ""
-          ]}
-        >
-          {link.label}
-        </a>
-      ))}
-      <div class="w-px h-4 bg-white/10 ml-2 mr-2"></div>
-      <a 
-        href={portalLink.href} 
-        class:list={[
-          "transition-all transform hover:scale-105 active:scale-95",
-          portalLink.class,
-          normalizedPath.startsWith('/portal') ? "lg:bg-white" : ""
-        ]}
-      >
-        {portalLink.label}
-      </a>
-    </div>
-
-    <!-- Mobile/Small Desktop Toggle -->
-    <button class="lg:hidden text-white p-2 focus-visible:ring-2 focus-visible:ring-brand-teal rounded-lg outline-none" id="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+    <!-- Navigation Toggle -->
+    <button class="text-white p-2 focus-visible:ring-2 focus-visible:ring-brand-teal rounded-lg outline-none" id="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
     </button>
   </nav>
 
-  <!-- Mobile Menu Backdrop -->
-  <div id="mobile-menu" class="hidden absolute top-16 left-0 w-full glass rounded-3xl p-8 flex flex-col gap-6 lg:hidden border-white/10 shadow-2xl transition-all duration-300 opacity-0 -translate-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto">
+  <!-- Navigation Menu Backdrop -->
+  <div id="mobile-menu" class="hidden absolute top-16 left-0 w-full bg-brand-charcoal/95 backdrop-blur-xl border border-white/10 rounded-3xl p-8 flex flex-col gap-6 shadow-2xl transition-all duration-300 opacity-0 -translate-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto">
     {navLinks.map(link => (
       <a 
         href={link.href} 
         class:list={[
-          "text-lg font-heading font-bold",
-          normalizedPath === link.href ? "text-brand-teal" : ""
+          "text-lg font-heading font-bold hover:text-brand-teal transition-colors",
+          normalizedPath === link.href ? "text-brand-teal" : "text-white"
         ]}
       >
         {link.label}
@@ -75,8 +48,8 @@ const isHome = normalizedPath === '/';
     <a 
       href={portalLink.href} 
       class:list={[
-        "text-lg font-heading font-bold text-brand-teal flex items-center gap-2",
-        normalizedPath.startsWith('/portal') ? "text-white" : ""
+        "text-lg font-heading font-bold text-brand-charcoal bg-brand-teal px-6 py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-brand-teal/90 transition-all shadow-lg shadow-brand-teal/20",
+        normalizedPath.startsWith('/portal') ? "ring-2 ring-white" : ""
       ]}
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
