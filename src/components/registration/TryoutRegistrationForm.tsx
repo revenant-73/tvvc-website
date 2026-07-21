@@ -513,6 +513,22 @@ export default function TryoutRegistrationForm({
           {athletes.map((athlete, index) => (
             <section key={index} className="glass-card border-brand-teal/20 p-8 space-y-8">
               <h2 className="text-2xl font-heading font-bold text-white uppercase tracking-tight">Select Tryout for {athlete.firstName}</h2>
+              
+              <div className="bg-brand-teal/5 border border-brand-teal/20 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-xl">📅</span>
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-brand-teal">Age Eligibility Reminder</h4>
+                </div>
+                <p className="text-sm text-white/70 leading-relaxed mb-4">
+                  For the 2026-2027 Season, players are grouped by their age as of <span className="text-brand-teal font-bold underline underline-offset-4">June 30, 2027</span>. 
+                  Athletes may play in their designated age division or older, but <span className="text-brand-coral font-bold italic">never younger</span>. 
+                  For example, a player who turns 16 by June 30, 2027, is eligible for 16U or higher.
+                </p>
+                <p className="text-sm text-white/70 leading-relaxed border-t border-white/5 pt-4">
+                  <span className="text-brand-coral font-bold">Note:</span> Players who want to try out for an age group older than what they qualify for must get permission from the club director before registering.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {initialEvents.map(event => (
                   <button
