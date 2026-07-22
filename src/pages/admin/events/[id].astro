@@ -80,7 +80,7 @@ if (eventData && !isAdmin) {
         <div class="glass-card p-8 border-white/10 text-center space-y-6">
           <h1 class="text-2xl font-heading font-bold text-white uppercase tracking-widest">Admin Access Restricted</h1>
           <p class="text-white/40 text-sm">You do not have permission to edit this event. Please sign in with an administrator account.</p>
-          <a href="/portal/login" class="btn btn-primary w-full">Sign In</a>
+          <a href="/portal/login?callbackUrl=/admin/registrations" class="btn btn-primary w-full">Sign In</a>
         </div>
       ) : (
         <div class="glass-card p-8 md:p-12 border-white/10">

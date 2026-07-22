@@ -119,7 +119,7 @@ const requestedTab = Astro.url.searchParams.get('tab') || 'camps';
               <p class="text-white/40 text-sm">Log in to auto-fill your info and select saved players.</p>
             </div>
           </div>
-          <a href="/portal/login" class="bg-brand-teal hover:bg-brand-teal/80 text-brand-charcoal font-black py-3 px-8 rounded-xl transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-brand-teal/10">
+          <a href="/portal/login?callbackUrl=/register" class="bg-brand-teal hover:bg-brand-teal/80 text-brand-charcoal font-black py-3 px-8 rounded-xl transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-brand-teal/10">
             Login to Save Time
           </a>
         </div>

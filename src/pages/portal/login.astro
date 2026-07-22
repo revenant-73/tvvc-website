@@ -3,9 +3,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
 
 const session = await getSession(Astro.request);
+const url = new URL(Astro.request.url);
+const callbackUrl = url.searchParams.get('callbackUrl') || '/portal/dashboard';
 
 if (session) {
-  return Astro.redirect('/portal/dashboard');
+  return Astro.redirect(callbackUrl);
 }
 ---
 
