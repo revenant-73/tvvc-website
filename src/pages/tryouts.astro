@@ -3,6 +3,7 @@ export const prerender = false;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';
+import FundraisingButton from '../components/FundraisingButton';
 import { db } from '../db/db';
 import { events } from '../db/schema';
 import { eq, and, like } from 'drizzle-orm';
@@ -277,6 +278,25 @@ const tryouts = [
           </div>
         </ScrollReveal>
       </div>
+    </section>
+
+    <!-- Financial Assistance Section -->
+    <section class="max-w-4xl mx-auto px-6 mb-12">
+      <ScrollReveal>
+        <div class="glass-card border-brand-teal/20 bg-brand-teal/5 p-8 md:p-12 text-center">
+          <h3 class="text-2xl font-heading font-bold text-white mb-4 uppercase tracking-tight">Financial <span class="text-brand-teal italic">Assistance</span></h3>
+          <p class="text-white/60 mb-8 leading-relaxed max-w-2xl mx-auto italic">
+            "We want to ensure that club volleyball is accessible. If you are concerned about season costs, we offer family-led fundraising options and flexible payment plans."
+          </p>
+          <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <FundraisingButton client:load variant="primary" />
+            <a href="mailto:loren@tualatinvalleyvb.com" class="text-[10px] font-bold text-white/40 uppercase tracking-widest hover:text-brand-teal transition-all flex items-center gap-2">
+              Contact Loren Directly
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+            </a>
+          </div>
+        </div>
+      </ScrollReveal>
     </section>
 
     <!-- FAQ CTA -->
