@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FundraisingModalProps {
@@ -7,17 +8,33 @@ interface FundraisingModalProps {
 }
 
 export default function FundraisingModal({ isOpen, onClose }: FundraisingModalProps) {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <>
+        <div className="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/95 backdrop-blur-md z-[999] cursor-pointer"
+            className="fixed inset-0 bg-black/95 backdrop-blur-md z-[999] cursor-pointer pointer-events-auto"
           />
 
           {/* Modal Container */}
@@ -125,9 +142,10 @@ export default function FundraisingModal({ isOpen, onClose }: FundraisingModalPr
               </div>
             </motion.div>
           </div>
-        </>
+        </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
