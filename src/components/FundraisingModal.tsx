@@ -17,19 +17,19 @@ export default function FundraisingModal({ isOpen, onClose }: FundraisingModalPr
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] cursor-pointer"
+            className="fixed inset-0 bg-black/95 backdrop-blur-md z-[999] cursor-pointer"
           />
 
           {/* Modal Container */}
-          <div className="fixed inset-0 flex items-center justify-center z-[101] pointer-events-none p-4 md:p-6">
+          <div className="fixed inset-0 flex items-center justify-center z-[1000] pointer-events-none p-4 md:p-6">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-card border-brand-teal/30 bg-black/90 w-full max-w-3xl max-h-[90vh] overflow-hidden pointer-events-auto relative shadow-2xl flex flex-col"
+              className="border border-white/10 bg-brand-charcoal w-full max-w-3xl max-h-[90vh] overflow-hidden pointer-events-auto relative shadow-[0_0_100px_rgba(0,0,0,0.9)] flex flex-col rounded-[2.5rem]"
             >
               {/* Header */}
-              <div className="p-6 md:p-8 border-b border-white/10 flex items-center justify-between bg-brand-teal/5">
+              <div className="p-6 md:p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
                 <div>
                   <span className="text-brand-teal font-bold uppercase tracking-widest text-[10px] mb-2 block">Family Resource</span>
                   <h2 className="text-2xl md:text-3xl font-heading font-extrabold text-white uppercase tracking-tight">
@@ -114,13 +114,13 @@ export default function FundraisingModal({ isOpen, onClose }: FundraisingModalPr
               </div>
 
               {/* Footer */}
-              <div className="p-6 border-t border-white/10 bg-white/5 flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <p className="text-[10px] text-white/40 uppercase tracking-widest font-medium">Choose a goal & start today</p>
+              <div className="p-6 border-t border-white/5 bg-white/[0.02] flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Choose a goal & start today</p>
                 <button
                   onClick={onClose}
-                  className="btn btn-primary !py-3 !px-8 text-xs"
+                  className="btn btn-primary !py-4 !px-10 text-xs shadow-glow-teal hover:scale-105 transition-transform"
                 >
-                  Got it, thanks!
+                  Close & Continue
                 </button>
               </div>
             </motion.div>
@@ -133,10 +133,12 @@ export default function FundraisingModal({ isOpen, onClose }: FundraisingModalPr
 
 function FundraisingOption({ title, description, icon }: { title: string; description: string; icon: string }) {
   return (
-    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-brand-teal/20 transition-all group">
-      <span className="text-2xl mb-3 block group-hover:scale-110 transition-transform">{icon}</span>
-      <h4 className="text-white font-bold text-sm mb-2">{title}</h4>
-      <p className="text-white/50 text-xs leading-relaxed">{description}</p>
+    <div className="p-6 rounded-3xl bg-white/[0.03] border border-white/5 hover:border-brand-teal/30 transition-all group">
+      <div className="w-12 h-12 rounded-2xl bg-brand-teal/10 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      <h4 className="text-white font-bold text-base mb-2">{title}</h4>
+      <p className="text-white/60 text-sm leading-relaxed">{description}</p>
     </div>
   );
 }
