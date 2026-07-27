@@ -34,7 +34,10 @@
     "@opentelemetry/core": "^2.8.0",
     "@opentelemetry/resources": "^2.7.2",
     "@opentelemetry/sdk-trace-base": "^2.7.2",
-    "@opentelemetry/sdk-trace-node": "^2.7.2"
+    "@opentelemetry/sdk-trace-node": "^2.7.2",
+    "sharp": "^0.35.3",
+    "brace-expansion": "^5.0.8",
+    "minimatch": "^10.2.6"
   },
   "dependencies": {
     "@astrojs/netlify": "^8.1.2",
