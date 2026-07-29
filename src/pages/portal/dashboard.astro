@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../db/db';
 import { registrations, registrationItems, events, athletes, users } from '../../db/schema';
-import { eq, desc, and, sql, or } from 'drizzle-orm';
+import { eq, desc, and, or, gte } from 'drizzle-orm';
 
 const session = await getSession(Astro.request);
 
@@ -18,6 +18,19 @@ const dbUser = await db.select().from(users).where(eq(users.email, user.email!))
 const currentUser = dbUser[0];
 const userId = currentUser?.id || (user as any).id;
 
+const clubDateParts = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Los_Angeles',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).formatToParts(new Date());
+const clubDate = {
+  year: clubDateParts.find((part) => part.type === 'year')?.value,
+  month: clubDateParts.find((part) => part.type === 'month')?.value,
+  day: clubDateParts.find((part) => part.type === 'day')?.value,
+};
+const today = `${clubDate.year}-${clubDate.month}-${clubDate.day}`;
+
 // Fetch purchase history for the logged-in user
 const userRegistrations = await db.select({
   id: registrations.id,
@@ -27,7 +40,14 @@ const userRegistrations = await db.select({
   createdAt: registrations.createdAt,
 })
 .from(registrations)
-.where(eq(registrations.parentEmail, user.email!))
+.where(
+  userId
+    ? or(
+        eq(registrations.userId, userId),
+        eq(registrations.parentEmail, user.email!)
+      )
+    : eq(registrations.parentEmail, user.email!)
+)
 .orderBy(desc(registrations.createdAt));
 
 // Fetch upcoming events for this user's athletes
@@ -47,8 +67,18 @@ const upcomingEvents = await db.select({
 .innerJoin(athletes, eq(registrationItems.athleteId, athletes.id))
 .where(
   and(
-    eq(registrations.parentEmail, user.email!),
-    eq(registrations.status, 'paid')
+    userId
+      ? or(
+          eq(registrations.userId, userId),
+          eq(registrations.parentEmail, user.email!)
+        )
+      : eq(registrations.parentEmail, user.email!),
+    eq(registrations.status, 'paid'),
+    eq(events.active, true),
+    or(
+      gte(events.startDate, today),
+      gte(events.endDate, today)
+    )
   )
 )
 .orderBy(events.startDate);

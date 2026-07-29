@@ -25,13 +25,18 @@ const [registration] = await db.select()
   .where(eq(registrations.id, id))
   .limit(1);
 
-// Security check: Ensure this registration belongs to the logged-in user
-if (!registration || registration.parentEmail !== user.email) {
+// Security check: Prefer the canonical user relationship, with email fallback
+// for purchases made before the parent created a portal account.
+const ownsRegistration = registration && (
+  registration.userId === (user as any).id ||
+  registration.parentEmail === user.email
+);
+if (!ownsRegistration) {
   return Astro.redirect('/portal/dashboard');
 }
 
 // Fetch items for this registration
-const items = await db.select({
+const databaseItems = await db.select({
   id: registrationItems.id,
   eventName: events.name,
   eventPrice: events.price,
@@ -44,6 +49,39 @@ const items = await db.select({
 .innerJoin(events, eq(registrationItems.eventId, events.id))
 .innerJoin(athletes, eq(registrationItems.athleteId, athletes.id))
 .where(eq(registrationItems.registrationId, id));
+
+type OrderItem = {
+  id: number | string;
+  eventName: string;
+  eventPrice: number;
+  eventDate: string;
+  eventTime: string | null;
+  athleteFirstName: string;
+  athleteLastName: string;
+};
+
+let items: OrderItem[] = databaseItems;
+try {
+  const metadata = registration.metadata ? JSON.parse(registration.metadata) : null;
+  if (Array.isArray(metadata?.orderItems) && metadata.orderItems.length > 0) {
+    items = metadata.orderItems.map((item: any, index: number) => {
+      const athleteName = String(item.athleteName || '').trim();
+      const [athleteFirstName = '', ...lastNameParts] = athleteName.split(/\s+/);
+
+      return {
+        id: `snapshot-${index}`,
+        eventName: String(item.eventName || 'Registration item'),
+        eventPrice: Number(item.unitAmount) || 0,
+        eventDate: String(item.eventDate || ''),
+        eventTime: item.eventTime ? String(item.eventTime) : null,
+        athleteFirstName,
+        athleteLastName: lastNameParts.join(' '),
+      };
+    });
+  }
+} catch (error) {
+  console.warn(`Unable to parse order snapshot for registration ${id}`, error);
+}
 
 const formatCurrency = (cents: number) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
@@ -174,9 +212,26 @@ const formatDate = (dateStr: string | null) => {
 </BaseLayout>
 
 <script>
-  // Receipt download logic could be added here if needed, 
-  // though typically it would redirect to Stripe receipt or generate PDF.
-  document.getElementById('download-receipt')?.addEventListener('click', () => {
-    window.toast.success('Redirecting to your Stripe receipt...');
+  document.getElementById('download-receipt')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    button.disabled = true;
+
+    try {
+      const registrationId = window.location.pathname.split('/').pop();
+      const response = await fetch(`/api/stripe/receipt?registrationId=${encodeURIComponent(registrationId || '')}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.url) {
+        window.toast.error(data.error || 'Unable to load receipt');
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      console.error(error);
+      window.toast.error('Unable to load receipt');
+    } finally {
+      button.disabled = false;
+    }
   });
 </script>

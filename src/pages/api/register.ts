@@ -1,14 +1,18 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../db';
 import { registrations, athletes, registrationItems, events } from '../../db/schema';
-import { eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, or, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
 
 import { registrationSchema } from '../../lib/schemas';
+import { rejectCrossOriginRequest } from '../../lib/request-security';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const originError = rejectCrossOriginRequest(request);
+    if (originError) return originError;
+
     const databaseUrl = import.meta.env.TURSO_DATABASE_URL;
     const stripeSecretKey = import.meta.env.STRIPE_SECRET_KEY;
 
@@ -78,6 +82,14 @@ export const POST: APIRoute = async ({ request }) => {
             return event?.type === 'training-block';
           })
       );
+      const orderItems: Array<{
+        eventId: string;
+        eventName: string;
+        eventDate: string;
+        eventTime: string | null;
+        athleteName: string;
+        unitAmount: number;
+      }> = [];
 
       // Handle other events normally (per-athlete charge)
       for (const athlete of athleteData) {
@@ -98,6 +110,14 @@ export const POST: APIRoute = async ({ request }) => {
           // ONLY add to total and line items if NOT a training block 
           if (event.type !== 'training-block') {
             totalCents += event.price;
+            orderItems.push({
+              eventId: event.id,
+              eventName: event.name,
+              eventDate: event.dateInfo,
+              eventTime: event.timeInfo,
+              athleteName: `${athlete.firstName} ${athlete.lastName}`,
+              unitAmount: event.price,
+            });
             lineItems.push({
               price_data: {
                 currency: 'usd',
@@ -119,6 +139,18 @@ export const POST: APIRoute = async ({ request }) => {
         if (!event) continue;
 
         totalCents += event.price;
+        const athleteNames = athleteData
+          .filter((athlete) => athlete.selectedEvents.includes(blockId))
+          .map((athlete) => `${athlete.firstName} ${athlete.lastName}`)
+          .join(', ');
+        orderItems.push({
+          eventId: event.id,
+          eventName: event.name,
+          eventDate: event.dateInfo,
+          eventTime: event.timeInfo,
+          athleteName: athleteNames,
+          unitAmount: event.price,
+        });
         lineItems.push({
           price_data: {
             currency: 'usd',
@@ -151,37 +183,92 @@ export const POST: APIRoute = async ({ request }) => {
         totalAmount: totalCents,
         stripeCustomerId: stripeCustomerId || null,
         expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minute reservation
-        metadata: body.metadata ? JSON.stringify(body.metadata) : null,
+        metadata: JSON.stringify({
+          ...(validation.data.metadata || {}),
+          orderItems,
+          agreements: athleteData.map((athlete) => ({
+            profileId: athlete.profileId || null,
+            athleteName: `${athlete.firstName} ${athlete.lastName}`,
+            waiverAgreed: athlete.waiverAgreed,
+            photoReleaseAgreed: athlete.photoReleaseAgreed,
+            acceptedAt: new Date().toISOString(),
+          })),
+        }),
       });
 
       for (const a of athleteData) {
-        const [athleteResult] = await tx.insert(athletes).values({
-          registrationId: registrationId,
-          parentId: userId || null,
-          firstName: a.firstName,
-          lastName: a.lastName,
-          preferredName: a.preferredName || null,
-          dateOfBirth: a.dateOfBirth || null,
-          gender: a.gender || null,
-          grade: a.grade,
-          school: a.school || null,
-          gradYear: a.gradYear || null,
-          division: a.division || null,
-          tshirtSize: a.tshirtSize || null,
-          jerseySize: a.jerseySize || null,
-          experience: a.experience || null,
-          positions: a.positions || null,
-          medicalInfo: a.medicalInfo,
-          photoReleaseAgreed: a.photoReleaseAgreed || false,
-          waiverAgreed: a.waiverAgreed || false,
-          metadata: a.metadata ? JSON.stringify(a.metadata) : null,
-        }).returning({ id: athletes.id });
+        let athleteId: number;
 
-        if (!athleteResult) {
-          throw new Error('Failed to create athlete record');
+        if (a.profileId) {
+          if (!userId || !session?.user?.email) {
+            throw new Error('Sign in to use a saved player profile.');
+          }
+
+          const [ownedAthlete] = await tx.select({ id: athletes.id })
+            .from(athletes)
+            .leftJoin(registrations, eq(athletes.registrationId, registrations.id))
+            .where(and(
+              eq(athletes.id, a.profileId),
+              or(
+                eq(athletes.parentId, userId),
+                eq(registrations.parentEmail, session.user.email)
+              )
+            ))
+            .limit(1);
+
+          if (!ownedAthlete) {
+            throw new Error('Saved player profile not found.');
+          }
+
+          athleteId = ownedAthlete.id;
+          await tx.update(athletes)
+            .set({
+              firstName: a.firstName,
+              lastName: a.lastName,
+              preferredName: a.preferredName || null,
+              dateOfBirth: a.dateOfBirth || null,
+              gender: a.gender || null,
+              grade: a.grade,
+              school: a.school || null,
+              gradYear: a.gradYear || null,
+              division: a.division || null,
+              tshirtSize: a.tshirtSize || null,
+              jerseySize: a.jerseySize || null,
+              experience: a.experience || null,
+              positions: a.positions || null,
+              medicalInfo: a.medicalInfo,
+              metadata: a.metadata ? JSON.stringify(a.metadata) : null,
+            })
+            .where(eq(athletes.id, athleteId));
+        } else {
+          const [athleteResult] = await tx.insert(athletes).values({
+            registrationId: registrationId,
+            parentId: userId || null,
+            firstName: a.firstName,
+            lastName: a.lastName,
+            preferredName: a.preferredName || null,
+            dateOfBirth: a.dateOfBirth || null,
+            gender: a.gender || null,
+            grade: a.grade,
+            school: a.school || null,
+            gradYear: a.gradYear || null,
+            division: a.division || null,
+            tshirtSize: a.tshirtSize || null,
+            jerseySize: a.jerseySize || null,
+            experience: a.experience || null,
+            positions: a.positions || null,
+            medicalInfo: a.medicalInfo,
+            photoReleaseAgreed: a.photoReleaseAgreed || false,
+            waiverAgreed: a.waiverAgreed || false,
+            metadata: a.metadata ? JSON.stringify(a.metadata) : null,
+          }).returning({ id: athletes.id });
+
+          if (!athleteResult) {
+            throw new Error('Failed to create athlete record');
+          }
+
+          athleteId = athleteResult.id;
         }
-
-        const athleteId = athleteResult.id;
 
         for (const eventId of a.selectedEvents) {
           await tx.insert(registrationItems).values({
@@ -207,6 +294,7 @@ export const POST: APIRoute = async ({ request }) => {
       if (stripeCustomerId) {
         stripeSessionParams.customer = stripeCustomerId;
       } else {
+        stripeSessionParams.customer_creation = 'always';
         stripeSessionParams.customer_email = parentInfo.email;
       }
 
@@ -228,4 +316,3 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: message }), { status: 500 });
   }
 };
-

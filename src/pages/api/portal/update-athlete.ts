@@ -1,11 +1,16 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../db/db';
 import { athletes, registrations } from '../../../db/schema';
-import { eq, or, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
+import { portalAthleteUpdateSchema } from '../../../lib/schemas';
+import { rejectCrossOriginRequest } from '../../../lib/request-security';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const originError = rejectCrossOriginRequest(request);
+    if (originError) return originError;
+
     let session = null;
     try {
       session = await getSession(request);
@@ -17,12 +22,13 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    const body = await request.json();
-    const { id, firstName, lastName, grade, tshirtSize, medicalInfo } = body;
-
-    if (!id) {
-      return new Response(JSON.stringify({ error: 'Missing athlete ID' }), { status: 400 });
+    const validation = portalAthleteUpdateSchema.safeParse(await request.json());
+    if (!validation.success) {
+      return new Response(JSON.stringify({
+        error: validation.error.issues[0]?.message || 'Invalid player details',
+      }), { status: 400 });
     }
+    const { id, firstName, lastName, grade, tshirtSize, medicalInfo } = validation.data;
 
     // Verify ownership
     const athleteData = await db.select({
@@ -31,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
     })
     .from(athletes)
     .leftJoin(registrations, eq(athletes.registrationId, registrations.id))
-    .where(eq(athletes.id, parseInt(id)))
+    .where(eq(athletes.id, id))
     .limit(1);
 
     const record = athleteData[0];
@@ -56,7 +62,7 @@ export const POST: APIRoute = async ({ request }) => {
         tshirtSize,
         medicalInfo,
       })
-      .where(eq(athletes.id, parseInt(id)));
+      .where(eq(athletes.id, id));
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err) {

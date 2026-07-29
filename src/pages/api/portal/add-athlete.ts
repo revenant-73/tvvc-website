@@ -3,9 +3,14 @@ import { db } from '../../../db/db';
 import { athletes, users } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
+import { portalAthleteSchema } from '../../../lib/schemas';
+import { rejectCrossOriginRequest } from '../../../lib/request-security';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const originError = rejectCrossOriginRequest(request);
+    if (originError) return originError;
+
     let session = null;
     try {
       session = await getSession(request);
@@ -30,12 +35,13 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'User ID not found' }), { status: 400 });
     }
 
-    const body = await request.json();
-    const { firstName, lastName, grade, tshirtSize, medicalInfo } = body;
-
-    if (!firstName || !lastName || !grade) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+    const validation = portalAthleteSchema.safeParse(await request.json());
+    if (!validation.success) {
+      return new Response(JSON.stringify({
+        error: validation.error.issues[0]?.message || 'Invalid player details',
+      }), { status: 400 });
     }
+    const { firstName, lastName, grade, tshirtSize, medicalInfo } = validation.data;
 
     // Insert new athlete linked to the current user
     await db.insert(athletes).values({
@@ -45,8 +51,8 @@ export const POST: APIRoute = async ({ request }) => {
       grade,
       tshirtSize,
       medicalInfo,
-      waiverAgreed: true, // Assuming agreement if adding via portal
-      photoReleaseAgreed: true,
+      waiverAgreed: false,
+      photoReleaseAgreed: false,
     });
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });

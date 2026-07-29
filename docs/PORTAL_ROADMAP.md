@@ -2,6 +2,40 @@
 
 This roadmap tracks the development of the Customer Portal for TVVC parents and athletes.
 
+## Stabilization TODO
+
+### Security and data integrity
+- [x] Restrict login callback URLs to same-origin portal/admin paths.
+- [x] Enable Astro origin checks and validate origins on JSON write endpoints.
+- [x] Validate and normalize all portal API payloads with shared Zod schemas.
+- [x] Stop recording waiver and photo-release consent when a parent only creates a player profile.
+- [ ] Replace email-only ownership fallbacks with claimed, canonical user relationships.
+
+### Billing and purchase history
+- [x] Always create or reuse a Stripe Customer during checkout.
+- [x] Guard against missing Stripe Customer IDs in webhook processing.
+- [x] Add an authenticated receipt endpoint and connect the Receipt button.
+- [x] Store immutable purchase-time line-item names and prices.
+- [ ] Reconcile existing registrations with Stripe Customer IDs where possible.
+
+### Player profiles
+- [ ] Separate persistent player profiles from per-registration athlete snapshots.
+- [x] Pass saved player IDs through registration forms.
+- [x] Prevent repeat registrations from creating duplicate player profiles.
+- [ ] Add an intentional merge/archive flow for existing duplicates.
+
+### Dashboard and sessions
+- [x] Filter Upcoming Events by the club timezone and exclude past/cancelled events.
+- [x] Make “Sign Out Everywhere” revoke every database session for the user.
+- [ ] Clarify access rules for secondary parents/guardians.
+
+### Automated coverage
+- [x] Test unauthenticated portal redirects and cross-origin request handling.
+- [ ] Test that one parent cannot access another parent’s orders or players.
+- [ ] Test add/edit player validation and ownership.
+- [ ] Test upcoming-event filtering and historical order totals.
+- [ ] Test Stripe Customer creation, billing portal access, and receipt authorization.
+
 ## ✅ Phase 1: Order & Billing Transparency (COMPLETED)
 - [x] **Order Details Page (`/portal/orders/[id]`)**
   - Dedicated view for individual registrations.

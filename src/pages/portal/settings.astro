@@ -168,6 +168,24 @@ if (!dbUser) {
     }
   });
 
-  const { signOut } = await import('auth-astro/client');
-  document.getElementById('signout-all')?.addEventListener('click', () => signOut());
+  document.getElementById('signout-all')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    button.disabled = true;
+
+    try {
+      const response = await fetch('/api/portal/sign-out-everywhere', { method: 'POST' });
+      if (!response.ok) {
+        const data = await response.json();
+        window.toast.error(data.error || 'Unable to sign out all devices');
+        button.disabled = false;
+        return;
+      }
+
+      window.location.href = '/portal/login';
+    } catch (error) {
+      console.error(error);
+      window.toast.error('Unable to sign out all devices');
+      button.disabled = false;
+    }
+  });
 </script>

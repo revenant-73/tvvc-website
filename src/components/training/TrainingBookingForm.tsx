@@ -32,7 +32,13 @@ export default function TrainingBookingForm({
     email: currentUser?.email || '',
     phone: currentUser?.emergencyPhone || '',
   });
-  const [athletes, setAthletes] = useState([
+  const [athletes, setAthletes] = useState<Array<{
+    profileId?: number;
+    firstName: string;
+    lastName: string;
+    grade: string;
+    medicalInfo: string;
+  }>>([
     { firstName: '', lastName: '', grade: 'N/A', medicalInfo: '' }
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,7 +67,7 @@ export default function TrainingBookingForm({
     });
   };
 
-  const updateAthlete = (index: number, field: string, value: string) => {
+  const updateAthlete = (index: number, field: string, value: string | number) => {
     const next = [...athletes];
     next[index] = { ...next[index], [field]: value };
     setAthletes(next);
@@ -79,7 +85,7 @@ export default function TrainingBookingForm({
         ...a,
         selectedEvents: selectedBlockIds,
         waiverAgreed: true,
-        photoReleaseAgreed: true,
+        photoReleaseAgreed: false,
       }))
     };
 
@@ -262,6 +268,7 @@ export default function TrainingBookingForm({
                               key={sa.id}
                               type="button"
                               onClick={() => {
+                                updateAthlete(idx, 'profileId', sa.id);
                                 updateAthlete(idx, 'firstName', sa.firstName);
                                 updateAthlete(idx, 'lastName', sa.lastName);
                                 // For training blocks, we also sync medical info to the group if it's the first one selected

@@ -3,9 +3,14 @@ import { db } from '../../../db/db';
 import { users } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
+import { portalProfileSchema } from '../../../lib/schemas';
+import { rejectCrossOriginRequest } from '../../../lib/request-security';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const originError = rejectCrossOriginRequest(request);
+    if (originError) return originError;
+
     let session = null;
     try {
       session = await getSession(request);
@@ -17,16 +22,18 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    const { name, emergencyPhone } = await request.json();
-
-    if (typeof name !== 'string') {
-      return new Response(JSON.stringify({ error: 'Invalid name' }), { status: 400 });
+    const validation = portalProfileSchema.safeParse(await request.json());
+    if (!validation.success) {
+      return new Response(JSON.stringify({
+        error: validation.error.issues[0]?.message || 'Invalid profile details',
+      }), { status: 400 });
     }
+    const { name, emergencyPhone } = validation.data;
 
     await db.update(users)
       .set({ 
         name,
-        emergencyPhone: typeof emergencyPhone === 'string' ? emergencyPhone : undefined
+        emergencyPhone
       })
       .where(eq(users.email, session.user.email));
 

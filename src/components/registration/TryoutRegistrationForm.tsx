@@ -14,6 +14,7 @@ interface Event {
 }
 
 interface Athlete {
+  profileId?: number;
   firstName: string;
   lastName: string;
   preferredName: string;
@@ -393,6 +394,7 @@ export default function TryoutRegistrationForm({
                         key={sa.id}
                         type="button"
                         onClick={() => {
+                          updateAthlete(index, 'profileId', sa.id);
                           updateAthlete(index, 'firstName', sa.firstName);
                           updateAthlete(index, 'lastName', sa.lastName);
                           updateAthlete(index, 'preferredName', sa.preferredName || '');

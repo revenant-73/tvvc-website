@@ -29,7 +29,7 @@ export default defineConfig({
   },
   adapter: netlify(),
   security: {
-    checkOrigin: false
+    checkOrigin: true
   },
   build: {
     format: 'file'
