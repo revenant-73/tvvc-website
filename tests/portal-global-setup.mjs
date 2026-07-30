@@ -60,6 +60,18 @@ export default async function globalSetup() {
       ],
     },
     {
+      sql: `INSERT INTO user
+        (id, name, email, email_verified, role, stripe_customer_id, emergency_phone)
+        VALUES (?, ?, ?, ?, 'user', NULL, ?)`,
+      args: [
+        fixtures.legacyParent.id,
+        'Legacy Parent',
+        fixtures.legacyParent.email,
+        Date.now(),
+        '503-555-0303',
+      ],
+    },
+    {
       sql: 'INSERT INTO session (session_token, userId, expires) VALUES (?, ?, ?)',
       args: [fixtures.parentA.sessionToken, fixtures.parentA.id, expires],
     },
@@ -70,6 +82,10 @@ export default async function globalSetup() {
     {
       sql: 'INSERT INTO session (session_token, userId, expires) VALUES (?, ?, ?)',
       args: [fixtures.parentB.sessionToken, fixtures.parentB.id, expires],
+    },
+    {
+      sql: 'INSERT INTO session (session_token, userId, expires) VALUES (?, ?, ?)',
+      args: [fixtures.legacyParent.sessionToken, fixtures.legacyParent.id, expires],
     },
     {
       sql: `INSERT INTO registrations
@@ -108,6 +124,45 @@ export default async function globalSetup() {
       ],
     },
     {
+      sql: `INSERT INTO registrations
+        (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
+         stripe_session_id, stripe_customer_id, status, total_amount, metadata)
+        VALUES (?, NULL, ?, ?, ?, ?, ?, ?, 'paid', ?, ?)`,
+      args: [
+        fixtures.legacyParent.registrationId,
+        'Legacy Parent',
+        ` ${fixtures.legacyParent.email.toUpperCase()} `,
+        '503-555-0303',
+        '503-555-0303',
+        'cs_test_legacy_parent',
+        fixtures.legacyParent.stripeCustomerId,
+        5500,
+        orderMetadata(fixtures.legacyParent.eventName, fixtures.legacyParent.athleteName, 5500),
+      ],
+    },
+    {
+      sql: `INSERT INTO registrations
+        (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
+         stripe_session_id, stripe_customer_id, status, total_amount, metadata)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?)`,
+      args: [
+        fixtures.emailCollision.registrationId,
+        fixtures.parentB.id,
+        'Parent Beta',
+        fixtures.parentA.email,
+        '503-555-0202',
+        '503-555-0202',
+        'cs_test_email_collision',
+        'cus_parent_beta',
+        7500,
+        orderMetadata(
+          fixtures.emailCollision.eventName,
+          fixtures.emailCollision.athleteName,
+          7500
+        ),
+      ],
+    },
+    {
       sql: `INSERT INTO athletes
         (id, registration_id, parent_id, first_name, last_name, grade, medical_info)
         VALUES (?, ?, ?, 'Avery', 'Alpha', '8th', 'None')`,
@@ -118,6 +173,22 @@ export default async function globalSetup() {
         (id, registration_id, parent_id, first_name, last_name, grade, medical_info)
         VALUES (?, ?, ?, 'Bailey', 'Beta', '7th', 'None')`,
       args: [fixtures.parentB.athleteId, fixtures.parentB.registrationId, fixtures.parentB.id],
+    },
+    {
+      sql: `INSERT INTO athletes
+        (id, registration_id, parent_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, NULL, 'Legacy', 'Player', '6th', 'None')`,
+      args: [fixtures.legacyParent.athleteId, fixtures.legacyParent.registrationId],
+    },
+    {
+      sql: `INSERT INTO athletes
+        (id, registration_id, parent_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, ?, 'Casey', 'Collision', '10th', 'None')`,
+      args: [
+        fixtures.emailCollision.athleteId,
+        fixtures.emailCollision.registrationId,
+        fixtures.parentB.id,
+      ],
     },
     {
       sql: `INSERT INTO events
@@ -134,6 +205,20 @@ export default async function globalSetup() {
       args: [fixtures.parentB.eventName],
     },
     {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
+        VALUES ('event-legacy-parent', 'clinic', ?, 'August 12, 2099', '12:00 PM',
+                '2099-08-12', '2099-08-12', 5500, 30, true)`,
+      args: [fixtures.legacyParent.eventName],
+    },
+    {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
+        VALUES ('event-email-collision', 'clinic', ?, 'August 13, 2099', '1:00 PM',
+                '2099-08-13', '2099-08-13', 7500, 30, true)`,
+      args: [fixtures.emailCollision.eventName],
+    },
+    {
       sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
             VALUES (?, ?, 'event-parent-a')`,
       args: [fixtures.parentA.registrationId, fixtures.parentA.athleteId],
@@ -142,6 +227,16 @@ export default async function globalSetup() {
       sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
             VALUES (?, ?, 'event-parent-b')`,
       args: [fixtures.parentB.registrationId, fixtures.parentB.athleteId],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, 'event-legacy-parent')`,
+      args: [fixtures.legacyParent.registrationId, fixtures.legacyParent.athleteId],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, 'event-email-collision')`,
+      args: [fixtures.emailCollision.registrationId, fixtures.emailCollision.athleteId],
     },
   ], 'write');
 

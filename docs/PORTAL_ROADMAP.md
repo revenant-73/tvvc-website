@@ -9,14 +9,14 @@ This roadmap tracks the development of the Customer Portal for TVVC parents and 
 - [x] Enable Astro origin checks and validate origins on JSON write endpoints.
 - [x] Validate and normalize all portal API payloads with shared Zod schemas.
 - [x] Stop recording waiver and photo-release consent when a parent only creates a player profile.
-- [ ] Replace email-only ownership fallbacks with claimed, canonical user relationships.
+- [x] Replace email-only ownership fallbacks with claimed, canonical user relationships.
 
 ### Billing and purchase history
 - [x] Always create or reuse a Stripe Customer during checkout.
 - [x] Guard against missing Stripe Customer IDs in webhook processing.
 - [x] Add an authenticated receipt endpoint and connect the Receipt button.
 - [x] Store immutable purchase-time line-item names and prices.
-- [ ] Reconcile existing registrations with Stripe Customer IDs where possible.
+- [x] Reconcile existing registrations with Stripe Customer IDs where possible.
 
 ### Player profiles
 - [ ] Separate persistent player profiles from per-registration athlete snapshots.
@@ -67,4 +67,4 @@ This roadmap tracks the development of the Customer Portal for TVVC parents and 
   - Fully pre-fill parent info from logged-in session.
 
 ---
-*Last Updated: 2026-07-20*
+*Last Updated: 2026-07-30*

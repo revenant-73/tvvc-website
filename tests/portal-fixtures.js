@@ -24,4 +24,20 @@ module.exports = {
     athleteName: 'Bailey Beta',
     eventName: 'Parent B Future Camp',
   },
+  legacyParent: {
+    id: 'parent-legacy',
+    email: 'legacy-parent@tvvc.test',
+    sessionToken: 'portal-e2e-legacy-parent-session',
+    registrationId: 'order-legacy-2026',
+    athleteId: 303,
+    athleteName: 'Legacy Player',
+    eventName: 'Legacy Parent Clinic',
+    stripeCustomerId: 'cus_legacy_parent',
+  },
+  emailCollision: {
+    registrationId: 'order-email-collision',
+    athleteId: 204,
+    athleteName: 'Casey Collision',
+    eventName: 'Email Collision Event',
+  },
 };

@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../db/db';
-import { athletes, users } from '../../../db/schema';
-import { eq } from 'drizzle-orm';
+import { athletes } from '../../../db/schema';
 import { getSession } from 'auth-astro/server';
 import { portalAthleteSchema } from '../../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
+import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -18,21 +18,13 @@ export const POST: APIRoute = async ({ request }) => {
       console.error('Auth Session Error (non-fatal):', authErr);
     }
 
-    if (!session || !session.user?.email) {
+    if (!session) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    // Ensure we have the correct user ID from the database
-    const [dbUser] = await db.select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, session.user.email))
-      .limit(1);
-    
-    const rawUserId = dbUser?.id || (session.user as any).id;
-    const userId = (typeof rawUserId === 'string' && rawUserId.trim() !== '') ? rawUserId : null;
-
-    if (!userId) {
-      return new Response(JSON.stringify({ error: 'User ID not found' }), { status: 400 });
+    const portalUser = await ensureCanonicalPortalUser(session.user);
+    if (!portalUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
     const validation = portalAthleteSchema.safeParse(await request.json());
@@ -45,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Insert new athlete linked to the current user
     await db.insert(athletes).values({
-      parentId: userId,
+      parentId: portalUser.id,
       firstName,
       lastName,
       grade,

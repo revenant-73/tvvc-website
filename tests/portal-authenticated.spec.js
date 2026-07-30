@@ -15,6 +15,33 @@ async function authenticate(context, parent) {
 }
 
 test.describe.serial('Authenticated Parent Portal isolation', () => {
+  test('claims verified legacy purchases into canonical account relationships', async ({ context, page }) => {
+    await authenticate(context, fixtures.legacyParent);
+    await page.goto('/portal/dashboard');
+
+    await expect(page.getByText(fixtures.legacyParent.athleteName, { exact: true })).toBeVisible();
+    await expect(page.getByText(fixtures.legacyParent.eventName, { exact: true })).toBeVisible();
+
+    const client = createClient({ url: fixtures.databaseUrl });
+    const registration = await client.execute({
+      sql: 'SELECT user_id FROM registrations WHERE id = ?',
+      args: [fixtures.legacyParent.registrationId],
+    });
+    const athlete = await client.execute({
+      sql: 'SELECT parent_id FROM athletes WHERE id = ?',
+      args: [fixtures.legacyParent.athleteId],
+    });
+    const user = await client.execute({
+      sql: 'SELECT stripe_customer_id FROM user WHERE id = ?',
+      args: [fixtures.legacyParent.id],
+    });
+    client.close();
+
+    expect(registration.rows[0].user_id).toBe(fixtures.legacyParent.id);
+    expect(athlete.rows[0].parent_id).toBe(fixtures.legacyParent.id);
+    expect(user.rows[0].stripe_customer_id).toBe(fixtures.legacyParent.stripeCustomerId);
+  });
+
   test('shows only the signed-in parent’s purchases, players, and schedule', async ({ context, page }) => {
     await authenticate(context, fixtures.parentA);
     await page.goto('/portal/dashboard');
@@ -24,20 +51,22 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
     await expect(page.getByText(fixtures.parentA.eventName, { exact: true })).toBeVisible();
     await expect(page.getByText(fixtures.parentB.athleteName, { exact: true })).toHaveCount(0);
     await expect(page.getByText(fixtures.parentB.eventName, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(fixtures.emailCollision.athleteName, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(fixtures.emailCollision.eventName, { exact: true })).toHaveCount(0);
   });
 
-  test('blocks another parent’s order, athlete, and receipt', async ({ context, page }) => {
+  test('blocks another parent’s resources even when the stored email matches', async ({ context, page }) => {
     await authenticate(context, fixtures.parentA);
 
-    await page.goto(`/portal/orders/${fixtures.parentB.registrationId}`);
+    await page.goto(`/portal/orders/${fixtures.emailCollision.registrationId}`);
     await expect(page).toHaveURL(/\/portal\/dashboard$/);
-    await expect(page.getByText(fixtures.parentB.athleteName, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(fixtures.emailCollision.athleteName, { exact: true })).toHaveCount(0);
 
-    await page.goto(`/portal/athletes/${fixtures.parentB.athleteId}`);
+    await page.goto(`/portal/athletes/${fixtures.emailCollision.athleteId}`);
     await expect(page).toHaveURL(/\/portal\/dashboard$/);
 
     const receiptResponse = await page.request.get(
-      `/api/stripe/receipt?registrationId=${fixtures.parentB.registrationId}`,
+      `/api/stripe/receipt?registrationId=${fixtures.emailCollision.registrationId}`,
       { maxRedirects: 0 }
     );
     expect(receiptResponse.status()).toBe(404);
@@ -120,7 +149,10 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
     expect(result.body.url).toMatch(/127\.0\.0\.1:4322\/mock-checkout\//);
 
     const client = createClient({ url: fixtures.databaseUrl });
-    const athleteCount = await client.execute('SELECT COUNT(*) AS count FROM athletes');
+    const athleteCount = await client.execute({
+      sql: 'SELECT COUNT(*) AS count FROM athletes WHERE parent_id = ?',
+      args: [fixtures.parentA.id],
+    });
     const reusedItems = await client.execute({
       sql: `SELECT ri.athlete_id
             FROM registration_items ri
@@ -130,7 +162,7 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
     });
     client.close();
 
-    expect(Number(athleteCount.rows[0].count)).toBe(2);
+    expect(Number(athleteCount.rows[0].count)).toBe(1);
     expect(Number(reusedItems.rows[0].athlete_id)).toBe(fixtures.parentA.athleteId);
   });
 

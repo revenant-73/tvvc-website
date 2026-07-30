@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../db/db';
-import { athletes, registrations } from '../../../db/schema';
-import { eq } from 'drizzle-orm';
+import { athletes } from '../../../db/schema';
+import { and, eq } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
 import { portalAthleteUpdateSchema } from '../../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
+import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -18,7 +19,12 @@ export const POST: APIRoute = async ({ request }) => {
       console.error('Auth Session Error (non-fatal):', authErr);
     }
 
-    if (!session || !session.user?.email) {
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    const portalUser = await ensureCanonicalPortalUser(session.user);
+    if (!portalUser) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
@@ -30,30 +36,18 @@ export const POST: APIRoute = async ({ request }) => {
     }
     const { id, firstName, lastName, grade, tshirtSize, medicalInfo } = validation.data;
 
-    // Verify ownership
-    const athleteData = await db.select({
-      athlete: athletes,
-      registration: registrations
-    })
+    const [ownedAthlete] = await db.select({ id: athletes.id })
     .from(athletes)
-    .leftJoin(registrations, eq(athletes.registrationId, registrations.id))
-    .where(eq(athletes.id, id))
+    .where(and(
+      eq(athletes.id, id),
+      eq(athletes.parentId, portalUser.id)
+    ))
     .limit(1);
 
-    const record = athleteData[0];
-
-    if (!record) {
+    if (!ownedAthlete) {
       return new Response(JSON.stringify({ error: 'Athlete not found' }), { status: 404 });
     }
 
-    const isOwner = (record.athlete.parentId === (session.user as any).id) || 
-                    (record.registration?.parentEmail === session.user.email);
-
-    if (!isOwner) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 });
-    }
-
-    // Update athlete
     await db.update(athletes)
       .set({
         firstName,
@@ -62,7 +56,10 @@ export const POST: APIRoute = async ({ request }) => {
         tshirtSize,
         medicalInfo,
       })
-      .where(eq(athletes.id, id));
+      .where(and(
+        eq(athletes.id, id),
+        eq(athletes.parentId, portalUser.id)
+      ));
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err) {

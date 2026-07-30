@@ -2,8 +2,9 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../../db/db';
-import { athletes, registrations, users } from '../../../db/schema';
-import { eq, or, and } from 'drizzle-orm';
+import { athletes } from '../../../db/schema';
+import { and, eq } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
 const { id } = Astro.params;
 
@@ -17,34 +18,22 @@ if (!id) {
   return Astro.redirect('/portal/dashboard');
 }
 
-const user = session.user;
+const portalUser = await ensureCanonicalPortalUser(session.user);
+if (!portalUser) {
+  return Astro.redirect('/portal/login');
+}
 
-// Fetch athlete and verify ownership
-// We check if parentId matches user.id OR if the linked registration email matches user.email
-const athleteData = await db.select({
-  athlete: athletes,
-  registration: registrations
-})
+const [athlete] = await db.select()
 .from(athletes)
-.leftJoin(registrations, eq(athletes.registrationId, registrations.id))
-.where(eq(athletes.id, parseInt(id)))
+.where(and(
+  eq(athletes.id, parseInt(id)),
+  eq(athletes.parentId, portalUser.id)
+))
 .limit(1);
 
-const record = athleteData[0];
-
-if (!record) {
+if (!athlete) {
   return Astro.redirect('/portal/dashboard');
 }
-
-// Security check
-const isOwner = (record.athlete.parentId === (user as any).id) || 
-                (record.registration?.parentEmail === user.email);
-
-if (!isOwner) {
-  return Astro.redirect('/portal/dashboard');
-}
-
-const athlete = record.athlete;
 ---
 
 <BaseLayout title={`Edit Player: ${athlete.firstName}`} noindex={true}>

@@ -2,9 +2,7 @@ import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
 import { createStripeClient } from '../../../lib/stripe-client';
-import { db } from '../../../db/db';
-import { registrations, users } from '../../../db/schema';
-import { and, desc, eq, isNotNull } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -22,6 +20,11 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
+    const portalUser = await ensureCanonicalPortalUser(session.user);
+    if (!portalUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
     const stripeSecretKey = import.meta.env.STRIPE_SECRET_KEY;
     if (!stripeSecretKey) {
       return new Response(JSON.stringify({ error: 'Stripe secret key missing' }), { status: 500 });
@@ -29,30 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const stripe = createStripeClient(stripeSecretKey);
 
-    let stripeCustomerId = (session.user as any).stripeCustomerId as string | null;
-
-    // Claim the most recent legacy purchase for accounts created after checkout.
-    if (!stripeCustomerId && session.user?.email) {
-      const [legacyRegistration] = await db.select({
-        stripeCustomerId: registrations.stripeCustomerId,
-      })
-        .from(registrations)
-        .where(and(
-          eq(registrations.parentEmail, session.user.email),
-          eq(registrations.status, 'paid'),
-          isNotNull(registrations.stripeCustomerId)
-        ))
-        .orderBy(desc(registrations.createdAt))
-        .limit(1);
-
-      stripeCustomerId = legacyRegistration?.stripeCustomerId || null;
-
-      if (stripeCustomerId) {
-        await db.update(users)
-          .set({ stripeCustomerId })
-          .where(eq(users.email, session.user.email));
-      }
-    }
+    const stripeCustomerId = portalUser.stripeCustomerId;
 
     if (!stripeCustomerId) {
       return new Response(JSON.stringify({ 

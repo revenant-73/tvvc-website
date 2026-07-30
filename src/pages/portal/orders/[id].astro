@@ -4,6 +4,7 @@ import { getSession } from 'auth-astro/server';
 import { db } from '../../../db/db';
 import { registrations, registrationItems, events, athletes } from '../../../db/schema';
 import { eq, and } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
 const { id } = Astro.params;
 
@@ -17,21 +18,21 @@ if (!id) {
   return Astro.redirect('/portal/dashboard');
 }
 
-const user = session.user;
+const portalUser = await ensureCanonicalPortalUser(session.user);
+if (!portalUser) {
+  return Astro.redirect('/portal/login');
+}
 
-// Fetch registration details
+// Fetch registration details using only the canonical account relationship.
 const [registration] = await db.select()
   .from(registrations)
-  .where(eq(registrations.id, id))
+  .where(and(
+    eq(registrations.id, id),
+    eq(registrations.userId, portalUser.id)
+  ))
   .limit(1);
 
-// Security check: Prefer the canonical user relationship, with email fallback
-// for purchases made before the parent created a portal account.
-const ownsRegistration = registration && (
-  registration.userId === (user as any).id ||
-  registration.parentEmail === user.email
-);
-if (!ownsRegistration) {
+if (!registration) {
   return Astro.redirect('/portal/dashboard');
 }
 

@@ -5,8 +5,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import RegistrationForm from '../components/registration/RegistrationForm';
 import { getSession } from 'auth-astro/server';
 import { db } from '../db/db';
-import { events, athletes, registrations, users } from '../db/schema';
-import { asc, and, eq, or } from 'drizzle-orm';
+import { events, athletes } from '../db/schema';
+import { asc, eq } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../lib/portal-ownership';
 
 let session = null;
 try {
@@ -50,41 +51,28 @@ try {
     }
   });
 
-  if (session?.user?.email) {
-    // Fetch user profile for pre-filling contact info and ensuring we have correct IDs
-    const [dbUser] = await db.select({
-      id: users.id,
-      emergencyPhone: users.emergencyPhone,
-    })
-    .from(users)
-    .where(eq(users.email, session.user.email))
-    .limit(1);
+  if (session) {
+    const portalUser = await ensureCanonicalPortalUser(session.user);
 
-    const userId = dbUser?.id || (session.user as any).id;
-
-    if (dbUser?.emergencyPhone) {
-      (session.user as any).emergencyPhone = dbUser.emergencyPhone;
+    if (portalUser?.emergencyPhone) {
+      (session.user as any).emergencyPhone = portalUser.emergencyPhone;
     }
 
-    userAthletes = await db.select({
-      id: athletes.id,
-      firstName: athletes.firstName,
-      lastName: athletes.lastName,
-      grade: athletes.grade,
-      medicalInfo: athletes.medicalInfo,
-      tshirtSize: athletes.tshirtSize,
-      waiverAgreed: athletes.waiverAgreed,
-      photoReleaseAgreed: athletes.photoReleaseAgreed,
-    })
-    .from(athletes)
-    .leftJoin(registrations, eq(athletes.registrationId, registrations.id))
-    .where(
-      or(
-        eq(registrations.parentEmail, session.user.email),
-        eq(athletes.parentId, userId)
-      )
-    )
-    .groupBy(athletes.id);
+    if (portalUser) {
+      userAthletes = await db.select({
+        id: athletes.id,
+        firstName: athletes.firstName,
+        lastName: athletes.lastName,
+        grade: athletes.grade,
+        medicalInfo: athletes.medicalInfo,
+        tshirtSize: athletes.tshirtSize,
+        waiverAgreed: athletes.waiverAgreed,
+        photoReleaseAgreed: athletes.photoReleaseAgreed,
+      })
+      .from(athletes)
+      .where(eq(athletes.parentId, portalUser.id))
+      .groupBy(athletes.id);
+    }
   }
 } catch (e) {
   console.error("Database Error:", e);

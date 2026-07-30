@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
 import { portalProfileSchema } from '../../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
+import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -18,7 +19,12 @@ export const POST: APIRoute = async ({ request }) => {
       console.error('Auth Session Error (non-fatal):', authErr);
     }
 
-    if (!session || !session.user?.email) {
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    const portalUser = await ensureCanonicalPortalUser(session.user);
+    if (!portalUser) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
@@ -35,7 +41,7 @@ export const POST: APIRoute = async ({ request }) => {
         name,
         emergencyPhone
       })
-      .where(eq(users.email, session.user.email));
+      .where(eq(users.id, portalUser.id));
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err) {

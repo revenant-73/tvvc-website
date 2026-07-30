@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../db';
 import { registrations, athletes, registrationItems, events } from '../../db/schema';
-import { and, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
 import { createStripeClient } from '../../lib/stripe-client';
+import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
 
 import { registrationSchema } from '../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../lib/request-security';
@@ -31,14 +32,15 @@ export const POST: APIRoute = async ({ request }) => {
       console.error('Auth Session Error (non-fatal):', authErr);
     }
     
-    // Ensure userId is either a valid string or null (never empty string)
-    const rawUserId = (session?.user as any)?.id;
-    const userId = (typeof rawUserId === 'string' && rawUserId.trim() !== '') ? rawUserId : null;
+    const portalUser = session
+      ? await ensureCanonicalPortalUser(session.user)
+      : null;
+    const userId = portalUser?.id || null;
 
     const stripe = createStripeClient(stripeSecretKey);
 
     // If we have a stripeCustomerId for the user, use it
-    let stripeCustomerId = (session?.user as any)?.stripeCustomerId;
+    let stripeCustomerId = portalUser?.stripeCustomerId || null;
 
     const body = await request.json();
     
@@ -199,19 +201,15 @@ export const POST: APIRoute = async ({ request }) => {
         let athleteId: number;
 
         if (a.profileId) {
-          if (!userId || !session?.user?.email) {
+          if (!userId) {
             throw new Error('Sign in to use a saved player profile.');
           }
 
           const [ownedAthlete] = await tx.select({ id: athletes.id })
             .from(athletes)
-            .leftJoin(registrations, eq(athletes.registrationId, registrations.id))
             .where(and(
               eq(athletes.id, a.profileId),
-              or(
-                eq(athletes.parentId, userId),
-                eq(registrations.parentEmail, session.user.email)
-              )
+              eq(athletes.parentId, userId)
             ))
             .limit(1);
 

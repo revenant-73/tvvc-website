@@ -3,13 +3,19 @@ import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
 import { createStripeClient } from '../../../lib/stripe-client';
 import { db } from '../../../db/db';
-import { registrations, users } from '../../../db/schema';
-import { and, eq, or } from 'drizzle-orm';
+import { registrations } from '../../../db/schema';
+import { and, eq } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
     const session = await getSession(request);
-    if (!session?.user?.email) {
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    const portalUser = await ensureCanonicalPortalUser(session.user);
+    if (!portalUser) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
@@ -18,23 +24,11 @@ export const GET: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Missing registration ID' }), { status: 400 });
     }
 
-    const [dbUser] = await db.select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, session.user.email))
-      .limit(1);
-
-    const ownershipCondition = dbUser?.id
-      ? or(
-          eq(registrations.userId, dbUser.id),
-          eq(registrations.parentEmail, session.user.email)
-        )
-      : eq(registrations.parentEmail, session.user.email);
-
     const [registration] = await db.select()
       .from(registrations)
       .where(and(
         eq(registrations.id, registrationId),
-        ownershipCondition
+        eq(registrations.userId, portalUser.id)
       ))
       .limit(1);
 

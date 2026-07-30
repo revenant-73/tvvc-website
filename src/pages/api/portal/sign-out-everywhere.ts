@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../../db/db';
-import { sessions, users } from '../../../db/schema';
+import { sessions } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
+import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -11,20 +12,16 @@ export const POST: APIRoute = async ({ request }) => {
     if (originError) return originError;
 
     const session = await getSession(request);
-    if (!session?.user?.email) {
+    if (!session) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    const [user] = await db.select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, session.user.email))
-      .limit(1);
-
-    if (!user) {
+    const portalUser = await ensureCanonicalPortalUser(session.user);
+    if (!portalUser) {
       return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
     }
 
-    await db.delete(sessions).where(eq(sessions.userId, user.id));
+    await db.delete(sessions).where(eq(sessions.userId, portalUser.id));
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

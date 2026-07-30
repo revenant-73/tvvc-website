@@ -5,8 +5,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import TryoutRegistrationForm from '../../components/registration/TryoutRegistrationForm';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../db/db';
-import { events, athletes, registrations, users } from '../../db/schema';
-import { asc, and, eq, or } from 'drizzle-orm';
+import { events, athletes } from '../../db/schema';
+import { and, eq } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
 
 let session = null;
 try {
@@ -32,46 +33,33 @@ try {
       return eventDate >= now || eventDate.toDateString() === now.toDateString();
     });
 
-    if (session?.user?.email) {
-      // Fetch user profile
-      const [dbUser] = await db.select({
-        id: users.id,
-        emergencyPhone: users.emergencyPhone,
-      })
-      .from(users)
-      .where(eq(users.email, session.user.email))
-      .limit(1);
+    if (session) {
+      const portalUser = await ensureCanonicalPortalUser(session.user);
 
-      const userId = dbUser?.id || (session.user as any).id;
-
-      if (dbUser?.emergencyPhone) {
-        (session.user as any).emergencyPhone = dbUser.emergencyPhone;
+      if (portalUser?.emergencyPhone) {
+        (session.user as any).emergencyPhone = portalUser.emergencyPhone;
       }
 
-      userAthletes = await db.select({
-        id: athletes.id,
-        firstName: athletes.firstName,
-        lastName: athletes.lastName,
-        preferredName: athletes.preferredName,
-        dateOfBirth: athletes.dateOfBirth,
-        gender: athletes.gender,
-        grade: athletes.grade,
-        school: athletes.school,
-        gradYear: athletes.gradYear,
-        experience: athletes.experience,
-        jerseySize: athletes.jerseySize,
-        medicalInfo: athletes.medicalInfo,
-        waiverAgreed: athletes.waiverAgreed,
-      })
-      .from(athletes)
-      .leftJoin(registrations, eq(athletes.registrationId, registrations.id))
-      .where(
-        or(
-          eq(registrations.parentEmail, session.user.email),
-          eq(athletes.parentId, userId)
-        )
-      )
-      .groupBy(athletes.id);
+      if (portalUser) {
+        userAthletes = await db.select({
+          id: athletes.id,
+          firstName: athletes.firstName,
+          lastName: athletes.lastName,
+          preferredName: athletes.preferredName,
+          dateOfBirth: athletes.dateOfBirth,
+          gender: athletes.gender,
+          grade: athletes.grade,
+          school: athletes.school,
+          gradYear: athletes.gradYear,
+          experience: athletes.experience,
+          jerseySize: athletes.jerseySize,
+          medicalInfo: athletes.medicalInfo,
+          waiverAgreed: athletes.waiverAgreed,
+        })
+        .from(athletes)
+        .where(eq(athletes.parentId, portalUser.id))
+        .groupBy(athletes.id);
+      }
     }
   }
 } catch (e) {

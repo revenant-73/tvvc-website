@@ -4,6 +4,7 @@ import { getSession } from 'auth-astro/server';
 import { db } from '../../db/db';
 import { users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
 
 const session = await getSession(Astro.request);
 
@@ -11,12 +12,15 @@ if (!session) {
   return Astro.redirect('/portal/login');
 }
 
-const user = session.user;
+const portalUser = await ensureCanonicalPortalUser(session.user);
+if (!portalUser) {
+  return Astro.redirect('/portal/login');
+}
 
 // Fetch full user record from DB
 const [dbUser] = await db.select()
   .from(users)
-  .where(eq(users.email, user.email!))
+  .where(eq(users.id, portalUser.id))
   .limit(1);
 
 if (!dbUser) {

@@ -6,8 +6,9 @@ import ScrollReveal from '../components/ScrollReveal.astro';
 import OutdoorRegistrationManager from '../components/registration/OutdoorRegistrationManager';
 import { getSession } from 'auth-astro/server';
 import { db } from '../db/db';
-import { events as eventsTable, athletes, registrations, users } from '../db/schema';
-import { eq, or } from 'drizzle-orm';
+import { events as eventsTable, athletes } from '../db/schema';
+import { eq } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../lib/portal-ownership';
 
 let session = null;
 try {
@@ -26,38 +27,28 @@ try {
     (e.type === 'tournament' || e.type === 'family-challenge') && e.active
   );
 
-  if (session?.user?.email) {
-    // Fetch user profile for pre-filling contact info
-    const [userProfile] = await db.select({
-      emergencyPhone: users.emergencyPhone,
-    })
-    .from(users)
-    .where(eq(users.email, session.user.email))
-    .limit(1);
+  if (session) {
+    const portalUser = await ensureCanonicalPortalUser(session.user);
 
-    if (userProfile?.emergencyPhone) {
-      (session.user as any).emergencyPhone = userProfile.emergencyPhone;
+    if (portalUser?.emergencyPhone) {
+      (session.user as any).emergencyPhone = portalUser.emergencyPhone;
     }
 
-    userAthletes = await db.select({
-      id: athletes.id,
-      firstName: athletes.firstName,
-      lastName: athletes.lastName,
-      grade: athletes.grade,
-      medicalInfo: athletes.medicalInfo,
-      tshirtSize: athletes.tshirtSize,
-      waiverAgreed: athletes.waiverAgreed,
-      photoReleaseAgreed: athletes.photoReleaseAgreed,
-    })
-    .from(athletes)
-    .leftJoin(registrations, eq(athletes.registrationId, registrations.id))
-    .where(
-      or(
-        eq(registrations.parentEmail, session.user.email),
-        eq(athletes.parentId, (session.user as any).id)
-      )
-    )
-    .groupBy(athletes.id);
+    if (portalUser) {
+      userAthletes = await db.select({
+        id: athletes.id,
+        firstName: athletes.firstName,
+        lastName: athletes.lastName,
+        grade: athletes.grade,
+        medicalInfo: athletes.medicalInfo,
+        tshirtSize: athletes.tshirtSize,
+        waiverAgreed: athletes.waiverAgreed,
+        photoReleaseAgreed: athletes.photoReleaseAgreed,
+      })
+      .from(athletes)
+      .where(eq(athletes.parentId, portalUser.id))
+      .groupBy(athletes.id);
+    }
   }
 } catch (e) {
   console.error("Outdoor Events DB Error:", e);
