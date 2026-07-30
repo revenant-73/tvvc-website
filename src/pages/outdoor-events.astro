@@ -6,7 +6,7 @@ import ScrollReveal from '../components/ScrollReveal.astro';
 import OutdoorRegistrationManager from '../components/registration/OutdoorRegistrationManager';
 import { getSession } from 'auth-astro/server';
 import { db } from '../db/db';
-import { events as eventsTable, athletes } from '../db/schema';
+import { events as eventsTable, playerProfiles } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../lib/portal-ownership';
 
@@ -36,18 +36,16 @@ try {
 
     if (portalUser) {
       userAthletes = await db.select({
-        id: athletes.id,
-        firstName: athletes.firstName,
-        lastName: athletes.lastName,
-        grade: athletes.grade,
-        medicalInfo: athletes.medicalInfo,
-        tshirtSize: athletes.tshirtSize,
-        waiverAgreed: athletes.waiverAgreed,
-        photoReleaseAgreed: athletes.photoReleaseAgreed,
+        id: playerProfiles.id,
+        firstName: playerProfiles.firstName,
+        lastName: playerProfiles.lastName,
+        grade: playerProfiles.grade,
+        medicalInfo: playerProfiles.medicalInfo,
+        tshirtSize: playerProfiles.tshirtSize,
       })
-      .from(athletes)
-      .where(eq(athletes.parentId, portalUser.id))
-      .groupBy(athletes.id);
+      .from(playerProfiles)
+      .where(eq(playerProfiles.parentId, portalUser.id))
+      .groupBy(playerProfiles.id);
     }
   }
 } catch (e) {

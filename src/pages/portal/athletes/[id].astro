@@ -2,7 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../../db/db';
-import { athletes } from '../../../db/schema';
+import { playerProfiles } from '../../../db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
@@ -24,10 +24,10 @@ if (!portalUser) {
 }
 
 const [athlete] = await db.select()
-.from(athletes)
+.from(playerProfiles)
 .where(and(
-  eq(athletes.id, parseInt(id)),
-  eq(athletes.parentId, portalUser.id)
+  eq(playerProfiles.id, parseInt(id)),
+  eq(playerProfiles.parentId, portalUser.id)
 ))
 .limit(1);
 

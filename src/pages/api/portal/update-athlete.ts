@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../db/db';
-import { athletes } from '../../../db/schema';
+import { playerProfiles } from '../../../db/schema';
 import { and, eq } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
 import { portalAthleteUpdateSchema } from '../../../lib/schemas';
@@ -36,11 +36,11 @@ export const POST: APIRoute = async ({ request }) => {
     }
     const { id, firstName, lastName, grade, tshirtSize, medicalInfo } = validation.data;
 
-    const [ownedAthlete] = await db.select({ id: athletes.id })
-    .from(athletes)
+    const [ownedAthlete] = await db.select({ id: playerProfiles.id })
+    .from(playerProfiles)
     .where(and(
-      eq(athletes.id, id),
-      eq(athletes.parentId, portalUser.id)
+      eq(playerProfiles.id, id),
+      eq(playerProfiles.parentId, portalUser.id)
     ))
     .limit(1);
 
@@ -48,17 +48,18 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Athlete not found' }), { status: 404 });
     }
 
-    await db.update(athletes)
+    await db.update(playerProfiles)
       .set({
         firstName,
         lastName,
         grade,
         tshirtSize,
         medicalInfo,
+        updatedAt: new Date().toISOString(),
       })
       .where(and(
-        eq(athletes.id, id),
-        eq(athletes.parentId, portalUser.id)
+        eq(playerProfiles.id, id),
+        eq(playerProfiles.parentId, portalUser.id)
       ));
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });

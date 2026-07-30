@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../db/db';
-import { athletes } from '../../../db/schema';
+import { playerProfiles } from '../../../db/schema';
 import { getSession } from 'auth-astro/server';
 import { portalAthleteSchema } from '../../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
@@ -35,16 +35,13 @@ export const POST: APIRoute = async ({ request }) => {
     }
     const { firstName, lastName, grade, tshirtSize, medicalInfo } = validation.data;
 
-    // Insert new athlete linked to the current user
-    await db.insert(athletes).values({
+    await db.insert(playerProfiles).values({
       parentId: portalUser.id,
       firstName,
       lastName,
       grade,
       tshirtSize,
       medicalInfo,
-      waiverAgreed: false,
-      photoReleaseAgreed: false,
     });
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });

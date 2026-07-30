@@ -27,7 +27,7 @@ interface Athlete {
   positions: string[];
   medicalInfo: string;
   selectedEvents: string[];
-  waiverAgreed: boolean;
+  waiverAgreed?: boolean;
 }
 
 const grades = ['5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th', 'Other'];

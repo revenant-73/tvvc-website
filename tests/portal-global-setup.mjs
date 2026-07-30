@@ -15,10 +15,16 @@ export default async function globalSetup() {
   await fs.rm(`${fixtures.databasePath}-wal`, { force: true });
 
   const client = createClient({ url: fixtures.databaseUrl });
-  const migrationPath = path.join(currentDir, '..', 'drizzle', '0000_thin_terrax.sql');
-  const migration = (await fs.readFile(migrationPath, 'utf8'))
-    .replaceAll('--> statement-breakpoint', '');
-  await client.executeMultiple(migration);
+  const migrationDir = path.join(currentDir, '..', 'drizzle');
+  const migrationFiles = (await fs.readdir(migrationDir))
+    .filter((file) => /^\d+.*\.sql$/.test(file))
+    .sort();
+
+  for (const migrationFile of migrationFiles) {
+    const migration = (await fs.readFile(path.join(migrationDir, migrationFile), 'utf8'))
+      .replaceAll('--> statement-breakpoint', '');
+    await client.executeMultiple(migration);
+  }
 
   const expires = Date.now() + 24 * 60 * 60 * 1000;
   const orderMetadata = (eventName, athleteName, amount) => JSON.stringify({
@@ -163,16 +169,44 @@ export default async function globalSetup() {
       ],
     },
     {
-      sql: `INSERT INTO athletes
-        (id, registration_id, parent_id, first_name, last_name, grade, medical_info)
-        VALUES (?, ?, ?, 'Avery', 'Alpha', '8th', 'None')`,
-      args: [fixtures.parentA.athleteId, fixtures.parentA.registrationId, fixtures.parentA.id],
+      sql: `INSERT INTO player_profiles
+        (id, parent_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, 'Avery', 'Alpha', '8th', 'None')`,
+      args: [fixtures.parentA.athleteId, fixtures.parentA.id],
+    },
+    {
+      sql: `INSERT INTO player_profiles
+        (id, parent_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, 'Bailey', 'Beta', '7th', 'None')`,
+      args: [fixtures.parentB.athleteId, fixtures.parentB.id],
+    },
+    {
+      sql: `INSERT INTO player_profiles
+        (id, parent_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, 'Casey', 'Collision', '10th', 'None')`,
+      args: [fixtures.emailCollision.athleteId, fixtures.parentB.id],
     },
     {
       sql: `INSERT INTO athletes
-        (id, registration_id, parent_id, first_name, last_name, grade, medical_info)
-        VALUES (?, ?, ?, 'Bailey', 'Beta', '7th', 'None')`,
-      args: [fixtures.parentB.athleteId, fixtures.parentB.registrationId, fixtures.parentB.id],
+        (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, ?, ?, 'Avery', 'Alpha', '8th', 'None')`,
+      args: [
+        fixtures.parentA.athleteId,
+        fixtures.parentA.registrationId,
+        fixtures.parentA.id,
+        fixtures.parentA.athleteId,
+      ],
+    },
+    {
+      sql: `INSERT INTO athletes
+        (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, ?, ?, 'Bailey', 'Beta', '7th', 'None')`,
+      args: [
+        fixtures.parentB.athleteId,
+        fixtures.parentB.registrationId,
+        fixtures.parentB.id,
+        fixtures.parentB.athleteId,
+      ],
     },
     {
       sql: `INSERT INTO athletes
@@ -182,12 +216,13 @@ export default async function globalSetup() {
     },
     {
       sql: `INSERT INTO athletes
-        (id, registration_id, parent_id, first_name, last_name, grade, medical_info)
-        VALUES (?, ?, ?, 'Casey', 'Collision', '10th', 'None')`,
+        (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, ?, ?, 'Casey', 'Collision', '10th', 'None')`,
       args: [
         fixtures.emailCollision.athleteId,
         fixtures.emailCollision.registrationId,
         fixtures.parentB.id,
+        fixtures.emailCollision.athleteId,
       ],
     },
     {

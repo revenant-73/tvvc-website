@@ -28,8 +28,12 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
       args: [fixtures.legacyParent.registrationId],
     });
     const athlete = await client.execute({
-      sql: 'SELECT parent_id FROM athletes WHERE id = ?',
+      sql: 'SELECT parent_id, profile_id FROM athletes WHERE id = ?',
       args: [fixtures.legacyParent.athleteId],
+    });
+    const profile = await client.execute({
+      sql: 'SELECT parent_id FROM player_profiles WHERE id = ?',
+      args: [athlete.rows[0].profile_id],
     });
     const user = await client.execute({
       sql: 'SELECT stripe_customer_id FROM user WHERE id = ?',
@@ -39,6 +43,7 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
 
     expect(registration.rows[0].user_id).toBe(fixtures.legacyParent.id);
     expect(athlete.rows[0].parent_id).toBe(fixtures.legacyParent.id);
+    expect(profile.rows[0].parent_id).toBe(fixtures.legacyParent.id);
     expect(user.rows[0].stripe_customer_id).toBe(fixtures.legacyParent.stripeCustomerId);
   });
 
@@ -98,18 +103,23 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
     await expect(page).toHaveURL(/\/portal\/dashboard$/);
 
     const client = createClient({ url: fixtures.databaseUrl });
-    const ownAthlete = await client.execute({
+    const ownProfile = await client.execute({
+      sql: 'SELECT grade FROM player_profiles WHERE id = ?',
+      args: [fixtures.parentA.athleteId],
+    });
+    const otherProfile = await client.execute({
+      sql: 'SELECT grade FROM player_profiles WHERE id = ?',
+      args: [fixtures.parentB.athleteId],
+    });
+    const historicalSnapshot = await client.execute({
       sql: 'SELECT grade FROM athletes WHERE id = ?',
       args: [fixtures.parentA.athleteId],
     });
-    const otherAthlete = await client.execute({
-      sql: 'SELECT grade FROM athletes WHERE id = ?',
-      args: [fixtures.parentB.athleteId],
-    });
     client.close();
 
-    expect(ownAthlete.rows[0].grade).toBe('9th');
-    expect(otherAthlete.rows[0].grade).toBe('7th');
+    expect(ownProfile.rows[0].grade).toBe('9th');
+    expect(otherProfile.rows[0].grade).toBe('7th');
+    expect(historicalSnapshot.rows[0].grade).toBe('8th');
   });
 
   test('reuses a saved player instead of creating a duplicate during registration', async ({ context, page }) => {
@@ -150,20 +160,63 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
 
     const client = createClient({ url: fixtures.databaseUrl });
     const athleteCount = await client.execute({
-      sql: 'SELECT COUNT(*) AS count FROM athletes WHERE parent_id = ?',
+      sql: 'SELECT COUNT(*) AS count FROM player_profiles WHERE parent_id = ?',
       args: [fixtures.parentA.id],
     });
     const reusedItems = await client.execute({
-      sql: `SELECT ri.athlete_id
+      sql: `SELECT ri.athlete_id, a.profile_id, a.grade
             FROM registration_items ri
             INNER JOIN registrations r ON r.id = ri.registration_id
+            INNER JOIN athletes a ON a.id = ri.athlete_id
             WHERE r.user_id = ? AND r.id != ?`,
       args: [fixtures.parentA.id, fixtures.parentA.registrationId],
     });
     client.close();
 
     expect(Number(athleteCount.rows[0].count)).toBe(1);
-    expect(Number(reusedItems.rows[0].athlete_id)).toBe(fixtures.parentA.athleteId);
+    expect(Number(reusedItems.rows[0].athlete_id)).not.toBe(fixtures.parentA.athleteId);
+    expect(Number(reusedItems.rows[0].profile_id)).toBe(fixtures.parentA.athleteId);
+    expect(reusedItems.rows[0].grade).toBe('9th');
+  });
+
+  test('creates portal-only player profiles without fabricating purchase snapshots', async ({ context, page }) => {
+    await authenticate(context, fixtures.parentA);
+    await page.goto('/portal/dashboard');
+
+    const response = await page.evaluate(async () => {
+      const result = await fetch('/api/portal/add-athlete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: 'Portal',
+          lastName: 'Only',
+          grade: '5th',
+          tshirtSize: 'Youth M',
+          medicalInfo: 'None',
+        }),
+      });
+      return result.status;
+    });
+
+    expect(response).toBe(200);
+
+    const client = createClient({ url: fixtures.databaseUrl });
+    const profiles = await client.execute({
+      sql: `SELECT COUNT(*) AS count
+            FROM player_profiles
+            WHERE parent_id = ? AND first_name = 'Portal' AND last_name = 'Only'`,
+      args: [fixtures.parentA.id],
+    });
+    const snapshots = await client.execute({
+      sql: `SELECT COUNT(*) AS count
+            FROM athletes
+            WHERE parent_id = ? AND first_name = 'Portal' AND last_name = 'Only'`,
+      args: [fixtures.parentA.id],
+    });
+    client.close();
+
+    expect(Number(profiles.rows[0].count)).toBe(1);
+    expect(Number(snapshots.rows[0].count)).toBe(0);
   });
 
   test('sign out everywhere deletes every session for the parent', async ({ context, page }) => {

@@ -27,8 +27,8 @@ interface SavedAthlete {
   grade: string;
   medicalInfo: string;
   tshirtSize?: string;
-  waiverAgreed: boolean;
-  photoReleaseAgreed: boolean;
+  waiverAgreed?: boolean;
+  photoReleaseAgreed?: boolean;
 }
 
 export default function RegistrationForm({ 

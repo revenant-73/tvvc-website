@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { db } from '../db/db';
-import { athletes, registrations, users } from '../db/schema';
+import { athletes, playerProfiles, registrations, users } from '../db/schema';
 
 type SessionUser = {
   id?: unknown;
@@ -60,6 +60,45 @@ export async function ensureCanonicalPortalUser(
     const legacyIds = legacyRegistrations.map((registration) => registration.id);
 
     if (legacyIds.length > 0) {
+      const unlinkedSnapshots = await tx.select()
+        .from(athletes)
+        .where(and(
+          isNull(athletes.profileId),
+          inArray(athletes.registrationId, legacyIds)
+        ));
+
+      for (const snapshot of unlinkedSnapshots) {
+        const [profile] = await tx.insert(playerProfiles).values({
+          parentId: account.id,
+          firstName: snapshot.firstName,
+          lastName: snapshot.lastName,
+          preferredName: snapshot.preferredName,
+          dateOfBirth: snapshot.dateOfBirth,
+          gender: snapshot.gender,
+          grade: snapshot.grade,
+          school: snapshot.school,
+          gradYear: snapshot.gradYear,
+          division: snapshot.division,
+          tshirtSize: snapshot.tshirtSize,
+          jerseySize: snapshot.jerseySize,
+          experience: snapshot.experience,
+          positions: snapshot.positions,
+          medicalInfo: snapshot.medicalInfo,
+          metadata: snapshot.metadata,
+        }).returning({ id: playerProfiles.id });
+
+        if (!profile) {
+          throw new Error('Failed to create a player profile for a legacy registration.');
+        }
+
+        await tx.update(athletes)
+          .set({
+            parentId: account.id,
+            profileId: profile.id,
+          })
+          .where(eq(athletes.id, snapshot.id));
+      }
+
       await tx.update(registrations)
         .set({ userId: account.id })
         .where(and(

@@ -5,7 +5,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import TryoutRegistrationForm from '../../components/registration/TryoutRegistrationForm';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../db/db';
-import { events, athletes } from '../../db/schema';
+import { events, playerProfiles } from '../../db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
 
@@ -42,23 +42,22 @@ try {
 
       if (portalUser) {
         userAthletes = await db.select({
-          id: athletes.id,
-          firstName: athletes.firstName,
-          lastName: athletes.lastName,
-          preferredName: athletes.preferredName,
-          dateOfBirth: athletes.dateOfBirth,
-          gender: athletes.gender,
-          grade: athletes.grade,
-          school: athletes.school,
-          gradYear: athletes.gradYear,
-          experience: athletes.experience,
-          jerseySize: athletes.jerseySize,
-          medicalInfo: athletes.medicalInfo,
-          waiverAgreed: athletes.waiverAgreed,
+          id: playerProfiles.id,
+          firstName: playerProfiles.firstName,
+          lastName: playerProfiles.lastName,
+          preferredName: playerProfiles.preferredName,
+          dateOfBirth: playerProfiles.dateOfBirth,
+          gender: playerProfiles.gender,
+          grade: playerProfiles.grade,
+          school: playerProfiles.school,
+          gradYear: playerProfiles.gradYear,
+          experience: playerProfiles.experience,
+          jerseySize: playerProfiles.jerseySize,
+          medicalInfo: playerProfiles.medicalInfo,
         })
-        .from(athletes)
-        .where(eq(athletes.parentId, portalUser.id))
-        .groupBy(athletes.id);
+        .from(playerProfiles)
+        .where(eq(playerProfiles.parentId, portalUser.id))
+        .groupBy(playerProfiles.id);
       }
     }
   }

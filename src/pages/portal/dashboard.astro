@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../db/db';
-import { registrations, registrationItems, events, athletes } from '../../db/schema';
+import { registrations, registrationItems, events, athletes, playerProfiles } from '../../db/schema';
 import { eq, desc, and, or, gte } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
 
@@ -74,14 +74,14 @@ const upcomingEvents = await db.select({
 
 // Fetch player profiles linked to this canonical parent account.
 const userAthletes = await db.select({
-  id: athletes.id,
-  firstName: athletes.firstName,
-  lastName: athletes.lastName,
-  grade: athletes.grade,
+  id: playerProfiles.id,
+  firstName: playerProfiles.firstName,
+  lastName: playerProfiles.lastName,
+  grade: playerProfiles.grade,
 })
-.from(athletes)
-.where(eq(athletes.parentId, userId))
-.groupBy(athletes.id);
+.from(playerProfiles)
+.where(eq(playerProfiles.parentId, userId))
+.groupBy(playerProfiles.id);
 
 const formatCurrency = (cents: number) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);

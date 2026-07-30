@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../db';
-import { registrations, athletes, registrationItems, events } from '../../db/schema';
+import { registrations, athletes, playerProfiles, registrationItems, events } from '../../db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
@@ -198,27 +198,27 @@ export const POST: APIRoute = async ({ request }) => {
       });
 
       for (const a of athleteData) {
-        let athleteId: number;
+        let profileId: number | null = null;
 
         if (a.profileId) {
           if (!userId) {
             throw new Error('Sign in to use a saved player profile.');
           }
 
-          const [ownedAthlete] = await tx.select({ id: athletes.id })
-            .from(athletes)
+          const [ownedProfile] = await tx.select({ id: playerProfiles.id })
+            .from(playerProfiles)
             .where(and(
-              eq(athletes.id, a.profileId),
-              eq(athletes.parentId, userId)
+              eq(playerProfiles.id, a.profileId),
+              eq(playerProfiles.parentId, userId)
             ))
             .limit(1);
 
-          if (!ownedAthlete) {
+          if (!ownedProfile) {
             throw new Error('Saved player profile not found.');
           }
 
-          athleteId = ownedAthlete.id;
-          await tx.update(athletes)
+          profileId = ownedProfile.id;
+          await tx.update(playerProfiles)
             .set({
               firstName: a.firstName,
               lastName: a.lastName,
@@ -235,12 +235,15 @@ export const POST: APIRoute = async ({ request }) => {
               positions: a.positions || null,
               medicalInfo: a.medicalInfo,
               metadata: a.metadata ? JSON.stringify(a.metadata) : null,
+              updatedAt: new Date().toISOString(),
             })
-            .where(eq(athletes.id, athleteId));
-        } else {
-          const [athleteResult] = await tx.insert(athletes).values({
-            registrationId: registrationId,
-            parentId: userId || null,
+            .where(and(
+              eq(playerProfiles.id, profileId),
+              eq(playerProfiles.parentId, userId)
+            ));
+        } else if (userId) {
+          const [profile] = await tx.insert(playerProfiles).values({
+            parentId: userId,
             firstName: a.firstName,
             lastName: a.lastName,
             preferredName: a.preferredName || null,
@@ -255,22 +258,47 @@ export const POST: APIRoute = async ({ request }) => {
             experience: a.experience || null,
             positions: a.positions || null,
             medicalInfo: a.medicalInfo,
-            photoReleaseAgreed: a.photoReleaseAgreed || false,
-            waiverAgreed: a.waiverAgreed || false,
             metadata: a.metadata ? JSON.stringify(a.metadata) : null,
-          }).returning({ id: athletes.id });
+          }).returning({ id: playerProfiles.id });
 
-          if (!athleteResult) {
-            throw new Error('Failed to create athlete record');
+          if (!profile) {
+            throw new Error('Failed to create player profile.');
           }
 
-          athleteId = athleteResult.id;
+          profileId = profile.id;
+        }
+
+        const [athleteSnapshot] = await tx.insert(athletes).values({
+          registrationId,
+          parentId: userId,
+          profileId,
+          firstName: a.firstName,
+          lastName: a.lastName,
+          preferredName: a.preferredName || null,
+          dateOfBirth: a.dateOfBirth || null,
+          gender: a.gender || null,
+          grade: a.grade,
+          school: a.school || null,
+          gradYear: a.gradYear || null,
+          division: a.division || null,
+          tshirtSize: a.tshirtSize || null,
+          jerseySize: a.jerseySize || null,
+          experience: a.experience || null,
+          positions: a.positions || null,
+          medicalInfo: a.medicalInfo,
+          photoReleaseAgreed: a.photoReleaseAgreed,
+          waiverAgreed: a.waiverAgreed,
+          metadata: a.metadata ? JSON.stringify(a.metadata) : null,
+        }).returning({ id: athletes.id });
+
+        if (!athleteSnapshot) {
+          throw new Error('Failed to create registration athlete snapshot.');
         }
 
         for (const eventId of a.selectedEvents) {
           await tx.insert(registrationItems).values({
             registrationId,
-            athleteId,
+            athleteId: athleteSnapshot.id,
             eventId,
           });
         }
