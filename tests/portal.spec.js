@@ -36,6 +36,26 @@ test.describe('Parent Portal access boundaries', () => {
     expect(await response.text()).toMatch(/origin|cross-site/i);
   });
 
+  test('rejects unauthenticated player creation and updates', async ({ request }) => {
+    const player = {
+      firstName: 'Unauthorized',
+      lastName: 'Player',
+      grade: '8th',
+      tshirtSize: 'Youth M',
+      medicalInfo: 'None',
+    };
+
+    const createResponse = await request.post('/api/portal/add-athlete', {
+      data: player,
+    });
+    expect(createResponse.status()).toBe(401);
+
+    const updateResponse = await request.post('/api/portal/update-athlete', {
+      data: { id: 1, ...player },
+    });
+    expect(updateResponse.status()).toBe(401);
+  });
+
   test('does not expose Stripe receipts without a session', async ({ request }) => {
     const response = await request.get('/api/stripe/receipt?registrationId=missing');
 

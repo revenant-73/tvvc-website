@@ -28,7 +28,14 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    const validation = portalAthleteUpdateSchema.safeParse(await request.json());
+    let payload: unknown;
+    try {
+      payload = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON payload' }), { status: 400 });
+    }
+
+    const validation = portalAthleteUpdateSchema.safeParse(payload);
     if (!validation.success) {
       return new Response(JSON.stringify({
         error: validation.error.issues[0]?.message || 'Invalid player details',
