@@ -33,7 +33,7 @@ This roadmap tracks the development of the Customer Portal for TVVC parents and 
 - [x] Test unauthenticated portal redirects and cross-origin request handling.
 - [x] Test that one parent cannot access another parent’s orders or players.
 - [x] Test add/edit player validation and ownership.
-- [ ] Test upcoming-event filtering and historical order totals.
+- [x] Test upcoming-event filtering and historical order totals.
 - [x] Test Stripe Customer creation, billing portal access, and receipt authorization.
 
 ### Deployment note: player profile migrations
