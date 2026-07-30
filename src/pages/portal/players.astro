@@ -1,0 +1,255 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import { asc, eq } from 'drizzle-orm';
+import { db } from '../../db/db';
+import { playerProfiles } from '../../db/schema';
+import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
+
+const session = await getSession(Astro.request);
+if (!session) {
+  return Astro.redirect('/portal/login');
+}
+
+const portalUser = await ensureCanonicalPortalUser(session.user);
+if (!portalUser) {
+  return Astro.redirect('/portal/login');
+}
+
+const profiles = await db.select({
+  id: playerProfiles.id,
+  firstName: playerProfiles.firstName,
+  lastName: playerProfiles.lastName,
+  grade: playerProfiles.grade,
+  archivedAt: playerProfiles.archivedAt,
+  mergedIntoProfileId: playerProfiles.mergedIntoProfileId,
+})
+  .from(playerProfiles)
+  .where(eq(playerProfiles.parentId, portalUser.id))
+  .orderBy(asc(playerProfiles.firstName), asc(playerProfiles.lastName));
+
+const activeProfiles = profiles.filter(
+  (profile) => !profile.archivedAt && !profile.mergedIntoProfileId
+);
+const archivedProfiles = profiles.filter((profile) => Boolean(profile.archivedAt));
+const profileNames = new Map(
+  profiles.map((profile) => [
+    profile.id,
+    `${profile.firstName} ${profile.lastName}`,
+  ])
+);
+---
+
+<BaseLayout title="Manage Players" noindex={true}>
+  <main class="pt-32 pb-20 px-4 max-w-5xl mx-auto">
+    <a href="/portal/dashboard" class="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest mb-8">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Back to Dashboard
+    </a>
+
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
+      <div>
+        <h1 class="text-4xl font-heading font-black uppercase tracking-tight mb-2">
+          Manage <span class="text-brand-teal">Players</span>
+        </h1>
+        <p class="text-white/40 font-medium max-w-2xl">
+          Edit active profiles, archive players you no longer need, or merge duplicates without losing purchase history.
+        </p>
+      </div>
+      <a href="/portal/athletes/new" class="bg-brand-teal hover:bg-brand-teal/80 text-brand-charcoal font-bold py-3 px-6 rounded-2xl transition-colors whitespace-nowrap">
+        Add Player
+      </a>
+    </div>
+
+    <section class="glass rounded-3xl p-6 md:p-8 border-white/5 mb-8">
+      <h2 class="text-2xl font-heading font-bold mb-2 uppercase tracking-tight flex items-center gap-3">
+        <span class="w-2 h-8 bg-brand-teal rounded-full"></span>
+        Active Players
+      </h2>
+      <p class="text-sm text-white/40 mb-6">
+        When merging, choose the profile whose current details you want to keep. Purchases from the duplicate will be linked to it.
+      </p>
+
+      {activeProfiles.length > 0 ? (
+        <div class="space-y-4">
+          {activeProfiles.map((profile) => {
+            const otherProfiles = activeProfiles.filter((candidate) => candidate.id !== profile.id);
+            const fullName = `${profile.firstName} ${profile.lastName}`;
+
+            return (
+              <article class="bg-white/5 rounded-2xl p-5 border border-white/5" data-profile-card={profile.id}>
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                  <div class="flex items-center gap-4 min-w-0">
+                    <div class="w-12 h-12 bg-brand-teal/20 rounded-full flex items-center justify-center text-brand-teal font-black text-xl flex-shrink-0">
+                      {profile.firstName[0]}
+                    </div>
+                    <div class="min-w-0">
+                      <h3 class="font-bold text-lg truncate">{fullName}</h3>
+                      <p class="text-xs text-white/40 uppercase tracking-widest font-bold">Grade: {profile.grade || 'Not set'}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-3">
+                    <a href={`/portal/athletes/${profile.id}`} class="glass px-4 py-2 rounded-xl text-xs uppercase tracking-widest font-bold hover:bg-white/10 transition-colors">
+                      Edit
+                    </a>
+                    <button
+                      type="button"
+                      class="archive-player px-4 py-2 rounded-xl text-xs uppercase tracking-widest font-bold text-brand-coral border border-brand-coral/30 hover:bg-brand-coral hover:text-white transition-colors"
+                      data-profile-id={profile.id}
+                      data-profile-name={fullName}
+                    >
+                      Archive
+                    </button>
+                  </div>
+                </div>
+
+                {otherProfiles.length > 0 && (
+                  <div class="mt-5 pt-5 border-t border-white/5 flex flex-col md:flex-row md:items-end gap-3">
+                    <label class="flex-grow">
+                      <span class="block text-[10px] uppercase tracking-widest font-bold text-white/40 mb-2">Merge this duplicate into</span>
+                      <select
+                        class="merge-target w-full bg-[#202020] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-teal"
+                        aria-label={`Profile to keep when merging ${fullName}`}
+                      >
+                        {otherProfiles.map((target) => (
+                          <option value={target.id}>{target.firstName} {target.lastName}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      class="merge-player px-5 py-3 rounded-xl text-xs uppercase tracking-widest font-bold bg-white/10 hover:bg-brand-teal hover:text-brand-charcoal transition-colors"
+                      data-source-profile-id={profile.id}
+                      data-source-profile-name={fullName}
+                    >
+                      Merge Duplicate
+                    </button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div class="text-center py-10 bg-white/5 rounded-2xl border border-dashed border-white/10">
+          <p class="text-white/40 mb-4">No active player profiles.</p>
+          <a href="/portal/athletes/new" class="text-brand-teal font-bold hover:underline uppercase tracking-widest text-sm">Add a Player &rarr;</a>
+        </div>
+      )}
+    </section>
+
+    {archivedProfiles.length > 0 && (
+      <section class="glass rounded-3xl p-6 md:p-8 border-white/5">
+        <h2 class="text-xl font-heading font-bold mb-2 uppercase tracking-tight">Archived Players</h2>
+        <p class="text-sm text-white/40 mb-6">Archived profiles stay attached to their historical registrations.</p>
+
+        <div class="space-y-3">
+          {archivedProfiles.map((profile) => {
+            const fullName = `${profile.firstName} ${profile.lastName}`;
+            const mergedIntoName = profile.mergedIntoProfileId
+              ? profileNames.get(profile.mergedIntoProfileId)
+              : null;
+
+            return (
+              <article class="bg-white/[0.03] rounded-2xl p-5 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 class="font-bold text-white/70">{fullName}</h3>
+                  <p class="text-xs text-white/30 uppercase tracking-widest font-bold mt-1">
+                    {mergedIntoName ? `Merged into ${mergedIntoName}` : 'Archived'}
+                  </p>
+                </div>
+                {!profile.mergedIntoProfileId && (
+                  <button
+                    type="button"
+                    class="restore-player self-start sm:self-auto glass px-4 py-2 rounded-xl text-xs uppercase tracking-widest font-bold hover:bg-white/10 transition-colors"
+                    data-profile-id={profile.id}
+                    data-profile-name={fullName}
+                  >
+                    Restore
+                  </button>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    )}
+  </main>
+</BaseLayout>
+
+<script>
+  async function runPlayerAction(payload: Record<string, string | number>, successMessage: string) {
+    const response = await fetch('/api/portal/manage-athlete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to update player profile.');
+    }
+
+    window.toast.success(successMessage);
+    window.setTimeout(() => window.location.reload(), 350);
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.archive-player').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const profileId = Number(button.dataset.profileId);
+      const profileName = button.dataset.profileName || 'this player';
+      if (!window.confirm(`Archive ${profileName}? Their purchase history will remain available.`)) return;
+
+      button.disabled = true;
+      try {
+        await runPlayerAction({ action: 'archive', profileId }, `${profileName} archived.`);
+      } catch (error) {
+        window.toast.error(error instanceof Error ? error.message : 'Unable to archive player.');
+        button.disabled = false;
+      }
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.restore-player').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const profileId = Number(button.dataset.profileId);
+      const profileName = button.dataset.profileName || 'Player';
+
+      button.disabled = true;
+      try {
+        await runPlayerAction({ action: 'restore', profileId }, `${profileName} restored.`);
+      } catch (error) {
+        window.toast.error(error instanceof Error ? error.message : 'Unable to restore player.');
+        button.disabled = false;
+      }
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.merge-player').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const card = button.closest<HTMLElement>('[data-profile-card]');
+      const select = card?.querySelector<HTMLSelectElement>('.merge-target');
+      const sourceProfileId = Number(button.dataset.sourceProfileId);
+      const targetProfileId = Number(select?.value);
+      const sourceName = button.dataset.sourceProfileName || 'this duplicate';
+      const targetName = select?.selectedOptions[0]?.textContent?.trim() || 'the selected player';
+
+      if (!targetProfileId) return;
+      if (!window.confirm(
+        `Merge ${sourceName} into ${targetName}? ${targetName}'s profile details will be kept. This cannot be undone.`
+      )) return;
+
+      button.disabled = true;
+      try {
+        await runPlayerAction(
+          { action: 'merge', sourceProfileId, targetProfileId },
+          `${sourceName} merged into ${targetName}.`
+        );
+      } catch (error) {
+        window.toast.error(error instanceof Error ? error.message : 'Unable to merge players.');
+        button.disabled = false;
+      }
+    });
+  });
+</script>

@@ -15,6 +15,13 @@
       "when": 1785429010117,
       "tag": "0001_player_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785446867554,
+      "tag": "0002_player_profile_lifecycle",
+      "breakpoints": true
     }
   ]
 }

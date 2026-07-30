@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../db/db';
 import { playerProfiles } from '../../../db/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
 import { portalAthleteUpdateSchema } from '../../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
@@ -40,7 +40,9 @@ export const POST: APIRoute = async ({ request }) => {
     .from(playerProfiles)
     .where(and(
       eq(playerProfiles.id, id),
-      eq(playerProfiles.parentId, portalUser.id)
+      eq(playerProfiles.parentId, portalUser.id),
+      isNull(playerProfiles.archivedAt),
+      isNull(playerProfiles.mergedIntoProfileId)
     ))
     .limit(1);
 
@@ -59,7 +61,9 @@ export const POST: APIRoute = async ({ request }) => {
       })
       .where(and(
         eq(playerProfiles.id, id),
-        eq(playerProfiles.parentId, portalUser.id)
+        eq(playerProfiles.parentId, portalUser.id),
+        isNull(playerProfiles.archivedAt),
+        isNull(playerProfiles.mergedIntoProfileId)
       ));
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });

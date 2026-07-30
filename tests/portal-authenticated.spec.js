@@ -77,6 +77,57 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
     expect(receiptResponse.status()).toBe(404);
   });
 
+  test('merges duplicate profiles while preserving and relinking purchase snapshots', async ({ context, page }) => {
+    await authenticate(context, fixtures.parentA);
+    await page.goto('/portal/players');
+
+    await expect(page.getByRole('heading', { name: fixtures.duplicateProfile.name })).toBeVisible();
+
+    const duplicateCard = page.locator('article').filter({
+      has: page.getByRole('heading', { name: fixtures.duplicateProfile.name }),
+    });
+    await duplicateCard.getByRole('combobox').selectOption(String(fixtures.parentA.athleteId));
+    page.once('dialog', (dialog) => dialog.accept());
+    await duplicateCard.getByRole('button', { name: 'Merge Duplicate' }).click();
+
+    await expect(page.getByText(`Merged into ${fixtures.parentA.athleteName}`, { exact: true }))
+      .toBeVisible();
+
+    const client = createClient({ url: fixtures.databaseUrl });
+    const duplicate = await client.execute({
+      sql: 'SELECT archived_at, merged_into_profile_id FROM player_profiles WHERE id = ?',
+      args: [fixtures.duplicateProfile.id],
+    });
+    const historicalSnapshot = await client.execute({
+      sql: 'SELECT profile_id, first_name, last_name, medical_info FROM athletes WHERE id = ?',
+      args: [fixtures.duplicateProfile.snapshotId],
+    });
+    client.close();
+
+    expect(duplicate.rows[0].archived_at).toBeTruthy();
+    expect(Number(duplicate.rows[0].merged_into_profile_id)).toBe(fixtures.parentA.athleteId);
+    expect(historicalSnapshot.rows[0]).toEqual({
+      profile_id: fixtures.parentA.athleteId,
+      first_name: 'Avery',
+      last_name: 'Duplicate',
+      medical_info: 'Historical duplicate snapshot',
+    });
+
+    const restoreResponse = await page.request.post('/api/portal/manage-athlete', {
+      data: { action: 'restore', profileId: fixtures.duplicateProfile.id },
+    });
+    expect(restoreResponse.status()).toBe(404);
+
+    const crossParentResponse = await page.request.post('/api/portal/manage-athlete', {
+      data: {
+        action: 'merge',
+        sourceProfileId: fixtures.parentA.athleteId,
+        targetProfileId: fixtures.parentB.athleteId,
+      },
+    });
+    expect(crossParentResponse.status()).toBe(404);
+  });
+
   test('opens only the signed-in parent’s Stripe receipt and billing portal', async ({ context, page }) => {
     await authenticate(context, fixtures.parentA);
     await page.goto(`/portal/orders/${fixtures.parentA.registrationId}`);
@@ -160,7 +211,8 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
 
     const client = createClient({ url: fixtures.databaseUrl });
     const athleteCount = await client.execute({
-      sql: 'SELECT COUNT(*) AS count FROM player_profiles WHERE parent_id = ?',
+      sql: `SELECT COUNT(*) AS count FROM player_profiles
+            WHERE parent_id = ? AND archived_at IS NULL AND merged_into_profile_id IS NULL`,
       args: [fixtures.parentA.id],
     });
     const reusedItems = await client.execute({
@@ -217,6 +269,51 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
 
     expect(Number(profiles.rows[0].count)).toBe(1);
     expect(Number(snapshots.rows[0].count)).toBe(0);
+  });
+
+  test('archives and restores a player without changing historical data', async ({ context, page }) => {
+    await authenticate(context, fixtures.parentA);
+    await page.goto('/portal/players');
+
+    const client = createClient({ url: fixtures.databaseUrl });
+    const portalOnly = await client.execute({
+      sql: `SELECT id FROM player_profiles
+            WHERE parent_id = ? AND first_name = 'Portal' AND last_name = 'Only'`,
+      args: [fixtures.parentA.id],
+    });
+    const profileId = Number(portalOnly.rows[0].id);
+
+    const archiveResponse = await page.request.post('/api/portal/manage-athlete', {
+      data: { action: 'archive', profileId },
+    });
+    expect(archiveResponse.status()).toBe(200);
+
+    await page.goto('/portal/dashboard');
+    await expect(page.getByText('Portal Only', { exact: true })).toHaveCount(0);
+
+    const archived = await client.execute({
+      sql: 'SELECT archived_at, merged_into_profile_id FROM player_profiles WHERE id = ?',
+      args: [profileId],
+    });
+    expect(archived.rows[0].archived_at).toBeTruthy();
+    expect(archived.rows[0].merged_into_profile_id).toBeNull();
+
+    const restoreResponse = await page.request.post('/api/portal/manage-athlete', {
+      data: { action: 'restore', profileId },
+    });
+    expect(restoreResponse.status()).toBe(200);
+
+    await page.goto('/portal/dashboard');
+    await expect(page.getByText('Portal Only', { exact: true })).toBeVisible();
+
+    const restored = await client.execute({
+      sql: 'SELECT archived_at, merged_into_profile_id FROM player_profiles WHERE id = ?',
+      args: [profileId],
+    });
+    client.close();
+
+    expect(restored.rows[0].archived_at).toBeNull();
+    expect(restored.rows[0].merged_into_profile_id).toBeNull();
   });
 
   test('sign out everywhere deletes every session for the parent', async ({ context, page }) => {

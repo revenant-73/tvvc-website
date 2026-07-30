@@ -6,7 +6,7 @@ import RegistrationForm from '../components/registration/RegistrationForm';
 import { getSession } from 'auth-astro/server';
 import { db } from '../db/db';
 import { events, playerProfiles } from '../db/schema';
-import { asc, eq } from 'drizzle-orm';
+import { asc, and, eq, isNull } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../lib/portal-ownership';
 
 let session = null;
@@ -68,7 +68,11 @@ try {
         tshirtSize: playerProfiles.tshirtSize,
       })
       .from(playerProfiles)
-      .where(eq(playerProfiles.parentId, portalUser.id))
+      .where(and(
+        eq(playerProfiles.parentId, portalUser.id),
+        isNull(playerProfiles.archivedAt),
+        isNull(playerProfiles.mergedIntoProfileId)
+      ))
       .groupBy(playerProfiles.id);
     }
   }

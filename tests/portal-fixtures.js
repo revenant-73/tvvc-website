@@ -15,6 +15,11 @@ module.exports = {
     athleteName: 'Avery Alpha',
     eventName: 'Parent A Future Clinic',
   },
+  duplicateProfile: {
+    id: 102,
+    snapshotId: 104,
+    name: 'Avery Duplicate',
+  },
   parentB: {
     id: 'parent-b',
     email: 'parent-b@tvvc.test',

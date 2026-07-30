@@ -68,6 +68,35 @@ test('backfills editable profiles without changing historical athlete snapshots'
       grade: '8th',
       medical_info: 'Original snapshot',
     });
+
+    await applyMigration(client, '0002_player_profile_lifecycle.sql');
+
+    const lifecycleColumns = await client.execute('PRAGMA table_info(player_profiles)');
+    const lifecycleIndexes = await client.execute('PRAGMA index_list(player_profiles)');
+    const profileAfterLifecycle = await client.execute(
+      'SELECT archived_at, merged_into_profile_id FROM player_profiles WHERE id = 77'
+    );
+
+    assert.equal(
+      lifecycleColumns.rows.some((column) => column.name === 'archived_at'),
+      true
+    );
+    assert.equal(
+      lifecycleColumns.rows.some((column) => column.name === 'merged_into_profile_id'),
+      true
+    );
+    assert.equal(
+      lifecycleIndexes.rows.some((index) => index.name === 'player_profiles_archived_at_idx'),
+      true
+    );
+    assert.equal(
+      lifecycleIndexes.rows.some((index) => index.name === 'player_profiles_merged_into_profile_id_idx'),
+      true
+    );
+    assert.deepEqual(profileAfterLifecycle.rows[0], {
+      archived_at: null,
+      merged_into_profile_id: null,
+    });
   } finally {
     client.close();
     // Windows can hold the native SQLite handle briefly after close.
