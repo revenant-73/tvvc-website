@@ -20,6 +20,17 @@ module.exports = {
     snapshotId: 104,
     name: 'Avery Duplicate',
   },
+  scheduleHistory: {
+    historicalRegistrationId: 'history-a-2020',
+    historicalAthleteId: 105,
+    historicalSnapshotEventName: 'Original Spring Clinic',
+    historicalCurrentEventName: 'Current Premium Clinic',
+    ongoingEventName: 'Ongoing Multi-Day Camp',
+    inactiveEventName: 'Inactive Future Clinic',
+    cancelledRegistrationId: 'cancel-a-2099',
+    cancelledAthleteId: 106,
+    cancelledEventName: 'Cancelled Registration Event',
+  },
   guardian: {
     id: 'guardian-a',
     email: 'guardian-a@tvvc.test',

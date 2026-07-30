@@ -60,6 +60,43 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
     await expect(page.getByText(fixtures.emailCollision.eventName, { exact: true })).toHaveCount(0);
   });
 
+  test('shows only active paid events that are upcoming or still in progress', async ({ context, page }) => {
+    await authenticate(context, fixtures.parentA);
+    await page.goto('/portal/dashboard');
+
+    await expect(page.getByText(fixtures.parentA.eventName, { exact: true })).toBeVisible();
+    await expect(page.getByText(fixtures.scheduleHistory.ongoingEventName, { exact: true }))
+      .toBeVisible();
+    await expect(page.getByText(fixtures.scheduleHistory.historicalCurrentEventName, { exact: true }))
+      .toHaveCount(0);
+    await expect(page.getByText(fixtures.scheduleHistory.inactiveEventName, { exact: true }))
+      .toHaveCount(0);
+    await expect(page.getByText(fixtures.scheduleHistory.cancelledEventName, { exact: true }))
+      .toHaveCount(0);
+  });
+
+  test('renders immutable purchase-time names, prices, and totals for historical orders', async ({ context, page }) => {
+    await authenticate(context, fixtures.parentA);
+    await page.goto('/portal/dashboard');
+
+    const orderLabel = `Order #${fixtures.scheduleHistory.historicalRegistrationId
+      .slice(0, 8)
+      .toUpperCase()}`;
+    const historyCard = page.locator('div.group').filter({ hasText: orderLabel });
+    await expect(historyCard).toHaveCount(1);
+    await expect(historyCard.getByText('$45.00', { exact: true })).toBeVisible();
+
+    await page.goto(`/portal/orders/${fixtures.scheduleHistory.historicalRegistrationId}`);
+    await expect(
+      page.getByText(fixtures.scheduleHistory.historicalSnapshotEventName, { exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByText(fixtures.scheduleHistory.historicalCurrentEventName, { exact: true })
+    ).toHaveCount(0);
+    await expect(page.getByText('$45.00', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('$99.00', { exact: true })).toHaveCount(0);
+  });
+
   test('blocks another parent’s resources even when the stored email matches', async ({ context, page }) => {
     await authenticate(context, fixtures.parentA);
 
@@ -378,8 +415,13 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
             FROM registration_items ri
             INNER JOIN registrations r ON r.id = ri.registration_id
             INNER JOIN athletes a ON a.id = ri.athlete_id
-            WHERE r.user_id = ? AND r.id != ?`,
-      args: [fixtures.parentA.id, fixtures.parentA.registrationId],
+            WHERE r.user_id = ? AND r.id NOT IN (?, ?, ?)`,
+      args: [
+        fixtures.parentA.id,
+        fixtures.parentA.registrationId,
+        fixtures.scheduleHistory.historicalRegistrationId,
+        fixtures.scheduleHistory.cancelledRegistrationId,
+      ],
     });
     client.close();
 

@@ -27,12 +27,18 @@ export default async function globalSetup() {
   }
 
   const expires = Date.now() + 24 * 60 * 60 * 1000;
-  const orderMetadata = (eventName, athleteName, amount) => JSON.stringify({
+  const orderMetadata = (
+    eventName,
+    athleteName,
+    amount,
+    eventDate = 'August 10, 2099',
+    eventTime = '10:00 AM'
+  ) => JSON.stringify({
     orderItems: [{
       eventId: eventName.toLowerCase().replaceAll(' ', '-'),
       eventName,
-      eventDate: 'August 10, 2099',
-      eventTime: '10:00 AM',
+      eventDate,
+      eventTime,
       athleteName,
       unitAmount: amount,
     }],
@@ -123,6 +129,42 @@ export default async function globalSetup() {
         'cus_parent_alpha',
         4500,
         orderMetadata(fixtures.parentA.eventName, fixtures.parentA.athleteName, 4500),
+      ],
+    },
+    {
+      sql: `INSERT INTO registrations
+        (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
+         stripe_session_id, stripe_customer_id, status, total_amount, metadata)
+        VALUES (?, ?, 'Parent Alpha', ?, '503-555-0101', '503-555-0101',
+                'cs_test_parent_alpha_history', 'cus_parent_alpha', 'paid', 4500, ?)`,
+      args: [
+        fixtures.scheduleHistory.historicalRegistrationId,
+        fixtures.parentA.id,
+        fixtures.parentA.email,
+        orderMetadata(
+          fixtures.scheduleHistory.historicalSnapshotEventName,
+          fixtures.parentA.athleteName,
+          4500,
+          'May 1, 2020',
+          '9:00 AM'
+        ),
+      ],
+    },
+    {
+      sql: `INSERT INTO registrations
+        (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
+         stripe_session_id, stripe_customer_id, status, total_amount, metadata)
+        VALUES (?, ?, 'Parent Alpha', ?, '503-555-0101', '503-555-0101',
+                'cs_test_parent_alpha_cancelled', 'cus_parent_alpha', 'cancelled', 3500, ?)`,
+      args: [
+        fixtures.scheduleHistory.cancelledRegistrationId,
+        fixtures.parentA.id,
+        fixtures.parentA.email,
+        orderMetadata(
+          fixtures.scheduleHistory.cancelledEventName,
+          fixtures.parentA.athleteName,
+          3500
+        ),
       ],
     },
     {
@@ -226,6 +268,28 @@ export default async function globalSetup() {
     {
       sql: `INSERT INTO athletes
         (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, ?, ?, 'Avery', 'Alpha', '8th', 'Historical order snapshot')`,
+      args: [
+        fixtures.scheduleHistory.historicalAthleteId,
+        fixtures.scheduleHistory.historicalRegistrationId,
+        fixtures.parentA.id,
+        fixtures.parentA.athleteId,
+      ],
+    },
+    {
+      sql: `INSERT INTO athletes
+        (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, ?, ?, 'Avery', 'Alpha', '8th', 'Cancelled order snapshot')`,
+      args: [
+        fixtures.scheduleHistory.cancelledAthleteId,
+        fixtures.scheduleHistory.cancelledRegistrationId,
+        fixtures.parentA.id,
+        fixtures.parentA.athleteId,
+      ],
+    },
+    {
+      sql: `INSERT INTO athletes
+        (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
         VALUES (?, ?, ?, ?, 'Avery', 'Duplicate', '9th', 'Historical duplicate snapshot')`,
       args: [
         fixtures.duplicateProfile.snapshotId,
@@ -272,6 +336,34 @@ export default async function globalSetup() {
     {
       sql: `INSERT INTO events
         (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
+        VALUES ('event-parent-a-history', 'clinic', ?, 'May 1, 2020', '9:00 AM',
+                '2020-05-01', '2020-05-01', 9900, 30, true)`,
+      args: [fixtures.scheduleHistory.historicalCurrentEventName],
+    },
+    {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
+        VALUES ('event-parent-a-ongoing', 'camp', ?, '2020–2099', 'All day',
+                '2020-01-01', '2099-12-31', 2500, 30, true)`,
+      args: [fixtures.scheduleHistory.ongoingEventName],
+    },
+    {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
+        VALUES ('event-parent-a-inactive', 'clinic', ?, 'September 1, 2099', '2:00 PM',
+                '2099-09-01', '2099-09-01', 2500, 30, false)`,
+      args: [fixtures.scheduleHistory.inactiveEventName],
+    },
+    {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
+        VALUES ('event-parent-a-cancelled', 'clinic', ?, 'September 2, 2099', '3:00 PM',
+                '2099-09-02', '2099-09-02', 3500, 30, true)`,
+      args: [fixtures.scheduleHistory.cancelledEventName],
+    },
+    {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
         VALUES ('event-parent-b', 'camp', ?, 'August 11, 2099', '11:00 AM',
                 '2099-08-11', '2099-08-11', 6500, 30, true)`,
       args: [fixtures.parentB.eventName],
@@ -294,6 +386,32 @@ export default async function globalSetup() {
       sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
             VALUES (?, ?, 'event-parent-a')`,
       args: [fixtures.parentA.registrationId, fixtures.parentA.athleteId],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, 'event-parent-a-history')`,
+      args: [
+        fixtures.scheduleHistory.historicalRegistrationId,
+        fixtures.scheduleHistory.historicalAthleteId,
+      ],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, 'event-parent-a-ongoing')`,
+      args: [fixtures.parentA.registrationId, fixtures.parentA.athleteId],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, 'event-parent-a-inactive')`,
+      args: [fixtures.parentA.registrationId, fixtures.parentA.athleteId],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, 'event-parent-a-cancelled')`,
+      args: [
+        fixtures.scheduleHistory.cancelledRegistrationId,
+        fixtures.scheduleHistory.cancelledAthleteId,
+      ],
     },
     {
       sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
