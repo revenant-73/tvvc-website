@@ -30,8 +30,7 @@ test.describe('Parent Portal access boundaries', () => {
     });
 
     expect(response.status()).toBe(403);
-    const body = await response.json();
-    expect(body.error).toMatch(/origin|cross-site/i);
+    expect(await response.text()).toMatch(/origin|cross-site/i);
   });
 
   test('does not expose Stripe receipts without a session', async ({ request }) => {

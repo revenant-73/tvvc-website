@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
+import { createStripeClient } from '../../../lib/stripe-client';
 import { db } from '../../../db/db';
 import { registrations, users } from '../../../db/schema';
 import { and, eq, or } from 'drizzle-orm';
@@ -46,9 +47,7 @@ export const GET: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Stripe configuration missing' }), { status: 500 });
     }
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2025-01-27.acacia' as any,
-    });
+    const stripe = createStripeClient(stripeSecretKey);
     const checkoutSession = await stripe.checkout.sessions.retrieve(
       registration.stripeSessionId,
       { expand: ['payment_intent.latest_charge'] }

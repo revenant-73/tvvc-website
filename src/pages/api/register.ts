@@ -4,6 +4,7 @@ import { registrations, athletes, registrationItems, events } from '../../db/sch
 import { and, eq, inArray, or, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
+import { createStripeClient } from '../../lib/stripe-client';
 
 import { registrationSchema } from '../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../lib/request-security';
@@ -34,9 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
     const rawUserId = (session?.user as any)?.id;
     const userId = (typeof rawUserId === 'string' && rawUserId.trim() !== '') ? rawUserId : null;
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2025-01-27.acacia' as any,
-    });
+    const stripe = createStripeClient(stripeSecretKey);
 
     // If we have a stripeCustomerId for the user, use it
     let stripeCustomerId = (session?.user as any)?.stripeCustomerId;
@@ -298,14 +297,14 @@ export const POST: APIRoute = async ({ request }) => {
         stripeSessionParams.customer_email = parentInfo.email;
       }
 
-      const session = await stripe.checkout.sessions.create(stripeSessionParams);
+      const checkoutSession = await stripe.checkout.sessions.create(stripeSessionParams);
 
       // Update registration with Stripe session ID
       await tx.update(registrations)
-        .set({ stripeSessionId: session.id })
+        .set({ stripeSessionId: checkoutSession.id })
         .where(eq(registrations.id, registrationId));
 
-      return session.url;
+      return checkoutSession.url;
     });
 
     return new Response(JSON.stringify({ url: sessionUrl }), { status: 200 });

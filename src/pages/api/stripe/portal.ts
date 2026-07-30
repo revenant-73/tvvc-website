@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
-import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
+import { createStripeClient } from '../../../lib/stripe-client';
 import { db } from '../../../db/db';
 import { registrations, users } from '../../../db/schema';
 import { and, desc, eq, isNotNull } from 'drizzle-orm';
@@ -27,9 +27,7 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Stripe secret key missing' }), { status: 500 });
     }
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2025-01-27.acacia' as any,
-    });
+    const stripe = createStripeClient(stripeSecretKey);
 
     let stripeCustomerId = (session.user as any).stripeCustomerId as string | null;
 
