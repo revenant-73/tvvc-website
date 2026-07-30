@@ -1,6 +1,12 @@
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { db } from '../db/db';
-import { athletes, playerProfiles, registrations, users } from '../db/schema';
+import {
+  athletes,
+  householdGuardians,
+  playerProfiles,
+  registrations,
+  users,
+} from '../db/schema';
 
 type SessionUser = {
   id?: unknown;
@@ -12,6 +18,12 @@ export type CanonicalPortalUser = {
   email: string;
   stripeCustomerId: string | null;
   emergencyPhone: string | null;
+};
+
+export type PortalAccessContext = {
+  user: CanonicalPortalUser;
+  readableOwnerIds: string[];
+  sharedOwnerIds: string[];
 };
 
 /**
@@ -145,6 +157,60 @@ export async function ensureCanonicalPortalUser(
       email: account.email,
       stripeCustomerId,
       emergencyPhone: account.emergencyPhone,
+    };
+  });
+}
+
+/**
+ * Activates pending invitations only after the invited email has completed a
+ * verified portal sign-in, then returns the household owners this account may
+ * view. Shared access is intentionally read-only; write APIs continue to
+ * authorize against ensureCanonicalPortalUser().id.
+ */
+export async function ensurePortalAccessContext(
+  sessionUser: SessionUser
+): Promise<PortalAccessContext | null> {
+  const user = await ensureCanonicalPortalUser(sessionUser);
+  if (!user || !db) return null;
+
+  const normalizedEmail = user.email.trim().toLowerCase();
+  const now = new Date().toISOString();
+
+  return db.transaction(async (tx) => {
+    await tx.update(householdGuardians)
+      .set({
+        guardianUserId: user.id,
+        status: 'active',
+        acceptedAt: now,
+        revokedAt: null,
+        updatedAt: now,
+      })
+      .where(and(
+        eq(householdGuardians.guardianEmail, normalizedEmail),
+        eq(householdGuardians.status, 'pending'),
+        isNull(householdGuardians.revokedAt)
+      ));
+
+    const sharedHouseholds = await tx.select({
+      ownerUserId: householdGuardians.ownerUserId,
+    })
+      .from(householdGuardians)
+      .where(and(
+        eq(householdGuardians.guardianUserId, user.id),
+        eq(householdGuardians.status, 'active'),
+        isNull(householdGuardians.revokedAt)
+      ));
+
+    const sharedOwnerIds = Array.from(new Set(
+      sharedHouseholds
+        .map((access) => access.ownerUserId)
+        .filter((ownerId) => ownerId !== user.id)
+    ));
+
+    return {
+      user,
+      sharedOwnerIds,
+      readableOwnerIds: [user.id, ...sharedOwnerIds],
     };
   });
 }

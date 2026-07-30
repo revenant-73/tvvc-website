@@ -9,8 +9,8 @@ export interface EmailPayload {
 }
 
 export async function sendEmail({ to, subject, html }: EmailPayload) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY is not set. Skipping email send.');
+  if (!process.env.RESEND_API_KEY || process.env.PLAYWRIGHT_TEST === '1') {
+    console.warn('Email sending is disabled. Skipping email send.');
     return;
   }
 

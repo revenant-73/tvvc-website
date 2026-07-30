@@ -3,8 +3,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../db/db';
 import { registrations, registrationItems, events, athletes, playerProfiles } from '../../db/schema';
-import { eq, desc, and, or, gte, isNull } from 'drizzle-orm';
-import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
+import { eq, desc, and, or, gte, inArray, isNull } from 'drizzle-orm';
+import { ensurePortalAccessContext } from '../../lib/portal-ownership';
 
 const session = await getSession(Astro.request);
 
@@ -13,11 +13,11 @@ if (!session) {
 }
 
 const user = session.user;
-const portalUser = await ensureCanonicalPortalUser(user);
-if (!portalUser) {
+const access = await ensurePortalAccessContext(user);
+if (!access) {
   return Astro.redirect('/portal/login');
 }
-const userId = portalUser.id;
+const userId = access.user.id;
 
 const clubDateParts = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/Los_Angeles',
@@ -35,13 +35,14 @@ const today = `${clubDate.year}-${clubDate.month}-${clubDate.day}`;
 // Fetch purchase history for the logged-in user
 const userRegistrations = await db.select({
   id: registrations.id,
+  ownerUserId: registrations.userId,
   parentName: registrations.parentName,
   status: registrations.status,
   totalAmount: registrations.totalAmount,
   createdAt: registrations.createdAt,
 })
 .from(registrations)
-.where(eq(registrations.userId, userId))
+.where(inArray(registrations.userId, access.readableOwnerIds))
 .orderBy(desc(registrations.createdAt));
 
 // Fetch upcoming events for this user's athletes
@@ -61,7 +62,7 @@ const upcomingEvents = await db.select({
 .innerJoin(athletes, eq(registrationItems.athleteId, athletes.id))
 .where(
   and(
-    eq(registrations.userId, userId),
+    inArray(registrations.userId, access.readableOwnerIds),
     eq(registrations.status, 'paid'),
     eq(events.active, true),
     or(
@@ -78,10 +79,11 @@ const userAthletes = await db.select({
   firstName: playerProfiles.firstName,
   lastName: playerProfiles.lastName,
   grade: playerProfiles.grade,
+  ownerUserId: playerProfiles.parentId,
 })
 .from(playerProfiles)
 .where(and(
-  eq(playerProfiles.parentId, userId),
+  inArray(playerProfiles.parentId, access.readableOwnerIds),
   isNull(playerProfiles.archivedAt),
   isNull(playerProfiles.mergedIntoProfileId)
 ))
@@ -99,6 +101,10 @@ const formatDate = (dateStr: string | null) => {
     day: 'numeric' 
   });
 };
+
+const hasOwnRegistrations = userRegistrations.some(
+  (registration) => registration.ownerUserId === userId
+);
 ---
 
 <BaseLayout title="Customer Dashboard" noindex={true}>
@@ -148,6 +154,11 @@ const formatDate = (dateStr: string | null) => {
                       ]}>
                         {reg.status}
                       </span>
+                      {reg.ownerUserId !== userId && (
+                        <span class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full font-bold bg-white/10 text-white/50">
+                          Shared
+                        </span>
+                      )}
                     </div>
                     <p class="text-white/40 text-sm">{formatDate(reg.createdAt)}</p>
                   </div>
@@ -224,18 +235,35 @@ const formatDate = (dateStr: string | null) => {
 
           <div class="space-y-4">
             {userAthletes.length > 0 ? (
-              userAthletes.map((athlete) => (
-                <a href={`/portal/athletes/${athlete.id}`} class="bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 hover:border-brand-teal/30 transition-all group">
-                  <div class="w-12 h-12 bg-brand-teal/20 rounded-full flex items-center justify-center text-brand-teal font-black text-xl group-hover:scale-110 transition-transform">
-                    {athlete.firstName[0]}
+              userAthletes.map((athlete) => {
+                const isOwned = athlete.ownerUserId === userId;
+                const content = (
+                  <>
+                    <div class="w-12 h-12 bg-brand-teal/20 rounded-full flex items-center justify-center text-brand-teal font-black text-xl group-hover:scale-110 transition-transform">
+                      {athlete.firstName[0]}
+                    </div>
+                    <div class="flex-grow">
+                      <p class="font-bold group-hover:text-brand-teal transition-colors">{athlete.firstName} {athlete.lastName}</p>
+                      <p class="text-xs text-white/40 uppercase tracking-widest font-bold">
+                        {isOwned ? `Grade: ${athlete.grade}` : `Shared · Grade: ${athlete.grade}`}
+                      </p>
+                    </div>
+                    {isOwned && (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/20 group-hover:text-brand-teal transition-colors"><path d="m9 18 6-6-6-6"/></svg>
+                    )}
+                  </>
+                );
+
+                return isOwned ? (
+                  <a href={`/portal/athletes/${athlete.id}`} class="bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 hover:border-brand-teal/30 transition-all group">
+                    {content}
+                  </a>
+                ) : (
+                  <div class="bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 group">
+                    {content}
                   </div>
-                  <div class="flex-grow">
-                    <p class="font-bold group-hover:text-brand-teal transition-colors">{athlete.firstName} {athlete.lastName}</p>
-                    <p class="text-xs text-white/40 uppercase tracking-widest font-bold">Grade: {athlete.grade}</p>
-                  </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/20 group-hover:text-brand-teal transition-colors"><path d="m9 18 6-6-6-6"/></svg>
-                </a>
-              ))
+                );
+              })
             ) : (
               <p class="text-white/40 text-sm text-center py-4">No players added yet.</p>
             )}
@@ -243,17 +271,26 @@ const formatDate = (dateStr: string | null) => {
         </section>
 
         <!-- Feature 4: Billing & Payments -->
-        <section class="glass rounded-3xl p-8 border-white/5 bg-gradient-to-br from-white/5 to-transparent">
-          <h2 class="text-xl font-heading font-bold mb-4 uppercase tracking-tight">Billing</h2>
-          <p class="text-sm text-white/40 mb-6">Update your payment methods and download tax receipts via our secure payment partner.</p>
-          <button id="manage-billing" class="w-full bg-white text-brand-charcoal font-black py-4 rounded-2xl hover:bg-brand-teal transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-            <span>Manage via Stripe</span>
-            <svg id="billing-spinner" class="animate-spin h-4 w-4 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </button>
-        </section>
+        {hasOwnRegistrations ? (
+          <section class="glass rounded-3xl p-8 border-white/5 bg-gradient-to-br from-white/5 to-transparent">
+            <h2 class="text-xl font-heading font-bold mb-4 uppercase tracking-tight">Billing</h2>
+            <p class="text-sm text-white/40 mb-6">Update your payment methods and download tax receipts via our secure payment partner.</p>
+            <button id="manage-billing" class="w-full bg-white text-brand-charcoal font-black py-4 rounded-2xl hover:bg-brand-teal transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              <span>Manage via Stripe</span>
+              <svg id="billing-spinner" class="animate-spin h-4 w-4 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </button>
+          </section>
+        ) : access.sharedOwnerIds.length > 0 ? (
+          <section class="glass rounded-3xl p-8 border-white/5">
+            <h2 class="text-xl font-heading font-bold mb-4 uppercase tracking-tight">Shared Access</h2>
+            <p class="text-sm text-white/40 leading-relaxed">
+              You have view-only access to this household. Billing, receipts, registrations, and player changes remain with the primary parent.
+            </p>
+          </section>
+        ) : null}
       </div>
     </div>
   </main>

@@ -97,6 +97,25 @@ test('backfills editable profiles without changing historical athlete snapshots'
       archived_at: null,
       merged_into_profile_id: null,
     });
+
+    await applyMigration(client, '0003_guardian_household_access.sql');
+
+    const guardianColumns = await client.execute('PRAGMA table_info(household_guardians)');
+    const guardianIndexes = await client.execute('PRAGMA index_list(household_guardians)');
+    assert.equal(
+      guardianColumns.rows.some((column) => column.name === 'owner_user_id'),
+      true
+    );
+    assert.equal(
+      guardianColumns.rows.some((column) => column.name === 'guardian_user_id'),
+      true
+    );
+    assert.equal(
+      guardianIndexes.rows.some(
+        (index) => index.name === 'household_guardians_owner_email_unique'
+      ),
+      true
+    );
   } finally {
     client.close();
     // Windows can hold the native SQLite handle briefly after close.

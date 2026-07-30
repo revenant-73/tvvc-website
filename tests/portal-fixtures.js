@@ -20,6 +20,11 @@ module.exports = {
     snapshotId: 104,
     name: 'Avery Duplicate',
   },
+  guardian: {
+    id: 'guardian-a',
+    email: 'guardian-a@tvvc.test',
+    sessionToken: 'portal-e2e-guardian-a-session',
+  },
   parentB: {
     id: 'parent-b',
     email: 'parent-b@tvvc.test',

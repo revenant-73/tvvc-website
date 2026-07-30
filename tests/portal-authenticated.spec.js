@@ -316,6 +316,132 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
     expect(restored.rows[0].merged_into_profile_id).toBeNull();
   });
 
+  test('does not grant portal access from a secondary-parent email field alone', async ({ context, page }) => {
+    await authenticate(context, fixtures.guardian);
+    await page.goto('/portal/dashboard');
+
+    await expect(page.getByText(fixtures.parentA.athleteName, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(fixtures.parentB.athleteName, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(fixtures.parentB.eventName, { exact: true })).toHaveCount(0);
+  });
+
+  test('creates guardian access only from an explicit primary-parent invitation', async ({ context, page }) => {
+    await authenticate(context, fixtures.parentA);
+    await page.goto('/portal/settings');
+
+    const selfInvite = await page.request.post('/api/portal/guardians', {
+      data: { action: 'invite', email: fixtures.parentA.email },
+    });
+    expect(selfInvite.status()).toBe(400);
+
+    const invite = await page.request.post('/api/portal/guardians', {
+      data: { action: 'invite', email: fixtures.guardian.email.toUpperCase() },
+    });
+    expect(invite.status()).toBe(200);
+
+    const client = createClient({ url: fixtures.databaseUrl });
+    const access = await client.execute({
+      sql: `SELECT id, guardian_email, guardian_user_id, status, revoked_at
+            FROM household_guardians
+            WHERE owner_user_id = ? AND guardian_email = ?`,
+      args: [fixtures.parentA.id, fixtures.guardian.email],
+    });
+    client.close();
+
+    expect(access.rows[0].guardian_email).toBe(fixtures.guardian.email);
+    expect(access.rows[0].guardian_user_id).toBeNull();
+    expect(access.rows[0].status).toBe('pending');
+    expect(access.rows[0].revoked_at).toBeNull();
+  });
+
+  test('gives an invited guardian view-only household access after verified sign-in', async ({ context, page }) => {
+    await authenticate(context, fixtures.guardian);
+    await page.goto('/portal/dashboard');
+
+    await expect(page.getByText(fixtures.parentA.athleteName, { exact: true })).toBeVisible();
+    await expect(page.getByText(fixtures.parentA.eventName, { exact: true })).toBeVisible();
+    await expect(page.getByText(fixtures.parentB.athleteName, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(fixtures.parentB.eventName, { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Shared Access' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Manage via Stripe' })).toHaveCount(0);
+
+    await page.goto(`/portal/orders/${fixtures.parentA.registrationId}`);
+    await expect(page).toHaveURL(new RegExp(`/portal/orders/${fixtures.parentA.registrationId}$`));
+    await expect(page.getByRole('button', { name: 'Receipt' })).toHaveCount(0);
+    await expect(page.getByText(/Receipts and billing controls remain with the primary parent/)).toBeVisible();
+
+    await page.goto(`/portal/athletes/${fixtures.parentA.athleteId}`);
+    await expect(page).toHaveURL(/\/portal\/dashboard$/);
+
+    const lifecycleResponse = await page.request.post('/api/portal/manage-athlete', {
+      data: { action: 'archive', profileId: fixtures.parentA.athleteId },
+    });
+    expect(lifecycleResponse.status()).toBe(404);
+
+    const receiptResponse = await page.request.get(
+      `/api/stripe/receipt?registrationId=${fixtures.parentA.registrationId}`
+    );
+    expect(receiptResponse.status()).toBe(404);
+
+    const client = createClient({ url: fixtures.databaseUrl });
+    const access = await client.execute({
+      sql: `SELECT guardian_user_id, status, accepted_at
+            FROM household_guardians
+            WHERE owner_user_id = ? AND guardian_email = ?`,
+      args: [fixtures.parentA.id, fixtures.guardian.email],
+    });
+    client.close();
+
+    expect(access.rows[0].guardian_user_id).toBe(fixtures.guardian.id);
+    expect(access.rows[0].status).toBe('active');
+    expect(access.rows[0].accepted_at).toBeTruthy();
+  });
+
+  test('lets only the primary parent revoke guardian access immediately', async ({ context, page }) => {
+    const client = createClient({ url: fixtures.databaseUrl });
+    const access = await client.execute({
+      sql: `SELECT id FROM household_guardians
+            WHERE owner_user_id = ? AND guardian_email = ?`,
+      args: [fixtures.parentA.id, fixtures.guardian.email],
+    });
+    const accessId = Number(access.rows[0].id);
+
+    await authenticate(context, fixtures.parentB);
+    const crossParentRevoke = await page.request.post('/api/portal/guardians', {
+      data: { action: 'revoke', accessId },
+    });
+    expect(crossParentRevoke.status()).toBe(404);
+
+    await authenticate(context, fixtures.parentA);
+    const duplicateInvite = await page.request.post('/api/portal/guardians', {
+      data: { action: 'invite', email: fixtures.guardian.email },
+    });
+    expect(duplicateInvite.status()).toBe(409);
+
+    const revoke = await page.request.post('/api/portal/guardians', {
+      data: { action: 'revoke', accessId },
+    });
+    expect(revoke.status()).toBe(200);
+
+    const revoked = await client.execute({
+      sql: `SELECT guardian_user_id, status, revoked_at
+            FROM household_guardians WHERE id = ?`,
+      args: [accessId],
+    });
+    expect(revoked.rows[0].guardian_user_id).toBeNull();
+    expect(revoked.rows[0].status).toBe('revoked');
+    expect(revoked.rows[0].revoked_at).toBeTruthy();
+    client.close();
+
+    await authenticate(context, fixtures.guardian);
+    await page.goto('/portal/dashboard');
+    await expect(page.getByText(fixtures.parentA.athleteName, { exact: true })).toHaveCount(0);
+    await expect(page.getByText(fixtures.parentB.athleteName, { exact: true })).toHaveCount(0);
+
+    await page.goto(`/portal/orders/${fixtures.parentA.registrationId}`);
+    await expect(page).toHaveURL(/\/portal\/dashboard$/);
+  });
+
   test('sign out everywhere deletes every session for the parent', async ({ context, page }) => {
     await authenticate(context, fixtures.parentA);
     await page.goto('/portal/settings');
