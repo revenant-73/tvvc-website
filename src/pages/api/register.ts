@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../db';
 import { registrations, athletes, playerProfiles, registrationItems, events } from '../../db/schema';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
 import { createStripeClient } from '../../lib/stripe-client';
@@ -209,7 +209,9 @@ export const POST: APIRoute = async ({ request }) => {
             .from(playerProfiles)
             .where(and(
               eq(playerProfiles.id, a.profileId),
-              eq(playerProfiles.parentId, userId)
+              eq(playerProfiles.parentId, userId),
+              isNull(playerProfiles.archivedAt),
+              isNull(playerProfiles.mergedIntoProfileId)
             ))
             .limit(1);
 
@@ -239,7 +241,9 @@ export const POST: APIRoute = async ({ request }) => {
             })
             .where(and(
               eq(playerProfiles.id, profileId),
-              eq(playerProfiles.parentId, userId)
+              eq(playerProfiles.parentId, userId),
+              isNull(playerProfiles.archivedAt),
+              isNull(playerProfiles.mergedIntoProfileId)
             ));
         } else if (userId) {
           const [profile] = await tx.insert(playerProfiles).values({

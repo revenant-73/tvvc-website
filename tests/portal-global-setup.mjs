@@ -177,6 +177,12 @@ export default async function globalSetup() {
     {
       sql: `INSERT INTO player_profiles
         (id, parent_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, 'Avery', 'Duplicate', '9th', 'Duplicate profile snapshot')`,
+      args: [fixtures.duplicateProfile.id, fixtures.parentA.id],
+    },
+    {
+      sql: `INSERT INTO player_profiles
+        (id, parent_id, first_name, last_name, grade, medical_info)
         VALUES (?, ?, 'Bailey', 'Beta', '7th', 'None')`,
       args: [fixtures.parentB.athleteId, fixtures.parentB.id],
     },
@@ -195,6 +201,17 @@ export default async function globalSetup() {
         fixtures.parentA.registrationId,
         fixtures.parentA.id,
         fixtures.parentA.athleteId,
+      ],
+    },
+    {
+      sql: `INSERT INTO athletes
+        (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, ?, ?, 'Avery', 'Duplicate', '9th', 'Historical duplicate snapshot')`,
+      args: [
+        fixtures.duplicateProfile.snapshotId,
+        fixtures.parentA.registrationId,
+        fixtures.parentA.id,
+        fixtures.duplicateProfile.id,
       ],
     },
     {

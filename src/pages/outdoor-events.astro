@@ -7,7 +7,7 @@ import OutdoorRegistrationManager from '../components/registration/OutdoorRegist
 import { getSession } from 'auth-astro/server';
 import { db } from '../db/db';
 import { events as eventsTable, playerProfiles } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../lib/portal-ownership';
 
 let session = null;
@@ -44,7 +44,11 @@ try {
         tshirtSize: playerProfiles.tshirtSize,
       })
       .from(playerProfiles)
-      .where(eq(playerProfiles.parentId, portalUser.id))
+      .where(and(
+        eq(playerProfiles.parentId, portalUser.id),
+        isNull(playerProfiles.archivedAt),
+        isNull(playerProfiles.mergedIntoProfileId)
+      ))
       .groupBy(playerProfiles.id);
     }
   }

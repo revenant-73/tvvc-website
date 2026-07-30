@@ -55,6 +55,24 @@ export const portalAthleteUpdateSchema = portalAthleteSchema.extend({
   id: z.coerce.number().int().positive('Invalid athlete ID'),
 });
 
+const profileId = z.coerce.number().int().positive('Invalid player profile ID');
+
+export const portalPlayerLifecycleSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('archive'),
+    profileId,
+  }),
+  z.object({
+    action: z.literal('restore'),
+    profileId,
+  }),
+  z.object({
+    action: z.literal('merge'),
+    sourceProfileId: profileId,
+    targetProfileId: profileId,
+  }),
+]);
+
 export const portalProfileSchema = z.object({
   name: z.string().trim().max(120, 'Display name is too long'),
   emergencyPhone: z.string().trim().max(40, 'Phone number is too long').optional().default(''),

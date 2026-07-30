@@ -22,7 +22,7 @@ This roadmap tracks the development of the Customer Portal for TVVC parents and 
 - [x] Separate persistent player profiles from per-registration athlete snapshots.
 - [x] Pass saved player IDs through registration forms.
 - [x] Prevent repeat registrations from creating duplicate player profiles.
-- [ ] Add an intentional merge/archive flow for existing duplicates.
+- [x] Add an intentional merge/archive flow for existing duplicates.
 
 ### Dashboard and sessions
 - [x] Filter Upcoming Events by the club timezone and exclude past/cancelled events.
@@ -36,17 +36,20 @@ This roadmap tracks the development of the Customer Portal for TVVC parents and 
 - [ ] Test upcoming-event filtering and historical order totals.
 - [x] Test Stripe Customer creation, billing portal access, and receipt authorization.
 
-### Deployment note: player profile migration
+### Deployment note: player profile migrations
 
 The profile/snapshot split adds `player_profiles` and `athletes.profile_id`.
-Before deploying the application commit that contains this change:
+The lifecycle migration adds the nullable `archived_at` and
+`merged_into_profile_id` columns plus their indexes. Before deploying an
+application commit that depends on either migration:
 
 1. Set the production `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`.
 2. Run `npm run db:migrate`.
 3. Deploy the application only after the migration succeeds.
 
-The migration is additive and backfills profiles with their existing athlete IDs,
-so it can safely run before the application deployment.
+Both migrations are additive. The first backfills profiles with their existing
+athlete IDs, while the lifecycle migration leaves every existing profile active
+by default, so they can safely run before the application deployment.
 
 ## ✅ Phase 1: Order & Billing Transparency (COMPLETED)
 - [x] **Order Details Page (`/portal/orders/[id]`)**

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, primaryKey, index, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // --- Authentication Tables (Auth.js) ---
@@ -220,11 +220,16 @@ export const playerProfiles = sqliteTable('player_profiles', {
   positions: text('positions'),
   medicalInfo: text('medical_info'),
   metadata: text('metadata'),
+  archivedAt: text('archived_at'),
+  mergedIntoProfileId: integer('merged_into_profile_id')
+    .references((): AnySQLiteColumn => playerProfiles.id),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 }, (table) => {
   return {
     parentIdIdx: index('player_profiles_parent_id_idx').on(table.parentId),
+    archivedAtIdx: index('player_profiles_archived_at_idx').on(table.archivedAt),
+    mergedIntoProfileIdIdx: index('player_profiles_merged_into_profile_id_idx').on(table.mergedIntoProfileId),
   };
 });
 

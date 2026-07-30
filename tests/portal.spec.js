@@ -10,6 +10,9 @@ test.describe('Parent Portal access boundaries', () => {
   });
 
   test('protects player and order pages without a session', async ({ page }) => {
+    await page.goto('/portal/players');
+    await expect(page).toHaveURL(/\/portal\/login$/);
+
     await page.goto('/portal/athletes/1');
     await expect(page).toHaveURL(/\/portal\/login$/);
 
