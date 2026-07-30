@@ -8,6 +8,13 @@
       "when": 1784579436020,
       "tag": "0000_thin_terrax",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1785429010117,
+      "tag": "0001_player_profiles",
+      "breakpoints": true
     }
   ]
 }

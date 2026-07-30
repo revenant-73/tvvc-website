@@ -11,6 +11,7 @@ export const parentInfoSchema = z.object({
 });
 
 export const athleteSchema = z.object({
+  profileId: z.coerce.number().int().positive().optional(),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   preferredName: z.string().optional().nullable(),
@@ -37,6 +38,26 @@ export const registrationSchema = z.object({
   parentInfo: parentInfoSchema,
   athletes: z.array(athleteSchema).min(1, 'At least one athlete is required'),
   metadata: z.record(z.any()).optional().nullable(),
+});
+
+const portalText = (field: string, max: number) =>
+  z.string().trim().min(1, `${field} is required`).max(max, `${field} is too long`);
+
+export const portalAthleteSchema = z.object({
+  firstName: portalText('First name', 80),
+  lastName: portalText('Last name', 80),
+  grade: portalText('Grade', 20),
+  tshirtSize: z.string().trim().max(30, 'T-shirt size is too long').optional().default(''),
+  medicalInfo: z.string().trim().max(2000, 'Medical information is too long').optional().default(''),
+});
+
+export const portalAthleteUpdateSchema = portalAthleteSchema.extend({
+  id: z.coerce.number().int().positive('Invalid athlete ID'),
+});
+
+export const portalProfileSchema = z.object({
+  name: z.string().trim().max(120, 'Display name is too long'),
+  emergencyPhone: z.string().trim().max(40, 'Phone number is too long').optional().default(''),
 });
 
 export type ParentInfo = z.infer<typeof parentInfoSchema>;

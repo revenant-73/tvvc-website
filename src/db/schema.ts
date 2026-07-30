@@ -201,10 +201,39 @@ export const registrations = sqliteTable('registrations', {
   };
 });
 
+// Editable, parent-owned player records used to prefill future registrations.
+export const playerProfiles = sqliteTable('player_profiles', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  parentId: text('parent_id').notNull().references(() => users.id),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  preferredName: text('preferred_name'),
+  dateOfBirth: text('date_of_birth'),
+  gender: text('gender'),
+  grade: text('grade').notNull(),
+  school: text('school'),
+  gradYear: text('grad_year'),
+  division: text('division'),
+  tshirtSize: text('tshirt_size'),
+  jerseySize: text('jersey_size'),
+  experience: text('experience'),
+  positions: text('positions'),
+  medicalInfo: text('medical_info'),
+  metadata: text('metadata'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    parentIdIdx: index('player_profiles_parent_id_idx').on(table.parentId),
+  };
+});
+
+// Immutable registration-time snapshots used by orders, rosters, and receipts.
 export const athletes = sqliteTable('athletes', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   registrationId: text('registration_id').references(() => registrations.id),
-  parentId: text('parent_id').references(() => users.id), // Link athlete to parent account for long-term profile
+  parentId: text('parent_id').references(() => users.id), // Canonical owner at registration time
+  profileId: integer('profile_id').references(() => playerProfiles.id),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   preferredName: text('preferred_name'),
@@ -226,6 +255,7 @@ export const athletes = sqliteTable('athletes', {
   return {
     parentIdIdx: index('athletes_parent_id_idx').on(table.parentId),
     registrationIdIdx: index('athletes_registration_id_idx').on(table.registrationId),
+    profileIdIdx: index('athletes_profile_id_idx').on(table.profileId),
   };
 });
 

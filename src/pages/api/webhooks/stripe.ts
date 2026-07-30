@@ -45,7 +45,9 @@ export const POST: APIRoute = async ({ request }) => {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     const registrationId = session.metadata?.registrationId;
-    const stripeCustomerId = session.customer as string;
+    const stripeCustomerId = typeof session.customer === 'string'
+      ? session.customer
+      : session.customer?.id || null;
 
     console.log('Received checkout.session.completed for registration:', registrationId);
 
@@ -69,7 +71,7 @@ export const POST: APIRoute = async ({ request }) => {
           }
 
           // 2. Link Stripe Customer ID to User if not already set
-          if (updateReg[0].userId) {
+          if (updateReg[0].userId && stripeCustomerId) {
             await tx.update(users)
               .set({ stripeCustomerId: stripeCustomerId })
               .where(and(

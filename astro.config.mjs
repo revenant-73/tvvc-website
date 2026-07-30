@@ -5,6 +5,8 @@ import sitemap from '@astrojs/sitemap';
 import netlify from '@astrojs/netlify';
 import auth from 'auth-astro';
 
+const isPlaywright = process.env.PLAYWRIGHT_TEST === '1';
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://tualatinvalleyvb.com',
@@ -27,9 +29,9 @@ export default defineConfig({
       include: ['auth-astro/client']
     }
   },
-  adapter: netlify(),
+  adapter: netlify(isPlaywright ? { devFeatures: false } : undefined),
   security: {
-    checkOrigin: false
+    checkOrigin: true
   },
   build: {
     format: 'file'

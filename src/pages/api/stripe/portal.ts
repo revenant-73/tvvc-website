@@ -1,9 +1,14 @@
 import type { APIRoute } from 'astro';
-import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
+import { rejectCrossOriginRequest } from '../../../lib/request-security';
+import { createStripeClient } from '../../../lib/stripe-client';
+import { ensureCanonicalPortalUser } from '../../../lib/portal-ownership';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const originError = rejectCrossOriginRequest(request);
+    if (originError) return originError;
+
     let session = null;
     try {
       session = await getSession(request);
@@ -15,16 +20,19 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
+    const portalUser = await ensureCanonicalPortalUser(session.user);
+    if (!portalUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
     const stripeSecretKey = import.meta.env.STRIPE_SECRET_KEY;
     if (!stripeSecretKey) {
       return new Response(JSON.stringify({ error: 'Stripe secret key missing' }), { status: 500 });
     }
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2025-01-27.acacia' as any,
-    });
+    const stripe = createStripeClient(stripeSecretKey);
 
-    const stripeCustomerId = (session.user as any).stripeCustomerId;
+    const stripeCustomerId = portalUser.stripeCustomerId;
 
     if (!stripeCustomerId) {
       return new Response(JSON.stringify({ 

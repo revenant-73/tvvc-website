@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
+import { getSafeCallbackUrl } from '../../lib/redirects';
 
 const session = await getSession(Astro.request);
 const url = new URL(Astro.request.url);
-const callbackUrl = url.searchParams.get('callbackUrl') || '/portal/dashboard';
+const requestedCallbackUrl = url.searchParams.get('callbackUrl');
+const callbackUrl = getSafeCallbackUrl(requestedCallbackUrl);
 
 if (session) {
   return Astro.redirect(callbackUrl);

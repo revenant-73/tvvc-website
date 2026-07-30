@@ -12,6 +12,7 @@ interface Event {
 }
 
 interface Player {
+  profileId?: number;
   firstName: string;
   lastName: string;
   grade: string;
@@ -112,7 +113,7 @@ export default function TournamentRegistrationForm({
         ...p,
         division: division,
         selectedEvents: [event.id],
-        photoReleaseAgreed: true, // Defaulting for tournament
+        photoReleaseAgreed: false,
         waiverAgreed: waiverAgreed
       }));
 
@@ -233,6 +234,7 @@ export default function TournamentRegistrationForm({
                             key={sa.id}
                             type="button"
                             onClick={() => {
+                              updatePlayer(i, 'profileId', sa.id);
                               updatePlayer(i, 'firstName', sa.firstName);
                               updatePlayer(i, 'lastName', sa.lastName);
                               updatePlayer(i, 'grade', sa.grade);

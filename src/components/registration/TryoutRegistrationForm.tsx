@@ -14,6 +14,7 @@ interface Event {
 }
 
 interface Athlete {
+  profileId?: number;
   firstName: string;
   lastName: string;
   preferredName: string;
@@ -26,7 +27,7 @@ interface Athlete {
   positions: string[];
   medicalInfo: string;
   selectedEvents: string[];
-  waiverAgreed: boolean;
+  waiverAgreed?: boolean;
 }
 
 const grades = ['5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th', 'Other'];
@@ -393,6 +394,7 @@ export default function TryoutRegistrationForm({
                         key={sa.id}
                         type="button"
                         onClick={() => {
+                          updateAthlete(index, 'profileId', sa.id);
                           updateAthlete(index, 'firstName', sa.firstName);
                           updateAthlete(index, 'lastName', sa.lastName);
                           updateAthlete(index, 'preferredName', sa.preferredName || '');

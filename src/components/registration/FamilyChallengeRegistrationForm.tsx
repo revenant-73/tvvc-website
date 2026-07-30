@@ -12,6 +12,7 @@ interface Event {
 }
 
 interface Participant {
+  profileId?: number;
   firstName: string;
   lastName: string;
   role: 'parent' | 'player';
@@ -125,6 +126,7 @@ export default function FamilyChallengeRegistrationForm({
     
     try {
       const athletes = participants.map(p => ({
+        profileId: p.profileId,
         firstName: p.firstName,
         lastName: p.lastName,
         grade: p.grade,
@@ -132,7 +134,7 @@ export default function FamilyChallengeRegistrationForm({
         medicalInfo: p.medicalInfo,
         waiverAgreed: waiverAgreed,
         selectedEvents: [event.id],
-        photoReleaseAgreed: true,
+        photoReleaseAgreed: false,
       }));
 
       const response = await fetch('/api/register', {
@@ -277,6 +279,7 @@ export default function FamilyChallengeRegistrationForm({
                             key={sa.id}
                             type="button"
                             onClick={() => {
+                              updateParticipant(1, 'profileId', sa.id);
                               updateParticipant(1, 'firstName', sa.firstName);
                               updateParticipant(1, 'lastName', sa.lastName);
                               updateParticipant(1, 'grade', sa.grade);

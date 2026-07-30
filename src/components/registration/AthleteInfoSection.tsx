@@ -45,12 +45,11 @@ export const AthleteInfoSection: React.FC<AthleteInfoSectionProps> = ({
                 key={sa.id}
                 type="button"
                 onClick={() => {
+                  updateAthlete(index, 'profileId', sa.id);
                   updateAthlete(index, 'firstName', sa.firstName);
                   updateAthlete(index, 'lastName', sa.lastName);
                   updateAthlete(index, 'grade', sa.grade);
                   updateAthlete(index, 'medicalInfo', sa.medicalInfo || '');
-                  updateAthlete(index, 'waiverAgreed', sa.waiverAgreed || false);
-                  updateAthlete(index, 'photoReleaseAgreed', sa.photoReleaseAgreed || false);
                 }}
                 className="bg-white/5 hover:bg-brand-teal/20 border border-white/10 hover:border-brand-teal/50 rounded-xl px-4 py-2 text-xs font-bold transition-all"
               >

@@ -4,6 +4,7 @@ import { getSession } from 'auth-astro/server';
 import { db } from '../../db/db';
 import { users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
 
 const session = await getSession(Astro.request);
 
@@ -11,12 +12,15 @@ if (!session) {
   return Astro.redirect('/portal/login');
 }
 
-const user = session.user;
+const portalUser = await ensureCanonicalPortalUser(session.user);
+if (!portalUser) {
+  return Astro.redirect('/portal/login');
+}
 
 // Fetch full user record from DB
 const [dbUser] = await db.select()
   .from(users)
-  .where(eq(users.email, user.email!))
+  .where(eq(users.id, portalUser.id))
   .limit(1);
 
 if (!dbUser) {
@@ -168,6 +172,24 @@ if (!dbUser) {
     }
   });
 
-  const { signOut } = await import('auth-astro/client');
-  document.getElementById('signout-all')?.addEventListener('click', () => signOut());
+  document.getElementById('signout-all')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    button.disabled = true;
+
+    try {
+      const response = await fetch('/api/portal/sign-out-everywhere', { method: 'POST' });
+      if (!response.ok) {
+        const data = await response.json();
+        window.toast.error(data.error || 'Unable to sign out all devices');
+        button.disabled = false;
+        return;
+      }
+
+      window.location.href = '/portal/login';
+    } catch (error) {
+      console.error(error);
+      window.toast.error('Unable to sign out all devices');
+      button.disabled = false;
+    }
+  });
 </script>

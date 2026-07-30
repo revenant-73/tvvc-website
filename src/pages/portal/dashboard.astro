@@ -2,8 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../db/db';
-import { registrations, registrationItems, events, athletes, users } from '../../db/schema';
-import { eq, desc, and, sql, or } from 'drizzle-orm';
+import { registrations, registrationItems, events, athletes, playerProfiles } from '../../db/schema';
+import { eq, desc, and, or, gte } from 'drizzle-orm';
+import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
 
 const session = await getSession(Astro.request);
 
@@ -12,11 +13,24 @@ if (!session) {
 }
 
 const user = session.user;
+const portalUser = await ensureCanonicalPortalUser(user);
+if (!portalUser) {
+  return Astro.redirect('/portal/login');
+}
+const userId = portalUser.id;
 
-// Get the actual user record from DB to ensure we have the correct ID and stripeCustomerId
-const dbUser = await db.select().from(users).where(eq(users.email, user.email!)).limit(1);
-const currentUser = dbUser[0];
-const userId = currentUser?.id || (user as any).id;
+const clubDateParts = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Los_Angeles',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).formatToParts(new Date());
+const clubDate = {
+  year: clubDateParts.find((part) => part.type === 'year')?.value,
+  month: clubDateParts.find((part) => part.type === 'month')?.value,
+  day: clubDateParts.find((part) => part.type === 'day')?.value,
+};
+const today = `${clubDate.year}-${clubDate.month}-${clubDate.day}`;
 
 // Fetch purchase history for the logged-in user
 const userRegistrations = await db.select({
@@ -27,7 +41,7 @@ const userRegistrations = await db.select({
   createdAt: registrations.createdAt,
 })
 .from(registrations)
-.where(eq(registrations.parentEmail, user.email!))
+.where(eq(registrations.userId, userId))
 .orderBy(desc(registrations.createdAt));
 
 // Fetch upcoming events for this user's athletes
@@ -47,29 +61,27 @@ const upcomingEvents = await db.select({
 .innerJoin(athletes, eq(registrationItems.athleteId, athletes.id))
 .where(
   and(
-    eq(registrations.parentEmail, user.email!),
-    eq(registrations.status, 'paid')
+    eq(registrations.userId, userId),
+    eq(registrations.status, 'paid'),
+    eq(events.active, true),
+    or(
+      gte(events.startDate, today),
+      gte(events.endDate, today)
+    )
   )
 )
 .orderBy(events.startDate);
 
-// Fetch athletes linked to this user/email
-// Includes athletes from past registrations (via email) AND athletes added directly via portal (via parentId)
+// Fetch player profiles linked to this canonical parent account.
 const userAthletes = await db.select({
-  id: athletes.id,
-  firstName: athletes.firstName,
-  lastName: athletes.lastName,
-  grade: athletes.grade,
+  id: playerProfiles.id,
+  firstName: playerProfiles.firstName,
+  lastName: playerProfiles.lastName,
+  grade: playerProfiles.grade,
 })
-.from(athletes)
-.leftJoin(registrations, eq(athletes.registrationId, registrations.id))
-.where(
-  or(
-    eq(registrations.parentEmail, user.email!),
-    eq(athletes.parentId, userId)
-  )
-)
-.groupBy(athletes.id); // Prevent duplicates if an athlete has both
+.from(playerProfiles)
+.where(eq(playerProfiles.parentId, userId))
+.groupBy(playerProfiles.id);
 
 const formatCurrency = (cents: number) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
