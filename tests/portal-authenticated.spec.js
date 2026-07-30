@@ -77,6 +77,79 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
     expect(receiptResponse.status()).toBe(404);
   });
 
+  test('rejects invalid player creation payloads without inserting profiles', async ({ context, page }) => {
+    await authenticate(context, fixtures.parentA);
+    await page.goto('/portal/dashboard');
+
+    const client = createClient({ url: fixtures.databaseUrl });
+    const before = await client.execute({
+      sql: 'SELECT COUNT(*) AS count FROM player_profiles WHERE parent_id = ?',
+      args: [fixtures.parentA.id],
+    });
+
+    const malformedStatus = await page.evaluate(async () => {
+      const response = await fetch('/api/portal/add-athlete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{',
+      });
+      return response.status;
+    });
+    expect(malformedStatus).toBe(400);
+
+    const missingName = await page.request.post('/api/portal/add-athlete', {
+      data: {
+        firstName: '   ',
+        lastName: 'Alpha',
+        grade: '8th',
+        tshirtSize: 'Youth M',
+        medicalInfo: 'None',
+      },
+    });
+    expect(missingName.status()).toBe(400);
+
+    const invalidGrade = await page.request.post('/api/portal/add-athlete', {
+      data: {
+        firstName: 'Invalid',
+        lastName: 'Grade',
+        grade: 'College',
+        tshirtSize: 'Youth M',
+        medicalInfo: 'None',
+      },
+    });
+    expect(invalidGrade.status()).toBe(400);
+
+    const invalidShirt = await page.request.post('/api/portal/add-athlete', {
+      data: {
+        firstName: 'Invalid',
+        lastName: 'Shirt',
+        grade: '8th',
+        tshirtSize: 'Adult XXL',
+        medicalInfo: 'None',
+      },
+    });
+    expect(invalidShirt.status()).toBe(400);
+
+    const oversizedMedicalInfo = await page.request.post('/api/portal/add-athlete', {
+      data: {
+        firstName: 'Invalid',
+        lastName: 'Medical',
+        grade: '8th',
+        tshirtSize: 'Youth M',
+        medicalInfo: 'x'.repeat(2001),
+      },
+    });
+    expect(oversizedMedicalInfo.status()).toBe(400);
+
+    const after = await client.execute({
+      sql: 'SELECT COUNT(*) AS count FROM player_profiles WHERE parent_id = ?',
+      args: [fixtures.parentA.id],
+    });
+    client.close();
+
+    expect(Number(after.rows[0].count)).toBe(Number(before.rows[0].count));
+  });
+
   test('merges duplicate profiles while preserving and relinking purchase snapshots', async ({ context, page }) => {
     await authenticate(context, fixtures.parentA);
     await page.goto('/portal/players');
@@ -126,6 +199,91 @@ test.describe.serial('Authenticated Parent Portal isolation', () => {
       },
     });
     expect(crossParentResponse.status()).toBe(404);
+  });
+
+  test('rejects invalid, cross-parent, and merged-profile edits without mutation', async ({ context, page }) => {
+    await authenticate(context, fixtures.parentA);
+    await page.goto('/portal/dashboard');
+
+    const client = createClient({ url: fixtures.databaseUrl });
+    const ownBefore = await client.execute({
+      sql: `SELECT first_name, last_name, grade, tshirt_size, medical_info, updated_at
+            FROM player_profiles WHERE id = ?`,
+      args: [fixtures.parentA.athleteId],
+    });
+    const otherBefore = await client.execute({
+      sql: `SELECT first_name, last_name, grade, tshirt_size, medical_info, updated_at
+            FROM player_profiles WHERE id = ?`,
+      args: [fixtures.parentB.athleteId],
+    });
+
+    const malformedStatus = await page.evaluate(async () => {
+      const response = await fetch('/api/portal/update-athlete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{',
+      });
+      return response.status;
+    });
+    expect(malformedStatus).toBe(400);
+
+    const invalidOwnEdit = await page.request.post('/api/portal/update-athlete', {
+      data: {
+        id: fixtures.parentA.athleteId,
+        firstName: '',
+        lastName: 'Changed',
+        grade: 'Professional',
+        tshirtSize: 'Adult XXL',
+        medicalInfo: 'Changed',
+      },
+    });
+    expect(invalidOwnEdit.status()).toBe(400);
+
+    const crossParentEdit = await page.request.post('/api/portal/update-athlete', {
+      data: {
+        id: fixtures.parentB.athleteId,
+        firstName: 'Hacked',
+        lastName: 'Profile',
+        grade: '12th',
+        tshirtSize: 'Adult XL',
+        medicalInfo: 'Changed',
+      },
+    });
+    expect(crossParentEdit.status()).toBe(404);
+
+    const mergedProfileEdit = await page.request.post('/api/portal/update-athlete', {
+      data: {
+        id: fixtures.duplicateProfile.id,
+        firstName: 'Restored',
+        lastName: 'Duplicate',
+        grade: '9th',
+        tshirtSize: 'Adult M',
+        medicalInfo: 'Changed',
+      },
+    });
+    expect(mergedProfileEdit.status()).toBe(404);
+
+    const ownAfter = await client.execute({
+      sql: `SELECT first_name, last_name, grade, tshirt_size, medical_info, updated_at
+            FROM player_profiles WHERE id = ?`,
+      args: [fixtures.parentA.athleteId],
+    });
+    const otherAfter = await client.execute({
+      sql: `SELECT first_name, last_name, grade, tshirt_size, medical_info, updated_at
+            FROM player_profiles WHERE id = ?`,
+      args: [fixtures.parentB.athleteId],
+    });
+    const mergedAfter = await client.execute({
+      sql: `SELECT archived_at, merged_into_profile_id
+            FROM player_profiles WHERE id = ?`,
+      args: [fixtures.duplicateProfile.id],
+    });
+    client.close();
+
+    expect(ownAfter.rows[0]).toEqual(ownBefore.rows[0]);
+    expect(otherAfter.rows[0]).toEqual(otherBefore.rows[0]);
+    expect(mergedAfter.rows[0].archived_at).toBeTruthy();
+    expect(Number(mergedAfter.rows[0].merged_into_profile_id)).toBe(fixtures.parentA.athleteId);
   });
 
   test('opens only the signed-in parent’s Stripe receipt and billing portal', async ({ context, page }) => {

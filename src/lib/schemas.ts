@@ -43,11 +43,24 @@ export const registrationSchema = z.object({
 const portalText = (field: string, max: number) =>
   z.string().trim().min(1, `${field} is required`).max(max, `${field} is too long`);
 
+const portalGrades = [
+  '3rd', '4th', '5th', '6th', '7th',
+  '8th', '9th', '10th', '11th', '12th',
+] as const;
+const portalShirtSizes = [
+  '', 'Youth S', 'Youth M', 'Youth L',
+  'Adult S', 'Adult M', 'Adult L', 'Adult XL',
+] as const;
+
 export const portalAthleteSchema = z.object({
   firstName: portalText('First name', 80),
   lastName: portalText('Last name', 80),
-  grade: portalText('Grade', 20),
-  tshirtSize: z.string().trim().max(30, 'T-shirt size is too long').optional().default(''),
+  grade: z.string().trim().pipe(z.enum(portalGrades, {
+    errorMap: () => ({ message: 'Choose a valid grade' }),
+  })),
+  tshirtSize: z.string().trim().pipe(z.enum(portalShirtSizes, {
+    errorMap: () => ({ message: 'Choose a valid T-shirt size' }),
+  })).optional().default(''),
   medicalInfo: z.string().trim().max(2000, 'Medical information is too long').optional().default(''),
 });
 
