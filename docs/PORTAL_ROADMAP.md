@@ -27,7 +27,7 @@ This roadmap tracks the development of the Customer Portal for TVVC parents and 
 ### Dashboard and sessions
 - [x] Filter Upcoming Events by the club timezone and exclude past/cancelled events.
 - [x] Make “Sign Out Everywhere” revoke every database session for the user.
-- [ ] Clarify access rules for secondary parents/guardians.
+- [x] Add explicit, revocable view-only access for invited parents/guardians.
 
 ### Automated coverage
 - [x] Test unauthenticated portal redirects and cross-origin request handling.
@@ -40,16 +40,19 @@ This roadmap tracks the development of the Customer Portal for TVVC parents and 
 
 The profile/snapshot split adds `player_profiles` and `athletes.profile_id`.
 The lifecycle migration adds the nullable `archived_at` and
-`merged_into_profile_id` columns plus their indexes. Before deploying an
-application commit that depends on either migration:
+`merged_into_profile_id` columns plus their indexes.
+The guardian-access migration adds the `household_guardians` invitation and
+authorization table. Before deploying an application commit that depends on
+these migrations:
 
 1. Set the production `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`.
 2. Run `npm run db:migrate`.
 3. Deploy the application only after the migration succeeds.
 
-Both migrations are additive. The first backfills profiles with their existing
-athlete IDs, while the lifecycle migration leaves every existing profile active
-by default, so they can safely run before the application deployment.
+All migrations are additive. The first backfills profiles with their existing
+athlete IDs, the lifecycle migration leaves every existing profile active by
+default, and guardian access begins empty with no automatic sharing. They can
+safely run before the application deployment.
 
 ## ✅ Phase 1: Order & Billing Transparency (COMPLETED)
 - [x] **Order Details Page (`/portal/orders/[id]`)**

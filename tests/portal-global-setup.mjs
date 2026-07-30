@@ -55,6 +55,16 @@ export default async function globalSetup() {
     {
       sql: `INSERT INTO user
         (id, name, email, email_verified, role, stripe_customer_id, emergency_phone)
+        VALUES (?, 'Guardian Alpha', ?, ?, 'user', NULL, NULL)`,
+      args: [
+        fixtures.guardian.id,
+        fixtures.guardian.email,
+        Date.now(),
+      ],
+    },
+    {
+      sql: `INSERT INTO user
+        (id, name, email, email_verified, role, stripe_customer_id, emergency_phone)
         VALUES (?, ?, ?, ?, 'user', ?, ?)`,
       args: [
         fixtures.parentB.id,
@@ -94,6 +104,10 @@ export default async function globalSetup() {
       args: [fixtures.legacyParent.sessionToken, fixtures.legacyParent.id, expires],
     },
     {
+      sql: 'INSERT INTO session (session_token, userId, expires) VALUES (?, ?, ?)',
+      args: [fixtures.guardian.sessionToken, fixtures.guardian.id, expires],
+    },
+    {
       sql: `INSERT INTO registrations
         (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
          stripe_session_id, stripe_customer_id, status, total_amount, metadata)
@@ -128,6 +142,12 @@ export default async function globalSetup() {
         6500,
         orderMetadata(fixtures.parentB.eventName, fixtures.parentB.athleteName, 6500),
       ],
+    },
+    {
+      sql: `UPDATE registrations
+            SET secondary_parent_email = ?
+            WHERE id = ?`,
+      args: [fixtures.guardian.email, fixtures.parentB.registrationId],
     },
     {
       sql: `INSERT INTO registrations

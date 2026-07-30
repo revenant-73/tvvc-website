@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey, index, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, primaryKey, index, uniqueIndex, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // --- Authentication Tables (Auth.js) ---
@@ -198,6 +198,28 @@ export const registrations = sqliteTable('registrations', {
     parentEmailIdx: index('registrations_parent_email_idx').on(table.parentEmail),
     userIdIdx: index('registrations_user_id_idx').on(table.userId),
     stripeSessionIdIdx: index('registrations_stripe_session_id_idx').on(table.stripeSessionId),
+  };
+});
+
+// Explicit, revocable view-only access to a primary parent's household.
+export const householdGuardians = sqliteTable('household_guardians', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  ownerUserId: text('owner_user_id').notNull().references(() => users.id),
+  guardianEmail: text('guardian_email').notNull(),
+  guardianUserId: text('guardian_user_id').references(() => users.id),
+  status: text('status').notNull().default('pending'), // pending, active, revoked
+  invitedAt: text('invited_at').default(sql`CURRENT_TIMESTAMP`),
+  acceptedAt: text('accepted_at'),
+  revokedAt: text('revoked_at'),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    ownerEmailUnique: uniqueIndex('household_guardians_owner_email_unique')
+      .on(table.ownerUserId, table.guardianEmail),
+    ownerUserIdIdx: index('household_guardians_owner_user_id_idx').on(table.ownerUserId),
+    guardianEmailIdx: index('household_guardians_guardian_email_idx').on(table.guardianEmail),
+    guardianUserIdIdx: index('household_guardians_guardian_user_id_idx').on(table.guardianUserId),
+    statusIdx: index('household_guardians_status_idx').on(table.status),
   };
 });
 

@@ -22,6 +22,13 @@
       "when": 1785446867554,
       "tag": "0002_player_profile_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1785448841508,
+      "tag": "0003_guardian_household_access",
+      "breakpoints": true
     }
   ]
 }

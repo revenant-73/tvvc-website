@@ -78,6 +78,17 @@ export const portalProfileSchema = z.object({
   emergencyPhone: z.string().trim().max(40, 'Phone number is too long').optional().default(''),
 });
 
+export const portalGuardianAccessSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('invite'),
+    email: z.string().trim().toLowerCase().email('Enter a valid guardian email address'),
+  }),
+  z.object({
+    action: z.literal('revoke'),
+    accessId: z.coerce.number().int().positive('Invalid guardian access ID'),
+  }),
+]);
+
 export type ParentInfo = z.infer<typeof parentInfoSchema>;
 export type Athlete = z.infer<typeof athleteSchema>;
 export type Registration = z.infer<typeof registrationSchema>;

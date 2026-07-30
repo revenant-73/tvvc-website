@@ -2,8 +2,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
 import { db } from '../../db/db';
-import { users } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { householdGuardians, users } from '../../db/schema';
+import { and, eq, isNull } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
 
 const session = await getSession(Astro.request);
@@ -26,6 +26,17 @@ const [dbUser] = await db.select()
 if (!dbUser) {
   return Astro.redirect('/portal/login');
 }
+
+const guardianAccess = await db.select({
+  id: householdGuardians.id,
+  email: householdGuardians.guardianEmail,
+  status: householdGuardians.status,
+})
+  .from(householdGuardians)
+  .where(and(
+    eq(householdGuardians.ownerUserId, portalUser.id),
+    isNull(householdGuardians.revokedAt)
+  ));
 ---
 
 <BaseLayout title="Account Settings" noindex={true}>
@@ -111,6 +122,58 @@ if (!dbUser) {
         </form>
       </section>
 
+      <section class="glass rounded-3xl p-8 border-white/5">
+        <h2 class="text-2xl font-heading font-bold mb-2 uppercase tracking-tight flex items-center gap-3">
+          <span class="w-2 h-8 bg-brand-teal rounded-full"></span>
+          Guardian Access
+        </h2>
+        <p class="text-sm text-white/40 mb-6 max-w-2xl">
+          Invite another parent or guardian to view your players, schedules, and order history. Shared access is view-only and can be revoked at any time.
+        </p>
+
+        <form id="guardian-form" class="flex flex-col sm:flex-row gap-3 mb-6">
+          <label class="flex-grow">
+            <span class="sr-only">Guardian email address</span>
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="guardian@example.com"
+              class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-teal transition-colors placeholder:text-white/20"
+            />
+          </label>
+          <button
+            type="submit"
+            class="bg-brand-teal hover:bg-brand-teal/80 text-brand-charcoal font-bold px-6 py-4 rounded-2xl transition-colors disabled:opacity-50"
+          >
+            Send Invite
+          </button>
+        </form>
+
+        <div class="space-y-3" id="guardian-list">
+          {guardianAccess.length > 0 ? guardianAccess.map((access) => (
+            <div class="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p class="font-bold">{access.email}</p>
+                <p class="text-[10px] uppercase tracking-widest font-bold text-white/40 mt-1">
+                  {access.status === 'active' ? 'Active · View only' : 'Pending sign-in'}
+                </p>
+              </div>
+              <button
+                type="button"
+                class="revoke-guardian self-start sm:self-auto text-brand-coral border border-brand-coral/30 hover:bg-brand-coral hover:text-white px-4 py-2 rounded-xl text-xs uppercase tracking-widest font-bold transition-colors"
+                data-access-id={access.id}
+                data-guardian-email={access.email}
+              >
+                Revoke
+              </button>
+            </div>
+          )) : (
+            <p class="text-sm text-white/30 py-2">No guardian access has been shared.</p>
+          )}
+        </div>
+      </section>
+
       <!-- Advanced Section -->
       <section class="glass rounded-3xl p-8 border-white/5">
         <h2 class="text-2xl font-heading font-bold mb-6 uppercase tracking-tight flex items-center gap-3">
@@ -170,6 +233,71 @@ if (!dbUser) {
       btnText?.classList.remove('hidden');
       btnLoader?.classList.add('hidden');
     }
+  });
+
+  const guardianForm = document.getElementById('guardian-form') as HTMLFormElement;
+  guardianForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = guardianForm.querySelector('button[type="submit"]') as HTMLButtonElement;
+    const email = String(new FormData(guardianForm).get('email') || '');
+    button.disabled = true;
+
+    try {
+      const response = await fetch('/api/portal/guardians', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'invite', email }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        window.toast.error(result.error || 'Unable to invite guardian');
+        return;
+      }
+
+      window.toast.success(
+        result.emailSent
+          ? 'Guardian invitation sent.'
+          : 'Guardian access saved. Ask them to sign in with that email.'
+      );
+      window.setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      console.error(error);
+      window.toast.error('Unable to invite guardian');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.revoke-guardian').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const accessId = Number(button.dataset.accessId);
+      const guardianEmail = button.dataset.guardianEmail || 'this guardian';
+      if (!window.confirm(`Revoke view access for ${guardianEmail}?`)) return;
+
+      button.disabled = true;
+      try {
+        const response = await fetch('/api/portal/guardians', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'revoke', accessId }),
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+          window.toast.error(result.error || 'Unable to revoke guardian access');
+          button.disabled = false;
+          return;
+        }
+
+        window.toast.success('Guardian access revoked.');
+        window.setTimeout(() => window.location.reload(), 500);
+      } catch (error) {
+        console.error(error);
+        window.toast.error('Unable to revoke guardian access');
+        button.disabled = false;
+      }
+    });
   });
 
   document.getElementById('signout-all')?.addEventListener('click', async (event) => {
