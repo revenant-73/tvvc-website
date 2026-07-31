@@ -374,6 +374,18 @@ export default async function globalSetup() {
     },
     {
       sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price,
+         capacity, spots_filled, pending_spots, active)
+        VALUES (?, 'clinic', ?, 'September 10, 2099', '4:00 PM',
+                '2099-09-10', '2099-09-10', ?, 1, 0, 0, true)`,
+      args: [
+        fixtures.capacity.eventId,
+        fixtures.capacity.eventName,
+        fixtures.capacity.price,
+      ],
+    },
+    {
+      sql: `INSERT INTO events
         (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
         VALUES ('event-parent-a-history', 'clinic', ?, 'May 1, 2020', '9:00 AM',
                 '2020-05-01', '2020-05-01', 9900, 30, true)`,
