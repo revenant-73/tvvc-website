@@ -8,6 +8,7 @@ import { db } from '../../db/db';
 import { events, playerProfiles } from '../../db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
+import { isRegistrationEventEligible } from '../../lib/event-eligibility';
 
 let session = null;
 try {
@@ -15,8 +16,6 @@ try {
 } catch (e) {
   console.error('Failed to get session:', e);
 }
-
-const now = new Date();
 
 let tryoutEvents = [];
 let userAthletes = [];
@@ -26,12 +25,7 @@ try {
   if (db) {
     const results = await db.select().from(events).where(and(eq(events.type, 'tryout'), eq(events.active, true)));
     
-    // Filter out past events
-    tryoutEvents = results.filter(e => {
-      if (!e.startDate) return true;
-      const eventDate = new Date(e.startDate);
-      return eventDate >= now || eventDate.toDateString() === now.toDateString();
-    });
+    tryoutEvents = results.filter((event) => isRegistrationEventEligible(event));
 
     if (session) {
       const portalUser = await ensureCanonicalPortalUser(session.user);

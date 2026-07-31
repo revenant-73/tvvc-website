@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+const portalFixtures = require('./portal-fixtures');
 
 test.describe('Registration Flow', () => {
   test.setTimeout(60000);
@@ -80,6 +81,58 @@ test.describe('Registration Flow', () => {
     await page.getByLabel(/Medical Info/).first().fill('None');
     await expect(page.getByLabel(/Medical Info/).first()).toHaveValue('None');
   }
+
+  const registrationPayload = (eventId) => ({
+    parentInfo: {
+      name: 'Eligibility Test Parent',
+      email: 'eligibility-parent@tvvc.test',
+      phone: '503-555-0140',
+      emergencyPhone: '503-555-0141',
+    },
+    athletes: [{
+      firstName: 'Eligibility',
+      lastName: 'Player',
+      grade: '6th',
+      medicalInfo: 'None',
+      photoReleaseAgreed: false,
+      waiverAgreed: true,
+      selectedEvents: [eventId],
+    }],
+  });
+
+  test('does not offer inactive or expired events in the registration form', async ({ page }) => {
+    await fillStep1(page);
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible();
+    await expect(page.getByText(portalFixtures.parentB.eventName, { exact: true })).toBeVisible();
+    await expect(page.getByText(
+      portalFixtures.scheduleHistory.historicalCurrentEventName,
+      { exact: true }
+    )).not.toBeVisible();
+    await expect(page.getByText(
+      portalFixtures.scheduleHistory.inactiveEventName,
+      { exact: true }
+    )).not.toBeVisible();
+  });
+
+  test('rejects inactive, expired, and unknown event IDs at the API boundary', async ({ request }) => {
+    const unavailableEventIds = [
+      'event-parent-a-inactive',
+      'event-parent-a-history',
+      'event-that-does-not-exist',
+    ];
+
+    for (const eventId of unavailableEventIds) {
+      const response = await request.post('/api/register', {
+        data: registrationPayload(eventId),
+      });
+      const responseBody = await response.json();
+
+      expect(response.status(), eventId).toBe(400);
+      expect(responseBody.error).toContain('no longer available');
+    }
+  });
 
   test('should validate required fields', async ({ page }) => {
     await fillStep1(page);
