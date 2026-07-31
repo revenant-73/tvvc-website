@@ -9,6 +9,7 @@ import { db } from '../db/db';
 import { events as eventsTable, playerProfiles } from '../db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../lib/portal-ownership';
+import { isRegistrationEventEligible } from '../lib/event-eligibility';
 
 let session = null;
 try {
@@ -23,8 +24,9 @@ let userAthletes = [];
 try {
   const allRows = await db.select().from(eventsTable);
   
-  dbEvents = allRows.filter(e => 
-    (e.type === 'tournament' || e.type === 'family-challenge') && e.active
+  dbEvents = allRows.filter(e =>
+    (e.type === 'tournament' || e.type === 'family-challenge') &&
+    isRegistrationEventEligible(e)
   );
 
   if (session) {

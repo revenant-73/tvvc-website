@@ -6,9 +6,12 @@ import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
 import { createStripeClient } from '../../lib/stripe-client';
 import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
+import { getClubDate, isRegistrationEventEligible } from '../../lib/event-eligibility';
 
 import { registrationSchema } from '../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../lib/request-security';
+
+class RegistrationUnavailableError extends Error {}
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -68,13 +71,28 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'No events selected.' }), { status: 400 });
     }
 
-    const selectedEvents = await db.select().from(events).where(inArray(events.id, allEventIds));
-    
     const lineItems = [];
     const registrationId = crypto.randomUUID();
 
     // Perform all DB operations inside a transaction
     const sessionUrl = await db.transaction(async (tx) => {
+      const requestedEventIds = Array.from(new Set(allEventIds));
+      const selectedEvents = await tx.select()
+        .from(events)
+        .where(inArray(events.id, requestedEventIds));
+      const selectedEventsById = new Map(selectedEvents.map((event) => [event.id, event]));
+      const clubDate = getClubDate();
+      const unavailableEventIds = requestedEventIds.filter((eventId) => {
+        const event = selectedEventsById.get(eventId);
+        return !event || !isRegistrationEventEligible(event, clubDate);
+      });
+
+      if (unavailableEventIds.length > 0) {
+        throw new RegistrationUnavailableError(
+          'One or more selected events are no longer available. Refresh the page and choose an active event.'
+        );
+      }
+
       // For training blocks, we charge once per unique block across all athletes in the request
       const uniqueTrainingBlockIds = new Set(
         athleteData.flatMap((a: any) => a.selectedEvents)
@@ -340,8 +358,12 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ url: sessionUrl }), { status: 200 });
 
   } catch (err) {
-    console.error('Registration API Error:', err);
     const message = err instanceof Error ? err.message : 'An internal error occurred.';
+    if (err instanceof RegistrationUnavailableError) {
+      return new Response(JSON.stringify({ error: message }), { status: 400 });
+    }
+
+    console.error('Registration API Error:', err);
     return new Response(JSON.stringify({ error: message }), { status: 500 });
   }
 };

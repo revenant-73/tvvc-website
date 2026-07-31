@@ -2,6 +2,10 @@
 
 This roadmap tracks the development of the Customer Portal for TVVC parents and athletes.
 
+The July 2026 registration and portal audit, including the prioritized
+remediation backlog, is tracked in
+[REGISTRATION_PORTAL_AUDIT.md](./REGISTRATION_PORTAL_AUDIT.md).
+
 ## Stabilization TODO
 
 ### Security and data integrity
@@ -85,4 +89,4 @@ safely run before the application deployment.
   - Fully pre-fill parent info from logged-in session.
 
 ---
-*Last Updated: 2026-07-30*
+*Last Updated: 2026-07-31*

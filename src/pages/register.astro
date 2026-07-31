@@ -8,6 +8,7 @@ import { db } from '../db/db';
 import { events, playerProfiles } from '../db/schema';
 import { asc, and, eq, isNull } from 'drizzle-orm';
 import { ensureCanonicalPortalUser } from '../lib/portal-ownership';
+import { isRegistrationEventEligible } from '../lib/event-eligibility';
 
 let session = null;
 try {
@@ -16,19 +17,6 @@ try {
   console.error('Failed to get session:', e);
 }
 
-const now = new Date();
-const currentYear = 2026;
-
-const getSortValue = (dateInfo: string) => {
-  try {
-    const datePart = dateInfo.split('–')[0].trim();
-    const eventDate = new Date(`${datePart}, ${currentYear}`);
-    return eventDate.getTime();
-  } catch (e) {
-    return 0;
-  }
-};
-
 let allEvents = [];
 let userAthletes = [];
 let error = null;
@@ -36,20 +24,7 @@ let error = null;
 try {
   const results = await db.select().from(events).where(eq(events.active, true)).orderBy(asc(events.type));
   
-  // Filter out past events
-  allEvents = results.filter(e => {
-    try {
-      const eventTime = getSortValue(e.dateInfo);
-      if (eventTime === 0) return true; // Keep if we can't parse
-      
-      // If it's a camp (multi-day), we might want to keep it if it's still ongoing
-      // but for simplicity and following "hide before this date", we'll hide if it started before today
-      // unless today is one of the days.
-      return eventTime > now.getTime() || new Date(eventTime).toDateString() === now.toDateString();
-    } catch (e) {
-      return true;
-    }
-  });
+  allEvents = results.filter((event) => isRegistrationEventEligible(event));
 
   if (session) {
     const portalUser = await ensureCanonicalPortalUser(session.user);
