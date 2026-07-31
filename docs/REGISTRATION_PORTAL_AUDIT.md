@@ -17,7 +17,7 @@ the deployed Netlify site.
 
 - [x] Reject inactive, expired, and unknown events in the registration API and
   hide expired events from every public registration form.
-- [ ] Make Stripe webhook processing idempotent so retries cannot double-count
+- [x] Make Stripe webhook processing idempotent so retries cannot double-count
   capacity or resend confirmations.
 - [ ] Reserve capacity with atomic conditional database updates to prevent two
   checkouts from claiming the final spot.
