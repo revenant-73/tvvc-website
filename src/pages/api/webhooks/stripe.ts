@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
 import { registrations, events, registrationItems, users, athletes } from '../../../db/schema';
-import { eq, sql, and } from 'drizzle-orm';
+import { eq, sql, and, inArray } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { sendEmail } from '../../../lib/email';
 import { generateRegistrationEmail } from '../../../lib/email-templates';
@@ -55,27 +55,56 @@ export const POST: APIRoute = async ({ request }) => {
       console.log(`Processing successful registration: ${registrationId}`);
       
       try {
-        await db.transaction(async (tx) => {
-          // 1. Update Registration Status and store Customer ID
-          const updateReg = await tx.update(registrations)
+        const finalizedRegistration = await db.transaction(async (tx) => {
+          const [registration] = await tx.select()
+            .from(registrations)
+            .where(eq(registrations.id, registrationId))
+            .limit(1);
+
+          if (!registration) {
+            console.warn(`Registration ${registrationId} was not found for Stripe event ${event.id}.`);
+            return null;
+          }
+
+          const paymentIsValid =
+            session.id === registration.stripeSessionId &&
+            session.payment_status === 'paid' &&
+            session.amount_total === registration.totalAmount &&
+            session.currency?.toLowerCase() === 'usd';
+
+          if (!paymentIsValid) {
+            await tx.update(registrations)
+              .set({ needsReview: true })
+              .where(eq(registrations.id, registrationId));
+            console.error(`Stripe payment verification failed for registration ${registrationId} and event ${event.id}.`);
+            return null;
+          }
+
+          // This conditional transition is the idempotency boundary. Only one
+          // delivery can move an eligible registration into the paid state.
+          const [updateReg] = await tx.update(registrations)
             .set({ 
               status: 'paid',
               stripeCustomerId: stripeCustomerId
             })
-            .where(eq(registrations.id, registrationId))
+            .where(and(
+              eq(registrations.id, registrationId),
+              eq(registrations.stripeSessionId, session.id),
+              inArray(registrations.status, ['pending', 'expired'])
+            ))
             .returning();
           
-          if (updateReg.length === 0) {
-            console.warn(`Registration ${registrationId} not found in database during webhook processing.`);
-            return;
+          if (!updateReg) {
+            console.log(`Stripe event ${event.id} did not transition registration ${registrationId}; it was already finalized or is no longer payable.`);
+            return null;
           }
 
           // 2. Link Stripe Customer ID to User if not already set
-          if (updateReg[0].userId && stripeCustomerId) {
+          if (updateReg.userId && stripeCustomerId) {
             await tx.update(users)
               .set({ stripeCustomerId: stripeCustomerId })
               .where(and(
-                eq(users.id, updateReg[0].userId),
+                eq(users.id, updateReg.userId),
                 sql`${users.stripeCustomerId} IS NULL`
               ));
           }
@@ -123,7 +152,7 @@ export const POST: APIRoute = async ({ request }) => {
                   <div style="font-family: sans-serif; padding: 20px; border: 2px solid #E85D4E; border-radius: 8px;">
                     <h2 style="color: #E85D4E;">Action Required: Over-Enrollment</h2>
                     <p>Registration <strong>${registrationId}</strong> has resulted in an event exceeding its capacity.</p>
-                    <p><strong>Parent:</strong> ${updateReg[0].parentName} (${updateReg[0].parentEmail})</p>
+                    <p><strong>Parent:</strong> ${updateReg.parentName} (${updateReg.parentEmail})</p>
                     <p>Please check the <a href="${new URL(request.url).origin}/admin/registrations?auth=true">Admin Dashboard</a> to manage this registration.</p>
                   </div>
                 `
@@ -132,7 +161,16 @@ export const POST: APIRoute = async ({ request }) => {
               console.error('Failed to send admin alert email:', notifyErr);
             }
           }
+
+          return updateReg;
         });
+
+        if (!finalizedRegistration) {
+          return new Response(JSON.stringify({ received: true, processed: false }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
         
         console.log(`Registration ${registrationId} fully finalized. Preparing confirmation email...`);
 

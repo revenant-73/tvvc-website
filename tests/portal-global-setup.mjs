@@ -231,6 +231,24 @@ export default async function globalSetup() {
       ],
     },
     {
+      sql: `INSERT INTO registrations
+        (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
+         stripe_session_id, status, total_amount, expires_at, metadata)
+        VALUES (?, NULL, 'Webhook Parent', 'webhook-parent@example.test', '503-555-0401', '503-555-0402',
+                ?, 'pending', ?, ?, ?)`,
+      args: [
+        fixtures.webhook.registrationId,
+        fixtures.webhook.sessionId,
+        fixtures.webhook.totalAmount,
+        Date.now() + 30 * 60 * 1000,
+        orderMetadata(
+          fixtures.webhook.eventName,
+          'Webhook Player',
+          fixtures.webhook.totalAmount
+        ),
+      ],
+    },
+    {
       sql: `INSERT INTO player_profiles
         (id, parent_id, first_name, last_name, grade, medical_info)
         VALUES (?, ?, 'Avery', 'Alpha', '8th', 'None')`,
@@ -327,11 +345,32 @@ export default async function globalSetup() {
       ],
     },
     {
+      sql: `INSERT INTO athletes
+        (id, registration_id, parent_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, NULL, 'Webhook', 'Player', '8th', 'None')`,
+      args: [
+        fixtures.webhook.athleteId,
+        fixtures.webhook.registrationId,
+      ],
+    },
+    {
       sql: `INSERT INTO events
         (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
         VALUES ('event-parent-a', 'clinic', ?, 'August 10, 2099', '10:00 AM',
                 '2099-08-10', '2099-08-10', 4500, 30, true)`,
       args: [fixtures.parentA.eventName],
+    },
+    {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price,
+         capacity, spots_filled, pending_spots, active)
+        VALUES (?, 'clinic', ?, 'August 20, 2099', '10:00 AM',
+                '2099-08-20', '2099-08-20', ?, 10, 2, 1, true)`,
+      args: [
+        fixtures.webhook.eventId,
+        fixtures.webhook.eventName,
+        fixtures.webhook.totalAmount,
+      ],
     },
     {
       sql: `INSERT INTO events
@@ -386,6 +425,15 @@ export default async function globalSetup() {
       sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
             VALUES (?, ?, 'event-parent-a')`,
       args: [fixtures.parentA.registrationId, fixtures.parentA.athleteId],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, ?)`,
+      args: [
+        fixtures.webhook.registrationId,
+        fixtures.webhook.athleteId,
+        fixtures.webhook.eventId,
+      ],
     },
     {
       sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)

@@ -61,4 +61,12 @@ module.exports = {
     athleteName: 'Casey Collision',
     eventName: 'Email Collision Event',
   },
+  webhook: {
+    registrationId: 'webhook-pending-2026',
+    athleteId: 501,
+    eventId: 'event-webhook-idempotency',
+    sessionId: 'cs_test_webhook_idempotency',
+    eventName: 'Webhook Idempotency Clinic',
+    totalAmount: 4200,
+  },
 };
