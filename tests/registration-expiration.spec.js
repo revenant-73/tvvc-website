@@ -1,12 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { createClient } from '@libsql/client';
 const fixtures = require('./portal-fixtures');
+const cronSecret = 'playwright-only-cron-secret-not-for-production-use';
 
 test('cleanup releases an expired reservation only once', async ({ request }) => {
   const client = createClient({ url: fixtures.databaseUrl });
-  const headers = process.env.CRON_SECRET
-    ? { Authorization: `Bearer ${process.env.CRON_SECRET}` }
-    : {};
+  const headers = { Authorization: `Bearer ${cronSecret}` };
 
   try {
     const cleanup = await request.post('/api/admin/cleanup-expired', {
@@ -50,4 +49,15 @@ test('cleanup releases an expired reservation only once', async ({ request }) =>
   } finally {
     client.close();
   }
+});
+
+test('cleanup rejects missing and invalid cron credentials', async ({ request }) => {
+  const missing = await request.post('/api/admin/cleanup-expired', { data: {} });
+  expect(missing.status()).toBe(401);
+
+  const invalid = await request.post('/api/admin/cleanup-expired', {
+    headers: { Authorization: 'Bearer definitely-not-the-secret' },
+    data: {},
+  });
+  expect(invalid.status()).toBe(401);
 });

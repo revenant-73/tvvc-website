@@ -45,7 +45,9 @@ sequenceDiagram
 
 ## 🔐 Administration
 
-The system includes a passcode-protected admin suite located at `/admin`.
+The system includes an authenticated, role-protected admin suite located at
+`/admin`. Admin API mutations verify the current server-side session and the
+user's current database role on every request.
 
 ### Features:
 - **Event Manager**: View all camps/clinics, current capacity, and toggle active status.
@@ -95,7 +97,11 @@ To run the system correctly, the following environment variables must be configu
 | `STRIPE_WEBHOOK_SECRET` | Secret to verify webhook signatures | Stripe Dashboard (Webhooks > Endpoint Secret) |
 | `TURSO_DATABASE_URL` | LibSQL Database connection URL | Turso Dashboard or `turso db show` |
 | `TURSO_AUTH_TOKEN` | Turso Database access token | Turso Dashboard or `turso db tokens create` |
-| `ADMIN_PASSCODE` | Custom passcode for `/admin` access | Your choice (set in environment) |
+| `AUTH_SECRET` | Signs and verifies Auth.js sessions | Generate a long random secret |
+| `CRON_SECRET` | Bearer token required by scheduled cleanup | Generate a separate long random secret |
+
+Admin access is controlled by the authenticated user's `role` in the `user`
+table. Browser-supplied passcodes are not accepted by admin APIs.
 
 ### 💻 Local Setup
 1. Create a `.env` file from `.env.example`.
@@ -107,4 +113,3 @@ To run the system correctly, the following environment variables must be configu
 2. **Crucial**: Use **Live Mode** keys for Stripe.
 3. Set the Webhook URL in Stripe to: `https://your-domain.com/api/webhooks/stripe`.
 4. Ensure the build command is `npm run build` and the publish directory is `dist`.
-

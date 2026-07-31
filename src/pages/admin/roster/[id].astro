@@ -12,7 +12,6 @@ const { id } = Astro.params;
 const session = await getSession(Astro.request);
 const user = session?.user as any;
 const isAdmin = user?.role === 'admin';
-const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
 
 let eventData = null;
 let roster = [];
@@ -315,7 +314,7 @@ if (eventData && !isAdmin) {
   </main>
 </BaseLayout>
 
-<script is:inline define:vars={{ roster, eventName: eventData?.name, eventId: id, ADMIN_PASSCODE }}>
+<script is:inline define:vars={{ roster, eventName: eventData?.name, eventId: id }}>
   // Modal Logic
   const modal = document.getElementById('addPlayerModal');
   const addBtn = document.getElementById('addPlayerBtn');
@@ -392,7 +391,6 @@ if (eventData && !isAdmin) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          passcode: ADMIN_PASSCODE,
           itemId: parseInt(currentTransferItemId),
           newEventId
         }),
@@ -436,7 +434,6 @@ if (eventData && !isAdmin) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          passcode: ADMIN_PASSCODE,
           athlete,
           eventId
         }),
@@ -469,7 +466,6 @@ if (eventData && !isAdmin) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              passcode: ADMIN_PASSCODE,
               itemId: parseInt(itemId)
             }),
           });
@@ -499,7 +495,6 @@ if (eventData && !isAdmin) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              passcode: ADMIN_PASSCODE,
               registrationId
             }),
           });

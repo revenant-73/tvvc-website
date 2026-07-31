@@ -1,27 +1,18 @@
 import type { APIRoute } from 'astro';
-import { getDb } from '../../../db';
 import { registrationItems, events } from '../../../db/schema';
 import { eq, sql } from 'drizzle-orm';
+import { requireAdminApiSession } from '../../../lib/admin-auth';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const databaseUrl = import.meta.env.TURSO_DATABASE_URL;
-    const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
-
-    if (!databaseUrl) {
-      throw new Error('Database configuration missing');
-    }
+    const authorization = await requireAdminApiSession(request);
+    if (!authorization.authorized) return authorization.response;
 
     const body = await request.json();
-    const { passcode, itemId } = body;
-
-    if (passcode !== ADMIN_PASSCODE) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
-
-    const db = getDb(databaseUrl, import.meta.env.TURSO_AUTH_TOKEN || '');
+    const { itemId } = body;
+    const { db } = authorization;
 
     // 1. Get the item to find the eventId
     const [item] = await db.select().from(registrationItems).where(eq(registrationItems.id, itemId));
