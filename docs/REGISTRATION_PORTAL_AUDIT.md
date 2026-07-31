@@ -19,7 +19,7 @@ the deployed Netlify site.
   hide expired events from every public registration form.
 - [x] Make Stripe webhook processing idempotent so retries cannot double-count
   capacity or resend confirmations.
-- [ ] Reserve capacity with atomic conditional database updates to prevent two
+- [x] Reserve capacity with atomic conditional database updates to prevent two
   checkouts from claiming the final spot.
 - [ ] Align database and Stripe Checkout expiration, handle
   `checkout.session.expired`, and release abandoned reservations promptly.

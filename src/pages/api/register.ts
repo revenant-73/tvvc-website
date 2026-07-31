@@ -12,6 +12,19 @@ import { registrationSchema } from '../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../lib/request-security';
 
 class RegistrationUnavailableError extends Error {}
+class RegistrationCapacityError extends Error {}
+
+function isDatabaseBusyError(error: unknown): boolean {
+  let current = error;
+
+  for (let depth = 0; depth < 5 && current && typeof current === 'object'; depth += 1) {
+    const candidate = current as { code?: unknown; cause?: unknown };
+    if (candidate.code === 'SQLITE_BUSY') return true;
+    current = candidate.cause;
+  }
+
+  return false;
+}
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -93,6 +106,33 @@ export const POST: APIRoute = async ({ request }) => {
         );
       }
 
+      const requestedSpotsByEvent = allEventIds.reduce((counts, eventId) => {
+        counts.set(eventId, (counts.get(eventId) || 0) + 1);
+        return counts;
+      }, new Map<string, number>());
+
+      // Claim each event's complete requested quantity in one conditional
+      // update. The capacity check and pending-spots increment therefore share
+      // the same database write boundary, even across concurrent checkouts.
+      for (const [eventId, requestedSpots] of requestedSpotsByEvent) {
+        const event = selectedEventsById.get(eventId)!;
+        const [reservedEvent] = await tx.update(events)
+          .set({
+            pendingSpots: sql`COALESCE(${events.pendingSpots}, 0) + ${requestedSpots}`,
+          })
+          .where(and(
+            eq(events.id, eventId),
+            sql`COALESCE(${events.spotsFilled}, 0) + COALESCE(${events.pendingSpots}, 0) + ${requestedSpots} <= ${events.capacity}`
+          ))
+          .returning({ id: events.id });
+
+        if (!reservedEvent) {
+          throw new RegistrationCapacityError(
+            `The event "${event.name}" no longer has enough available spots.`
+          );
+        }
+      }
+
       // For training blocks, we charge once per unique block across all athletes in the request
       const uniqueTrainingBlockIds = new Set(
         athleteData.flatMap((a: any) => a.selectedEvents)
@@ -115,16 +155,6 @@ export const POST: APIRoute = async ({ request }) => {
         for (const eventId of athlete.selectedEvents) {
           const event = selectedEvents.find(e => e.id === eventId);
           if (!event) continue;
-
-          // Check combined capacity (Filled + Pending)
-          if ((event.spotsFilled || 0) + (event.pendingSpots || 0) >= (event.capacity || 0)) {
-            throw new Error(`The event "${event.name}" is full.`);
-          }
-
-          // Increment pending spots immediately to "reserve" it
-          await tx.update(events)
-            .set({ pendingSpots: sql`${events.pendingSpots} + 1` })
-            .where(eq(events.id, eventId));
 
           // ONLY add to total and line items if NOT a training block 
           if (event.type !== 'training-block') {
@@ -361,6 +391,14 @@ export const POST: APIRoute = async ({ request }) => {
     const message = err instanceof Error ? err.message : 'An internal error occurred.';
     if (err instanceof RegistrationUnavailableError) {
       return new Response(JSON.stringify({ error: message }), { status: 400 });
+    }
+    if (err instanceof RegistrationCapacityError) {
+      return new Response(JSON.stringify({ error: message }), { status: 409 });
+    }
+    if (isDatabaseBusyError(err)) {
+      return new Response(JSON.stringify({
+        error: 'Another checkout is reserving these spots. Refresh and try again.',
+      }), { status: 409 });
     }
 
     console.error('Registration API Error:', err);

@@ -69,4 +69,9 @@ module.exports = {
     eventName: 'Webhook Idempotency Clinic',
     totalAmount: 4200,
   },
+  capacity: {
+    eventId: 'event-atomic-final-spot',
+    eventName: 'Atomic Final Spot Clinic',
+    price: 3600,
+  },
 };
