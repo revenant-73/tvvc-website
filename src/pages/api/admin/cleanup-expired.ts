@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
-import { registrations, events, registrationItems } from '../../../db/schema';
-import { eq, and, lt, sql, inArray } from 'drizzle-orm';
+import { registrations } from '../../../db/schema';
+import { eq, and, lt } from 'drizzle-orm';
+import { expirePendingRegistration } from '../../../lib/registration-reservations';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -41,35 +42,21 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ message: 'No expired registrations found.' }), { status: 200 });
     }
 
-    const expiredIds = expiredRegistrations.map(r => r.id);
-
-    // 2. Process cleanup in a transaction
+    // 2. Process cleanup in a transaction. Each candidate must still win the
+    // pending -> expired transition before it may release capacity.
     const result = await db.transaction(async (tx) => {
-      // Find all items associated with these registrations to release spots
-      const items = await tx.select().from(registrationItems).where(inArray(registrationItems.registrationId, expiredIds));
-      
-      const releasedEvents: Record<string, number> = {};
-      for (const item of items) {
-        if (item.eventId) {
-          releasedEvents[item.eventId] = (releasedEvents[item.eventId] || 0) + 1;
-        }
-      }
+      let registrationsProcessed = 0;
+      let spotsReleased = 0;
 
-      // Decrement pendingSpots for each event
-      for (const [eventId, count] of Object.entries(releasedEvents)) {
-        await tx.update(events)
-          .set({ pendingSpots: sql`MAX(0, ${events.pendingSpots} - ${count})` })
-          .where(eq(events.id, eventId));
+      for (const registration of expiredRegistrations) {
+        const expiration = await expirePendingRegistration(tx, registration.id);
+        if (expiration.expired) registrationsProcessed += 1;
+        spotsReleased += expiration.spotsReleased;
       }
-
-      // Mark registrations as expired
-      await tx.update(registrations)
-        .set({ status: 'expired' })
-        .where(inArray(registrations.id, expiredIds));
 
       return {
-        registrationsProcessed: expiredIds.length,
-        spotsReleased: items.length
+        registrationsProcessed,
+        spotsReleased,
       };
     });
 

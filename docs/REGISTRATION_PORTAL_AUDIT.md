@@ -21,7 +21,7 @@ the deployed Netlify site.
   capacity or resend confirmations.
 - [x] Reserve capacity with atomic conditional database updates to prevent two
   checkouts from claiming the final spot.
-- [ ] Align database and Stripe Checkout expiration, handle
+- [x] Align database and Stripe Checkout expiration, handle
   `checkout.session.expired`, and release abandoned reservations promptly.
 
 ### Administration and abuse resistance

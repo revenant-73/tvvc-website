@@ -134,6 +134,24 @@ export default async function globalSetup() {
     {
       sql: `INSERT INTO registrations
         (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
+         stripe_session_id, status, total_amount, expires_at, metadata)
+        VALUES (?, NULL, 'Cleanup Parent', 'cleanup-expired@example.test', '503-555-0601', '503-555-0602',
+                ?, 'pending', ?, ?, ?)`,
+      args: [
+        fixtures.expirationCleanup.registrationId,
+        fixtures.expirationCleanup.sessionId,
+        fixtures.expirationCleanup.totalAmount,
+        Date.now() - 60 * 1000,
+        orderMetadata(
+          fixtures.expirationCleanup.eventName,
+          'Cleanup Player',
+          fixtures.expirationCleanup.totalAmount
+        ),
+      ],
+    },
+    {
+      sql: `INSERT INTO registrations
+        (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
          stripe_session_id, stripe_customer_id, status, total_amount, metadata)
         VALUES (?, ?, 'Parent Alpha', ?, '503-555-0101', '503-555-0101',
                 'cs_test_parent_alpha_history', 'cus_parent_alpha', 'paid', 4500, ?)`,
@@ -285,6 +303,15 @@ export default async function globalSetup() {
     },
     {
       sql: `INSERT INTO athletes
+        (id, registration_id, parent_id, first_name, last_name, grade, medical_info)
+        VALUES (?, ?, NULL, 'Cleanup', 'Player', '8th', 'None')`,
+      args: [
+        fixtures.expirationCleanup.athleteId,
+        fixtures.expirationCleanup.registrationId,
+      ],
+    },
+    {
+      sql: `INSERT INTO athletes
         (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
         VALUES (?, ?, ?, ?, 'Avery', 'Alpha', '8th', 'Historical order snapshot')`,
       args: [
@@ -376,6 +403,18 @@ export default async function globalSetup() {
       sql: `INSERT INTO events
         (id, type, name, date_info, time_info, start_date, end_date, price,
          capacity, spots_filled, pending_spots, active)
+        VALUES (?, 'clinic', ?, 'October 10, 2099', '4:00 PM',
+                '2099-10-10', '2099-10-10', ?, 10, 0, 1, true)`,
+      args: [
+        fixtures.expirationCleanup.eventId,
+        fixtures.expirationCleanup.eventName,
+        fixtures.expirationCleanup.totalAmount,
+      ],
+    },
+    {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price,
+         capacity, spots_filled, pending_spots, active)
         VALUES (?, 'clinic', ?, 'September 10, 2099', '4:00 PM',
                 '2099-09-10', '2099-09-10', ?, 1, 0, 0, true)`,
       args: [
@@ -445,6 +484,15 @@ export default async function globalSetup() {
         fixtures.webhook.registrationId,
         fixtures.webhook.athleteId,
         fixtures.webhook.eventId,
+      ],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, ?)`,
+      args: [
+        fixtures.expirationCleanup.registrationId,
+        fixtures.expirationCleanup.athleteId,
+        fixtures.expirationCleanup.eventId,
       ],
     },
     {
