@@ -5,6 +5,11 @@ const databasePath = path.join(__dirname, '..', 'test-results', 'portal-e2e.db')
 module.exports = {
   databasePath,
   databaseUrl: `file:${databasePath.replaceAll('\\', '/')}`,
+  admin: {
+    id: 'admin-a',
+    email: 'admin-a@tvvc.test',
+    sessionToken: 'portal-e2e-admin-a-session',
+  },
   parentA: {
     id: 'parent-a',
     email: 'parent-a@tvvc.test',

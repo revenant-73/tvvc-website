@@ -6,11 +6,15 @@ import { expirePendingRegistration } from '../../../lib/registration-reservation
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    // Basic security check (could be a secret token in headers)
     const authHeader = request.headers.get('Authorization');
-    const cronSecret = import.meta.env.CRON_SECRET;
-    
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    const cronSecret = import.meta.env.CRON_SECRET || process.env.CRON_SECRET;
+
+    if (!cronSecret) {
+      console.error('CRON_SECRET is missing; refusing to run registration cleanup.');
+      return new Response(JSON.stringify({ error: 'Cron authentication is not configured' }), { status: 503 });
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 

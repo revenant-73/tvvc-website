@@ -1,30 +1,21 @@
 import type { APIRoute } from 'astro';
-import { getDb } from '../../../db';
 import { registrations, athletes, registrationItems, events } from '../../../db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { sendEmail } from '../../../lib/email';
 import { generateRegistrationEmail } from '../../../lib/email-templates';
+import { requireAdminApiSession } from '../../../lib/admin-auth';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const databaseUrl = import.meta.env.TURSO_DATABASE_URL;
-    const ADMIN_PASSCODE = import.meta.env.ADMIN_PASSCODE || 'tvvc2024';
-
-    if (!databaseUrl) {
-      throw new Error('Database configuration missing');
-    }
+    const authorization = await requireAdminApiSession(request);
+    if (!authorization.authorized) return authorization.response;
 
     const body = await request.json();
-    const { passcode, athlete, eventId } = body;
-
-    if (passcode !== ADMIN_PASSCODE) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
-
-    const db = getDb(databaseUrl, import.meta.env.TURSO_AUTH_TOKEN || '');
+    const { athlete, eventId } = body;
+    const { db } = authorization;
 
     // 1. Create a manual registration record
     const registrationId = `manual_${uuidv4()}`;

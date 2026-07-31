@@ -48,6 +48,16 @@ export default async function globalSetup() {
     {
       sql: `INSERT INTO user
         (id, name, email, email_verified, role, stripe_customer_id, emergency_phone)
+        VALUES (?, 'Admin Alpha', ?, ?, 'admin', NULL, NULL)`,
+      args: [
+        fixtures.admin.id,
+        fixtures.admin.email,
+        Date.now(),
+      ],
+    },
+    {
+      sql: `INSERT INTO user
+        (id, name, email, email_verified, role, stripe_customer_id, emergency_phone)
         VALUES (?, ?, ?, ?, 'user', ?, ?)`,
       args: [
         fixtures.parentA.id,
@@ -92,6 +102,10 @@ export default async function globalSetup() {
         Date.now(),
         '503-555-0303',
       ],
+    },
+    {
+      sql: 'INSERT INTO session (session_token, userId, expires) VALUES (?, ?, ?)',
+      args: [fixtures.admin.sessionToken, fixtures.admin.id, expires],
     },
     {
       sql: 'INSERT INTO session (session_token, userId, expires) VALUES (?, ?, ?)',

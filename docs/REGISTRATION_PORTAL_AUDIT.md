@@ -26,7 +26,7 @@ the deployed Netlify site.
 
 ### Administration and abuse resistance
 
-- [ ] Replace browser-supplied admin passcodes with authenticated admin-session
+- [x] Replace browser-supplied admin passcodes with authenticated admin-session
   authorization; remove hardcoded fallbacks and make cron authentication fail
   closed.
 - [ ] Add registration rate limiting or bot protection plus bounded request
