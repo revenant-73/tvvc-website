@@ -5,6 +5,7 @@ import { eq, sql, and, inArray } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { sendEmail } from '../../../lib/email';
 import { generateRegistrationEmail } from '../../../lib/email-templates';
+import { expirePendingRegistration } from '../../../lib/registration-reservations';
 
 const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-01-27.acacia' as any,
@@ -209,6 +210,39 @@ export const POST: APIRoute = async ({ request }) => {
     } else {
       console.error('No registrationId found in session metadata');
     }
+  } else if (event.type === 'checkout.session.expired') {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const registrationId = session.metadata?.registrationId;
+
+    console.log('Received checkout.session.expired for registration:', registrationId);
+
+    if (registrationId) {
+      try {
+        const expiration = await db.transaction((tx) =>
+          expirePendingRegistration(tx, registrationId, session.id)
+        );
+
+        console.log(
+          expiration.expired
+            ? `Expired registration ${registrationId} and released ${expiration.spotsReleased} reserved spot(s).`
+            : `Stripe expiration ${event.id} did not transition registration ${registrationId}; it was already finalized or the session did not match.`
+        );
+
+        return new Response(JSON.stringify({
+          received: true,
+          processed: expiration.expired,
+          spotsReleased: expiration.spotsReleased,
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (dbErr) {
+        console.error('Database Error during expiration processing:', dbErr);
+        return new Response('Database error', { status: 500 });
+      }
+    }
+
+    console.error('No registrationId found in expired session metadata');
   } else {
     console.log(`Received unhandled event type: ${event.type}`);
   }

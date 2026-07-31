@@ -11,6 +11,8 @@ import { getClubDate, isRegistrationEventEligible } from '../../lib/event-eligib
 import { registrationSchema } from '../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../lib/request-security';
 
+const CHECKOUT_EXPIRATION_SECONDS = 31 * 60;
+
 class RegistrationUnavailableError extends Error {}
 class RegistrationCapacityError extends Error {}
 
@@ -231,7 +233,6 @@ export const POST: APIRoute = async ({ request }) => {
         status: 'pending',
         totalAmount: totalCents,
         stripeCustomerId: stripeCustomerId || null,
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minute reservation
         metadata: JSON.stringify({
           ...(validation.data.metadata || {}),
           orderItems,
@@ -357,6 +358,11 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       // 3. Create Stripe Checkout Session
+      // Stripe requires an expiration at least 30 minutes after session
+      // creation. Calculate it at the Stripe boundary and persist that exact
+      // epoch in the database after creation so both systems agree.
+      const checkoutExpiresAt = Math.floor(Date.now() / 1000) + CHECKOUT_EXPIRATION_SECONDS;
+      const reservationExpiresAt = new Date(checkoutExpiresAt * 1000);
       const stripeSessionParams: Stripe.Checkout.SessionCreateParams = {
         payment_method_types: ['card'],
         line_items: lineItems,
@@ -366,6 +372,7 @@ export const POST: APIRoute = async ({ request }) => {
         metadata: {
           registrationId: registrationId,
         },
+        expires_at: checkoutExpiresAt,
       };
 
       if (stripeCustomerId) {
@@ -379,7 +386,10 @@ export const POST: APIRoute = async ({ request }) => {
 
       // Update registration with Stripe session ID
       await tx.update(registrations)
-        .set({ stripeSessionId: checkoutSession.id })
+        .set({
+          stripeSessionId: checkoutSession.id,
+          expiresAt: reservationExpiresAt,
+        })
         .where(eq(registrations.id, registrationId));
 
       return checkoutSession.url;

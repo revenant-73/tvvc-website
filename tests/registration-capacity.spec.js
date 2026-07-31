@@ -46,6 +46,12 @@ test('allows only one concurrent checkout to reserve the final spot', async ({ r
             WHERE parent_email IN (?, ?) AND status = 'pending'`,
       args: ['capacity-alpha@tvvc.test', 'capacity-beta@tvvc.test'],
     });
+    const [winningRegistration] = (await client.execute({
+      sql: `SELECT stripe_session_id, expires_at
+            FROM registrations
+            WHERE parent_email IN (?, ?) AND status = 'pending'`,
+      args: ['capacity-alpha@tvvc.test', 'capacity-beta@tvvc.test'],
+    })).rows;
     const items = await client.execute({
       sql: 'SELECT COUNT(*) AS count FROM registration_items WHERE event_id = ?',
       args: [fixtures.capacity.eventId],
@@ -55,6 +61,14 @@ test('allows only one concurrent checkout to reserve the final spot', async ({ r
     expect(Number(event.rows[0].pending_spots)).toBe(1);
     expect(Number(registrations.rows[0].count)).toBe(1);
     expect(Number(items.rows[0].count)).toBe(1);
+
+    const mockSessionResponse = await request.get(
+      `http://127.0.0.1:4322/test/checkout-sessions/${winningRegistration.stripe_session_id}`
+    );
+    const mockSession = await mockSessionResponse.json();
+
+    expect(mockSessionResponse.status()).toBe(200);
+    expect(Math.floor(Number(winningRegistration.expires_at) / 1000)).toBe(mockSession.expires_at);
   } finally {
     client.close();
   }

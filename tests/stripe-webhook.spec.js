@@ -6,7 +6,11 @@ const fixtures = require('./portal-fixtures');
 const webhookSecret = 'whsec_playwright_not_used';
 const stripe = new Stripe('sk_test_playwright_not_used');
 
-function createWebhookRequest(eventId, amountTotal = fixtures.webhook.totalAmount) {
+function createWebhookRequest(
+  eventId,
+  amountTotal = fixtures.webhook.totalAmount,
+  type = 'checkout.session.completed'
+) {
   const payload = JSON.stringify({
     id: eventId,
     object: 'event',
@@ -14,7 +18,7 @@ function createWebhookRequest(eventId, amountTotal = fixtures.webhook.totalAmoun
     created: Math.floor(Date.now() / 1000),
     livemode: false,
     pending_webhooks: 1,
-    type: 'checkout.session.completed',
+    type,
     data: {
       object: {
         id: fixtures.webhook.sessionId,
@@ -22,7 +26,7 @@ function createWebhookRequest(eventId, amountTotal = fixtures.webhook.totalAmoun
         amount_total: amountTotal,
         currency: 'usd',
         customer: 'cus_webhook_parent',
-        payment_status: 'paid',
+        payment_status: type === 'checkout.session.completed' ? 'paid' : 'unpaid',
         metadata: {
           registrationId: fixtures.webhook.registrationId,
         },
@@ -42,8 +46,12 @@ function createWebhookRequest(eventId, amountTotal = fixtures.webhook.totalAmoun
 test('validates payment details and finalizes a checkout only once', async ({ request }) => {
   const client = createClient({ url: fixtures.databaseUrl });
 
-  const postWebhook = async (eventId, amountTotal = fixtures.webhook.totalAmount) => {
-    const webhook = createWebhookRequest(eventId, amountTotal);
+  const postWebhook = async (
+    eventId,
+    amountTotal = fixtures.webhook.totalAmount,
+    type = 'checkout.session.completed'
+  ) => {
+    const webhook = createWebhookRequest(eventId, amountTotal, type);
     return request.post('/api/webhooks/stripe', {
       headers: {
         'Content-Type': 'application/json',
@@ -73,6 +81,40 @@ test('validates payment details and finalizes a checkout only once', async ({ re
     expect(Number(registration.rows[0].needs_review)).toBe(1);
     expect(Number(event.rows[0].spots_filled)).toBe(2);
     expect(Number(event.rows[0].pending_spots)).toBe(1);
+
+    const expiration = await postWebhook(
+      'evt_webhook_expired',
+      fixtures.webhook.totalAmount,
+      'checkout.session.expired'
+    );
+    expect(expiration.status()).toBe(200);
+    expect((await expiration.json()).processed).toBe(true);
+
+    registration = await client.execute({
+      sql: 'SELECT status FROM registrations WHERE id = ?',
+      args: [fixtures.webhook.registrationId],
+    });
+    event = await client.execute({
+      sql: 'SELECT spots_filled, pending_spots FROM events WHERE id = ?',
+      args: [fixtures.webhook.eventId],
+    });
+    expect(registration.rows[0].status).toBe('expired');
+    expect(Number(event.rows[0].spots_filled)).toBe(2);
+    expect(Number(event.rows[0].pending_spots)).toBe(0);
+
+    const expirationReplay = await postWebhook(
+      'evt_webhook_expired_replay',
+      fixtures.webhook.totalAmount,
+      'checkout.session.expired'
+    );
+    expect(expirationReplay.status()).toBe(200);
+    expect((await expirationReplay.json()).processed).toBe(false);
+
+    event = await client.execute({
+      sql: 'SELECT pending_spots FROM events WHERE id = ?',
+      args: [fixtures.webhook.eventId],
+    });
+    expect(Number(event.rows[0].pending_spots)).toBe(0);
 
     const deliveries = await Promise.all([
       postWebhook('evt_webhook_delivery_a'),

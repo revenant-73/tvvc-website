@@ -74,4 +74,12 @@ module.exports = {
     eventName: 'Atomic Final Spot Clinic',
     price: 3600,
   },
+  expirationCleanup: {
+    registrationId: 'cleanup-expired-2026',
+    athleteId: 601,
+    eventId: 'event-cleanup-expired',
+    sessionId: 'cs_test_cleanup_expired',
+    eventName: 'Expired Reservation Clinic',
+    totalAmount: 3900,
+  },
 };
