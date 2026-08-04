@@ -9,6 +9,8 @@ const path = require('node:path');
  */
 require('dotenv').config();
 const portalFixtures = require('./tests/portal-fixtures');
+const localPort = process.env.PLAYWRIGHT_PORT || '4321';
+const localBaseUrl = `http://127.0.0.1:${localPort}`;
 
 module.exports = defineConfig({
   testDir: './tests',
@@ -19,7 +21,7 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : 4,
   reporter: 'html',
   use: {
-    baseURL: process.env.BASE_URL || 'http://127.0.0.1:4321',
+    baseURL: process.env.BASE_URL || localBaseUrl,
     trace: 'on-first-retry',
     video: 'on-first-retry',
   },
@@ -40,8 +42,8 @@ module.exports = defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: 'npm run dev -- --host 127.0.0.1',
-      url: 'http://127.0.0.1:4321',
+      command: `npm run dev -- --host 127.0.0.1 --port ${localPort}`,
+      url: localBaseUrl,
       reuseExistingServer: !process.env.CI,
       env: {
         ...process.env,

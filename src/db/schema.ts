@@ -175,6 +175,94 @@ export const events = sqliteTable('events', {
   };
 });
 
+// --- Club Season Registration Foundation ---
+
+export const clubSeasons = sqliteTable('club_seasons', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  status: text('status').notNull().default('draft'), // draft, active, archived
+  timezone: text('timezone').notNull().default('America/Los_Angeles'),
+  defaultBillingDay: integer('default_billing_day').notNull().default(5),
+  firstInstallmentDate: text('first_installment_date').notNull(), // YYYY-MM-DD
+  standardInstallmentCount: integer('standard_installment_count').notNull().default(5),
+  registrationOpensAt: text('registration_opens_at'),
+  registrationClosesAt: text('registration_closes_at'),
+  seasonStartDate: text('season_start_date'),
+  seasonEndDate: text('season_end_date'),
+  publicRegistrationEnabled: integer('public_registration_enabled', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  statusIdx: index('club_seasons_status_idx').on(table.status),
+}));
+
+export const clubPricingTiers = sqliteTable('club_pricing_tiers', {
+  id: text('id').primaryKey(),
+  seasonId: text('season_id')
+    .notNull()
+    .references(() => clubSeasons.id, { onDelete: 'cascade' }),
+  key: text('key').notNull(),
+  name: text('name').notNull(),
+  totalAmount: integer('total_amount').notNull(),
+  depositAmount: integer('deposit_amount').notNull(),
+  installmentAmount: integer('installment_amount').notNull(),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  seasonKeyUnique: uniqueIndex('club_pricing_tiers_season_key_unique')
+    .on(table.seasonId, table.key),
+  seasonIdIdx: index('club_pricing_tiers_season_id_idx').on(table.seasonId),
+  activeIdx: index('club_pricing_tiers_active_idx').on(table.active),
+}));
+
+export const clubAgeGroups = sqliteTable('club_age_groups', {
+  id: text('id').primaryKey(),
+  seasonId: text('season_id')
+    .notNull()
+    .references(() => clubSeasons.id, { onDelete: 'cascade' }),
+  pricingTierId: text('pricing_tier_id')
+    .notNull()
+    .references(() => clubPricingTiers.id),
+  code: text('code').notNull(),
+  label: text('label').notNull(),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  seasonCodeUnique: uniqueIndex('club_age_groups_season_code_unique')
+    .on(table.seasonId, table.code),
+  seasonIdIdx: index('club_age_groups_season_id_idx').on(table.seasonId),
+  pricingTierIdIdx: index('club_age_groups_pricing_tier_id_idx').on(table.pricingTierId),
+  activeIdx: index('club_age_groups_active_idx').on(table.active),
+}));
+
+export const clubTeams = sqliteTable('club_teams', {
+  id: text('id').primaryKey(),
+  seasonId: text('season_id')
+    .notNull()
+    .references(() => clubSeasons.id, { onDelete: 'cascade' }),
+  ageGroupId: text('age_group_id')
+    .notNull()
+    .references(() => clubAgeGroups.id),
+  name: text('name').notNull(),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  billingDayOverride: integer('billing_day_override'),
+  acceptanceDeadlineOverride: text('acceptance_deadline_override'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  seasonNameUnique: uniqueIndex('club_teams_season_name_unique')
+    .on(table.seasonId, table.name),
+  seasonIdIdx: index('club_teams_season_id_idx').on(table.seasonId),
+  ageGroupIdIdx: index('club_teams_age_group_id_idx').on(table.ageGroupId),
+  activeIdx: index('club_teams_active_idx').on(table.active),
+}));
+
 export const registrations = sqliteTable('registrations', {
   id: text('id').primaryKey(),
   userId: text('user_id').references(() => users.id), // Link registration to parent account

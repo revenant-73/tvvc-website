@@ -1,0 +1,552 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getDb } from '../../db';
+import { clubAgeGroups, clubPricingTiers, clubSeasons, clubTeams } from '../../db/schema';
+import { asc, eq } from 'drizzle-orm';
+import { getSession } from 'auth-astro/server';
+
+const SEASON_ID = '2026-2027-club';
+const clubSeasonFeatureEnabled = String(
+  import.meta.env.CLUB_SEASON_REGISTRATION_ENABLED ||
+  process.env.CLUB_SEASON_REGISTRATION_ENABLED ||
+  'false'
+).toLowerCase() === 'true';
+
+const session = await getSession(Astro.request);
+const user = session?.user as { role?: string } | undefined;
+const isAdmin = user?.role === 'admin';
+
+let season: typeof clubSeasons.$inferSelect | null = null;
+let pricingTiers: Array<typeof clubPricingTiers.$inferSelect> = [];
+let ageGroups: Array<typeof clubAgeGroups.$inferSelect> = [];
+let teams: Array<typeof clubTeams.$inferSelect> = [];
+let loadError = '';
+
+if (isAdmin) {
+  try {
+    const db = getDb(
+      import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL || '',
+      import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || ''
+    );
+
+    [season] = await db
+      .select()
+      .from(clubSeasons)
+      .where(eq(clubSeasons.id, SEASON_ID))
+      .limit(1);
+
+    if (season) {
+      [pricingTiers, ageGroups, teams] = await Promise.all([
+        db.select().from(clubPricingTiers)
+          .where(eq(clubPricingTiers.seasonId, season.id))
+          .orderBy(asc(clubPricingTiers.sortOrder)),
+        db.select().from(clubAgeGroups)
+          .where(eq(clubAgeGroups.seasonId, season.id))
+          .orderBy(asc(clubAgeGroups.sortOrder)),
+        db.select().from(clubTeams)
+          .where(eq(clubTeams.seasonId, season.id))
+          .orderBy(asc(clubTeams.name)),
+      ]);
+    }
+  } catch (error) {
+    console.error('Club season admin load error:', error);
+    loadError = 'Season configuration could not be loaded. Check the database connection and try again.';
+  }
+}
+
+const activeAgeGroups = ageGroups.filter((group) => group.active);
+const activeTeams = teams.filter((team) => team.active);
+const tierById = new Map(pricingTiers.map((tier) => [tier.id, tier]));
+const ageGroupById = new Map(ageGroups.map((group) => [group.id, group]));
+const teamsByAgeGroup = new Map(
+  ageGroups.map((group) => [group.id, teams.filter((team) => team.ageGroupId === group.id)])
+);
+
+const money = (cents: number) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+}).format(cents / 100);
+
+const displayDate = (value?: string | null) => {
+  if (!value) return 'Not set';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T12:00:00Z`));
+};
+
+const statusLabel = season?.status
+  ? season.status.charAt(0).toUpperCase() + season.status.slice(1)
+  : 'Not configured';
+const parentRegistrationEnabled = Boolean(
+  clubSeasonFeatureEnabled && season?.publicRegistrationEnabled
+);
+
+const scheduleMonths = [
+  { month: 'November', label: 'Deposit', tone: 'deposit' },
+  { month: 'December', label: 'No charge', tone: 'pause' },
+  { month: 'January', label: '5th', tone: 'payment' },
+  { month: 'February', label: '5th', tone: 'payment' },
+  { month: 'March', label: '5th', tone: 'payment' },
+  { month: 'April', label: '5th', tone: 'payment' },
+  { month: 'May', label: '5th', tone: 'payment' },
+];
+---
+
+<BaseLayout
+  title="Club Season Control"
+  description="Configure TVVC club season teams and payment schedules."
+  noindex={true}
+>
+  <main class="min-h-screen px-4 pb-24 pt-28 md:px-6 md:pt-32">
+    <div class="mx-auto max-w-7xl">
+      {!isAdmin ? (
+        <section class="mx-auto max-w-lg rounded-3xl border border-white/10 bg-white/[0.04] p-7 text-center shadow-2xl md:p-10" aria-labelledby="restricted-title">
+          <div class="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-brand-coral/30 bg-brand-coral/10 text-brand-coral">
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.28em] text-brand-coral">Restricted area</p>
+          <h1 id="restricted-title" class="text-2xl font-heading font-extrabold uppercase tracking-tight text-white">Admin access required</h1>
+          <p class="mx-auto mt-3 max-w-sm text-sm leading-6 text-white/55">Sign in with a TVVC administrator account to configure the club season.</p>
+          <a href="/portal/login?callbackUrl=/admin/club-season" class="mt-7 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-teal px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-charcoal">Sign in</a>
+        </section>
+      ) : (
+        <div class="space-y-7">
+          <nav aria-label="Breadcrumb">
+            <a href="/admin" class="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-white/45 transition hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"></path></svg>
+              Admin dashboard
+            </a>
+          </nav>
+
+          <header class="flex flex-col gap-5 border-b border-white/10 pb-7 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div class="mb-3 flex flex-wrap items-center gap-2">
+                <span class="rounded-md border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/70">{statusLabel}</span>
+                <span class:list={[
+                  'rounded-md border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em]',
+                  parentRegistrationEnabled
+                    ? 'border-brand-teal/30 bg-brand-teal/10 text-brand-teal'
+                    : 'border-brand-coral/30 bg-brand-coral/10 text-brand-coral',
+                ]}>
+                  Parent registration {parentRegistrationEnabled ? 'on' : 'off'}
+                </span>
+              </div>
+              <h1 class="font-heading text-4xl font-extrabold uppercase leading-none tracking-[-0.04em] text-white md:text-6xl">
+                Club Season <span class="text-brand-teal">Control</span>
+              </h1>
+              <p class="mt-3 max-w-2xl text-sm leading-6 text-white/50">Configure the season once. Add teams after tryouts without touching the payment math.</p>
+            </div>
+            <div class="flex items-center gap-3 text-left lg:text-right">
+              <span class="block h-2.5 w-2.5 rounded-full bg-brand-teal shadow-glow-teal" aria-hidden="true"></span>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Pricing foundation</p>
+                <p class="text-sm font-bold text-white">Ready for team setup</p>
+              </div>
+            </div>
+          </header>
+
+          {loadError && (
+            <section class="rounded-2xl border border-brand-coral/30 bg-brand-coral/10 p-5" role="alert">
+              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-coral">Couldn’t load configuration</p>
+              <p class="mt-2 text-sm text-white/70">{loadError}</p>
+            </section>
+          )}
+
+          {!loadError && !season && (
+            <section class="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5" role="alert">
+              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-300">Season not found</p>
+              <p class="mt-2 text-sm text-white/70">The 2026–2027 club season has not been seeded yet. Run the foundation migration and seed before configuring teams.</p>
+            </section>
+          )}
+
+          {season && (
+            <>
+              <section aria-label="Season configuration" class="grid overflow-hidden rounded-2xl border border-white/10 bg-[#11151d] sm:grid-cols-2 xl:grid-cols-4">
+                <div class="border-b border-white/10 p-4 sm:border-r xl:border-b-0">
+                  <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Season</p>
+                  <p class="mt-1.5 font-heading text-lg font-bold text-white">{season.name}</p>
+                </div>
+                <div class="border-b border-white/10 p-4 xl:border-b-0 xl:border-r">
+                  <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Timezone</p>
+                  <p class="mt-1.5 font-heading text-lg font-bold text-white">Pacific Time</p>
+                  <p class="text-[10px] text-white/35">{season.timezone}</p>
+                </div>
+                <div class="border-b border-white/10 p-4 sm:border-b-0 sm:border-r">
+                  <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Default billing day</p>
+                  <p class="mt-1.5 font-heading text-2xl font-extrabold text-brand-teal">{season.defaultBillingDay}<sup class="text-xs">th</sup></p>
+                </div>
+                <div class="p-4">
+                  <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">First installment</p>
+                  <p class="mt-1.5 font-heading text-lg font-bold text-white">{displayDate(season.firstInstallmentDate)}</p>
+                </div>
+              </section>
+
+              <section aria-labelledby="pricing-heading">
+                <div class="mb-4 flex items-end justify-between gap-4">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Locked-in math</p>
+                    <h2 id="pricing-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Pricing structures</h2>
+                  </div>
+                  <p class="hidden text-xs text-white/35 sm:block">All amounts are stored and calculated in cents.</p>
+                </div>
+                <div class="grid gap-4 lg:grid-cols-2">
+                  {pricingTiers.map((tier, index) => {
+                    const linkedGroups = ageGroups.filter((group) => group.pricingTierId === tier.id);
+                    return (
+                      <article class="group relative overflow-hidden rounded-3xl border border-white/10 bg-[#11151d] p-6 transition hover:border-brand-teal/40 md:p-7">
+                        <div class="absolute inset-y-0 left-0 w-1 bg-brand-teal"></div>
+                        <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <div class="flex items-center gap-2">
+                              <span class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Plan {String(index + 1).padStart(2, '0')}</span>
+                              {!tier.active && <span class="text-[9px] font-bold uppercase tracking-wider text-brand-coral">Inactive</span>}
+                            </div>
+                            <h3 class="mt-2 font-heading text-3xl font-extrabold uppercase tracking-tight text-white">{tier.name}</h3>
+                            <p class="mt-2 text-xs text-white/40">Applies to {linkedGroups.map((group) => group.label).join(', ') || 'no age groups yet'}</p>
+                          </div>
+                          <div class="sm:text-right">
+                            <p class="font-heading text-5xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(tier.totalAmount)}</p>
+                            <p class="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">Season total</p>
+                          </div>
+                        </div>
+                        <div class="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-white/10 pt-5">
+                          <div>
+                            <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/35">November deposit</p>
+                            <p class="mt-1 font-heading text-2xl font-extrabold tabular-nums text-white">{money(tier.depositAmount)}</p>
+                          </div>
+                          <span class="font-heading text-xl font-bold text-white/20" aria-hidden="true">+</span>
+                          <div class="text-right">
+                            <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/35">Jan–May</p>
+                            <p class="mt-1 font-heading text-2xl font-extrabold tabular-nums text-brand-teal">{season.standardInstallmentCount} × {money(tier.installmentAmount)}</p>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section aria-labelledby="schedule-heading" class="overflow-hidden rounded-3xl border border-white/10 bg-[#11151d]">
+                <div class="flex flex-col gap-2 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-end sm:justify-between md:px-7">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Standard cadence</p>
+                    <h2 id="schedule-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">The holiday-aware schedule</h2>
+                  </div>
+                  <p class="text-xs text-white/45">One deposit. One intentional pause. Five predictable payments.</p>
+                </div>
+                <div class="relative grid grid-cols-2 gap-px bg-white/10 sm:grid-cols-4 lg:grid-cols-7">
+                  <div class="pointer-events-none absolute left-[9%] right-[7%] top-[3.45rem] hidden h-px bg-white/10 lg:block" aria-hidden="true"></div>
+                  {scheduleMonths.map((item) => (
+                    <div class:list={[
+                      'relative min-h-36 bg-[#11151d] px-4 py-5 text-center',
+                      item.tone === 'pause' && 'bg-[#0d1016]',
+                    ]}>
+                      <p class="text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/35">{item.month}</p>
+                      <div class:list={[
+                        'relative z-10 mx-auto mt-4 flex h-9 w-9 items-center justify-center rounded-full border-4 border-[#11151d]',
+                        item.tone === 'payment' && 'bg-brand-teal text-white shadow-glow-teal',
+                        item.tone === 'deposit' && 'bg-white text-brand-charcoal',
+                        item.tone === 'pause' && 'border-2 border-dashed !border-white/20 bg-[#0d1016] text-white/25',
+                      ]}>
+                        {item.tone === 'pause' ? (
+                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"></path></svg>
+                        ) : (
+                          <span class="h-2 w-2 rounded-full bg-current" aria-hidden="true"></span>
+                        )}
+                      </div>
+                      <p class:list={[
+                        'mt-3 font-heading text-sm font-extrabold uppercase tracking-wide',
+                        item.tone === 'payment' && 'text-brand-teal',
+                        item.tone === 'deposit' && 'text-white',
+                        item.tone === 'pause' && 'text-white/35',
+                      ]}>{item.label}</p>
+                      {item.tone === 'pause' && <p class="mt-1 text-[9px] font-bold uppercase tracking-wider text-white/20">Holiday break</p>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section aria-labelledby="teams-heading" class="grid gap-5 xl:grid-cols-[22rem_minmax(0,1fr)]">
+                <aside class="self-start rounded-3xl border border-white/10 bg-[#11151d] p-5 md:p-6 xl:sticky xl:top-24">
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">After tryouts</p>
+                  <h2 id="teams-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Add a team</h2>
+                  <p class="mt-2 text-xs leading-5 text-white/45">Choose an age group and the correct price follows automatically.</p>
+
+                  <form id="add-team-form" class="mt-6 space-y-4" data-team-form data-mode="create">
+                    <input type="hidden" name="seasonId" value={season.id} />
+                    <div>
+                      <label for="new-team-name" class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Team name</label>
+                      <input id="new-team-name" name="name" required maxlength="80" autocomplete="off" placeholder="e.g. 14 Black" class="min-h-11 w-full rounded-xl border border-white/15 bg-black/20 px-3.5 text-sm font-semibold text-white outline-none transition placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <div>
+                      <label for="new-team-age" class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Age group</label>
+                      <select id="new-team-age" name="ageGroupId" required class="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm font-semibold text-white outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20">
+                        <option value="">Select age group</option>
+                        {activeAgeGroups.map((group) => {
+                          const tier = tierById.get(group.pricingTierId);
+                          return <option value={group.id}>{group.label} · {tier ? money(tier.totalAmount) : 'No price'}</option>;
+                        })}
+                      </select>
+                    </div>
+                    <div>
+                      <label for="new-team-day" class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Billing-day override <span class="normal-case tracking-normal text-white/30">(optional)</span></label>
+                      <input id="new-team-day" name="billingDayOverride" type="number" min="1" max="31" inputmode="numeric" placeholder={`Blank = ${season.defaultBillingDay}th`} class="min-h-11 w-full rounded-xl border border-white/15 bg-black/20 px-3.5 text-sm font-semibold text-white outline-none transition placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <button type="submit" class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-teal px-5 py-3 text-sm font-extrabold uppercase tracking-[0.1em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-60">
+                      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"></path></svg>
+                      <span data-button-label>Add team</span>
+                    </button>
+                    <p class="min-h-5 text-xs font-medium text-white/55" role="status" aria-live="polite" data-form-status></p>
+                  </form>
+                </aside>
+
+                <div class="rounded-3xl border border-white/10 bg-[#11151d] p-5 md:p-7">
+                  <div class="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Team workspace</p>
+                      <h2 class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Configured teams</h2>
+                    </div>
+                    <div class="flex items-baseline gap-2 sm:text-right">
+                      <strong class="font-heading text-4xl font-extrabold tabular-nums text-white">{activeTeams.length}</strong>
+                      <span class="text-[10px] font-bold uppercase tracking-[0.17em] text-white/35">active {activeTeams.length === 1 ? 'team' : 'teams'}</span>
+                    </div>
+                  </div>
+
+                  {teams.length === 0 ? (
+                    <div class="flex min-h-72 flex-col items-center justify-center px-4 py-10 text-center">
+                      <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-brand-teal/45 bg-brand-teal/10 text-brand-teal">
+                        <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg>
+                      </div>
+                      <h3 class="font-heading text-xl font-extrabold uppercase text-white">Waiting for tryouts</h3>
+                      <p class="mt-2 max-w-md text-sm leading-6 text-white/45">No team setup is needed yet. Once rosters take shape, add each team here and its age group will inherit the correct dues automatically.</p>
+                      <p class="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-brand-teal">Pricing is ready whenever the teams are</p>
+                    </div>
+                  ) : (
+                    <div class="mt-6 space-y-7">
+                      {ageGroups.filter((group) => (teamsByAgeGroup.get(group.id)?.length || 0) > 0).map((group) => {
+                        const groupTeams = teamsByAgeGroup.get(group.id) || [];
+                        const tier = tierById.get(group.pricingTierId);
+                        return (
+                          <section aria-labelledby={`group-${group.id}`}>
+                            <div class="mb-2.5 flex items-center gap-3">
+                              <h3 id={`group-${group.id}`} class="font-heading text-sm font-extrabold uppercase tracking-[0.12em] text-white">{group.label}</h3>
+                              <span class="h-px flex-1 bg-white/10"></span>
+                              <span class="text-[10px] font-bold uppercase tracking-wider text-white/30">{groupTeams.length} {groupTeams.length === 1 ? 'team' : 'teams'}</span>
+                            </div>
+                            <div class="space-y-2.5">
+                              {groupTeams.map((team) => (
+                                <article class:list={[
+                                  'rounded-2xl border bg-black/15 transition',
+                                  team.active ? 'border-white/10' : 'border-brand-coral/20 opacity-70',
+                                ]}>
+                                  <div class="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between">
+                                    <div class="min-w-0">
+                                      <div class="flex flex-wrap items-center gap-2">
+                                        <h4 class="truncate font-heading text-lg font-extrabold uppercase text-white">{team.name}</h4>
+                                        <span class:list={[
+                                          'rounded px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider',
+                                          team.active ? 'bg-brand-teal/10 text-brand-teal' : 'bg-brand-coral/10 text-brand-coral',
+                                        ]}>{team.active ? 'Active' : 'Inactive'}</span>
+                                      </div>
+                                      <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">
+                                        <span>{tier ? `${money(tier.totalAmount)} plan` : 'Pricing unavailable'}</span>
+                                        <span aria-hidden="true">•</span>
+                                        <span class={team.billingDayOverride ? 'text-amber-300' : 'text-white/40'}>
+                                          Billing {team.billingDayOverride ? `override: ${team.billingDayOverride}` : `inherited: ${season.defaultBillingDay}`}th
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div class="flex shrink-0 flex-wrap gap-2">
+                                      <button type="button" class="team-edit-toggle min-h-10 rounded-lg border border-white/15 px-3.5 text-xs font-bold text-white/70 transition hover:border-brand-teal/50 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal" aria-expanded="false" aria-controls={`edit-${team.id}`}>
+                                        Edit details
+                                      </button>
+                                      <button type="button" class:list={[
+                                        'team-state-toggle min-h-10 rounded-lg border px-3.5 text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-brand-teal',
+                                        team.active
+                                          ? 'border-brand-coral/25 text-brand-coral hover:bg-brand-coral/10'
+                                          : 'border-brand-teal/30 text-brand-teal hover:bg-brand-teal/10',
+                                      ]} data-team-id={team.id} data-team-name={team.name} data-active={String(team.active)}>
+                                        {team.active ? 'Deactivate' : 'Reactivate'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div id={`edit-${team.id}`} class="hidden border-t border-white/10 p-4" data-edit-panel>
+                                    <form class="grid gap-3 md:grid-cols-[1.3fr_1fr_0.7fr_auto] md:items-end" data-team-form data-mode="update">
+                                      <input type="hidden" name="id" value={team.id} />
+                                      <div>
+                                        <label for={`team-name-${team.id}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.15em] text-white/45">Team name</label>
+                                        <input id={`team-name-${team.id}`} name="name" value={team.name} required maxlength="80" class="min-h-10 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                                      </div>
+                                      <div>
+                                        <label for={`team-age-${team.id}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.15em] text-white/45">Age group</label>
+                                        <select id={`team-age-${team.id}`} name="ageGroupId" class="min-h-10 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20">
+                                          {activeAgeGroups.map((option) => <option value={option.id} selected={option.id === team.ageGroupId}>{option.label}</option>)}
+                                        </select>
+                                      </div>
+                                      <div>
+                                        <label for={`team-day-${team.id}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.15em] text-white/45">Billing day</label>
+                                        <input id={`team-day-${team.id}`} name="billingDayOverride" type="number" min="1" max="31" inputmode="numeric" value={team.billingDayOverride ?? ''} placeholder={`Default ${season.defaultBillingDay}`} class="min-h-10 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                                      </div>
+                                      <button type="submit" class="min-h-10 rounded-lg bg-brand-teal px-4 text-xs font-extrabold uppercase tracking-wider text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:cursor-wait disabled:opacity-60"><span data-button-label>Save</span></button>
+                                      <p class="text-xs text-white/55 md:col-span-4" role="status" aria-live="polite" data-form-status></p>
+                                    </form>
+                                  </div>
+                                </article>
+                              ))}
+                            </div>
+                          </section>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <aside class="flex flex-col gap-4 rounded-2xl border border-brand-teal/25 bg-brand-teal/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between" aria-label="Launch readiness">
+                <div class="flex items-start gap-3">
+                  <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-teal/15 text-brand-teal">
+                    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path><path d="m9 12 2 2 4-4"></path></svg>
+                  </div>
+                  <div>
+                    <p class="text-xs font-extrabold uppercase tracking-[0.16em] text-brand-teal">Foundation ready, parent flow safely dark</p>
+                    <p class="mt-1 text-sm leading-5 text-white/55">Pricing, billing dates, and team inheritance are configured. Parent registration remains disabled until the registration and payment phases are tested.</p>
+                  </div>
+                </div>
+                <span class="shrink-0 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-white/45">No live charges</span>
+              </aside>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  </main>
+
+  <script>
+    const endpoint = '/api/admin/club-season-teams';
+
+    const setStatus = (element, message, tone = 'neutral') => {
+      if (!(element instanceof HTMLElement)) return;
+      element.textContent = message;
+      element.classList.toggle('text-brand-coral', tone === 'error');
+      element.classList.toggle('text-brand-teal', tone === 'success');
+      element.classList.toggle('text-white/55', tone === 'neutral');
+    };
+
+    const notify = (type, message) => {
+      const toast = window.toast;
+      if (toast && typeof toast[type] === 'function') toast[type](message);
+    };
+
+    document.querySelectorAll('.team-edit-toggle').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        const panelId = button.getAttribute('aria-controls');
+        const panel = panelId ? document.getElementById(panelId) : null;
+        if (!panel) return;
+        const opening = panel.classList.contains('hidden');
+        panel.classList.toggle('hidden', !opening);
+        button.setAttribute('aria-expanded', String(opening));
+        button.textContent = opening ? 'Close editor' : 'Edit details';
+        if (opening) panel.querySelector('input:not([type="hidden"])')?.focus();
+      });
+    });
+
+    document.querySelectorAll('[data-team-form]').forEach((formElement) => {
+      formElement.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!(formElement instanceof HTMLFormElement) || !formElement.reportValidity()) return;
+
+        const formData = new FormData(formElement);
+        const name = String(formData.get('name') || '').trim();
+        const rawDay = String(formData.get('billingDayOverride') || '').trim();
+        const billingDayOverride = rawDay === '' ? null : Number(rawDay);
+        const status = formElement.querySelector('[data-form-status]');
+        const button = formElement.querySelector('button[type="submit"]');
+        const label = button?.querySelector('[data-button-label]');
+        const mode = formElement.dataset.mode;
+
+        if (!name) {
+          setStatus(status, 'Team name is required.', 'error');
+          return;
+        }
+        if (billingDayOverride !== null && (!Number.isInteger(billingDayOverride) || billingDayOverride < 1 || billingDayOverride > 31)) {
+          setStatus(status, 'Billing day must be from 1 to 31.', 'error');
+          return;
+        }
+
+        const payload = mode === 'create'
+          ? {
+              seasonId: String(formData.get('seasonId') || ''),
+              ageGroupId: String(formData.get('ageGroupId') || ''),
+              name,
+              billingDayOverride,
+            }
+          : {
+              id: String(formData.get('id') || ''),
+              ageGroupId: String(formData.get('ageGroupId') || ''),
+              name,
+              billingDayOverride,
+            };
+
+        if (button instanceof HTMLButtonElement) button.disabled = true;
+        if (label) label.textContent = mode === 'create' ? 'Adding…' : 'Saving…';
+        setStatus(status, mode === 'create' ? 'Adding team…' : 'Saving changes…');
+
+        try {
+          const response = await fetch(endpoint, {
+            method: mode === 'create' ? 'POST' : 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'The team could not be saved.');
+          setStatus(status, mode === 'create' ? 'Team added.' : 'Team updated.', 'success');
+          notify('success', mode === 'create' ? 'Team added' : 'Team updated');
+          window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The team could not be saved.';
+          setStatus(status, message, 'error');
+          notify('error', message);
+          if (button instanceof HTMLButtonElement) button.disabled = false;
+          if (label) label.textContent = mode === 'create' ? 'Add team' : 'Save';
+        }
+      });
+    });
+
+    document.querySelectorAll('.team-state-toggle').forEach((button) => {
+      button.addEventListener('click', async () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        const active = button.dataset.active === 'true';
+        const teamName = button.dataset.teamName || 'this team';
+        if (active && !window.confirm(`Deactivate ${teamName}? It will no longer be available for new season registrations.`)) return;
+
+        const originalLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = active ? 'Deactivating…' : 'Reactivating…';
+
+        try {
+          const response = await fetch(endpoint, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: button.dataset.teamId, active: !active }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'The team status could not be changed.');
+          notify('success', `${teamName} ${active ? 'deactivated' : 'reactivated'}`);
+          window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The team status could not be changed.';
+          notify('error', message);
+          button.disabled = false;
+          button.textContent = originalLabel;
+        }
+      });
+    });
+  </script>
+</BaseLayout>

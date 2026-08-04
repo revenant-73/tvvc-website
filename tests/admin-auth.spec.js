@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 const fixtures = require('./portal-fixtures');
 
-const appUrl = 'http://127.0.0.1:4321';
+const appUrl = process.env.BASE_URL
+  || `http://127.0.0.1:${process.env.PLAYWRIGHT_PORT || '4321'}`;
 
 async function contextWithSession(browser, sessionToken) {
   const context = await browser.newContext();
@@ -74,5 +75,69 @@ test('admin page no longer exposes account self-promotion or a passcode', async 
     expect(removedPromotionRoute.status()).toBe(404);
   } finally {
     await parentContext.close();
+  }
+});
+
+test('season team management requires admin access and supports create and update', async ({ browser, request }) => {
+  const anonymous = await request.post('/api/admin/club-season-teams', {
+    data: {
+      seasonId: '2026-2027-club',
+      ageGroupId: 'age-2026-2027-12u',
+      name: '12 Black',
+    },
+  });
+  expect(anonymous.status()).toBe(401);
+
+  const parentContext = await contextWithSession(browser, fixtures.parentA.sessionToken);
+  try {
+    const forbidden = await parentContext.request.post('/api/admin/club-season-teams', {
+      data: {
+        seasonId: '2026-2027-club',
+        ageGroupId: 'age-2026-2027-12u',
+        name: '12 Black',
+      },
+    });
+    expect(forbidden.status()).toBe(403);
+  } finally {
+    await parentContext.close();
+  }
+
+  const adminContext = await contextWithSession(browser, fixtures.admin.sessionToken);
+  try {
+    const uniqueName = `12 Black ${Date.now()}`;
+    const created = await adminContext.request.post('/api/admin/club-season-teams', {
+      data: {
+        seasonId: '2026-2027-club',
+        ageGroupId: 'age-2026-2027-12u',
+        name: uniqueName,
+      },
+    });
+    expect(created.status()).toBe(201);
+    const createdBody = await created.json();
+    expect(createdBody.team).toMatchObject({
+      seasonId: '2026-2027-club',
+      ageGroupId: 'age-2026-2027-12u',
+      name: uniqueName,
+      active: true,
+      billingDayOverride: null,
+    });
+
+    const updated = await adminContext.request.patch('/api/admin/club-season-teams', {
+      data: {
+        id: createdBody.team.id,
+        billingDayOverride: 15,
+        active: false,
+      },
+    });
+    expect(updated.status()).toBe(200);
+    await expect(updated.json()).resolves.toMatchObject({
+      team: {
+        id: createdBody.team.id,
+        billingDayOverride: 15,
+        active: false,
+      },
+    });
+  } finally {
+    await adminContext.close();
   }
 });
