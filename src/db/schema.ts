@@ -450,6 +450,7 @@ export const clubSeasonRegistrations = sqliteTable('club_season_registrations', 
   status: text('status').notNull().default('draft'),
   currentStep: integer('current_step').notNull().default(1),
   draftData: text('draft_data'),
+  draftSchemaVersion: integer('draft_schema_version').notNull().default(1),
   version: integer('version').notNull().default(1),
   startedAt: text('started_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   lastSavedAt: text('last_saved_at').notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -464,5 +465,69 @@ export const clubSeasonRegistrations = sqliteTable('club_season_registrations', 
   teamIdIdx: index('club_season_registrations_team_id_idx').on(table.teamId),
   ownerUserIdIdx: index('club_season_registrations_owner_user_id_idx').on(table.ownerUserId),
   statusIdx: index('club_season_registrations_status_idx').on(table.status),
+}));
+
+// Agreement wording is versioned so a future policy edit never changes the
+// text a family actually reviewed. Only published versions appear in a draft.
+export const clubSeasonAgreementVersions = sqliteTable('club_season_agreement_versions', {
+  id: text('id').primaryKey(),
+  seasonId: text('season_id')
+    .notNull()
+    .references(() => clubSeasons.id, { onDelete: 'cascade' }),
+  key: text('key').notNull(),
+  version: integer('version').notNull(),
+  title: text('title').notNull(),
+  summary: text('summary'),
+  body: text('body').notNull(),
+  contentHash: text('content_hash').notNull(),
+  responseType: text('response_type').notNull().default('acknowledgement'),
+  allowedResponses: text('allowed_responses'), // JSON array for choice agreements
+  status: text('status').notNull().default('draft'), // draft, published, retired
+  required: integer('required', { mode: 'boolean' }).notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  effectiveAt: text('effective_at'),
+  publishedAt: text('published_at'),
+  retiredAt: text('retired_at'),
+  createdByUserId: text('created_by_user_id').references(() => users.id),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  seasonKeyVersionUnique: uniqueIndex('club_season_agreements_season_key_version_unique')
+    .on(table.seasonId, table.key, table.version),
+  seasonIdIdx: index('club_season_agreements_season_id_idx').on(table.seasonId),
+  statusIdx: index('club_season_agreements_status_idx').on(table.status),
+}));
+
+// Each acceptance stores both the agreement reference and an immutable text
+// snapshot. This is evidence, not editable registration-form state.
+export const clubSeasonAgreementAcceptances = sqliteTable('club_season_agreement_acceptances', {
+  id: text('id').primaryKey(),
+  registrationId: text('registration_id')
+    .notNull()
+    .references(() => clubSeasonRegistrations.id),
+  agreementVersionId: text('agreement_version_id')
+    .notNull()
+    .references(() => clubSeasonAgreementVersions.id),
+  ownerUserId: text('owner_user_id')
+    .notNull()
+    .references(() => users.id),
+  agreementKeySnapshot: text('agreement_key_snapshot').notNull(),
+  agreementTitleSnapshot: text('agreement_title_snapshot').notNull(),
+  agreementBodySnapshot: text('agreement_body_snapshot').notNull(),
+  agreementContentHash: text('agreement_content_hash').notNull(),
+  response: text('response').notNull(),
+  acceptedName: text('accepted_name').notNull(),
+  acceptedEmail: text('accepted_email').notNull(),
+  requestIpHash: text('request_ip_hash'),
+  userAgent: text('user_agent'),
+  contextSnapshot: text('context_snapshot').notNull(),
+  acceptedAt: text('accepted_at').notNull(),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  registrationVersionUnique: uniqueIndex('club_season_acceptances_registration_version_unique')
+    .on(table.registrationId, table.agreementVersionId),
+  registrationIdIdx: index('club_season_acceptances_registration_id_idx')
+    .on(table.registrationId),
+  ownerUserIdIdx: index('club_season_acceptances_owner_user_id_idx').on(table.ownerUserId),
 }));
 

@@ -139,6 +139,31 @@ Not yet implemented in this milestone:
 - Offer, reminder, payment-confirmation, or failure emails
 - Custom payment plans and later plan revisions
 
+### 4.2 Milestone 2B implementation status — August 6, 2026
+
+Implemented on the dark feature branch:
+
+- Three-step save-and-resume registration draft for family/contact, player/readiness, and agreement review
+- Mailing address, emergency contact, communication preference, uniform sizing, jersey-number preferences, medical confirmation, CEVA status, medical-release status, and known season conflicts
+- Server-prefilled draft values from the immutable tryout snapshot without changing the original registration or player profile
+- Serialized autosave with a version counter; concurrent stale-tab writes are rejected instead of silently overwriting newer information
+- Bounded server-side validation and a separate completeness check before agreement submission
+- Versioned agreement records supporting acknowledgements and explicit choices
+- Immutable acceptance evidence containing the exact agreement text, content hash, response, verified parent identity/email, timestamp, user agent, privacy-preserving request-IP hash when available, and season/team/pricing context
+- Database triggers preventing published agreement text and recorded acceptance evidence from being rewritten or deleted
+- A completed-information `awaiting_payment` state that does not mark the offer accepted or the player confirmed
+- Concurrency protection for simultaneous start/decline actions
+
+Production agreement wording is deliberately **not seeded or published** by the migration. The current refund policy remains a working draft pending TVVC/board/legal approval. Until approved versions are published, families can safely save registration information but cannot record agreements or continue to payment. Automated browser fixtures use clearly isolated test-only agreement versions.
+
+Still deferred to the payment milestone:
+
+- Payment-option selection
+- Exact payment schedule snapshot
+- Automatic-payment authorization
+- Stripe Checkout and deposit collection
+- Final offer/roster acceptance after successful payment
+
 ## 5. Information Already Collected at Tryouts
 
 The existing tryout flow already collects or supports:
@@ -161,7 +186,7 @@ The season form should prefill these fields and ask the parent to confirm or upd
 
 ## 6. Recommended Additional Season Information
 
-The exact required fields remain a product decision, but the season form should support the following likely additions:
+Milestone 2B uses the following initial field set. It remains configurable before launch:
 
 - Offered team
 - Mailing address

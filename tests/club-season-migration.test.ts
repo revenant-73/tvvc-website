@@ -75,10 +75,17 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
 
     const offerTables = await client.execute(
       `SELECT name FROM sqlite_master
-       WHERE type = 'table' AND name IN ('club_season_offers', 'club_season_registrations')
+       WHERE type = 'table' AND name IN (
+         'club_season_agreement_acceptances',
+         'club_season_agreement_versions',
+         'club_season_offers',
+         'club_season_registrations'
+       )
        ORDER BY name`
     );
     assert.deepEqual(offerTables.rows, [
+      { name: 'club_season_agreement_acceptances' },
+      { name: 'club_season_agreement_versions' },
       { name: 'club_season_offers' },
       { name: 'club_season_registrations' },
     ]);
@@ -95,6 +102,52 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
       { name: 'club_season_offers_season_athlete_unique' },
       { name: 'club_season_registrations_offer_id_unique' },
     ]);
+
+    const draftColumns = await client.execute(`PRAGMA table_info('club_season_registrations')`);
+    assert.equal(
+      draftColumns.rows.some((column) => column.name === 'draft_schema_version' && column.dflt_value === '1'),
+      true
+    );
+
+    const immutabilityTriggers = await client.execute(
+      `SELECT name FROM sqlite_master
+       WHERE type = 'trigger' AND name LIKE 'club_season_%_restricted'
+       ORDER BY name`
+    );
+    assert.deepEqual(immutabilityTriggers.rows, [
+      { name: 'club_season_acceptance_delete_restricted' },
+      { name: 'club_season_acceptance_update_restricted' },
+      { name: 'club_season_published_agreement_delete_restricted' },
+      { name: 'club_season_published_agreement_status_restricted' },
+    ]);
+
+    await client.execute({
+      sql: `INSERT INTO club_season_agreement_versions
+        (id, season_id, key, version, title, body, content_hash, status, published_at)
+        VALUES (?, ?, 'refund-policy', 1, 'Refund policy', 'Original text', 'hash-1', 'published', CURRENT_TIMESTAMP)`,
+      args: ['agreement-test-v1', '2026-2027-club'],
+    });
+    await assert.rejects(
+      client.execute({
+        sql: 'UPDATE club_season_agreement_versions SET body = ? WHERE id = ?',
+        args: ['Rewritten text', 'agreement-test-v1'],
+      }),
+      /immutable/i
+    );
+    await assert.rejects(
+      client.execute({
+        sql: 'DELETE FROM club_season_agreement_versions WHERE id = ?',
+        args: ['agreement-test-v1'],
+      }),
+      /cannot be deleted/i
+    );
+    await assert.rejects(
+      client.execute({
+        sql: 'UPDATE club_season_agreement_versions SET status = ? WHERE id = ?',
+        args: ['draft', 'agreement-test-v1'],
+      }),
+      /cannot be reopened/i
+    );
   } finally {
     client.close();
     // Windows can hold the native SQLite handle briefly after close.

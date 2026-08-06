@@ -58,6 +58,48 @@ export default async function globalSetup() {
       args: [fixtures.clubSeason.teamId, fixtures.clubSeason.id, fixtures.clubSeason.teamName],
     },
     {
+      sql: `INSERT INTO club_season_agreement_versions
+        (id, season_id, key, version, title, summary, body, content_hash,
+         response_type, allowed_responses, status, required, sort_order, published_at)
+        VALUES (?, ?, 'season-commitment', 1, 'Club season participation commitment',
+                'Attendance, communication, and team participation', ?, ?,
+                'acknowledgement', NULL, 'published', 1, 10, CURRENT_TIMESTAMP)`,
+      args: [
+        fixtures.clubSeason.agreementIds.commitment,
+        fixtures.clubSeason.id,
+        'I confirm that our family has reviewed the offered team and understands the season requires reliable attendance, timely communication, and participation in scheduled practices and tournaments.',
+        '0fd0ff3088015996d43874f4332c379c436f544d7d758195f707535d147d5940',
+      ],
+    },
+    {
+      sql: `INSERT INTO club_season_agreement_versions
+        (id, season_id, key, version, title, summary, body, content_hash,
+         response_type, allowed_responses, status, required, sort_order, published_at)
+        VALUES (?, ?, 'refund-cancellation-policy', 1, 'Refund and cancellation policy',
+                'How cancellations, withdrawals, and approved refunds are handled', ?, ?,
+                'acknowledgement', NULL, 'published', 1, 20, CURRENT_TIMESTAMP)`,
+      args: [
+        fixtures.clubSeason.agreementIds.refund,
+        fixtures.clubSeason.id,
+        'I have reviewed the TVVC refund and cancellation policy, including the three-business-day cancellation period, the nonrefundable deposit after that period and before the first practice, and case-by-case review of voluntary withdrawals after practices begin.',
+        '648c375d96811b08605ac4169f56c43adaf7b64a071be7104a3ec8ee3a85972b',
+      ],
+    },
+    {
+      sql: `INSERT INTO club_season_agreement_versions
+        (id, season_id, key, version, title, summary, body, content_hash,
+         response_type, allowed_responses, status, required, sort_order, published_at)
+        VALUES (?, ?, 'media-release', 1, 'Player media release',
+                'Choose whether TVVC may use player photos or video', ?, ?,
+                'choice', '["granted","declined"]', 'published', 1, 30, CURRENT_TIMESTAMP)`,
+      args: [
+        fixtures.clubSeason.agreementIds.media,
+        fixtures.clubSeason.id,
+        'Choose whether TVVC may use photos or video of this player in club communications, team materials, and promotional content. Declining does not affect roster eligibility.',
+        'e1e395f1d65d0dd21fa07d99522cf672582bd0c30421c7489892664005fd1c86',
+      ],
+    },
+    {
       sql: `INSERT INTO user
         (id, name, email, email_verified, role, stripe_customer_id, emergency_phone)
         VALUES (?, 'Admin Alpha', ?, ?, 'admin', NULL, NULL)`,

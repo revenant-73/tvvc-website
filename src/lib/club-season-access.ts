@@ -1,9 +1,10 @@
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
 import { db } from '../db/db';
 import {
   athletes,
   clubAgeGroups,
+  clubSeasonAgreementVersions,
   clubPricingTiers,
   clubSeasonOffers,
   clubSeasonRegistrations,
@@ -37,6 +38,15 @@ export async function getOwnedClubSeasonOffers(request: Request) {
     ageGroup: clubAgeGroups,
     pricingTier: clubPricingTiers,
     athlete: athletes,
+    sourceRegistration: {
+      parentName: registrations.parentName,
+      parentEmail: registrations.parentEmail,
+      parentPhone: registrations.parentPhone,
+      secondaryParentName: registrations.secondaryParentName,
+      secondaryParentEmail: registrations.secondaryParentEmail,
+      secondaryParentPhone: registrations.secondaryParentPhone,
+      emergencyPhone: registrations.emergencyPhone,
+    },
     draft: clubSeasonRegistrations,
   })
     .from(clubSeasonOffers)
@@ -53,4 +63,15 @@ export async function getOwnedClubSeasonOffers(request: Request) {
       eq(athletes.registrationId, registrations.id),
       eq(clubSeasonOffers.recipientEmail, user.email.trim().toLowerCase())
     ));
+}
+
+export async function getPublishedClubSeasonAgreements(seasonId: string) {
+  if (!db) return [];
+
+  return db.select().from(clubSeasonAgreementVersions)
+    .where(and(
+      eq(clubSeasonAgreementVersions.seasonId, seasonId),
+      eq(clubSeasonAgreementVersions.status, 'published')
+    ))
+    .orderBy(asc(clubSeasonAgreementVersions.sortOrder));
 }

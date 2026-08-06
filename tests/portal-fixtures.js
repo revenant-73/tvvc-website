@@ -72,6 +72,11 @@ module.exports = {
     teamName: '14U Teal',
     tryoutEventId: 'event-club-season-tryout',
     tryoutEventName: '2026 Club Tryouts',
+    agreementIds: {
+      commitment: 'agreement-2026-commitment-v1',
+      refund: 'agreement-2026-refund-v1',
+      media: 'agreement-2026-media-v1',
+    },
   },
   webhook: {
     registrationId: 'webhook-pending-2026',

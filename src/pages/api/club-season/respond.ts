@@ -51,6 +51,13 @@ export const POST: APIRoute = async ({ request }) => {
       registrationUserId: registrations.userId,
       athleteParentId: athletes.parentId,
       athleteRegistrationId: athletes.registrationId,
+      athletePreferredName: athletes.preferredName,
+      athleteJerseySize: athletes.jerseySize,
+      athleteApparelSize: athletes.tshirtSize,
+      athleteMedicalInfo: athletes.medicalInfo,
+      parentName: registrations.parentName,
+      parentPhone: registrations.parentPhone,
+      emergencyPhone: registrations.emergencyPhone,
     })
       .from(clubSeasonOffers)
       .innerJoin(clubSeasons, eq(clubSeasonOffers.seasonId, clubSeasons.id))
@@ -88,7 +95,7 @@ export const POST: APIRoute = async ({ request }) => {
       if (offer.status === 'declined') return json({ status: 'declined' });
       if (offer.status !== 'offered') return json({ error: 'This offer cannot be declined.' }, 409);
 
-      await db.update(clubSeasonOffers).set({
+      const [declined] = await db.update(clubSeasonOffers).set({
         status: 'declined',
         recipientUserId: user.id,
         declineReason: parsed.data.declineReason || null,
@@ -98,7 +105,16 @@ export const POST: APIRoute = async ({ request }) => {
       }).where(and(
         eq(clubSeasonOffers.id, offer.id),
         eq(clubSeasonOffers.status, 'offered')
-      ));
+      )).returning({ id: clubSeasonOffers.id });
+
+      if (!declined) {
+        const [current] = await db.select({ status: clubSeasonOffers.status })
+          .from(clubSeasonOffers)
+          .where(eq(clubSeasonOffers.id, offer.id))
+          .limit(1);
+        if (current?.status === 'declined') return json({ status: 'declined' });
+        return json({ error: 'This offer changed before your response was saved. Reload and try again.' }, 409);
+      }
 
       return json({ status: 'declined' });
     }
@@ -107,10 +123,43 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: 'This offer cannot start registration.' }, 409);
     }
 
+    const supportedSizes = new Set(['YS', 'YM', 'YL', 'YXL', 'AS', 'AM', 'AL', 'AXL', 'A2XL', 'A3XL']);
+    const initialDraftData = {
+      schemaVersion: 1 as const,
+      family: {
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: 'OR',
+        postalCode: '',
+        emergencyContactName: ownedOffer.parentName,
+        emergencyContactRelationship: 'Parent/guardian',
+        emergencyContactPhone: ownedOffer.emergencyPhone || ownedOffer.parentPhone,
+        communicationPreference: '' as const,
+        informationConfirmed: false,
+      },
+      player: {
+        preferredName: ownedOffer.athletePreferredName || '',
+        jerseySize: supportedSizes.has(ownedOffer.athleteJerseySize || '')
+          ? ownedOffer.athleteJerseySize!
+          : '',
+        apparelSize: supportedSizes.has(ownedOffer.athleteApparelSize || '')
+          ? ownedOffer.athleteApparelSize!
+          : '',
+        jerseyNumberPreferences: [] as number[],
+        medicalInfo: ownedOffer.athleteMedicalInfo || '',
+        medicalInformationConfirmed: false,
+        cevaMembershipStatus: '' as const,
+        cevaMembershipNumber: '',
+        medicalReleaseStatus: '' as const,
+        seasonConflicts: '',
+      },
+    };
+
     const draftId = crypto.randomUUID();
     await db.transaction(async (tx) => {
       if (offer.status === 'offered') {
-        await tx.update(clubSeasonOffers).set({
+        const [startedOffer] = await tx.update(clubSeasonOffers).set({
           status: 'registration_started',
           recipientUserId: user.id,
           viewedAt: offer.viewedAt || now,
@@ -119,7 +168,17 @@ export const POST: APIRoute = async ({ request }) => {
         }).where(and(
           eq(clubSeasonOffers.id, offer.id),
           eq(clubSeasonOffers.status, 'offered')
-        ));
+        )).returning({ id: clubSeasonOffers.id });
+
+        if (!startedOffer) {
+          const [current] = await tx.select({ status: clubSeasonOffers.status })
+            .from(clubSeasonOffers)
+            .where(eq(clubSeasonOffers.id, offer.id))
+            .limit(1);
+          if (current?.status !== 'registration_started') {
+            throw new Error('OFFER_STATE_CONFLICT');
+          }
+        }
       }
 
       await tx.insert(clubSeasonRegistrations).values({
@@ -131,6 +190,8 @@ export const POST: APIRoute = async ({ request }) => {
         playerProfileId: offer.sourceProfileId,
         status: 'draft',
         currentStep: 1,
+        draftData: JSON.stringify(initialDraftData),
+        draftSchemaVersion: 1,
         startedAt: now,
         lastSavedAt: now,
         createdAt: now,
@@ -150,6 +211,9 @@ export const POST: APIRoute = async ({ request }) => {
     if (!draft) return json({ error: 'Unable to start registration.' }, 500);
     return json({ status: 'registration_started', draft });
   } catch (error) {
+    if (error instanceof Error && error.message === 'OFFER_STATE_CONFLICT') {
+      return json({ error: 'This offer changed before registration started. Reload and try again.' }, 409);
+    }
     console.error('Club season offer response error:', error);
     return json({ error: 'Unable to save your response.' }, 500);
   }
