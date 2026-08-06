@@ -1,0 +1,368 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import { getOwnedClubSeasonOffers } from '../lib/club-season-access';
+import { isClubSeasonRegistrationEnabled } from '../lib/club-season-feature';
+import { getClubDate } from '../lib/event-eligibility';
+
+const session = await getSession(Astro.request);
+const isSignedIn = Boolean(session?.user);
+const featureEnabled = isClubSeasonRegistrationEnabled();
+const ownedOffers = featureEnabled && isSignedIn
+  ? (await getOwnedClubSeasonOffers(Astro.request)).filter((item) => item.season.publicRegistrationEnabled)
+  : [];
+const clubDate = getClubDate();
+
+const money = (cents: number) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+}).format(cents / 100);
+
+const displayDate = (value?: string | null) => {
+  if (!value) return 'Contact TVVC for your response date';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T12:00:00Z`));
+};
+
+const firstName = (value: string) => value.trim().split(/\s+/)[0] || value;
+const offerState = (status: string, deadline?: string | null) => {
+  if (status === 'offered' && deadline && deadline < clubDate) return 'expired';
+  return status;
+};
+
+const installmentMonths = [
+  { month: 'January', due: 'Due Jan 5' },
+  { month: 'February', due: 'Due Feb 5' },
+  { month: 'March', due: 'Due Mar 5' },
+  { month: 'April', due: 'Due Apr 5' },
+  { month: 'May', due: 'Due May 5' },
+];
+---
+
+<BaseLayout
+  title="Club Season Invitation"
+  description="Review your private TVVC club season invitation."
+  noindex={true}
+>
+  <main class="relative min-h-screen overflow-hidden px-4 pb-24 pt-28 md:px-6 md:pb-32 md:pt-36">
+    <div aria-hidden="true" class="offer-court pointer-events-none absolute inset-x-0 top-20 mx-auto h-[34rem] max-w-7xl opacity-[0.055]"></div>
+    <div class="relative mx-auto max-w-6xl">
+      {!isSignedIn ? (
+        <section class="mx-auto max-w-xl overflow-hidden rounded-3xl border border-white/10 bg-[#11151d] shadow-2xl" aria-labelledby="invitation-title">
+          <div class="h-1.5 bg-brand-teal"></div>
+          <div class="p-7 text-center md:p-11">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-teal/25 bg-brand-teal/10 text-brand-teal">
+              <svg aria-hidden="true" width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
+            </div>
+            <p class="mt-6 text-[10px] font-extrabold uppercase tracking-[0.26em] text-brand-teal">Private club season link</p>
+            <h1 id="invitation-title" class="mt-2 font-heading text-3xl font-extrabold uppercase leading-tight tracking-[-0.035em] text-white md:text-5xl">Open your invitation</h1>
+            <p class="mx-auto mt-4 max-w-md text-sm leading-6 text-white/55">Sign in with the email used for tryout registration. We’ll show only invitations connected to your family’s verified account.</p>
+            <a href="/portal/login?callbackUrl=%2Fseason-registration" class="mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-teal px-6 text-sm font-extrabold uppercase tracking-[0.11em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d]">
+              Sign in securely
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+            </a>
+            <p class="mt-5 text-xs leading-5 text-white/55">This shared page does not expose invitation details before sign-in.</p>
+          </div>
+        </section>
+      ) : ownedOffers.length === 0 ? (
+        <section class="mx-auto max-w-xl rounded-3xl border border-white/10 bg-[#11151d] p-7 text-center shadow-2xl md:p-11" aria-labelledby="no-offer-title">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/45">
+            <svg aria-hidden="true" width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 17h.01"></path></svg>
+          </div>
+          <p class="mt-6 text-[10px] font-extrabold uppercase tracking-[0.24em] text-white/35">Club season registration</p>
+          <h1 id="no-offer-title" class="mt-2 font-heading text-3xl font-extrabold uppercase tracking-[-0.03em] text-white">No active offer found</h1>
+          <p class="mx-auto mt-4 max-w-md text-sm leading-6 text-white/55">If you expected an invitation, confirm that you signed in with the email used at tryouts. TVVC can help check the record without changing your account ownership.</p>
+          <a href="mailto:info@tualatinvalleyvb.com?subject=Club%20season%20offer%20help" class="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal">Contact TVVC</a>
+        </section>
+      ) : (
+        <div class="space-y-10">
+          <h1 class="sr-only">Your TVVC club season invitations</h1>
+          {ownedOffers.map((item, index) => {
+            const state = offerState(item.offer.status, item.offer.acceptanceDeadline);
+            const playerName = `${item.athlete.firstName} ${item.athlete.lastName}`;
+            const started = state === 'registration_started' || (state === 'offered' && Boolean(item.draft));
+            const canRespond = state === 'offered' && !started;
+            const stateCopy = state === 'revoked'
+              ? { eyebrow: 'Invitation updated', title: 'This offer is no longer active', body: 'TVVC has withdrawn this invitation. Contact the club if you believe this was unexpected.', tone: 'coral' }
+              : state === 'declined'
+                ? { eyebrow: 'Response received', title: 'You declined this offer', body: 'Your response has been saved. If your plans change, contact TVVC to ask whether the spot is still available.', tone: 'quiet' }
+                : state === 'expired'
+                  ? { eyebrow: 'Response window closed', title: 'This offer has expired', body: 'The response deadline has passed. Contact TVVC before making any plans; the roster spot may have been reassigned.', tone: 'coral' }
+                  : started
+                    ? { eyebrow: 'Draft started', title: 'Your registration is underway', body: 'Your secure draft is ready for the additional information and payment steps in the next phase. The roster spot is not final until the deposit is paid.', tone: 'teal' }
+                    : state === 'accepted'
+                      ? { eyebrow: 'Welcome to TVVC', title: 'Your spot is confirmed', body: 'This registration has been accepted and recorded. TVVC will share the next team details with your family.', tone: 'teal' }
+                      : { eyebrow: 'You’re invited', title: `${firstName(item.athlete.firstName)}, this spot is yours to claim.`, body: `TVVC is offering ${playerName} a place on ${item.team.name} for the ${item.season.name}.`, tone: 'teal' };
+            return (
+              <article class="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#11151d] shadow-2xl" data-parent-offer data-offer-id={item.offer.id} style={`animation-delay:${index * 100}ms`}>
+                <div class:list={[
+                  'h-1.5',
+                  stateCopy.tone === 'coral' ? 'bg-brand-coral' : stateCopy.tone === 'teal' ? 'bg-brand-teal' : 'bg-white/20',
+                ]}></div>
+                <div class="relative overflow-hidden px-6 pb-7 pt-7 md:px-10 md:pb-10 md:pt-10">
+                  <div aria-hidden="true" class="absolute -right-20 -top-24 h-72 w-72 rounded-full border border-white/[0.05]"></div>
+                  <div aria-hidden="true" class="absolute -right-8 -top-12 h-52 w-52 rounded-full border border-white/[0.05]"></div>
+
+                  <header class="relative grid gap-7 border-b border-white/10 pb-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                    <div>
+                      <div class="flex flex-wrap items-center gap-3">
+                        <p class:list={[
+                          'text-[10px] font-extrabold uppercase tracking-[0.25em]',
+                          stateCopy.tone === 'coral' ? 'text-brand-coral' : stateCopy.tone === 'teal' ? 'text-brand-teal' : 'text-white/40',
+                        ]}>{stateCopy.eyebrow}</p>
+                        <span class="h-px w-10 bg-white/15" aria-hidden="true"></span>
+                        <p class="text-xs font-bold uppercase tracking-[0.14em] text-white/55">{item.ageGroup.label}</p>
+                      </div>
+                      <h2 class="mt-3 max-w-3xl font-heading text-3xl font-extrabold uppercase leading-[0.98] tracking-[-0.04em] text-white md:text-5xl lg:text-6xl">{stateCopy.title}</h2>
+                      <p class="mt-4 max-w-2xl text-sm leading-6 text-white/60 md:text-base">{stateCopy.body}</p>
+                    </div>
+                    <div class="min-w-52 border-l-2 border-brand-teal pl-4">
+                      <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Player</p>
+                      <p class="mt-1 font-heading text-lg font-extrabold uppercase tracking-tight text-white">{playerName}</p>
+                      <p class="mt-3 text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Team assignment</p>
+                      <p class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">{item.team.name}</p>
+                      <p class="mt-1 text-xs font-semibold text-brand-teal">{item.ageGroup.label} · {item.season.name}</p>
+                    </div>
+                  </header>
+
+                  {canRespond && (
+                    <div class="relative mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,.75fr)]">
+                      <section aria-labelledby={`payment-heading-${item.offer.id}`}>
+                        <div class="flex flex-wrap items-end justify-between gap-3">
+                          <div>
+                            <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-brand-teal">Choose later during registration</p>
+                            <h2 id={`payment-heading-${item.offer.id}`} class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Two payment options</h2>
+                          </div>
+                          <p class="text-xs text-white/55">Automatic card setup comes in the payment step.</p>
+                        </div>
+
+                        <div class="mt-4 overflow-hidden rounded-2xl border border-white/10">
+                          <div class="grid gap-4 border-b border-white/10 bg-black/15 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                            <div>
+                              <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/60">Option 01 · Pay in full</p>
+                              <p class="mt-1 text-sm text-white/55">One card payment during the final registration step.</p>
+                            </div>
+                            <p class="font-heading text-4xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(item.pricingTier.totalAmount)}</p>
+                          </div>
+                          <div class="bg-[#0d1118] p-5">
+                            <div class="flex flex-wrap items-end justify-between gap-3">
+                              <div>
+                                <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Option 02 · Standard plan</p>
+                                <p class="mt-1 text-sm text-white/55"><strong class="font-bold text-white">{money(item.pricingTier.depositAmount)}</strong> deposit in November, then five payments of <strong class="font-bold text-white">{money(item.pricingTier.installmentAmount)}</strong>.</p>
+                              </div>
+                              <p class="text-xs font-bold uppercase tracking-[0.12em] text-white/55">Total {money(item.pricingTier.totalAmount)}</p>
+                            </div>
+                            <ol class="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-4 lg:grid-cols-7" aria-label="Standard payment schedule">
+                              <li class="bg-[#11151d] p-3">
+                                <p class="text-xs font-extrabold uppercase tracking-[0.11em] text-white/60">November</p>
+                                <p class="mt-2 text-sm font-extrabold text-white">{money(item.pricingTier.depositAmount)}</p>
+                                <p class="mt-0.5 text-xs text-white/55">Deposit due</p>
+                              </li>
+                              <li class="border-x border-brand-teal/20 bg-brand-teal/[0.08] p-3">
+                                <p class="text-xs font-extrabold uppercase tracking-[0.11em] text-white/60">December</p>
+                                <p class="mt-2 text-sm font-extrabold text-brand-teal">No charge</p>
+                                <p class="mt-0.5 text-xs text-white/55">Holiday pause</p>
+                              </li>
+                              {installmentMonths.map((installment) => (
+                                <li class="bg-[#11151d] p-3">
+                                  <p class="text-xs font-extrabold uppercase tracking-[0.11em] text-white/60">{installment.month}</p>
+                                  <p class="mt-2 text-sm font-extrabold text-white">{money(item.pricingTier.installmentAmount)}</p>
+                                  <p class="mt-0.5 text-xs font-semibold text-white/60">{installment.due}</p>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                        </div>
+                        <p class="mt-3 text-xs leading-5 text-white/60">Need a different arrangement? Contact TVVC before the deadline. Individual plans can be discussed and documented separately.</p>
+                      </section>
+
+                      <aside class="self-start rounded-2xl border border-brand-teal/25 bg-brand-teal/[0.06] p-5 md:p-6" aria-labelledby={`next-heading-${item.offer.id}`}>
+                        <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-brand-teal">Your next serve</p>
+                        <h2 id={`next-heading-${item.offer.id}`} class="mt-1 font-heading text-2xl font-extrabold uppercase text-white">Start the draft</h2>
+                        <p class="mt-3 text-sm leading-6 text-white/55">This opens the secure registration process. Starting does not accept the offer or reserve the roster spot by itself.</p>
+                        <div class="mt-5 border-y border-white/10 py-4">
+                          <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Reply by</p>
+                          <p class="mt-1 font-heading text-lg font-extrabold text-white">{displayDate(item.offer.acceptanceDeadline)}</p>
+                        </div>
+                        <button type="button" data-start-registration class="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-55">
+                          <span data-action-label>Start registration</span>
+                          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+                        </button>
+                        <button type="button" data-open-decline class="mt-2 min-h-10 w-full text-xs font-extrabold uppercase tracking-[0.12em] text-white/60 transition hover:text-brand-coral focus:outline-none focus:ring-2 focus:ring-brand-coral">Decline this offer</button>
+                        <p class="mt-3 text-center text-xs leading-5 text-white/55">The spot is finalized only after the later deposit is paid.</p>
+                      </aside>
+                    </div>
+                  )}
+
+                  {!canRespond && (
+                    <div class:list={[
+                      'relative mt-8 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between md:p-6',
+                      stateCopy.tone === 'coral' ? 'border-brand-coral/25 bg-brand-coral/[0.06]' : stateCopy.tone === 'teal' ? 'border-brand-teal/25 bg-brand-teal/[0.06]' : 'border-white/10 bg-black/15',
+                    ]}>
+                      <div>
+                        <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Recorded status</p>
+                        <p class="mt-1 text-sm font-bold text-white">{stateCopy.eyebrow}</p>
+                        {item.offer.acceptanceDeadline && <p class="mt-1 text-xs text-white/55">Original reply date: {displayDate(item.offer.acceptanceDeadline)}</p>}
+                      </div>
+                      <a href="mailto:info@tualatinvalleyvb.com?subject=Club%20season%20offer%20question" class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-white/15 px-4 text-xs font-extrabold uppercase tracking-[0.11em] text-white transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal">Contact TVVC</a>
+                    </div>
+                  )}
+
+                  <p class="mt-5 text-xs leading-5 text-white/55">Private family record · Invitation #{item.offer.id.slice(0, 8).toUpperCase()}</p>
+                </div>
+
+                {canRespond && (
+                  <dialog data-decline-dialog class="w-[min(32rem,calc(100%-2rem))] rounded-2xl border border-white/15 bg-[#11151d] p-0 text-white shadow-2xl backdrop:bg-black/80">
+                    <form method="dialog" class="p-6 md:p-7">
+                      <div class="flex items-start justify-between gap-4">
+                        <div>
+                          <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-brand-coral">Please confirm</p>
+                          <h2 class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight">Decline {item.team.name}?</h2>
+                        </div>
+                        <button type="submit" value="cancel" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/45 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal" aria-label="Close decline form">×</button>
+                      </div>
+                      <p class="mt-3 text-sm leading-6 text-white/55">This releases the offer from your registration flow. If you are unsure, contact TVVC before declining.</p>
+                      <div class="mt-5">
+                        <label for={`decline-reason-${item.offer.id}`} class="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.14em] text-white/60">Reason <span class="normal-case tracking-normal text-white/55">(optional)</span></label>
+                        <select id={`decline-reason-${item.offer.id}`} data-decline-reason class="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20">
+                          <option value="">Prefer not to say</option>
+                          <option value="Schedule conflict">Schedule conflict</option>
+                          <option value="Financial considerations">Financial considerations</option>
+                          <option value="Accepted another opportunity">Accepted another opportunity</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div class="mt-4">
+                        <label for={`decline-details-${item.offer.id}`} class="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.14em] text-white/60">Anything else? <span class="normal-case tracking-normal text-white/55">(optional)</span></label>
+                        <textarea id={`decline-details-${item.offer.id}`} data-decline-details maxlength="500" rows="3" class="w-full resize-y rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 py-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" placeholder="A short note for the club"></textarea>
+                      </div>
+                      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <button type="submit" value="cancel" class="min-h-11 rounded-xl px-4 text-xs font-extrabold uppercase tracking-[0.11em] text-white/60 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Keep the offer</button>
+                        <button type="button" data-confirm-decline class="min-h-11 rounded-xl border border-brand-coral/35 bg-brand-coral/10 px-5 text-xs font-extrabold uppercase tracking-[0.11em] text-brand-coral transition hover:bg-brand-coral hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-coral disabled:cursor-wait disabled:opacity-55"><span data-decline-label>Confirm decline</span></button>
+                      </div>
+                    </form>
+                  </dialog>
+                )}
+              </article>
+            );
+          })}
+
+          <p class="text-center text-xs leading-5 text-white/55">Have a question about the team, schedule, or a custom payment arrangement? <a href="mailto:info@tualatinvalleyvb.com?subject=Club%20season%20registration" class="font-bold text-brand-teal underline decoration-brand-teal/30 underline-offset-4 hover:text-white">Contact TVVC</a>.</p>
+        </div>
+      )}
+    </div>
+  </main>
+
+  {ownedOffers.length > 0 && (
+    <script>
+      type ToastWindow = Window & { toast?: { success?: (message: string) => void; error?: (message: string) => void } };
+      const endpoint = '/api/club-season/respond';
+      const notify = (type: 'success' | 'error', message: string) => (window as ToastWindow).toast?.[type]?.(message);
+
+      document.querySelectorAll<HTMLElement>('[data-parent-offer]').forEach((card) => {
+        const offerId = card.dataset.offerId || '';
+        const startButton = card.querySelector<HTMLButtonElement>('[data-start-registration]');
+        const startLabel = card.querySelector<HTMLElement>('[data-action-label]');
+        const openDecline = card.querySelector<HTMLButtonElement>('[data-open-decline]');
+        const dialog = card.querySelector<HTMLDialogElement>('[data-decline-dialog]');
+        const confirmDecline = card.querySelector<HTMLButtonElement>('[data-confirm-decline]');
+        const declineLabel = card.querySelector<HTMLElement>('[data-decline-label]');
+        const declineReason = card.querySelector<HTMLSelectElement>('[data-decline-reason]');
+        const declineDetails = card.querySelector<HTMLTextAreaElement>('[data-decline-details]');
+
+        const respond = async (payload: Record<string, unknown>) => {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ offerId, ...payload }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'Your response could not be saved.');
+          return data;
+        };
+
+        startButton?.addEventListener('click', async () => {
+          startButton.disabled = true;
+          if (startLabel) startLabel.textContent = 'Starting…';
+          try {
+            await respond({ action: 'start' });
+            notify('success', 'Registration draft started');
+            window.location.reload();
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Registration could not be started.';
+            notify('error', message);
+            startButton.disabled = false;
+            if (startLabel) startLabel.textContent = 'Start registration';
+          }
+        });
+
+        openDecline?.addEventListener('click', () => {
+          dialog?.showModal();
+          dialog?.querySelector<HTMLSelectElement>('[data-decline-reason]')?.focus();
+        });
+        dialog?.addEventListener('click', (event) => {
+          if (event.target === dialog) dialog.close('cancel');
+        });
+        confirmDecline?.addEventListener('click', async () => {
+          confirmDecline.disabled = true;
+          if (declineLabel) declineLabel.textContent = 'Saving…';
+          try {
+            await respond({
+              action: 'decline',
+              declineReason: declineReason?.value || undefined,
+              declineDetails: declineDetails?.value.trim() || undefined,
+            });
+            dialog?.close('confirmed');
+            notify('success', 'Your response has been saved');
+            window.location.reload();
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Your response could not be saved.';
+            notify('error', message);
+            confirmDecline.disabled = false;
+            if (declineLabel) declineLabel.textContent = 'Confirm decline';
+          }
+        });
+      });
+    </script>
+  )}
+
+  <style>
+    .offer-court {
+      background-image:
+        linear-gradient(90deg, transparent calc(50% - .5px), white 50%, transparent calc(50% + .5px)),
+        linear-gradient(0deg, transparent calc(50% - .5px), white 50%, transparent calc(50% + .5px)),
+        linear-gradient(90deg, transparent 8%, white 8%, white calc(8% + 1px), transparent calc(8% + 1px), transparent 92%, white 92%, white calc(92% + 1px), transparent calc(92% + 1px));
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+    }
+
+    [data-parent-offer] {
+      animation: offer-in 480ms ease-out both;
+    }
+
+    @keyframes offer-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    dialog[open] {
+      animation: dialog-in 180ms ease-out both;
+    }
+
+    @keyframes dialog-in {
+      from { opacity: 0; transform: translateY(8px) scale(.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      [data-parent-offer], dialog[open] { animation: none !important; }
+    }
+  </style>
+</BaseLayout>

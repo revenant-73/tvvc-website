@@ -387,3 +387,82 @@ export const registrationItems = sqliteTable('registration_items', {
   };
 });
 
+// An offer is the authorization boundary for the shared club-season link.
+// The URL is shared; eligibility is not. Each row anchors an offer to the
+// immutable athlete snapshot created by a paid tryout registration.
+export const clubSeasonOffers = sqliteTable('club_season_offers', {
+  id: text('id').primaryKey(),
+  seasonId: text('season_id')
+    .notNull()
+    .references(() => clubSeasons.id, { onDelete: 'cascade' }),
+  teamId: text('team_id')
+    .notNull()
+    .references(() => clubTeams.id),
+  sourceRegistrationId: text('source_registration_id')
+    .notNull()
+    .references(() => registrations.id),
+  sourceAthleteId: integer('source_athlete_id')
+    .notNull()
+    .references(() => athletes.id),
+  sourceProfileId: integer('source_profile_id')
+    .references(() => playerProfiles.id),
+  recipientEmail: text('recipient_email').notNull(),
+  recipientUserId: text('recipient_user_id').references(() => users.id),
+  status: text('status').notNull().default('offered'),
+  acceptanceDeadline: text('acceptance_deadline'), // YYYY-MM-DD, inclusive in club time
+  declineReason: text('decline_reason'),
+  declineDetails: text('decline_details'),
+  offeredAt: text('offered_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  viewedAt: text('viewed_at'),
+  respondedAt: text('responded_at'),
+  createdByUserId: text('created_by_user_id').references(() => users.id),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  seasonAthleteUnique: uniqueIndex('club_season_offers_season_athlete_unique')
+    .on(table.seasonId, table.sourceAthleteId),
+  seasonIdIdx: index('club_season_offers_season_id_idx').on(table.seasonId),
+  teamIdIdx: index('club_season_offers_team_id_idx').on(table.teamId),
+  sourceRegistrationIdIdx: index('club_season_offers_source_registration_id_idx')
+    .on(table.sourceRegistrationId),
+  recipientEmailIdx: index('club_season_offers_recipient_email_idx').on(table.recipientEmail),
+  recipientUserIdIdx: index('club_season_offers_recipient_user_id_idx').on(table.recipientUserId),
+  statusIdx: index('club_season_offers_status_idx').on(table.status),
+}));
+
+// Family-entered information is saved separately from offer eligibility so
+// later agreement and payment records can remain immutable and auditable.
+export const clubSeasonRegistrations = sqliteTable('club_season_registrations', {
+  id: text('id').primaryKey(),
+  offerId: text('offer_id')
+    .notNull()
+    .references(() => clubSeasonOffers.id),
+  seasonId: text('season_id')
+    .notNull()
+    .references(() => clubSeasons.id),
+  teamId: text('team_id')
+    .notNull()
+    .references(() => clubTeams.id),
+  ownerUserId: text('owner_user_id')
+    .notNull()
+    .references(() => users.id),
+  playerProfileId: integer('player_profile_id').references(() => playerProfiles.id),
+  status: text('status').notNull().default('draft'),
+  currentStep: integer('current_step').notNull().default(1),
+  draftData: text('draft_data'),
+  version: integer('version').notNull().default(1),
+  startedAt: text('started_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  lastSavedAt: text('last_saved_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  submittedAt: text('submitted_at'),
+  acceptedAt: text('accepted_at'),
+  cancelledAt: text('cancelled_at'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  offerIdUnique: uniqueIndex('club_season_registrations_offer_id_unique').on(table.offerId),
+  seasonIdIdx: index('club_season_registrations_season_id_idx').on(table.seasonId),
+  teamIdIdx: index('club_season_registrations_team_id_idx').on(table.teamId),
+  ownerUserIdIdx: index('club_season_registrations_owner_user_id_idx').on(table.ownerUserId),
+  statusIdx: index('club_season_registrations_status_idx').on(table.status),
+}));
+

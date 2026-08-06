@@ -1,7 +1,7 @@
 # Club Season Registration and Payment System
 
 **Status:** Product requirements and implementation reference
-**Last updated:** August 4, 2026
+**Last updated:** August 6, 2026
 **Applies to:** TVVC club-season team acceptance and dues collection
 **Related systems:** Tryout registration, parent portal, Stripe, Turso, Resend, Netlify
 
@@ -31,7 +31,7 @@ The following decisions are confirmed unless this document is deliberately revis
 | Public visibility | The link will not appear in public site navigation or the sitemap and the page will be marked `noindex`. |
 | Family verification | A family will verify the email address used for tryout registration before existing player information is disclosed. |
 | Player source | Every offered player will already have completed the TVVC tryout-registration process. |
-| Team selection | The parent will select the team the player was offered from a list of active teams. |
+| Team assignment | An administrator assigns the offered team when creating the offer; the parent reviews and confirms that assignment. This avoids accidental selection of the wrong team. |
 | Team availability | Actual teams will be created by an administrator after tryouts, when the number of teams at each age group is known. |
 | Pricing tiers | There are two standard pricing structures: 12U and 13U-18U. |
 | Payment choices | Pay in full or pay a deposit and authorize the standard automatic payment plan. |
@@ -99,14 +99,14 @@ The shared URL should be stable, such as `/season-registration`. The exact route
 
 An unlisted URL is not sufficient security by itself. The page may be shared or forwarded, so the system must protect player data with verification and server-side authorization.
 
-Recommended lookup flow:
+Implemented access flow:
 
-1. Parent enters the email address used for tryout registration.
-2. TVVC sends a short-lived verification link or code to that address.
-3. After verification, the server locates eligible tryout registrations associated with the email.
-4. Parent selects the applicable player.
-5. Existing player and household information is prefilled for review.
-6. The system records which verified adult completed the season registration.
+1. Parent opens the shared `/season-registration` URL.
+2. Parent signs in through the existing Resend magic-link flow using the email from tryout registration.
+3. The server verifies the current account and resolves offers through the paid tryout registration and immutable athlete snapshot—not email text alone.
+4. The parent sees only offers belonging to that verified primary account.
+5. The parent reviews the player, assigned team, pricing, response deadline, and payment choices.
+6. The parent starts a registration draft or declines the offer. Starting a draft does not finalize the roster spot; acceptance remains contingent on the later successful deposit.
 
 Security requirements:
 
@@ -116,6 +116,28 @@ Security requirements:
 - Prevent duplicate completed season registrations for the same player and season.
 - Require server-side ownership checks for every parent-portal and payment action.
 - Mark the route `noindex` and omit it from public navigation and sitemap generation.
+
+### 4.1 Milestone 2A implementation status — August 6, 2026
+
+Implemented on the dark feature branch:
+
+- Offer and registration-draft database tables with one offer per player and season
+- Admin bulk-offer workspace designed for the full tryout roster
+- Active-team assignment, optional response deadline, search, filtering, batch selection, retry-safe creation, revocation, and restoration
+- Shared parent route with signed-out, no-offer, offered, expired, revoked, declined, draft-started, and accepted presentations
+- Verified ownership checks tied to both the paid registration and athlete snapshot
+- Generic signed-out/no-offer states that do not disclose another family's data
+- Feature flag, season-level enable switch, `noindex`, and sitemap exclusion
+- Parent actions to start a draft or decline; final acceptance and payment are deliberately deferred
+- Automated migration, callback security, bulk idempotency, email-collision, cross-family, and same-origin tests
+
+Not yet implemented in this milestone:
+
+- The additional season-information form and draft autosave
+- Agreement/refund-policy acceptance snapshots
+- Stripe deposit checkout, pay-in-full, or automatic installment authorization
+- Offer, reminder, payment-confirmation, or failure emails
+- Custom payment plans and later plan revisions
 
 ## 5. Information Already Collected at Tryouts
 

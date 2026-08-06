@@ -72,6 +72,29 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
       { code: '17U', pricing_tier_id: 'tier-2026-2027-13u-18u' },
       { code: '18U', pricing_tier_id: 'tier-2026-2027-13u-18u' },
     ]);
+
+    const offerTables = await client.execute(
+      `SELECT name FROM sqlite_master
+       WHERE type = 'table' AND name IN ('club_season_offers', 'club_season_registrations')
+       ORDER BY name`
+    );
+    assert.deepEqual(offerTables.rows, [
+      { name: 'club_season_offers' },
+      { name: 'club_season_registrations' },
+    ]);
+
+    const offerIndexes = await client.execute(
+      `SELECT name FROM sqlite_master
+       WHERE type = 'index' AND name IN (
+         'club_season_offers_season_athlete_unique',
+         'club_season_registrations_offer_id_unique'
+       )
+       ORDER BY name`
+    );
+    assert.deepEqual(offerIndexes.rows, [
+      { name: 'club_season_offers_season_athlete_unique' },
+      { name: 'club_season_registrations_offer_id_unique' },
+    ]);
   } finally {
     client.close();
     // Windows can hold the native SQLite handle briefly after close.

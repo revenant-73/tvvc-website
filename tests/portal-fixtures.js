@@ -66,6 +66,13 @@ module.exports = {
     athleteName: 'Casey Collision',
     eventName: 'Email Collision Event',
   },
+  clubSeason: {
+    id: '2026-2027-club',
+    teamId: 'team-2026-2027-14u-test',
+    teamName: '14U Teal',
+    tryoutEventId: 'event-club-season-tryout',
+    tryoutEventName: '2026 Club Tryouts',
+  },
   webhook: {
     registrationId: 'webhook-pending-2026',
     athleteId: 501,

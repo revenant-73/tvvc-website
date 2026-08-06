@@ -46,6 +46,18 @@ export default async function globalSetup() {
 
   await client.batch([
     {
+      sql: `UPDATE club_seasons
+            SET public_registration_enabled = 1, status = 'active'
+            WHERE id = ?`,
+      args: [fixtures.clubSeason.id],
+    },
+    {
+      sql: `INSERT INTO club_teams
+        (id, season_id, age_group_id, name, active, acceptance_deadline_override)
+        VALUES (?, ?, 'age-2026-2027-14u', ?, 1, '2099-11-30')`,
+      args: [fixtures.clubSeason.teamId, fixtures.clubSeason.id, fixtures.clubSeason.teamName],
+    },
+    {
       sql: `INSERT INTO user
         (id, name, email, email_verified, role, stripe_customer_id, emergency_phone)
         VALUES (?, 'Admin Alpha', ?, ?, 'admin', NULL, NULL)`,
@@ -487,6 +499,13 @@ export default async function globalSetup() {
       args: [fixtures.emailCollision.eventName],
     },
     {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
+        VALUES (?, 'tryout', ?, 'November 1, 2099', '9:00 AM',
+                '2099-11-01', '2099-11-01', 5000, 300, true)`,
+      args: [fixtures.clubSeason.tryoutEventId, fixtures.clubSeason.tryoutEventName],
+    },
+    {
       sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
             VALUES (?, ?, 'event-parent-a')`,
       args: [fixtures.parentA.registrationId, fixtures.parentA.athleteId],
@@ -549,6 +568,33 @@ export default async function globalSetup() {
       sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
             VALUES (?, ?, 'event-email-collision')`,
       args: [fixtures.emailCollision.registrationId, fixtures.emailCollision.athleteId],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, ?)`,
+      args: [
+        fixtures.parentA.registrationId,
+        fixtures.parentA.athleteId,
+        fixtures.clubSeason.tryoutEventId,
+      ],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, ?)`,
+      args: [
+        fixtures.parentB.registrationId,
+        fixtures.parentB.athleteId,
+        fixtures.clubSeason.tryoutEventId,
+      ],
+    },
+    {
+      sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+            VALUES (?, ?, ?)`,
+      args: [
+        fixtures.emailCollision.registrationId,
+        fixtures.emailCollision.athleteId,
+        fixtures.clubSeason.tryoutEventId,
+      ],
     },
   ], 'write');
 

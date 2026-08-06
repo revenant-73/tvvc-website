@@ -51,6 +51,7 @@ module.exports = defineConfig({
         ASTRO_DEV_BACKGROUND: '0',
         ASTRO_TELEMETRY_DISABLED: '1',
         AUTH_SECRET: 'playwright-only-auth-secret-not-for-production-use',
+        CLUB_SEASON_REGISTRATION_ENABLED: 'true',
         CRON_SECRET: 'playwright-only-cron-secret-not-for-production-use',
         PLAYWRIGHT_TEST: '1',
         RESEND_API_KEY: 're_playwright_not_used',
