@@ -76,7 +76,7 @@ CREATE TABLE `club_season_payment_transactions` (
 	`payment_plan_version_id` text NOT NULL,
 	`installment_id` text NOT NULL,
 	`stripe_event_id` text NOT NULL,
-	`stripe_checkout_session_id` text NOT NULL,
+	`stripe_checkout_session_id` text,
 	`stripe_payment_intent_id` text NOT NULL,
 	`amount` integer NOT NULL,
 	`currency` text NOT NULL,

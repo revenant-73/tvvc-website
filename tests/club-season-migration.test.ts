@@ -78,7 +78,9 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
        WHERE type = 'table' AND name IN (
          'club_season_agreement_acceptances',
          'club_season_agreement_versions',
+         'club_season_email_deliveries',
          'club_season_offers',
+         'club_season_payment_attempts',
          'club_season_payment_installments',
          'club_season_payment_plan_versions',
          'club_season_payment_plans',
@@ -90,7 +92,9 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
     assert.deepEqual(offerTables.rows, [
       { name: 'club_season_agreement_acceptances' },
       { name: 'club_season_agreement_versions' },
+      { name: 'club_season_email_deliveries' },
       { name: 'club_season_offers' },
+      { name: 'club_season_payment_attempts' },
       { name: 'club_season_payment_installments' },
       { name: 'club_season_payment_plan_versions' },
       { name: 'club_season_payment_plans' },
@@ -116,6 +120,11 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
       draftColumns.rows.some((column) => column.name === 'draft_schema_version' && column.dflt_value === '1'),
       true
     );
+    const installmentColumns = await client.execute(`PRAGMA table_info('club_season_payment_installments')`);
+    assert.equal(installmentColumns.rows.some((column) => column.name === 'attempt_count' && column.dflt_value === '0'), true);
+    assert.equal(installmentColumns.rows.some((column) => column.name === 'next_attempt_date'), true);
+    const planColumns = await client.execute(`PRAGMA table_info('club_season_payment_plans')`);
+    assert.equal(planColumns.rows.some((column) => column.name === 'financial_status' && column.dflt_value === "'not_started'"), true);
 
     const immutabilityTriggers = await client.execute(
       `SELECT name FROM sqlite_master
@@ -125,7 +134,9 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
     assert.deepEqual(immutabilityTriggers.rows, [
       { name: 'club_season_acceptance_delete_restricted' },
       { name: 'club_season_acceptance_update_restricted' },
+      { name: 'club_season_email_delivery_delete_restricted' },
       { name: 'club_season_installment_delete_restricted' },
+      { name: 'club_season_payment_attempt_delete_restricted' },
       { name: 'club_season_payment_transaction_delete_restricted' },
       { name: 'club_season_payment_transaction_update_restricted' },
       { name: 'club_season_payment_version_delete_restricted' },

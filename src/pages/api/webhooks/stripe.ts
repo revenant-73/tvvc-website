@@ -19,6 +19,7 @@ import { sendEmail } from '../../../lib/email';
 import { generateRegistrationEmail } from '../../../lib/email-templates';
 import { expirePendingRegistration } from '../../../lib/registration-reservations';
 import { createStripeClient } from '../../../lib/stripe-client';
+import { recordInstallmentFailure, recordInstallmentSuccess } from '../../../lib/club-season-billing';
 
 const stripe = createStripeClient(import.meta.env.STRIPE_SECRET_KEY || '');
 
@@ -143,6 +144,7 @@ async function processClubSeasonCheckout(
     }
     await tx.update(clubSeasonPaymentPlans).set({
       status: planStatus,
+      financialStatus: version.paymentOption === 'pay_in_full' ? 'paid_in_full' : 'current',
       stripeCustomerId,
       stripePaymentMethodId,
       activatedAt: processedAt,
@@ -166,6 +168,7 @@ async function processClubSeasonCheckout(
       paymentPlanVersionId,
       installmentId: deposit.id,
       stripeEventId: event.id,
+      source: 'checkout',
       stripeCheckoutSessionId: session.id,
       stripePaymentIntentId: paymentIntentId,
       amount: version.dueNowAmount,
@@ -211,6 +214,25 @@ export const POST: APIRoute = async ({ request }) => {
     databaseUrl,
     import.meta.env.TURSO_AUTH_TOKEN || ''
   );
+
+  if (event.type === 'payment_intent.succeeded' || event.type === 'payment_intent.payment_failed') {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    if (intent.metadata?.flow === 'club_season_installment') {
+      try {
+        const siteUrl = new URL(request.url).origin;
+        const processed = event.type === 'payment_intent.succeeded'
+          ? await recordInstallmentSuccess(db, stripe, event.id, intent, siteUrl)
+          : await recordInstallmentFailure(db, intent, siteUrl);
+        return new Response(JSON.stringify({ received: true, processed }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('Club season installment webhook processing error:', error);
+        return new Response('Database error', { status: 500 });
+      }
+    }
+  }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;

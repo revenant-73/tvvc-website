@@ -542,6 +542,7 @@ export const clubSeasonPaymentPlans = sqliteTable('club_season_payment_plans', {
     .notNull()
     .references(() => users.id),
   status: text('status').notNull().default('pending_checkout'),
+  financialStatus: text('financial_status').notNull().default('not_started'),
   currentVersion: integer('current_version').notNull().default(1),
   stripeCustomerId: text('stripe_customer_id'),
   stripePaymentMethodId: text('stripe_payment_method_id'),
@@ -605,6 +606,11 @@ export const clubSeasonPaymentInstallments = sqliteTable('club_season_payment_in
   amount: integer('amount').notNull(),
   status: text('status').notNull().default('scheduled'),
   stripePaymentIntentId: text('stripe_payment_intent_id'),
+  attemptCount: integer('attempt_count').notNull().default(0),
+  nextAttemptDate: text('next_attempt_date'),
+  lastAttemptedAt: text('last_attempted_at'),
+  lastFailureCode: text('last_failure_code'),
+  lastFailureMessage: text('last_failure_message'),
   paidAt: text('paid_at'),
   createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -631,8 +637,10 @@ export const clubSeasonPaymentTransactions = sqliteTable('club_season_payment_tr
     .notNull()
     .references(() => clubSeasonPaymentInstallments.id),
   stripeEventId: text('stripe_event_id').notNull(),
-  stripeCheckoutSessionId: text('stripe_checkout_session_id').notNull(),
+  source: text('source').notNull().default('checkout'),
+  stripeCheckoutSessionId: text('stripe_checkout_session_id'),
   stripePaymentIntentId: text('stripe_payment_intent_id').notNull(),
+  stripeChargeId: text('stripe_charge_id'),
   amount: integer('amount').notNull(),
   currency: text('currency').notNull(),
   status: text('status').notNull(),
@@ -647,5 +655,65 @@ export const clubSeasonPaymentTransactions = sqliteTable('club_season_payment_tr
     .on(table.stripePaymentIntentId),
   registrationIdIdx: index('club_season_payment_transactions_registration_id_idx')
     .on(table.registrationId),
+}));
+
+export const clubSeasonPaymentAttempts = sqliteTable('club_season_payment_attempts', {
+  id: text('id').primaryKey(),
+  registrationId: text('registration_id')
+    .notNull()
+    .references(() => clubSeasonRegistrations.id),
+  paymentPlanVersionId: text('payment_plan_version_id')
+    .notNull()
+    .references(() => clubSeasonPaymentPlanVersions.id),
+  installmentId: text('installment_id')
+    .notNull()
+    .references(() => clubSeasonPaymentInstallments.id),
+  attemptNumber: integer('attempt_number').notNull(),
+  idempotencyKey: text('idempotency_key').notNull(),
+  amount: integer('amount').notNull(),
+  currency: text('currency').notNull(),
+  status: text('status').notNull().default('pending'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  failureCode: text('failure_code'),
+  failureMessage: text('failure_message'),
+  attemptedAt: text('attempted_at').notNull(),
+  resolvedAt: text('resolved_at'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  installmentAttemptUnique: uniqueIndex('club_season_payment_attempts_installment_attempt_unique')
+    .on(table.installmentId, table.attemptNumber),
+  idempotencyKeyUnique: uniqueIndex('club_season_payment_attempts_idempotency_unique')
+    .on(table.idempotencyKey),
+  stripeIntentIdx: index('club_season_payment_attempts_stripe_intent_idx')
+    .on(table.stripePaymentIntentId),
+  statusIdx: index('club_season_payment_attempts_status_idx').on(table.status),
+}));
+
+export const clubSeasonEmailDeliveries = sqliteTable('club_season_email_deliveries', {
+  id: text('id').primaryKey(),
+  registrationId: text('registration_id')
+    .notNull()
+    .references(() => clubSeasonRegistrations.id),
+  installmentId: text('installment_id')
+    .references(() => clubSeasonPaymentInstallments.id),
+  type: text('type').notNull(),
+  recipient: text('recipient').notNull(),
+  idempotencyKey: text('idempotency_key').notNull(),
+  status: text('status').notNull().default('pending'),
+  providerMessageId: text('provider_message_id'),
+  attemptCount: integer('attempt_count').notNull().default(0),
+  lastError: text('last_error'),
+  sentAt: text('sent_at'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  idempotencyKeyUnique: uniqueIndex('club_season_email_deliveries_idempotency_unique')
+    .on(table.idempotencyKey),
+  registrationIdIdx: index('club_season_email_deliveries_registration_id_idx')
+    .on(table.registrationId),
+  installmentIdIdx: index('club_season_email_deliveries_installment_id_idx')
+    .on(table.installmentId),
+  statusIdx: index('club_season_email_deliveries_status_idx').on(table.status),
 }));
 

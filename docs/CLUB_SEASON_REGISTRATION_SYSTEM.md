@@ -182,13 +182,33 @@ Implemented on the dark feature branch in Stripe test mode:
 
 Still deferred to later payment milestones:
 
-- Daily January-May installment charging and authentication-recovery workflow
-- Five-day reminder, payment-confirmation, failure, and admin-alert emails
 - Admin-created custom plans, individual billing-day changes, and mid-plan version revisions
 - Parent payment-method management and the full balance/history view
 - Refund execution, credits, offline payments, disputes, and financial reconciliation tools
 
 The feature remains disabled for public production use. Before launch, TVVC must publish approved agreement/refund-policy versions, configure and verify live Stripe webhook/receipt settings, and complete the remaining installment and communication milestones.
+
+### 4.4 Milestone 3B implementation status — August 7, 2026
+
+Implemented on the dark feature branch:
+
+- A daily Netlify scheduled trigger that hands work to a protected background function, avoiding the scheduled-function 30-second ceiling for a season of more than 140 players
+- Pacific-time billing decisions with January 5 through May 5 charges, a January 2 reminder after the December holiday pause, and five-day reminders for February through May
+- Authorized off-session Stripe PaymentIntent charges using the customer and payment-method references saved during deposit Checkout
+- A deterministic attempt ledger and Stripe idempotency key for every charge: original due date, retry three days later, and final retry seven days after the original due date
+- Verified Stripe PaymentIntent success/failure webhook handling plus safe handling of the immediate processor result
+- Separate financial states (`current`, `past_due`, `action_required`, and `paid_in_full`); failures never alter the accepted registration or roster state
+- Parent reminder, success/receipt, and failure/recovery emails; a final-failure or authentication-required result also alerts the billing administrator
+- A retry-safe email delivery ledger using stable Resend idempotency keys
+
+Still deferred:
+
+- Admin-created custom plans, individual billing-day changes, and mid-plan version revisions
+- A dedicated parent balance/history screen beyond Stripe payment-method management
+- Manual email resend controls and Resend delivery/bounce webhook tracking
+- Refund execution, credits, offline payments, disputes, and financial reconciliation tools
+
+The production environment must define `CLUB_SEASON_CRON_SECRET`; `CLUB_SEASON_BILLING_EMAIL` is optional and defaults to Loren's TVVC address. The feature remains disabled until the production-readiness work is complete.
 
 ## 5. Information Already Collected at Tryouts
 
@@ -350,7 +370,7 @@ Recommended workflow:
 2. If the attempt succeeds, the installment becomes `paid` and the balance is updated.
 3. If it fails, the installment becomes `past_due` and the account is flagged.
 4. Parent receives an immediate recovery email with a secure payment-method or authentication link.
-5. Stripe performs configured retries for eligible failures.
+5. TVVC performs the documented retry schedule for eligible failures using the same Stripe PaymentIntent.
 6. A successful retry automatically restores the account to `current` if no other installment is overdue.
 7. Exhausted retries change the account to `action_required` and notify TVVC.
 
@@ -361,7 +381,7 @@ Recommended initial retry policy:
 - Final retry approximately seven days later
 - Manual admin follow-up after the final failure
 
-The actual retry behavior should be configured and verified in Stripe before launch. Stripe's recovery tools and supported decline behavior can change over time:
+The retry behavior and decline handling must be verified in Stripe test mode before launch. Authentication-required failures stop automatic retries and require parent/admin action:
 
 - <https://docs.stripe.com/invoicing/automatic-collection>
 - <https://docs.stripe.com/billing/subscriptions/webhooks>
@@ -403,7 +423,7 @@ Confirmation content should include:
 
 ### 11.2 January reminder and December break
 
-The January 5 installment reminder would normally be sent December 31 under a five-day rule. Because TVVC intentionally skips December to reduce holiday financial pressure, consider sending that reminder on January 2 instead. This remains an open content/scheduling decision.
+The January 5 installment reminder is sent January 2 rather than December 31. This preserves the intentional December holiday break while still giving families advance notice. February through May reminders are sent five days before the charge.
 
 ### 11.3 Delivery requirements
 

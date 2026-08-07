@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "fa61dbd8-7223-48c4-856e-80af9e04ef7f",
-  "prevId": "dab75037-d77e-4ec5-a0c0-c350e8ed2a25",
+  "id": "df4bb5ba-3a86-4ea8-a74e-960690045c6b",
+  "prevId": "fa61dbd8-7223-48c4-856e-80af9e04ef7f",
   "tables": {
     "account": {
       "name": "account",
@@ -982,6 +982,167 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "club_season_email_deliveries": {
+      "name": "club_season_email_deliveries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "registration_id": {
+          "name": "registration_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "installment_id": {
+          "name": "installment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "recipient": {
+          "name": "recipient",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "provider_message_id": {
+          "name": "provider_message_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "club_season_email_deliveries_idempotency_unique": {
+          "name": "club_season_email_deliveries_idempotency_unique",
+          "columns": [
+            "idempotency_key"
+          ],
+          "isUnique": true
+        },
+        "club_season_email_deliveries_registration_id_idx": {
+          "name": "club_season_email_deliveries_registration_id_idx",
+          "columns": [
+            "registration_id"
+          ],
+          "isUnique": false
+        },
+        "club_season_email_deliveries_installment_id_idx": {
+          "name": "club_season_email_deliveries_installment_id_idx",
+          "columns": [
+            "installment_id"
+          ],
+          "isUnique": false
+        },
+        "club_season_email_deliveries_status_idx": {
+          "name": "club_season_email_deliveries_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "club_season_email_deliveries_registration_id_club_season_registrations_id_fk": {
+          "name": "club_season_email_deliveries_registration_id_club_season_registrations_id_fk",
+          "tableFrom": "club_season_email_deliveries",
+          "tableTo": "club_season_registrations",
+          "columnsFrom": [
+            "registration_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "club_season_email_deliveries_installment_id_club_season_payment_installments_id_fk": {
+          "name": "club_season_email_deliveries_installment_id_club_season_payment_installments_id_fk",
+          "tableFrom": "club_season_email_deliveries",
+          "tableTo": "club_season_payment_installments",
+          "columnsFrom": [
+            "installment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "club_season_offers": {
       "name": "club_season_offers",
       "columns": {
@@ -1265,6 +1426,201 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "club_season_payment_attempts": {
+      "name": "club_season_payment_attempts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "registration_id": {
+          "name": "registration_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "payment_plan_version_id": {
+          "name": "payment_plan_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "installment_id": {
+          "name": "installment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attempt_number": {
+          "name": "attempt_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "stripe_payment_intent_id": {
+          "name": "stripe_payment_intent_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "failure_code": {
+          "name": "failure_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "failure_message": {
+          "name": "failure_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "attempted_at": {
+          "name": "attempted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "club_season_payment_attempts_installment_attempt_unique": {
+          "name": "club_season_payment_attempts_installment_attempt_unique",
+          "columns": [
+            "installment_id",
+            "attempt_number"
+          ],
+          "isUnique": true
+        },
+        "club_season_payment_attempts_idempotency_unique": {
+          "name": "club_season_payment_attempts_idempotency_unique",
+          "columns": [
+            "idempotency_key"
+          ],
+          "isUnique": true
+        },
+        "club_season_payment_attempts_stripe_intent_idx": {
+          "name": "club_season_payment_attempts_stripe_intent_idx",
+          "columns": [
+            "stripe_payment_intent_id"
+          ],
+          "isUnique": false
+        },
+        "club_season_payment_attempts_status_idx": {
+          "name": "club_season_payment_attempts_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "club_season_payment_attempts_registration_id_club_season_registrations_id_fk": {
+          "name": "club_season_payment_attempts_registration_id_club_season_registrations_id_fk",
+          "tableFrom": "club_season_payment_attempts",
+          "tableTo": "club_season_registrations",
+          "columnsFrom": [
+            "registration_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "club_season_payment_attempts_payment_plan_version_id_club_season_payment_plan_versions_id_fk": {
+          "name": "club_season_payment_attempts_payment_plan_version_id_club_season_payment_plan_versions_id_fk",
+          "tableFrom": "club_season_payment_attempts",
+          "tableTo": "club_season_payment_plan_versions",
+          "columnsFrom": [
+            "payment_plan_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "club_season_payment_attempts_installment_id_club_season_payment_installments_id_fk": {
+          "name": "club_season_payment_attempts_installment_id_club_season_payment_installments_id_fk",
+          "tableFrom": "club_season_payment_attempts",
+          "tableTo": "club_season_payment_installments",
+          "columnsFrom": [
+            "installment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "club_season_payment_installments": {
       "name": "club_season_payment_installments",
       "columns": {
@@ -1320,6 +1676,42 @@
         },
         "stripe_payment_intent_id": {
           "name": "stripe_payment_intent_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "next_attempt_date": {
+          "name": "next_attempt_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_attempted_at": {
+          "name": "last_attempted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_failure_code": {
+          "name": "last_failure_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_failure_message": {
+          "name": "last_failure_message",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -1657,6 +2049,14 @@
           "autoincrement": false,
           "default": "'pending_checkout'"
         },
+        "financial_status": {
+          "name": "financial_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'not_started'"
+        },
         "current_version": {
           "name": "current_version",
           "type": "integer",
@@ -1818,6 +2218,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'checkout'"
+        },
         "stripe_checkout_session_id": {
           "name": "stripe_checkout_session_id",
           "type": "text",
@@ -1830,6 +2238,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "stripe_charge_id": {
+          "name": "stripe_charge_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "amount": {
