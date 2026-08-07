@@ -164,6 +164,32 @@ Still deferred to the payment milestone:
 - Stripe Checkout and deposit collection
 - Final offer/roster acceptance after successful payment
 
+### 4.3 Milestone 3A implementation status â€” August 7, 2026
+
+Implemented on the dark feature branch in Stripe test mode:
+
+- Parent selection between pay in full and the standard automatic payment plan
+- Server-generated, fingerprinted payment terms so amounts and dates cannot be supplied or changed by the browser
+- Exact immutable charge schedules: payment or deposit due at Checkout, no December charge, then January 5 through May 5 for the standard plan
+- Typed-name and checkbox authorization for off-session automatic charges, with the exact authorization text, verified email, timestamp, user agent, privacy-preserving request-IP hash when available, and content hash retained as evidence
+- Stripe-hosted Checkout for the full dues or deposit; standard-plan Checkout marks the card for authorized future off-session use while full card data remains with Stripe
+- Stable Checkout idempotency keys and retry-safe plan creation
+- One logical payment plan per registration with immutable versioned terms, installments, and payment transactions so later custom arrangements can create a new version without rewriting history
+- Verified Stripe webhook activation that checks the session, amount, currency, registration, plan version, and payment status before atomically accepting the offer and confirming the roster spot
+- Duplicate webhook protection through conditional state transitions and unique Stripe session, PaymentIntent, and event references
+- Checkout-expiration handling that leaves the registration and agreement evidence intact and permits a new authorized attempt
+- Parent success/cancellation states that do not trust the browser redirect as proof of payment
+
+Still deferred to later payment milestones:
+
+- Daily January-May installment charging and authentication-recovery workflow
+- Five-day reminder, payment-confirmation, failure, and admin-alert emails
+- Admin-created custom plans, individual billing-day changes, and mid-plan version revisions
+- Parent payment-method management and the full balance/history view
+- Refund execution, credits, offline payments, disputes, and financial reconciliation tools
+
+The feature remains disabled for public production use. Before launch, TVVC must publish approved agreement/refund-policy versions, configure and verify live Stripe webhook/receipt settings, and complete the remaining installment and communication milestones.
+
 ## 5. Information Already Collected at Tryouts
 
 The existing tryout flow already collects or supports:

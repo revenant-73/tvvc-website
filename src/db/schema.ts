@@ -531,3 +531,121 @@ export const clubSeasonAgreementAcceptances = sqliteTable('club_season_agreement
   ownerUserIdIdx: index('club_season_acceptances_owner_user_id_idx').on(table.ownerUserId),
 }));
 
+// A registration has one logical payment plan. Later accommodations create a
+// new immutable version instead of rewriting the schedule a family accepted.
+export const clubSeasonPaymentPlans = sqliteTable('club_season_payment_plans', {
+  id: text('id').primaryKey(),
+  registrationId: text('registration_id')
+    .notNull()
+    .references(() => clubSeasonRegistrations.id),
+  ownerUserId: text('owner_user_id')
+    .notNull()
+    .references(() => users.id),
+  status: text('status').notNull().default('pending_checkout'),
+  currentVersion: integer('current_version').notNull().default(1),
+  stripeCustomerId: text('stripe_customer_id'),
+  stripePaymentMethodId: text('stripe_payment_method_id'),
+  needsReview: integer('needs_review', { mode: 'boolean' }).notNull().default(false),
+  activatedAt: text('activated_at'),
+  completedAt: text('completed_at'),
+  cancelledAt: text('cancelled_at'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  registrationIdUnique: uniqueIndex('club_season_payment_plans_registration_id_unique')
+    .on(table.registrationId),
+  ownerUserIdIdx: index('club_season_payment_plans_owner_user_id_idx').on(table.ownerUserId),
+  statusIdx: index('club_season_payment_plans_status_idx').on(table.status),
+}));
+
+export const clubSeasonPaymentPlanVersions = sqliteTable('club_season_payment_plan_versions', {
+  id: text('id').primaryKey(),
+  paymentPlanId: text('payment_plan_id')
+    .notNull()
+    .references(() => clubSeasonPaymentPlans.id),
+  version: integer('version').notNull(),
+  paymentOption: text('payment_option').notNull(), // pay_in_full, standard_plan, custom_plan
+  status: text('status').notNull().default('pending_checkout'),
+  totalAmount: integer('total_amount').notNull(),
+  dueNowAmount: integer('due_now_amount').notNull(),
+  currency: text('currency').notNull().default('usd'),
+  billingDay: integer('billing_day'),
+  scheduleSnapshot: text('schedule_snapshot').notNull(),
+  termsFingerprint: text('terms_fingerprint').notNull(),
+  authorizationText: text('authorization_text'),
+  authorizationContentHash: text('authorization_content_hash'),
+  authorizedName: text('authorized_name'),
+  authorizedEmail: text('authorized_email'),
+  requestIpHash: text('request_ip_hash'),
+  userAgent: text('user_agent'),
+  authorizedAt: text('authorized_at'),
+  stripeCheckoutSessionId: text('stripe_checkout_session_id'),
+  stripeCheckoutExpiresAt: text('stripe_checkout_expires_at'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  planVersionUnique: uniqueIndex('club_season_payment_plan_versions_plan_version_unique')
+    .on(table.paymentPlanId, table.version),
+  stripeSessionUnique: uniqueIndex('club_season_payment_plan_versions_stripe_session_unique')
+    .on(table.stripeCheckoutSessionId),
+  paymentPlanIdIdx: index('club_season_payment_plan_versions_plan_id_idx')
+    .on(table.paymentPlanId),
+  statusIdx: index('club_season_payment_plan_versions_status_idx').on(table.status),
+}));
+
+export const clubSeasonPaymentInstallments = sqliteTable('club_season_payment_installments', {
+  id: text('id').primaryKey(),
+  paymentPlanVersionId: text('payment_plan_version_id')
+    .notNull()
+    .references(() => clubSeasonPaymentPlanVersions.id),
+  sequence: integer('sequence').notNull(),
+  type: text('type').notNull(), // full_payment, deposit, installment
+  dueDate: text('due_date').notNull(),
+  amount: integer('amount').notNull(),
+  status: text('status').notNull().default('scheduled'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  paidAt: text('paid_at'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  versionSequenceUnique: uniqueIndex('club_season_installments_version_sequence_unique')
+    .on(table.paymentPlanVersionId, table.sequence),
+  stripeIntentUnique: uniqueIndex('club_season_installments_stripe_intent_unique')
+    .on(table.stripePaymentIntentId),
+  paymentPlanVersionIdIdx: index('club_season_installments_plan_version_id_idx')
+    .on(table.paymentPlanVersionId),
+  statusIdx: index('club_season_installments_status_idx').on(table.status),
+  dueDateIdx: index('club_season_installments_due_date_idx').on(table.dueDate),
+}));
+
+export const clubSeasonPaymentTransactions = sqliteTable('club_season_payment_transactions', {
+  id: text('id').primaryKey(),
+  registrationId: text('registration_id')
+    .notNull()
+    .references(() => clubSeasonRegistrations.id),
+  paymentPlanVersionId: text('payment_plan_version_id')
+    .notNull()
+    .references(() => clubSeasonPaymentPlanVersions.id),
+  installmentId: text('installment_id')
+    .notNull()
+    .references(() => clubSeasonPaymentInstallments.id),
+  stripeEventId: text('stripe_event_id').notNull(),
+  stripeCheckoutSessionId: text('stripe_checkout_session_id').notNull(),
+  stripePaymentIntentId: text('stripe_payment_intent_id').notNull(),
+  amount: integer('amount').notNull(),
+  currency: text('currency').notNull(),
+  status: text('status').notNull(),
+  processedAt: text('processed_at').notNull(),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  stripeEventUnique: uniqueIndex('club_season_payment_transactions_event_unique')
+    .on(table.stripeEventId),
+  stripeSessionUnique: uniqueIndex('club_season_payment_transactions_session_unique')
+    .on(table.stripeCheckoutSessionId),
+  stripeIntentUnique: uniqueIndex('club_season_payment_transactions_intent_unique')
+    .on(table.stripePaymentIntentId),
+  registrationIdIdx: index('club_season_payment_transactions_registration_id_idx')
+    .on(table.registrationId),
+}));
+

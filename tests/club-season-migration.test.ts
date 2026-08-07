@@ -79,6 +79,10 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
          'club_season_agreement_acceptances',
          'club_season_agreement_versions',
          'club_season_offers',
+         'club_season_payment_installments',
+         'club_season_payment_plan_versions',
+         'club_season_payment_plans',
+         'club_season_payment_transactions',
          'club_season_registrations'
        )
        ORDER BY name`
@@ -87,6 +91,10 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
       { name: 'club_season_agreement_acceptances' },
       { name: 'club_season_agreement_versions' },
       { name: 'club_season_offers' },
+      { name: 'club_season_payment_installments' },
+      { name: 'club_season_payment_plan_versions' },
+      { name: 'club_season_payment_plans' },
+      { name: 'club_season_payment_transactions' },
       { name: 'club_season_registrations' },
     ]);
 
@@ -117,6 +125,10 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
     assert.deepEqual(immutabilityTriggers.rows, [
       { name: 'club_season_acceptance_delete_restricted' },
       { name: 'club_season_acceptance_update_restricted' },
+      { name: 'club_season_installment_delete_restricted' },
+      { name: 'club_season_payment_transaction_delete_restricted' },
+      { name: 'club_season_payment_transaction_update_restricted' },
+      { name: 'club_season_payment_version_delete_restricted' },
       { name: 'club_season_published_agreement_delete_restricted' },
       { name: 'club_season_published_agreement_status_restricted' },
     ]);

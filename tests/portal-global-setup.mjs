@@ -157,6 +157,18 @@ export default async function globalSetup() {
         '503-555-0303',
       ],
     },
+    ...Object.values(fixtures.clubSeasonPayments).map((paymentFixture) => ({
+      sql: `INSERT INTO user
+        (id, name, email, email_verified, role, stripe_customer_id, emergency_phone)
+        VALUES (?, ?, ?, ?, 'user', ?, '503-555-0700')`,
+      args: [
+        paymentFixture.userId,
+        `${paymentFixture.athleteName} Parent`,
+        paymentFixture.email,
+        Date.now(),
+        `cus_${paymentFixture.userId.replaceAll('-', '_')}`,
+      ],
+    })),
     {
       sql: 'INSERT INTO session (session_token, userId, expires) VALUES (?, ?, ?)',
       args: [fixtures.admin.sessionToken, fixtures.admin.id, expires],
@@ -181,6 +193,10 @@ export default async function globalSetup() {
       sql: 'INSERT INTO session (session_token, userId, expires) VALUES (?, ?, ?)',
       args: [fixtures.guardian.sessionToken, fixtures.guardian.id, expires],
     },
+    ...Object.values(fixtures.clubSeasonPayments).map((paymentFixture) => ({
+      sql: 'INSERT INTO session (session_token, userId, expires) VALUES (?, ?, ?)',
+      args: [paymentFixture.sessionToken, paymentFixture.userId, expires],
+    })),
     {
       sql: `INSERT INTO registrations
         (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
@@ -217,6 +233,21 @@ export default async function globalSetup() {
         ),
       ],
     },
+    ...Object.values(fixtures.clubSeasonPayments).map((paymentFixture) => ({
+      sql: `INSERT INTO registrations
+        (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
+         stripe_session_id, stripe_customer_id, status, total_amount, metadata)
+        VALUES (?, ?, ?, ?, '503-555-0700', '503-555-0701', ?, ?, 'paid', 5000, ?)`,
+      args: [
+        paymentFixture.sourceRegistrationId,
+        paymentFixture.userId,
+        `${paymentFixture.athleteName} Parent`,
+        paymentFixture.email,
+        `cs_test_${paymentFixture.userId}`,
+        `cus_${paymentFixture.userId.replaceAll('-', '_')}`,
+        orderMetadata(fixtures.clubSeason.tryoutEventName, paymentFixture.athleteName, 5000),
+      ],
+    })),
     {
       sql: `INSERT INTO registrations
         (id, user_id, parent_name, parent_email, parent_phone, emergency_phone,
@@ -358,6 +389,15 @@ export default async function globalSetup() {
         VALUES (?, ?, 'Casey', 'Collision', '10th', 'None')`,
       args: [fixtures.emailCollision.athleteId, fixtures.parentB.id],
     },
+    ...Object.values(fixtures.clubSeasonPayments).map((paymentFixture) => {
+      const [firstName, lastName] = paymentFixture.athleteName.split(' ');
+      return {
+        sql: `INSERT INTO player_profiles
+          (id, parent_id, first_name, last_name, grade, medical_info)
+          VALUES (?, ?, ?, ?, '8th', 'None')`,
+        args: [paymentFixture.athleteId, paymentFixture.userId, firstName, lastName],
+      };
+    }),
     {
       sql: `INSERT INTO athletes
         (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
@@ -448,6 +488,22 @@ export default async function globalSetup() {
         fixtures.webhook.registrationId,
       ],
     },
+    ...Object.values(fixtures.clubSeasonPayments).map((paymentFixture) => {
+      const [firstName, lastName] = paymentFixture.athleteName.split(' ');
+      return {
+        sql: `INSERT INTO athletes
+          (id, registration_id, parent_id, profile_id, first_name, last_name, grade, medical_info)
+          VALUES (?, ?, ?, ?, ?, ?, '8th', 'None')`,
+        args: [
+          paymentFixture.athleteId,
+          paymentFixture.sourceRegistrationId,
+          paymentFixture.userId,
+          paymentFixture.athleteId,
+          firstName,
+          lastName,
+        ],
+      };
+    }),
     {
       sql: `INSERT INTO events
         (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
@@ -638,6 +694,84 @@ export default async function globalSetup() {
         fixtures.clubSeason.tryoutEventId,
       ],
     },
+    ...Object.values(fixtures.clubSeasonPayments).flatMap((paymentFixture) => ([
+      {
+        sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
+              VALUES (?, ?, ?)`,
+        args: [
+          paymentFixture.sourceRegistrationId,
+          paymentFixture.athleteId,
+          fixtures.clubSeason.tryoutEventId,
+        ],
+      },
+      {
+        sql: `INSERT INTO club_season_offers
+          (id, season_id, team_id, source_registration_id, source_athlete_id,
+           source_profile_id, recipient_email, recipient_user_id, status,
+           acceptance_deadline, offered_at, viewed_at, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'registration_started', '2099-11-30',
+                  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        args: [
+          paymentFixture.offerId,
+          fixtures.clubSeason.id,
+          fixtures.clubSeason.teamId,
+          paymentFixture.sourceRegistrationId,
+          paymentFixture.athleteId,
+          paymentFixture.athleteId,
+          paymentFixture.email,
+          paymentFixture.userId,
+        ],
+      },
+      {
+        sql: `INSERT INTO club_season_registrations
+          (id, offer_id, season_id, team_id, owner_user_id, player_profile_id,
+           status, current_step, draft_data, draft_schema_version, version,
+           submitted_at, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, 'awaiting_payment', 4, ?, 1, 4,
+                  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        args: [
+          paymentFixture.registrationId,
+          paymentFixture.offerId,
+          fixtures.clubSeason.id,
+          fixtures.clubSeason.teamId,
+          paymentFixture.userId,
+          paymentFixture.athleteId,
+          JSON.stringify({ schemaVersion: 1 }),
+        ],
+      },
+      {
+        sql: `INSERT INTO club_season_agreement_acceptances
+          (id, registration_id, agreement_version_id, owner_user_id,
+           agreement_key_snapshot, agreement_title_snapshot,
+           agreement_body_snapshot, agreement_content_hash, response,
+           accepted_name, accepted_email, context_snapshot, accepted_at, created_at)
+          VALUES (?, ?, ?, ?, 'season-commitment', 'Club season participation commitment',
+                  'Test-only accepted agreement evidence', ?, 'accepted', ?, ?, ?,
+                  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        args: [
+          `${paymentFixture.registrationId}-acceptance`,
+          paymentFixture.registrationId,
+          fixtures.clubSeason.agreementIds.commitment,
+          paymentFixture.userId,
+          '0fd0ff3088015996d43874f4332c379c436f544d7d758195f707535d147d5940',
+          `${paymentFixture.athleteName} Parent`,
+          paymentFixture.email,
+          JSON.stringify({
+            season: { id: fixtures.clubSeason.id, name: '2026-2027 Club Season' },
+            team: { id: fixtures.clubSeason.teamId, name: fixtures.clubSeason.teamName, ageGroup: '14U' },
+            pricing: {
+              tierId: 'tier-2026-2027-13u-18u',
+              tierName: '13U-18U',
+              totalAmount: 150000,
+              depositAmount: 40000,
+              installmentAmount: 22000,
+            },
+            offerId: paymentFixture.offerId,
+            sourceAthleteId: paymentFixture.athleteId,
+          }),
+        ],
+      },
+    ])),
   ], 'write');
 
   client.close();

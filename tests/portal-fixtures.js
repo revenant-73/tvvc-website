@@ -78,6 +78,28 @@ module.exports = {
       media: 'agreement-2026-media-v1',
     },
   },
+  clubSeasonPayments: {
+    standard: {
+      userId: 'parent-club-standard',
+      email: 'parent-club-standard@tvvc.test',
+      sessionToken: 'portal-e2e-club-standard-session',
+      sourceRegistrationId: 'tryout-club-standard',
+      athleteId: 701,
+      offerId: 'offer-club-standard',
+      registrationId: 'club-registration-standard',
+      athleteName: 'Sam Standard',
+    },
+    full: {
+      userId: 'parent-club-full',
+      email: 'parent-club-full@tvvc.test',
+      sessionToken: 'portal-e2e-club-full-session',
+      sourceRegistrationId: 'tryout-club-full',
+      athleteId: 702,
+      offerId: 'offer-club-full',
+      registrationId: 'club-registration-full',
+      athleteName: 'Parker Full',
+    },
+  },
   webhook: {
     registrationId: 'webhook-pending-2026',
     athleteId: 501,

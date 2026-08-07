@@ -346,7 +346,8 @@ test.describe.serial('Club season offer authorization', () => {
       const parentAPage = await parentA.newPage();
       await parentAPage.goto('/season-registration');
       await expect(parentAPage.getByText(fixtures.clubSeason.teamName, { exact: true }).first()).toBeVisible();
-      await expect(parentAPage.getByText(/information and agreement responses are safely recorded/i)).toBeVisible();
+      await expect(parentAPage.getByRole('heading', { name: /choose how to pay/i })).toBeVisible();
+      await expect(parentAPage.getByText(/roster spot becomes final only after payment is confirmed/i)).toBeVisible();
 
       const parentBPage = await parentB.newPage();
       await parentBPage.goto('/season-registration');
