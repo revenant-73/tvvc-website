@@ -5,6 +5,7 @@ import { db } from '../../../db/db';
 import {
   clubSeasonAgreementAcceptances,
   clubSeasonPaymentInstallments,
+  clubSeasonPaymentPlanAuthorizations,
   clubSeasonPaymentPlans,
   clubSeasonPaymentPlanVersions,
 } from '../../../db/schema';
@@ -23,6 +24,7 @@ import {
 import { getClubDate } from '../../../lib/event-eligibility';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
 import { createStripeClient } from '../../../lib/stripe-client';
+import { getPendingInitialPlan } from '../../../lib/club-season-initial-plan';
 
 export const prerender = false;
 
@@ -104,8 +106,17 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: 'The accepted pricing record needs TVVC review.' }, 503);
     }
 
+    const customProposal = parsed.data.paymentOption === 'custom_plan'
+      ? await getPendingInitialPlan(db, item.draft.id)
+      : null;
+    if (parsed.data.paymentOption === 'custom_plan' && !customProposal) {
+      return json({ error: 'That custom payment arrangement is no longer available. Reload to review your options.' }, 409);
+    }
+    if (customProposal?.snapshot.charges.some((charge) => charge.dueDate <= getClubDate())) {
+      return json({ error: 'A date in this custom payment arrangement has passed. Contact TVVC for an updated schedule.' }, 409);
+    }
     const billingDay = item.team.billingDayOverride || item.season.defaultBillingDay;
-    const terms = buildClubSeasonPaymentTerms({
+    const terms = customProposal?.terms || buildClubSeasonPaymentTerms({
       paymentOption: parsed.data.paymentOption,
       registrationDate: getClubDate(),
       firstInstallmentDate: item.season.firstInstallmentDate,
@@ -122,18 +133,19 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: 'The payment schedule changed. Reload and review the current terms.' }, 409);
     }
 
-    const isStandardPlan = parsed.data.paymentOption === 'standard_plan';
+    const isAutopayPlan = parsed.data.paymentOption !== 'pay_in_full';
     const authorizedName = parsed.data.authorizedName?.trim() || '';
-    if (isStandardPlan && (!parsed.data.autopayAuthorized || authorizedName.length < 2)) {
+    if (isAutopayPlan && (!parsed.data.autopayAuthorized || authorizedName.length < 2)) {
       return json({ error: 'Enter your name and authorize the automatic payment schedule.' }, 422);
     }
 
     const now = new Date().toISOString();
-    const authorizationHash = isStandardPlan
-      ? await hashClubSeasonAuthorization(CLUB_SEASON_AUTOPAY_AUTHORIZATION)
+    const authorizationText = customProposal?.authorizationText || CLUB_SEASON_AUTOPAY_AUTHORIZATION;
+    const authorizationHash = isAutopayPlan
+      ? await hashClubSeasonAuthorization(authorizationText)
       : null;
-    const ipHash = isStandardPlan ? await requestIpHash(request) : null;
-    const userAgent = isStandardPlan ? request.headers.get('user-agent')?.slice(0, 500) || null : null;
+    const ipHash = isAutopayPlan ? await requestIpHash(request) : null;
+    const userAgent = isAutopayPlan ? request.headers.get('user-agent')?.slice(0, 500) || null : null;
 
     const checkoutRecord = await db.transaction(async (tx) => {
       const proposedPlanId = crypto.randomUUID();
@@ -163,6 +175,95 @@ export const POST: APIRoute = async ({ request }) => {
           ))
           .limit(1);
         if (!existingVersion) throw new Error('PAYMENT_PLAN_INCOMPLETE');
+        if (parsed.data.paymentOption === 'custom_plan') {
+          if (
+            existingVersion.id !== customProposal?.version.id ||
+            existingVersion.paymentOption !== 'custom_plan' ||
+            existingVersion.termsFingerprint !== termsFingerprint
+          ) throw new Error('PAYMENT_SELECTION_LOCKED');
+          if (
+            ['pending_checkout', 'checkout_open'].includes(plan.status) &&
+            existingVersion.status === 'pending_checkout'
+          ) return { plan, version: existingVersion };
+          if (
+            plan.status !== 'custom_pending_authorization' ||
+            existingVersion.status !== 'pending_authorization'
+          ) throw new Error('PAYMENT_SELECTION_LOCKED');
+          const [claimed] = await tx.update(clubSeasonPaymentPlanVersions).set({
+            status: 'pending_checkout', updatedAt: now,
+          }).where(and(
+            eq(clubSeasonPaymentPlanVersions.id, existingVersion.id),
+            eq(clubSeasonPaymentPlanVersions.status, 'pending_authorization')
+          )).returning();
+          if (!claimed) throw new Error('PAYMENT_PLAN_RETRY_CONFLICT');
+          await tx.insert(clubSeasonPaymentPlanAuthorizations).values({
+            id: crypto.randomUUID(), paymentPlanVersionId: existingVersion.id,
+            ownerUserId: user.id, authorizationText,
+            authorizationContentHash: authorizationHash!, authorizedName,
+            authorizedEmail: user.email.trim().toLowerCase(), requestIpHash: ipHash,
+            userAgent, authorizedAt: now, createdAt: now,
+          });
+          await tx.update(clubSeasonPaymentInstallments).set({ status: 'scheduled', updatedAt: now })
+            .where(and(
+              eq(clubSeasonPaymentInstallments.paymentPlanVersionId, existingVersion.id),
+              eq(clubSeasonPaymentInstallments.status, 'pending_authorization')
+            ));
+          const [updatedPlan] = await tx.update(clubSeasonPaymentPlans).set({
+            status: 'pending_checkout', updatedAt: now,
+          }).where(and(
+            eq(clubSeasonPaymentPlans.id, plan.id),
+            eq(clubSeasonPaymentPlans.status, 'custom_pending_authorization')
+          )).returning();
+          if (!updatedPlan) throw new Error('PAYMENT_PLAN_RETRY_CONFLICT');
+          return { plan: updatedPlan, version: claimed };
+        }
+        if (
+          plan.status === 'custom_pending_authorization' &&
+          existingVersion.paymentOption === 'custom_plan' &&
+          existingVersion.status === 'pending_authorization'
+        ) {
+          const nextVersion = plan.currentVersion + 1;
+          const nextVersionId = crypto.randomUUID();
+          const [cancelledCustom] = await tx.update(clubSeasonPaymentPlanVersions)
+            .set({ status: 'cancelled', updatedAt: now })
+            .where(and(
+              eq(clubSeasonPaymentPlanVersions.id, existingVersion.id),
+              eq(clubSeasonPaymentPlanVersions.status, 'pending_authorization')
+            )).returning({ id: clubSeasonPaymentPlanVersions.id });
+          if (!cancelledCustom) throw new Error('PAYMENT_PLAN_RETRY_CONFLICT');
+          await tx.update(clubSeasonPaymentInstallments).set({ status: 'cancelled', updatedAt: now })
+            .where(and(
+              eq(clubSeasonPaymentInstallments.paymentPlanVersionId, existingVersion.id),
+              eq(clubSeasonPaymentInstallments.status, 'pending_authorization')
+            ));
+          const [replacement] = await tx.insert(clubSeasonPaymentPlanVersions).values({
+            id: nextVersionId, paymentPlanId: plan.id, version: nextVersion,
+            paymentOption: parsed.data.paymentOption, status: 'pending_checkout',
+            totalAmount: terms.totalAmount, dueNowAmount: terms.dueNowAmount,
+            currency: terms.currency, billingDay: terms.billingDay,
+            scheduleSnapshot: JSON.stringify(terms.charges), termsFingerprint,
+            authorizationText: isAutopayPlan ? authorizationText : null,
+            authorizationContentHash: authorizationHash,
+            authorizedName: isAutopayPlan ? authorizedName : null,
+            authorizedEmail: isAutopayPlan ? user.email.trim().toLowerCase() : null,
+            requestIpHash: ipHash, userAgent, authorizedAt: isAutopayPlan ? now : null,
+            createdAt: now, updatedAt: now,
+          }).returning();
+          await tx.insert(clubSeasonPaymentInstallments).values(terms.charges.map((charge) => ({
+            id: crypto.randomUUID(), paymentPlanVersionId: nextVersionId, sequence: charge.sequence,
+            type: charge.type, dueDate: charge.dueDate, amount: charge.amount,
+            status: 'scheduled', createdAt: now, updatedAt: now,
+          })));
+          const [updatedPlan] = await tx.update(clubSeasonPaymentPlans).set({
+            status: 'pending_checkout', currentVersion: nextVersion, updatedAt: now,
+          }).where(and(
+            eq(clubSeasonPaymentPlans.id, plan.id),
+            eq(clubSeasonPaymentPlans.status, 'custom_pending_authorization'),
+            eq(clubSeasonPaymentPlans.currentVersion, plan.currentVersion)
+          )).returning();
+          if (!replacement || !updatedPlan) throw new Error('PAYMENT_PLAN_RETRY_CONFLICT');
+          return { plan: updatedPlan, version: replacement };
+        }
         if (
           existingVersion.paymentOption !== parsed.data.paymentOption ||
           existingVersion.termsFingerprint !== termsFingerprint
@@ -187,13 +288,13 @@ export const POST: APIRoute = async ({ request }) => {
           billingDay: terms.billingDay,
           scheduleSnapshot: JSON.stringify(terms.charges),
           termsFingerprint,
-          authorizationText: isStandardPlan ? CLUB_SEASON_AUTOPAY_AUTHORIZATION : null,
+          authorizationText: isAutopayPlan ? authorizationText : null,
           authorizationContentHash: authorizationHash,
-          authorizedName: isStandardPlan ? authorizedName : null,
-          authorizedEmail: isStandardPlan ? user.email.trim().toLowerCase() : null,
+          authorizedName: isAutopayPlan ? authorizedName : null,
+          authorizedEmail: isAutopayPlan ? user.email.trim().toLowerCase() : null,
           requestIpHash: ipHash,
           userAgent,
-          authorizedAt: isStandardPlan ? now : null,
+          authorizedAt: isAutopayPlan ? now : null,
           createdAt: now,
           updatedAt: now,
         }).returning();
@@ -234,13 +335,13 @@ export const POST: APIRoute = async ({ request }) => {
         billingDay: terms.billingDay,
         scheduleSnapshot: JSON.stringify(terms.charges),
         termsFingerprint,
-        authorizationText: isStandardPlan ? CLUB_SEASON_AUTOPAY_AUTHORIZATION : null,
+        authorizationText: isAutopayPlan ? authorizationText : null,
         authorizationContentHash: authorizationHash,
-        authorizedName: isStandardPlan ? authorizedName : null,
-        authorizedEmail: isStandardPlan ? user.email.trim().toLowerCase() : null,
+        authorizedName: isAutopayPlan ? authorizedName : null,
+        authorizedEmail: isAutopayPlan ? user.email.trim().toLowerCase() : null,
         requestIpHash: ipHash,
         userAgent,
-        authorizedAt: isStandardPlan ? now : null,
+        authorizedAt: isAutopayPlan ? now : null,
         createdAt: now,
         updatedAt: now,
       }).returning();
@@ -303,7 +404,7 @@ export const POST: APIRoute = async ({ request }) => {
       metadata,
       payment_intent_data: {
         metadata,
-        ...(isStandardPlan ? { setup_future_usage: 'off_session' as const } : {}),
+        ...(isAutopayPlan ? { setup_future_usage: 'off_session' as const } : {}),
       },
       expires_at: expiresAt,
     };

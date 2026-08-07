@@ -77,13 +77,13 @@ async function processClubSeasonCheckout(
     ? session.customer
     : session.customer?.id || null;
   let stripePaymentMethodId: string | null = null;
-  if (version.paymentOption === 'standard_plan') {
+  if (version.paymentOption !== 'pay_in_full') {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     stripePaymentMethodId = typeof paymentIntent.payment_method === 'string'
       ? paymentIntent.payment_method
       : paymentIntent.payment_method?.id || null;
     if (!stripeCustomerId || !stripePaymentMethodId) {
-      throw new Error('Standard plan checkout did not return a reusable Stripe payment method.');
+      throw new Error('Installment plan checkout did not return a reusable Stripe payment method.');
     }
   }
 

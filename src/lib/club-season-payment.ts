@@ -10,13 +10,13 @@ export const CLUB_SEASON_AUTOPAY_AUTHORIZATION =
 
 export const clubSeasonCheckoutSchema = z.object({
   offerId: z.string().trim().min(1).max(100),
-  paymentOption: z.enum(['pay_in_full', 'standard_plan']),
+  paymentOption: z.enum(['pay_in_full', 'standard_plan', 'custom_plan']),
   termsFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
   authorizedName: z.string().trim().max(120).optional(),
   autopayAuthorized: z.boolean().optional().default(false),
 }).strict();
 
-export type ClubSeasonPaymentOption = 'pay_in_full' | 'standard_plan';
+export type ClubSeasonPaymentOption = 'pay_in_full' | 'standard_plan' | 'custom_plan';
 
 export type ClubSeasonPaymentTerms = {
   paymentOption: ClubSeasonPaymentOption;
@@ -58,6 +58,9 @@ export function buildClubSeasonPaymentTerms({
   billingDay,
   pricing,
 }: PaymentTermsInput): ClubSeasonPaymentTerms {
+  if (paymentOption === 'custom_plan') {
+    throw new Error('Custom payment terms must come from an administrator proposal.');
+  }
   if (paymentOption === 'pay_in_full') {
     return {
       paymentOption,

@@ -99,6 +99,16 @@ module.exports = {
       registrationId: 'club-registration-full',
       athleteName: 'Parker Full',
     },
+    custom: {
+      userId: 'parent-club-custom',
+      email: 'parent-club-custom@tvvc.test',
+      sessionToken: 'portal-e2e-club-custom-session',
+      sourceRegistrationId: 'tryout-club-custom',
+      athleteId: 703,
+      offerId: 'offer-club-custom',
+      registrationId: 'club-registration-custom',
+      athleteName: 'Casey Custom',
+    },
   },
   webhook: {
     registrationId: 'webhook-pending-2026',

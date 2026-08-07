@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { createClient } from '@libsql/client';
+import { createHash } from 'node:crypto';
 import Stripe from 'stripe';
 const fixtures = require('./portal-fixtures');
 
@@ -283,6 +284,76 @@ test.describe.serial('Club season payment checkout', () => {
       client.close();
       await parent.close();
       await otherParent.close();
+    }
+  });
+
+  test('custom plan shows exact admin terms and records immutable authorization before checkout', async ({ browser, request }) => {
+    const paymentFixture = fixtures.clubSeasonPayments.custom;
+    const parent = await contextWithSession(browser, paymentFixture.sessionToken);
+    const client = createClient({ url: fixtures.databaseUrl });
+    const planId = 'plan-club-custom';
+    const versionId = 'version-club-custom-1';
+    const terms = {
+      paymentOption: 'custom_plan', totalAmount: 150000, dueNowAmount: 30000,
+      currency: 'usd', billingDay: null,
+      charges: [
+        { sequence: 0, type: 'deposit', dueDate: '2026-11-12', amount: 30000 },
+        { sequence: 1, type: 'installment', dueDate: '2027-01-15', amount: 60000 },
+        { sequence: 2, type: 'installment', dueDate: '2027-02-15', amount: 60000 },
+      ],
+    };
+    const fingerprint = createHash('sha256').update(JSON.stringify(terms)).digest('hex');
+    const snapshot = {
+      kind: 'initial_custom_plan', currency: 'usd', seasonTotal: 150000,
+      dueNowAmount: 30000, proposedOn: '2026-11-12',
+      reason: 'Two larger installments requested by the family', adminNote: 'E2E fixture',
+      charges: terms.charges.slice(1),
+    };
+    try {
+      await client.batch([
+        { sql: `INSERT INTO club_season_payment_plans (id,registration_id,owner_user_id,status,financial_status,current_version) VALUES (?,?,?,'custom_pending_authorization','not_started',1)`, args: [planId, paymentFixture.registrationId, paymentFixture.userId] },
+        { sql: `INSERT INTO club_season_payment_plan_versions (id,payment_plan_id,version,payment_option,status,total_amount,due_now_amount,currency,billing_day,schedule_snapshot,terms_fingerprint) VALUES (?,?,1,'custom_plan','pending_authorization',150000,30000,'usd',NULL,?,?)`, args: [versionId, planId, JSON.stringify(snapshot), fingerprint] },
+        ...terms.charges.map((charge) => ({ sql: `INSERT INTO club_season_payment_installments (id,payment_plan_version_id,sequence,type,due_date,amount,status) VALUES (?,?,?,?,?,?,'pending_authorization')`, args: [`custom-installment-${charge.sequence}`, versionId, charge.sequence, charge.type, charge.dueDate, charge.amount] })),
+      ], 'write');
+
+      const page = await parent.newPage();
+      await page.goto('/season-registration');
+      const card = page.locator(`[data-offer-id="${paymentFixture.offerId}"]`);
+      const customOption = card.locator('input[value="custom_plan"]');
+      await expect(customOption).toBeVisible();
+      await expect(customOption).not.toBeChecked();
+      await customOption.check();
+      await expect(card.getByText('$300').first()).toBeVisible();
+      await expect(card.getByText('Jan 15, 2027')).toBeVisible();
+      await expect(card.getByText('Feb 15, 2027')).toBeVisible();
+      await expect(card.getByText(/Two larger installments requested/i).first()).toBeVisible();
+
+      const checkout = await parent.request.post('/api/club-season/checkout', { data: {
+        offerId: paymentFixture.offerId, paymentOption: 'custom_plan', termsFingerprint: fingerprint,
+        authorizedName: 'Custom Parent', autopayAuthorized: true,
+      } });
+      expect(checkout.ok()).toBeTruthy();
+
+      const record = await client.execute({
+        sql: `SELECT p.status AS plan_status, v.status AS version_status,
+                     v.stripe_checkout_session_id,
+                     (SELECT count(*) FROM club_season_payment_plan_authorizations a WHERE a.payment_plan_version_id=v.id) AS authorization_count,
+                     (SELECT authorized_name FROM club_season_payment_plan_authorizations a WHERE a.payment_plan_version_id=v.id) AS authorized_name
+              FROM club_season_payment_plans p JOIN club_season_payment_plan_versions v
+                ON v.payment_plan_id=p.id AND v.version=p.current_version WHERE p.id=?`,
+        args: [planId],
+      });
+      expect(record.rows[0]).toMatchObject({
+        plan_status: 'checkout_open', version_status: 'pending_checkout',
+        authorized_name: 'Custom Parent', authorization_count: 1,
+      });
+      const stripeSession = await request.get(`http://127.0.0.1:4322/test/checkout-sessions/${record.rows[0].stripe_checkout_session_id}`);
+      const stripeRequest = await stripeSession.json();
+      expect(stripeRequest.request_params['line_items[0][price_data][unit_amount]']).toBe('30000');
+      expect(stripeRequest.request_params['payment_intent_data[setup_future_usage]']).toBe('off_session');
+    } finally {
+      client.close();
+      await parent.close();
     }
   });
 });

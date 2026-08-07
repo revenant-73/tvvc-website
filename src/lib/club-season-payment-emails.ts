@@ -127,6 +127,21 @@ export function paymentPlanRevisionProposedEmail(context: PaymentEmailContext & 
   };
 }
 
+export function initialCustomPlanProposedEmail(context: PaymentEmailContext & { reason: string }) {
+  return {
+    subject: `Your TVVC custom payment arrangement is ready for ${context.playerName}`,
+    html: shell('Your custom payment arrangement is ready', 'Review before Checkout', `
+      <p>Hi ${escapeHtml(context.parentName)},</p>
+      <p>TVVC prepared the individualized payment arrangement you requested for ${escapeHtml(context.playerName)}.</p>
+      <p><strong>Reason:</strong> ${escapeHtml(context.reason)}</p>
+      <p><strong>Amount due at Checkout:</strong> ${money(context.amount)}</p>
+      <p><strong>Total season dues:</strong> ${money(context.remainingBalance)}</p>
+      <p>No payment will be made and no future automatic charges will be authorized until you sign in, select the custom arrangement, review every date and amount, and complete secure Stripe Checkout.</p>
+      ${button('Review registration payment options', context.portalUrl)}
+    `),
+  };
+}
+
 export function paymentPlanRevisionAcceptedEmail(context: PaymentEmailContext) {
   return {
     subject: `TVVC revised payment schedule confirmed for ${context.playerName}`,

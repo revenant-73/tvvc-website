@@ -167,6 +167,8 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
             const currentStep = Math.min(3, Math.max(1, item.draft?.currentStep || 1));
             const agreements = agreementsBySeason.get(item.season.id) || [];
             const paymentChoices = paymentTermsByOffer.get(item.offer.id);
+            const customPaymentTerms = (item as typeof item & { customPaymentTerms?: any }).customPaymentTerms;
+            const customFutureCharges = customPaymentTerms?.charges?.slice(1) || [];
             const stateCopy = state === 'revoked'
               ? { eyebrow: 'Invitation updated', title: 'This offer is no longer active', body: 'TVVC has withdrawn this invitation. Contact the club if you believe this was unexpected.', tone: 'coral' }
               : state === 'declined'
@@ -692,6 +694,32 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
                               <p class="mt-5 font-heading text-4xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(paymentChoices.standardPlan.terms.dueNowAmount)} <span class="text-sm tracking-normal text-white/55">today</span></p>
                               <p class="mt-1 text-sm leading-6 text-white/60">Then {item.season.standardInstallmentCount} automatic payments of {money(item.pricingTier.installmentAmount)}. <strong class="text-brand-teal">No December charge.</strong></p>
                             </label>
+
+                            {customPaymentTerms && (
+                              <label class="payment-choice relative cursor-pointer overflow-hidden rounded-xl border border-amber-300/30 bg-amber-300/[0.045] p-5 transition hover:border-amber-200/60 focus-within:ring-2 focus-within:ring-brand-teal has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal/[0.075] md:p-6 lg:col-span-2">
+                                <span class="absolute inset-y-0 left-0 w-1 bg-amber-300" aria-hidden="true"></span>
+                                <div class="flex items-start justify-between gap-4">
+                                  <span>
+                                    <span class="text-xs font-extrabold uppercase tracking-[0.13em] text-amber-300">Prepared specifically for your family</span>
+                                    <span class="mt-1 block font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Custom arrangement</span>
+                                  </span>
+                                  <input
+                                    type="radio"
+                                    name={`payment-option-${item.offer.id}`}
+                                    value="custom_plan"
+                                    class="mt-1 h-6 w-6 shrink-0 accent-[#009695]"
+                                    data-payment-option
+                                    data-terms-fingerprint={customPaymentTerms.termsFingerprint}
+                                    data-due-now-amount={customPaymentTerms.dueNowAmount}
+                                  />
+                                </div>
+                                <div class="mt-5 grid gap-4 sm:grid-cols-[auto_1fr] sm:items-end">
+                                  <div><p class="text-[10px] font-extrabold uppercase tracking-wider text-white/60">Due today</p><p class="mt-1 font-heading text-4xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(customPaymentTerms.dueNowAmount)}</p></div>
+                                  <div class="sm:border-l sm:border-white/10 sm:pl-4"><p class="text-[10px] font-extrabold uppercase tracking-wider text-white/60">Later by automatic payment</p><p class="mt-1 font-heading text-2xl font-extrabold tabular-nums text-white">{money(customFutureCharges.reduce((sum:number, charge:any) => sum + charge.amount, 0))}</p></div>
+                                </div>
+                                <p class="mt-4 text-sm leading-6 text-white/70">{customPaymentTerms.reason}</p>
+                              </label>
+                            )}
                           </div>
                         </fieldset>
 
@@ -735,6 +763,44 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
                             <p class="mt-4 text-xs leading-5 text-white/55">Stripe stores your card details; TVVC never receives your full card number. A failed payment may be retried and may prompt TVVC to contact you, but it does not automatically remove the player.</p>
                           </section>
                         </div>
+
+                        {customPaymentTerms && (
+                          <div class="hidden border-t border-white/10" data-custom-plan-details>
+                            <section class="p-5 md:p-8" aria-labelledby={`custom-schedule-heading-${item.offer.id}`}>
+                              <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                                <div><p class="text-xs font-extrabold uppercase tracking-[0.13em] text-amber-300">Your exact custom arrangement</p><h3 id={`custom-schedule-heading-${item.offer.id}`} class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Today is separate from later charges</h3></div>
+                                <p class="text-sm leading-6 text-white/65">{customPaymentTerms.reason}</p>
+                              </div>
+                              <div class="mt-5 grid gap-3 lg:grid-cols-[minmax(13rem,.65fr)_minmax(0,1.35fr)]">
+                                <article class="rounded-xl border border-brand-teal/30 bg-brand-teal/[0.07] p-5">
+                                  <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-brand-teal">Charged at Stripe Checkout</p>
+                                  <p class="mt-2 font-heading text-4xl font-extrabold tabular-nums text-white">{money(customPaymentTerms.dueNowAmount)}</p>
+                                  <p class="mt-2 text-xs leading-5 text-white/60">This is the only amount charged today.</p>
+                                </article>
+                                <article class="overflow-hidden rounded-xl border border-white/10 bg-[#11151d]">
+                                  <header class="flex items-center justify-between border-b border-white/10 px-4 py-3"><p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/65">Later automatic charges</p><strong class="tabular-nums text-white">{money(customFutureCharges.reduce((sum:number, charge:any) => sum + charge.amount, 0))}</strong></header>
+                                  <ol class="divide-y divide-white/10">
+                                    {customFutureCharges.map((charge:any, chargeIndex:number) => (
+                                      <li class="flex min-h-14 items-center justify-between gap-4 px-4 py-3"><span><span class="block text-[10px] font-extrabold uppercase tracking-wider text-white/55">Automatic payment {chargeIndex + 1}</span><span class="mt-1 block text-sm font-semibold tabular-nums text-white">{displayScheduleDate(charge.dueDate)}</span></span><strong class="font-heading text-xl font-extrabold tabular-nums text-white">{money(charge.amount)}</strong></li>
+                                    ))}
+                                  </ol>
+                                </article>
+                              </div>
+                              <div class="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-black/20 px-4 py-3"><span class="text-xs font-extrabold uppercase tracking-wider text-white/65">Exact season total</span><strong class="font-heading text-2xl font-extrabold tabular-nums text-white">{money(customPaymentTerms.totalAmount)}</strong></div>
+                            </section>
+
+                            <section class="border-t border-white/10 bg-black/15 p-5 md:p-8" aria-labelledby={`custom-authorization-heading-${item.offer.id}`}>
+                              <p class="text-xs font-extrabold uppercase tracking-[0.13em] text-brand-teal">Automatic payment authorization</p>
+                              <h3 id={`custom-authorization-heading-${item.offer.id}`} class="mt-1 font-heading text-xl font-extrabold uppercase tracking-tight text-white">Authorize this exact arrangement</h3>
+                              <p class="mt-3 max-w-4xl rounded-xl border border-brand-teal/20 bg-brand-teal/[0.055] p-4 text-sm leading-7 text-white/80">{customPaymentTerms.authorizationText}</p>
+                              <div class="mt-5 grid min-w-0 gap-4 lg:grid-cols-2 lg:items-start">
+                                <div><label class={labelClass} for={`custom-autopay-name-${item.offer.id}`}>Type your full name</label><input class={fieldClass} id={`custom-autopay-name-${item.offer.id}`} data-custom-autopay-name maxlength="120" autocomplete="name" placeholder="Full name" /></div>
+                                <label class="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-white/15 bg-[#11151d] p-4 text-sm font-semibold leading-6 text-white/75 transition hover:border-brand-teal/40 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal/[0.07]"><input type="checkbox" data-custom-autopay-authorized class="mt-0.5 h-5 w-5 shrink-0 accent-[#009695]" /><span>I have reviewed and authorize the exact custom automatic-payment schedule above.</span></label>
+                              </div>
+                              <p class="mt-4 text-xs leading-5 text-white/55">Stripe stores your card details; TVVC never receives your full card number. No custom schedule becomes active until you authorize it and complete checkout.</p>
+                            </section>
+                          </div>
+                        )}
 
                         <footer class="grid gap-5 border-t border-white/10 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:p-8">
                           <div>
@@ -833,8 +899,11 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
         const paymentForm = card.querySelector<HTMLFormElement>('[data-payment-form]');
         const paymentOptions = [...card.querySelectorAll<HTMLInputElement>('[data-payment-option]')];
         const standardDetails = card.querySelector<HTMLElement>('[data-standard-plan-details]');
+        const customDetails = card.querySelector<HTMLElement>('[data-custom-plan-details]');
         const autopayName = card.querySelector<HTMLInputElement>('[data-autopay-name]');
         const autopayAuthorized = card.querySelector<HTMLInputElement>('[data-autopay-authorized]');
+        const customAutopayName = card.querySelector<HTMLInputElement>('[data-custom-autopay-name]');
+        const customAutopayAuthorized = card.querySelector<HTMLInputElement>('[data-custom-autopay-authorized]');
         const dueNowDisplay = card.querySelector<HTMLElement>('[data-due-now-display]');
         const paymentSubmit = card.querySelector<HTMLButtonElement>('[data-payment-submit]');
         const paymentSubmitLabel = card.querySelector<HTMLElement>('[data-payment-submit-label]');
@@ -902,9 +971,13 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
         const updatePaymentChoice = () => {
           const selected = selectedPaymentOption();
           const standardSelected = selected?.value === 'standard_plan';
+          const customSelected = selected?.value === 'custom_plan';
           standardDetails?.classList.toggle('hidden', !standardSelected);
+          customDetails?.classList.toggle('hidden', !customSelected);
           if (autopayName) autopayName.required = standardSelected;
           if (autopayAuthorized) autopayAuthorized.required = standardSelected;
+          if (customAutopayName) customAutopayName.required = customSelected;
+          if (customAutopayAuthorized) customAutopayAuthorized.required = customSelected;
           if (dueNowDisplay && selected) dueNowDisplay.textContent = formatPaymentAmount(Number(selected.dataset.dueNowAmount || 0));
           paymentError?.classList.add('hidden');
         };
@@ -930,6 +1003,8 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
           if (paymentSubmitLabel) paymentSubmitLabel.textContent = 'Opening Stripe…';
           try {
             const isStandardPlan = selected.value === 'standard_plan';
+            const isCustomPlan = selected.value === 'custom_plan';
+            const requiresAutopayAuthorization = isStandardPlan || isCustomPlan;
             const response = await fetch('/api/club-season/checkout', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -937,9 +1012,9 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
                 offerId,
                 paymentOption: selected.value,
                 termsFingerprint: selected.dataset.termsFingerprint || '',
-                ...(isStandardPlan ? {
-                  authorizedName: autopayName?.value.trim() || '',
-                  autopayAuthorized: Boolean(autopayAuthorized?.checked),
+                ...(requiresAutopayAuthorization ? {
+                  authorizedName: (isCustomPlan ? customAutopayName : autopayName)?.value.trim() || '',
+                  autopayAuthorized: Boolean((isCustomPlan ? customAutopayAuthorized : autopayAuthorized)?.checked),
                 } : {}),
               }),
             });

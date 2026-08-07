@@ -13,6 +13,7 @@ import {
   registrations,
 } from '../db/schema';
 import { ensureCanonicalPortalUser } from './portal-ownership';
+import { getPendingInitialPlan } from './club-season-initial-plan';
 
 export type OwnedClubSeasonOffer = Awaited<ReturnType<typeof getOwnedClubSeasonOffers>>[number];
 
@@ -31,7 +32,7 @@ export async function getOwnedClubSeasonOffers(request: Request) {
   const user = await getVerifiedClubSeasonUser(request);
   if (!user) return [];
 
-  return db.select({
+  const offers = await db.select({
     offer: clubSeasonOffers,
     season: clubSeasons,
     team: clubTeams,
@@ -63,6 +64,21 @@ export async function getOwnedClubSeasonOffers(request: Request) {
       eq(athletes.registrationId, registrations.id),
       eq(clubSeasonOffers.recipientEmail, user.email.trim().toLowerCase())
     ));
+  return Promise.all(offers.map(async (item) => {
+    const custom = item.draft?.status === 'awaiting_payment'
+      ? await getPendingInitialPlan(db, item.draft.id)
+      : null;
+    return {
+      ...item,
+      customPaymentTerms: custom ? {
+        ...custom.terms,
+        proposalId: custom.version.id,
+        termsFingerprint: custom.version.termsFingerprint,
+        reason: custom.snapshot.reason,
+        authorizationText: custom.authorizationText,
+      } : null,
+    };
+  }));
 }
 
 export async function getPublishedClubSeasonAgreements(seasonId: string) {

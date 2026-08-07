@@ -1,7 +1,7 @@
 # Club Season Registration and Payment System
 
 **Status:** Product requirements and implementation reference
-**Last updated:** August 6, 2026
+**Last updated:** August 7, 2026
 **Applies to:** TVVC club-season team acceptance and dues collection
 **Related systems:** Tryout registration, parent portal, Stripe, Turso, Resend, Netlify
 
@@ -235,6 +235,29 @@ Still deferred:
 
 The initial 3C revision workflow is intentionally parent-authorized. An administrator can prepare or cancel a proposal but cannot silently activate new automatic-charge dates on a family's behalf.
 
+### 4.6 Milestone 3D implementation status — August 7, 2026
+
+Implemented on the dark feature branch:
+
+- An `Awaiting payment` queue in the protected finance workspace for families that completed registration information but have not entered Checkout
+- Administrator-created initial custom arrangements with an individualized amount due at Checkout and up to 18 future automatic charges
+- Live reconciliation requiring the due-now amount plus all future charges to equal the configured season price exactly
+- Server enforcement that every future charge is positive, uniquely dated, chronological, and after the proposal date
+- A family-facing reason plus a separate internal administrator note retained in the immutable schedule snapshot and audit history
+- Parent choice among pay in full, the standard plan, and the exact custom arrangement; a custom option is never selected silently
+- Exact custom-plan authorization with typed name, verified email, explicit consent, fingerprinted terms, timestamp, user agent, and privacy-preserving request-IP hash
+- Stripe Checkout for the custom due-now amount with the card saved for the specifically authorized future off-session charges
+- Retry-safe Checkout resumption and verified webhook activation using the same safeguards as the standard plan
+- Administrator cancellation before Checkout; a family may still choose the standard plan or pay in full without requiring a unique registration link
+
+Still deferred:
+
+- Credits, offline payments, refunds, disputes, and write-offs
+- Manual pause/resume controls and manual email resend controls
+- Resend delivery/bounce webhook tracking and household email consolidation
+
+The feature remains disabled in production while final agreement/refund language and live-environment readiness are completed.
+
 ## 5. Information Already Collected at Tryouts
 
 The existing tryout flow already collects or supports:
@@ -287,7 +310,9 @@ flowchart TD
     F --> G{"Choose payment option"}
     G -->|"Pay in full"| H["Stripe Checkout for full dues"]
     G -->|"Standard plan"| I["Review exact deposit and Jan-May schedule"]
+    G -->|"Custom arrangement"| N["Review exact individualized due-now amount and future dates"]
     I --> J["Authorize saved card and automatic charges"]
+    N --> J
     J --> K["Stripe Checkout for deposit"]
     H --> L["Registration active"]
     K --> L
@@ -427,6 +452,7 @@ For each installment:
 | Successful retry | Payment-recovery confirmation |
 | Revised plan proposed | New schedule awaiting parent review |
 | Revised plan accepted | Revised-plan confirmation |
+| Initial custom plan prepared | Custom arrangement ready for review before Checkout |
 
 Reminder content should include:
 
