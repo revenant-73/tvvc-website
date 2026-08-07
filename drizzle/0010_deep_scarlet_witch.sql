@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `club_season_plan_revisions_one_pending` ON `club_season_payment_plan_revisions` (`payment_plan_id`) WHERE "club_season_payment_plan_revisions"."status" = 'pending_authorization';

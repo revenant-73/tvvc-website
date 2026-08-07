@@ -112,3 +112,30 @@ export function adminPaymentAlertEmail(context: PaymentEmailContext, failureMess
     `),
   };
 }
+
+export function paymentPlanRevisionProposedEmail(context: PaymentEmailContext & { reason: string }) {
+  return {
+    subject: `Review your revised TVVC payment schedule for ${context.playerName}`,
+    html: shell('A revised schedule is ready', 'Parent authorization required', `
+      <p>Hi ${escapeHtml(context.parentName)},</p>
+      <p>TVVC prepared a revised payment schedule for ${escapeHtml(context.playerName)}. Your current schedule remains active until you review and authorize the revision.</p>
+      <p><strong>Reason:</strong> ${escapeHtml(context.reason)}</p>
+      <p><strong>Remaining balance:</strong> ${money(context.remainingBalance)}</p>
+      <p>No revised automatic charges will begin until you explicitly approve the dates and amounts in the parent portal.</p>
+      ${button('Review revised schedule', `${context.portalUrl}#club-season-plan`)}
+    `),
+  };
+}
+
+export function paymentPlanRevisionAcceptedEmail(context: PaymentEmailContext) {
+  return {
+    subject: `TVVC revised payment schedule confirmed for ${context.playerName}`,
+    html: shell('Revised schedule confirmed', 'Payment-plan update', `
+      <p>Hi ${escapeHtml(context.parentName)},</p>
+      <p>Your authorization was recorded and the revised schedule is now active for ${escapeHtml(context.playerName)}.</p>
+      <p><strong>Remaining balance:</strong> ${money(context.remainingBalance)}</p>
+      <p>The previous unpaid schedule has been retired. Paid installments and receipts remain unchanged.</p>
+      ${button('View billing details', context.portalUrl)}
+    `),
+  };
+}

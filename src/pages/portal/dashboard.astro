@@ -135,6 +135,25 @@ const hasOwnRegistrations = userRegistrations.some(
     <div class="grid lg:grid-cols-3 gap-8">
       <!-- Left Column: Registration History -->
       <div class="lg:col-span-2 space-y-8">
+        <section id="club-season-plan" data-plan-revision-card class="hidden overflow-hidden rounded-3xl border border-amber-300/25 bg-[#11151d] shadow-2xl" aria-labelledby="plan-revision-heading">
+          <div class="border-b border-white/10 px-6 py-5 md:px-8">
+            <div class="flex items-start gap-4">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-300/10 text-amber-300">
+                <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h7"></path><path d="m17 15 3 3 3-3"></path></svg>
+              </div>
+              <div>
+                <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-amber-300">Your review is needed</p>
+                <h2 id="plan-revision-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Revised payment schedule</h2>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-white/55">TVVC has proposed a different schedule for your remaining balance. Nothing changes until you review and authorize it.</p>
+              </div>
+            </div>
+          </div>
+          <div data-plan-revision-loading class="px-6 py-8 md:px-8" role="status"><div class="h-24 animate-pulse rounded-2xl bg-white/[0.05]"></div><p class="mt-3 text-xs font-bold uppercase tracking-wider text-white/35">Loading proposal…</p></div>
+          <div data-plan-revision-error class="hidden px-6 py-8 md:px-8" role="alert"><p class="font-bold text-brand-coral">We couldn’t load the proposed schedule.</p><p data-plan-revision-error-copy class="mt-2 text-sm text-white/50">Please try again.</p><button data-plan-revision-retry type="button" class="mt-4 min-h-11 rounded-xl border border-white/15 px-4 text-xs font-extrabold uppercase tracking-wider text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Try again</button></div>
+          <div data-plan-revision-list></div>
+          <p data-plan-revision-live class="sr-only" role="status" aria-live="polite"></p>
+        </section>
+
         <section class="glass rounded-3xl p-8 border-white/5">
           <h2 class="text-2xl font-heading font-bold mb-6 uppercase tracking-tight flex items-center gap-3">
             <span class="w-2 h-8 bg-brand-teal rounded-full"></span>
@@ -299,6 +318,144 @@ const hasOwnRegistrations = userRegistrations.some(
 <script>
   const { signOut } = await import('auth-astro/client');
   document.getElementById('signout')?.addEventListener('click', () => signOut());
+
+  type PlanRevision = {
+    id: string;
+    registrationId: string;
+    reason: string;
+    proposedAt: string;
+    termsFingerprint: string;
+    remainingBalance: number;
+    authorizationText: string;
+    installments: Array<{ id: string; dueDate: string; amount: number }>;
+  };
+  const revisionCard = document.querySelector<HTMLElement>('[data-plan-revision-card]');
+  const revisionList = revisionCard?.querySelector<HTMLElement>('[data-plan-revision-list]');
+  const revisionLoading = revisionCard?.querySelector<HTMLElement>('[data-plan-revision-loading]');
+  const revisionError = revisionCard?.querySelector<HTMLElement>('[data-plan-revision-error]');
+  const revisionLive = revisionCard?.querySelector<HTMLElement>('[data-plan-revision-live]');
+  const revisionMoney = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+  const revisionDate = (value: string) => new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`));
+  const revisionEscape = (value: unknown) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character] || character));
+  const revisionNotify = (type: 'success' | 'error', message: string) => {
+    const toast = (window as Window & { toast?: Record<string, (text: string) => void> }).toast;
+    toast?.[type]?.(message);
+    if (revisionLive) revisionLive.textContent = message;
+  };
+  const renderRevisions = (revisions: PlanRevision[]) => {
+    if (!revisionList || !revisionCard) return;
+    if (!revisions.length) {
+      revisionCard.classList.add('hidden');
+      revisionList.replaceChildren();
+      return;
+    }
+    revisionCard.classList.remove('hidden');
+    revisionList.innerHTML = revisions.map((revision, index) => `
+      <article class="px-6 py-7 md:px-8 ${index ? 'border-t border-white/10' : ''}" data-revision-id="${revisionEscape(revision.id)}">
+        <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_15rem]">
+          <div>
+            <p class="text-sm font-bold text-white">Why this is being offered</p>
+            <p class="mt-2 text-sm leading-6 text-white/60">${revisionEscape(revision.reason)}</p>
+            <div class="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+              <div class="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                <span class="text-[10px] font-extrabold uppercase tracking-[.16em] text-white/65">Proposed automatic charges</span>
+                <strong class="font-heading text-lg font-extrabold tabular-nums text-white">${revisionMoney(revision.remainingBalance)}</strong>
+              </div>
+              <ol class="divide-y divide-white/[.07]">${revision.installments.map((installment, chargeIndex) => `<li class="flex min-h-12 items-center justify-between gap-4 px-4 py-3"><span class="text-sm tabular-nums text-white/70"><span class="mr-2 text-[10px] font-bold text-white/55">${String(chargeIndex + 1).padStart(2, '0')}</span>${revisionDate(installment.dueDate)}</span><strong class="text-base tabular-nums text-white">${revisionMoney(installment.amount)}</strong></li>`).join('')}</ol>
+            </div>
+          </div>
+          <aside class="rounded-2xl border border-brand-teal/20 bg-brand-teal/[0.055] p-5">
+            <p class="text-[10px] font-extrabold uppercase tracking-[.17em] text-brand-teal">Balance rail</p>
+            <p class="mt-2 font-heading text-3xl font-extrabold tabular-nums tracking-tight text-white">${revisionMoney(revision.remainingBalance)}</p>
+            <p class="mt-1 text-xs text-white/65">Remaining balance</p>
+            <div class="mt-5 border-t border-brand-teal/15 pt-4 text-xs leading-5 text-white/65">
+              <p>The current schedule remains active until you accept.</p>
+              <p class="mt-2">Payments already made and your payment history do not change.</p>
+            </div>
+          </aside>
+        </div>
+        <form data-revision-authorize class="mt-6 rounded-2xl border border-white/10 bg-white/[.025] p-4 md:p-5">
+          <input type="hidden" name="revisionId" value="${revisionEscape(revision.id)}" />
+          <input type="hidden" name="termsFingerprint" value="${revisionEscape(revision.termsFingerprint)}" />
+          <div class="rounded-xl border border-brand-teal/20 bg-brand-teal/[.055] p-4">
+            <p class="text-[10px] font-extrabold uppercase tracking-[.15em] text-brand-teal">Exact authorization</p>
+            <p class="mt-2 text-sm leading-6 text-white/80">${revisionEscape(revision.authorizationText)}</p>
+            <label class="mt-4 flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-brand-teal/30 bg-[#0b0e14] px-3.5 py-3 text-sm font-semibold leading-5 text-white hover:border-brand-teal"><input name="autopayAuthorized" required type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 rounded border-white/30 bg-transparent text-brand-teal focus:ring-brand-teal focus:ring-offset-[#0b0e14]" /><span>I have read and agree to the exact automatic-payment authorization above.</span></label>
+          </div>
+          <div class="mt-4 max-w-md">
+            <label for="authorized-name-${index}" class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-wider text-white/65">Your full legal name</label><input id="authorized-name-${index}" name="authorizedName" required autocomplete="name" class="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+          </div>
+          <div class="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <button data-revision-decline type="button" class="min-h-11 px-3 text-xs font-extrabold uppercase tracking-wider text-white/65 hover:text-brand-coral focus:outline-none focus:ring-2 focus:ring-brand-coral">Decline this proposal</button>
+            <button type="submit" class="min-h-11 rounded-xl bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-wider text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-50">Authorize revised schedule</button>
+          </div>
+          <p data-revision-form-status class="mt-3 min-h-5 text-sm text-white/55" role="status" aria-live="polite"></p>
+        </form>
+      </article>`).join('');
+    revisionList.querySelectorAll<HTMLFormElement>('[data-revision-authorize]').forEach((form) => form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const status = form.querySelector<HTMLElement>('[data-revision-form-status]');
+      const formData = new FormData(form);
+      if (button) { button.disabled = true; button.textContent = 'Authorizing…'; }
+      if (status) status.textContent = 'Recording your authorization…';
+      try {
+        const response = await fetch('/api/club-season/payment-revision', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'authorize', revisionId: String(formData.get('revisionId')), authorizedName: String(formData.get('authorizedName') || '').trim(), autopayAuthorized: formData.get('autopayAuthorized') === 'on', termsFingerprint: String(formData.get('termsFingerprint')) }) });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Your authorization could not be recorded.');
+        revisionNotify('success', 'Revised payment schedule authorized.');
+        await loadRevisions();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Your authorization could not be recorded.';
+        if (status) status.textContent = message;
+        revisionNotify('error', message);
+        if (button) { button.disabled = false; button.textContent = 'Authorize revised schedule'; }
+      }
+    }));
+    revisionList.querySelectorAll<HTMLButtonElement>('[data-revision-decline]').forEach((button) => button.addEventListener('click', async () => {
+      const article = button.closest<HTMLElement>('[data-revision-id]');
+      if (!article || !window.confirm('Decline this proposed schedule? Your current payment schedule will remain active.')) return;
+      const form = button.closest('form');
+      const status = form?.querySelector<HTMLElement>('[data-revision-form-status]');
+      button.disabled = true;
+      button.textContent = 'Declining…';
+      try {
+        const response = await fetch('/api/club-season/payment-revision', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'decline', revisionId: article.dataset.revisionId }) });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'The proposal could not be declined.');
+        revisionNotify('success', 'Proposed schedule declined. Your current schedule remains active.');
+        await loadRevisions();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'The proposal could not be declined.';
+        if (status) status.textContent = message;
+        revisionNotify('error', message);
+        button.disabled = false;
+        button.textContent = 'Decline this proposal';
+      }
+    }));
+  };
+  const loadRevisions = async () => {
+    if (!revisionCard) return;
+    revisionCard.classList.remove('hidden');
+    revisionLoading?.classList.remove('hidden');
+    revisionError?.classList.add('hidden');
+    try {
+      const response = await fetch('/api/club-season/payment-revision');
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 404) { revisionCard.classList.add('hidden'); return; }
+      if (!response.ok) throw new Error(data.error || 'The proposed schedule could not be loaded.');
+      renderRevisions(data.revisions || []);
+    } catch (error) {
+      revisionError?.classList.remove('hidden');
+      const copy = revisionCard.querySelector<HTMLElement>('[data-plan-revision-error-copy]');
+      if (copy) copy.textContent = error instanceof Error ? error.message : 'Please try again.';
+    } finally {
+      revisionLoading?.classList.add('hidden');
+    }
+  };
+  revisionCard?.querySelector('[data-plan-revision-retry]')?.addEventListener('click', loadRevisions);
+  loadRevisions();
 
   document.getElementById('manage-billing')?.addEventListener('click', async (e) => {
     const btn = e.currentTarget as HTMLButtonElement;

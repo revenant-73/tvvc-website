@@ -690,6 +690,67 @@ export const clubSeasonPaymentAttempts = sqliteTable('club_season_payment_attemp
   statusIdx: index('club_season_payment_attempts_status_idx').on(table.status),
 }));
 
+// An administrator proposes a replacement for only the unpaid portion of an
+// active plan. The old and proposed versions remain linked for a complete
+// audit trail; activation requires a separate parent authorization record.
+export const clubSeasonPaymentPlanRevisions = sqliteTable('club_season_payment_plan_revisions', {
+  id: text('id').primaryKey(),
+  registrationId: text('registration_id').notNull().references(() => clubSeasonRegistrations.id),
+  paymentPlanId: text('payment_plan_id').notNull().references(() => clubSeasonPaymentPlans.id),
+  fromVersionId: text('from_version_id').notNull().references(() => clubSeasonPaymentPlanVersions.id),
+  proposedVersionId: text('proposed_version_id').notNull().references(() => clubSeasonPaymentPlanVersions.id),
+  status: text('status').notNull().default('pending_authorization'),
+  reason: text('reason').notNull(),
+  adminNote: text('admin_note'),
+  proposedByUserId: text('proposed_by_user_id').notNull().references(() => users.id),
+  proposedAt: text('proposed_at').notNull(),
+  reviewedAt: text('reviewed_at'),
+  cancelledAt: text('cancelled_at'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  proposedVersionUnique: uniqueIndex('club_season_plan_revisions_proposed_version_unique').on(table.proposedVersionId),
+  onePendingPerPlan: uniqueIndex('club_season_plan_revisions_one_pending')
+    .on(table.paymentPlanId)
+    .where(sql`${table.status} = 'pending_authorization'`),
+  paymentPlanIdIdx: index('club_season_plan_revisions_plan_id_idx').on(table.paymentPlanId),
+  registrationIdIdx: index('club_season_plan_revisions_registration_id_idx').on(table.registrationId),
+  statusIdx: index('club_season_plan_revisions_status_idx').on(table.status),
+}));
+
+export const clubSeasonPaymentPlanAuthorizations = sqliteTable('club_season_payment_plan_authorizations', {
+  id: text('id').primaryKey(),
+  paymentPlanVersionId: text('payment_plan_version_id').notNull().references(() => clubSeasonPaymentPlanVersions.id),
+  ownerUserId: text('owner_user_id').notNull().references(() => users.id),
+  authorizationText: text('authorization_text').notNull(),
+  authorizationContentHash: text('authorization_content_hash').notNull(),
+  authorizedName: text('authorized_name').notNull(),
+  authorizedEmail: text('authorized_email').notNull(),
+  requestIpHash: text('request_ip_hash'),
+  userAgent: text('user_agent'),
+  authorizedAt: text('authorized_at').notNull(),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  versionUnique: uniqueIndex('club_season_plan_authorizations_version_unique').on(table.paymentPlanVersionId),
+  ownerUserIdIdx: index('club_season_plan_authorizations_owner_id_idx').on(table.ownerUserId),
+}));
+
+export const clubSeasonAdminAuditLog = sqliteTable('club_season_admin_audit_log', {
+  id: text('id').primaryKey(),
+  adminUserId: text('admin_user_id').notNull().references(() => users.id),
+  action: text('action').notNull(),
+  entityType: text('entity_type').notNull(),
+  entityId: text('entity_id').notNull(),
+  reason: text('reason'),
+  beforeSnapshot: text('before_snapshot'),
+  afterSnapshot: text('after_snapshot'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  adminUserIdIdx: index('club_season_admin_audit_admin_id_idx').on(table.adminUserId),
+  entityIdx: index('club_season_admin_audit_entity_idx').on(table.entityType, table.entityId),
+  createdAtIdx: index('club_season_admin_audit_created_at_idx').on(table.createdAt),
+}));
+
 export const clubSeasonEmailDeliveries = sqliteTable('club_season_email_deliveries', {
   id: text('id').primaryKey(),
   registrationId: text('registration_id')

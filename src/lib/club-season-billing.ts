@@ -50,10 +50,10 @@ async function getContext(db: Db, installmentId: string, siteUrl: string) {
     .innerJoin(clubTeams, eq(clubSeasonRegistrations.teamId, clubTeams.id))
     .where(eq(clubSeasonPaymentInstallments.id, installmentId)).limit(1);
   if (!row) throw new Error(`Installment ${installmentId} was not found.`);
-  const [balance] = await db.select({ amount: sql<number>`coalesce(sum(${clubSeasonPaymentInstallments.amount}), 0)` })
-    .from(clubSeasonPaymentInstallments).where(and(
-      eq(clubSeasonPaymentInstallments.paymentPlanVersionId, row.version.id),
-      sql`${clubSeasonPaymentInstallments.status} <> 'paid'`
+  const [paid] = await db.select({ amount: sql<number>`coalesce(sum(${clubSeasonPaymentTransactions.amount}), 0)` })
+    .from(clubSeasonPaymentTransactions).where(and(
+      eq(clubSeasonPaymentTransactions.registrationId, row.registration.id),
+      eq(clubSeasonPaymentTransactions.status, 'succeeded')
     ));
   return {
     ...row,
@@ -63,19 +63,19 @@ async function getContext(db: Db, installmentId: string, siteUrl: string) {
       teamName: row.teamName,
       amount: row.installment.amount,
       dueDate: row.installment.dueDate,
-      remainingBalance: Number(balance?.amount || 0),
+      remainingBalance: Math.max(0, row.version.totalAmount - Number(paid?.amount || 0)),
       portalUrl: `${siteUrl.replace(/\/$/, '')}/portal/dashboard`,
     },
   };
 }
 
-async function deliver(db: Db, input: {
-  registrationId: string; installmentId: string; type: string; recipient: string;
+export async function deliverClubSeasonEmail(db: Db, input: {
+  registrationId: string; installmentId?: string | null; type: string; recipient: string;
   key: string; subject: string; html: string;
 }) {
   const now = new Date().toISOString();
   const [claimed] = await db.insert(clubSeasonEmailDeliveries).values({
-    id: crypto.randomUUID(), registrationId: input.registrationId, installmentId: input.installmentId,
+    id: crypto.randomUUID(), registrationId: input.registrationId, installmentId: input.installmentId || null,
     type: input.type, recipient: input.recipient, idempotencyKey: input.key,
     status: 'pending', attemptCount: 1, createdAt: now, updatedAt: now,
   }).onConflictDoNothing().returning({ id: clubSeasonEmailDeliveries.id });
@@ -106,6 +106,7 @@ export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: 
   const installmentId = intent.metadata.installmentId;
   const context = await getContext(db, installmentId, siteUrl);
   const alreadyPaid = context.installment.status === 'paid';
+  const isCurrentVersion = context.plan.currentVersion === context.version.version;
   if (intent.amount_received !== context.installment.amount || intent.currency !== context.version.currency) {
     await db.update(clubSeasonPaymentPlans).set({ needsReview: true, updatedAt: new Date().toISOString() })
       .where(eq(clubSeasonPaymentPlans.id, context.plan.id));
@@ -125,15 +126,20 @@ export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: 
       stripeChargeId: chargeId, amount: intent.amount_received, currency: intent.currency,
       status: 'succeeded', processedAt: now, createdAt: now,
     }).onConflictDoNothing();
-    const [outstanding] = await tx.select({ count: sql<number>`count(*)` }).from(clubSeasonPaymentInstallments)
-      .where(and(eq(clubSeasonPaymentInstallments.paymentPlanVersionId, context.version.id), sql`${clubSeasonPaymentInstallments.status} <> 'paid'`));
-    const completed = Number(outstanding?.count || 0) === 0;
-    await tx.update(clubSeasonPaymentPlans).set({
-      status: completed ? 'completed' : 'active', financialStatus: completed ? 'paid_in_full' : 'current',
-      completedAt: completed ? now : null, needsReview: false, updatedAt: now,
-    }).where(eq(clubSeasonPaymentPlans.id, context.plan.id));
-    if (completed) await tx.update(clubSeasonPaymentPlanVersions).set({ status: 'completed', updatedAt: now })
-      .where(eq(clubSeasonPaymentPlanVersions.id, context.version.id));
+    if (isCurrentVersion) {
+      const [outstanding] = await tx.select({ count: sql<number>`count(*)` }).from(clubSeasonPaymentInstallments)
+        .where(and(eq(clubSeasonPaymentInstallments.paymentPlanVersionId, context.version.id), sql`${clubSeasonPaymentInstallments.status} <> 'paid'`));
+      const completed = Number(outstanding?.count || 0) === 0;
+      await tx.update(clubSeasonPaymentPlans).set({
+        status: completed ? 'completed' : 'active', financialStatus: completed ? 'paid_in_full' : 'current',
+        completedAt: completed ? now : null, needsReview: false, updatedAt: now,
+      }).where(eq(clubSeasonPaymentPlans.id, context.plan.id));
+      if (completed) await tx.update(clubSeasonPaymentPlanVersions).set({ status: 'completed', updatedAt: now })
+        .where(eq(clubSeasonPaymentPlanVersions.id, context.version.id));
+    } else {
+      await tx.update(clubSeasonPaymentPlans).set({ financialStatus: 'action_required', needsReview: true, updatedAt: now })
+        .where(eq(clubSeasonPaymentPlans.id, context.plan.id));
+    }
   });
   let receiptUrl: string | null = null;
   if (chargeId) {
@@ -146,7 +152,7 @@ export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: 
       : Math.max(0, context.email.remainingBalance - context.installment.amount),
     receiptUrl,
   });
-  await deliver(db, { registrationId: context.registration.id, installmentId, type: 'payment_succeeded',
+  await deliverClubSeasonEmail(db, { registrationId: context.registration.id, installmentId, type: 'payment_succeeded',
     recipient: context.parentEmail, key: `club-season-success:${intent.id}`, ...message });
   return !alreadyPaid;
 }
@@ -166,9 +172,9 @@ async function recordFailure(db: Db, installmentId: string, attemptNumber: numbe
       .where(eq(clubSeasonPaymentPlans.id, context.plan.id));
   });
   const emailContext = { ...context.email, attemptNumber };
-  await deliver(db, { registrationId: context.registration.id, installmentId, type: 'payment_failed', recipient: context.parentEmail,
+  await deliverClubSeasonEmail(db, { registrationId: context.registration.id, installmentId, type: 'payment_failed', recipient: context.parentEmail,
     key: `club-season-failure:${installmentId}:${attemptNumber}`, ...paymentFailedEmail(emailContext, final) });
-  if (final) await deliver(db, { registrationId: context.registration.id, installmentId, type: 'admin_payment_alert', recipient: ADMIN_BILLING_EMAIL,
+  if (final) await deliverClubSeasonEmail(db, { registrationId: context.registration.id, installmentId, type: 'admin_payment_alert', recipient: ADMIN_BILLING_EMAIL,
     key: `club-season-admin-alert:${installmentId}`, ...adminPaymentAlertEmail(emailContext, message) });
 }
 
@@ -198,12 +204,21 @@ async function chargeInstallment(db: Db, stripe: Stripe, installmentId: string, 
     currency: context.version.currency, status: 'processing', attemptedAt: now, createdAt: now, updatedAt: now,
   }).onConflictDoNothing().returning();
   if (!attempt) return false;
-  await db.update(clubSeasonPaymentInstallments).set({ status: 'processing', attemptCount: attemptNumber, lastAttemptedAt: now, updatedAt: now })
-    .where(eq(clubSeasonPaymentInstallments.id, installmentId));
+  const [claimedInstallment] = await db.update(clubSeasonPaymentInstallments).set({
+    status: 'processing', attemptCount: attemptNumber, lastAttemptedAt: now, updatedAt: now,
+  }).where(and(
+    eq(clubSeasonPaymentInstallments.id, installmentId),
+    inArray(clubSeasonPaymentInstallments.status, ['scheduled', 'past_due'])
+  )).returning({ id: clubSeasonPaymentInstallments.id });
+  if (!claimedInstallment) {
+    await db.update(clubSeasonPaymentAttempts).set({ status: 'skipped', resolvedAt: now, updatedAt: now })
+      .where(eq(clubSeasonPaymentAttempts.id, attempt.id));
+    return false;
+  }
   let paymentMethodId = context.plan.stripePaymentMethodId;
   try {
     const customer = await stripe.customers.retrieve(context.plan.stripeCustomerId);
-    if (!customer.deleted) {
+    if (!('deleted' in customer)) {
       const defaultMethod = customer.invoice_settings.default_payment_method;
       const currentDefaultId = typeof defaultMethod === 'string' ? defaultMethod : defaultMethod?.id;
       if (currentDefaultId) paymentMethodId = currentDefaultId;
@@ -261,7 +276,7 @@ export async function runClubSeasonBilling(input: { db: Db; stripe: Stripe; site
     if (item.status === 'scheduled' && reminderDate(item.dueDate) === today) {
       const context = await getContext(input.db, item.id, input.siteUrl);
       const message = upcomingPaymentEmail(context.email);
-      if (await deliver(input.db, { registrationId: context.registration.id, installmentId: item.id, type: 'payment_reminder',
+      if (await deliverClubSeasonEmail(input.db, { registrationId: context.registration.id, installmentId: item.id, type: 'payment_reminder',
         recipient: context.parentEmail, key: `club-season-reminder:${item.id}`, ...message })) reminders++;
     }
     const chargeDate = item.status === 'scheduled' ? item.dueDate : item.nextAttemptDate;

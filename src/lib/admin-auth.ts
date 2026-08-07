@@ -27,6 +27,19 @@ function jsonError(error: string, status: number): Response {
   });
 }
 
+export async function getCurrentAdminUser(request: Request) {
+  let session;
+  try { session = await getSession(request); } catch { return null; }
+  const sessionUserId = (session?.user as { id?: unknown } | undefined)?.id;
+  if (typeof sessionUserId !== 'string' || !sessionUserId.trim()) return null;
+  const databaseUrl = import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL;
+  if (!databaseUrl) return null;
+  const database = getDb(databaseUrl, import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || '');
+  const [user] = await database.select({ id: users.id, email: users.email, role: users.role })
+    .from(users).where(eq(users.id, sessionUserId)).limit(1);
+  return user?.role === 'admin' ? { id: user.id, email: user.email } : null;
+}
+
 /**
  * Authorize a browser request to an admin API using the server-side Auth.js
  * session and the user's current database role. Never trust role or passcode

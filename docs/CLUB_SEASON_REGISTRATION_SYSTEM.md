@@ -210,6 +210,31 @@ Still deferred:
 
 The production environment must define `CLUB_SEASON_CRON_SECRET`; `CLUB_SEASON_BILLING_EMAIL` is optional and defaults to Loren's TVVC address. The feature remains disabled until the production-readiness work is complete.
 
+### 4.5 Milestone 3C implementation status — August 7, 2026
+
+Implemented on the dark feature branch:
+
+- A protected club-season financial workspace with player, parent, team, financial-status, total-paid, and remaining-balance views
+- Detailed immutable history across plan versions, scheduled installments, successful transactions, processor attempts, and revision decisions
+- Administrator-created revisions for the unpaid balance, including flexible dates and amounts rather than only a blanket billing-day change
+- Server-side reconciliation requiring every proposed installment to be positive, future-dated, chronological, unique by date, and exactly equal to the current remaining balance
+- A pending-authorization workflow that leaves the currently authorized schedule active until the parent responds
+- Parent review showing the exact replacement schedule, typed-name authorization, explicit automatic-payment consent, and immutable authorization evidence
+- Atomic activation that supersedes only old unpaid installments; paid installments, receipts, transactions, and attempts remain unchanged
+- Protection against activation while a Stripe payment is processing or an earlier PaymentIntent remains unresolved
+- Immutable administrator audit entries for proposals and cancellations
+- Proposal and acceptance emails recorded through the existing retry-safe delivery ledger
+- Late-webhook safeguards so a payment from an older version is recorded but cannot incorrectly mark the current plan complete
+
+Still deferred:
+
+- Custom schedules prepared before the initial deposit Checkout
+- Credits, offline payments, refunds, disputes, and write-offs
+- Manual pause/resume controls and manual email resend controls
+- Resend delivery/bounce webhook tracking and household email consolidation
+
+The initial 3C revision workflow is intentionally parent-authorized. An administrator can prepare or cancel a proposal but cannot silently activate new automatic-charge dates on a family's behalf.
+
 ## 5. Information Already Collected at Tryouts
 
 The existing tryout flow already collects or supports:
