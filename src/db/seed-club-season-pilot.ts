@@ -26,7 +26,8 @@ const teamId = 'team-2026-2027-14u-pilot';
 const tryoutEventId = 'event-2026-2027-club-tryout-pilot';
 const sourceRegistrationId = 'tryout-registration-season-pilot';
 const sourceAthleteId = 900001;
-const offerId = 'offer-season-pilot';
+const legacyOfferId = 'offer-season-pilot';
+const offerId = '00000000-0000-4000-8000-000000000013';
 
 const agreementDefinitions = [
   {
@@ -105,6 +106,16 @@ async function seedPilot() {
       sql: `INSERT OR IGNORE INTO registration_items (registration_id, athlete_id, event_id)
             VALUES (?, ?, ?)`,
       args: [sourceRegistrationId, sourceAthleteId, tryoutEventId],
+    },
+    {
+      sql: `UPDATE club_season_offers
+            SET id = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+              AND NOT EXISTS (
+                SELECT 1 FROM club_season_registrations
+                WHERE offer_id = ?
+              )`,
+      args: [offerId, legacyOfferId, legacyOfferId],
     },
     ...agreementDefinitions.map((agreement) => {
       const content = CLUB_SEASON_AGREEMENT_WORKING_DRAFTS[agreement.key];
