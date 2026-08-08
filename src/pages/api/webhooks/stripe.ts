@@ -19,7 +19,11 @@ import { sendEmail } from '../../../lib/email';
 import { generateRegistrationEmail } from '../../../lib/email-templates';
 import { expirePendingRegistration } from '../../../lib/registration-reservations';
 import { createStripeClient } from '../../../lib/stripe-client';
-import { recordInstallmentFailure, recordInstallmentSuccess } from '../../../lib/club-season-billing';
+import {
+  deliverClubSeasonCheckoutSuccess,
+  recordInstallmentFailure,
+  recordInstallmentSuccess,
+} from '../../../lib/club-season-billing';
 
 const stripe = createStripeClient(import.meta.env.STRIPE_SECRET_KEY || '');
 
@@ -30,7 +34,8 @@ export const prerender = false;
 async function processClubSeasonCheckout(
   db: ReturnType<typeof getDb>,
   event: Stripe.Event,
-  session: Stripe.Checkout.Session
+  session: Stripe.Checkout.Session,
+  siteUrl: string
 ) {
   const registrationId = session.metadata?.registrationId;
   const paymentPlanId = session.metadata?.paymentPlanId;
@@ -87,21 +92,25 @@ async function processClubSeasonCheckout(
     }
   }
 
+  const [deposit] = await db.select().from(clubSeasonPaymentInstallments)
+    .where(and(
+      eq(clubSeasonPaymentInstallments.paymentPlanVersionId, paymentPlanVersionId),
+      eq(clubSeasonPaymentInstallments.sequence, 0)
+    ))
+    .limit(1);
+  if (!deposit) {
+    throw new Error('Club season checkout references an incomplete payment record.');
+  }
+
   const processedAt = new Date().toISOString();
-  return db.transaction(async (tx) => {
+  const processed = await db.transaction(async (tx) => {
     const [plan] = await tx.select().from(clubSeasonPaymentPlans)
       .where(eq(clubSeasonPaymentPlans.id, paymentPlanId))
       .limit(1);
     const [registration] = await tx.select().from(clubSeasonRegistrations)
       .where(eq(clubSeasonRegistrations.id, registrationId))
       .limit(1);
-    const [deposit] = await tx.select().from(clubSeasonPaymentInstallments)
-      .where(and(
-        eq(clubSeasonPaymentInstallments.paymentPlanVersionId, paymentPlanVersionId),
-        eq(clubSeasonPaymentInstallments.sequence, 0)
-      ))
-      .limit(1);
-    if (!plan || !registration || !deposit) {
+    if (!plan || !registration) {
       throw new Error('Club season checkout references an incomplete payment record.');
     }
     if (
@@ -185,6 +194,13 @@ async function processClubSeasonCheckout(
     }
     return true;
   });
+
+  await deliverClubSeasonCheckoutSuccess(db, stripe, {
+    paymentIntentId,
+    installmentId: deposit.id,
+    siteUrl,
+  });
+  return processed;
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -238,7 +254,12 @@ export const POST: APIRoute = async ({ request }) => {
     const session = event.data.object as Stripe.Checkout.Session;
     if (session.metadata?.flow === 'club_season') {
       try {
-        const processed = await processClubSeasonCheckout(db, event, session);
+        const processed = await processClubSeasonCheckout(
+          db,
+          event,
+          session,
+          new URL(request.url).origin
+        );
         return new Response(JSON.stringify({ received: true, processed }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },

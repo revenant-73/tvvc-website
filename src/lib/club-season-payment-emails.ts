@@ -10,6 +10,11 @@ type PaymentEmailContext = {
   attemptNumber?: number;
 };
 
+type FutureCharge = {
+  dueDate: string;
+  amount: number;
+};
+
 const money = (cents: number) => new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
@@ -81,6 +86,37 @@ export function paymentSucceededEmail(context: PaymentEmailContext) {
       <p>We successfully received your scheduled club-season payment.</p>
       ${details(context, 'Amount paid')}
       ${context.receiptUrl ? button('View Stripe receipt', context.receiptUrl) : button('View payment details', context.portalUrl)}
+    `),
+  };
+}
+
+export function initialPaymentSucceededEmail(
+  context: PaymentEmailContext & {
+    paymentOption: 'pay_in_full' | 'standard_plan' | 'custom_plan';
+    futureCharges: FutureCharge[];
+  }
+) {
+  const storedPaymentCopy = context.paymentOption === 'standard_plan'
+    ? '<strong>There is no December charge.</strong> Stripe securely stores the authorized payment method for these scheduled payments.'
+    : 'Stripe securely stores the authorized payment method for these scheduled payments.';
+  const schedule = context.futureCharges.length > 0
+    ? `
+      <h2 style="margin:30px 0 12px;color:#0f172a;font-size:20px">Remaining automatic-payment schedule</h2>
+      <ul style="margin:0;padding-left:22px">
+        ${context.futureCharges.map((charge) => `<li style="margin:6px 0">${date(charge.dueDate)}: <strong>${money(charge.amount)}</strong></li>`).join('')}
+      </ul>
+      <p style="margin:14px 0 0">${storedPaymentCopy}</p>`
+    : '<p><strong>Your season dues are paid in full.</strong> No future automatic club-season charges are scheduled.</p>';
+
+  return {
+    subject: `TVVC registration confirmed: ${context.playerName} — ${context.teamName}`,
+    html: shell('Your TVVC roster spot is confirmed', 'Registration and payment confirmation', `
+      <p>Hi ${escapeHtml(context.parentName)},</p>
+      <p>We received your ${context.paymentOption === 'pay_in_full' ? 'club-season payment' : 'initial club-season payment'} and confirmed ${escapeHtml(context.playerName)}'s roster spot.</p>
+      ${details(context, context.paymentOption === 'pay_in_full' ? 'Amount paid' : 'Deposit paid')}
+      ${schedule}
+      ${context.receiptUrl ? button('View Stripe receipt', context.receiptUrl) : ''}
+      ${button('Open parent portal', context.portalUrl)}
     `),
   };
 }

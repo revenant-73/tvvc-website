@@ -17,6 +17,7 @@ import {
 import { sendEmail } from './email.ts';
 import {
   adminPaymentAlertEmail,
+  initialPaymentSucceededEmail,
   paymentFailedEmail,
   paymentSucceededEmail,
   upcomingPaymentEmail,
@@ -97,6 +98,51 @@ export async function deliverClubSeasonEmail(db: Db, input: {
     }).where(eq(clubSeasonEmailDeliveries.id, delivery.id));
     throw error;
   }
+}
+
+export async function deliverClubSeasonCheckoutSuccess(db: Db, stripe: Stripe, input: {
+  paymentIntentId: string;
+  installmentId: string;
+  siteUrl: string;
+}) {
+  const context = await getContext(db, input.installmentId, input.siteUrl);
+  const futureCharges = await db.select({
+    dueDate: clubSeasonPaymentInstallments.dueDate,
+    amount: clubSeasonPaymentInstallments.amount,
+  }).from(clubSeasonPaymentInstallments)
+    .where(and(
+      eq(clubSeasonPaymentInstallments.paymentPlanVersionId, context.version.id),
+      sql`${clubSeasonPaymentInstallments.sequence} > 0`
+    ))
+    .orderBy(clubSeasonPaymentInstallments.sequence);
+
+  let receiptUrl: string | null = null;
+  try {
+    const intent = await stripe.paymentIntents.retrieve(input.paymentIntentId);
+    const chargeId = typeof intent.latest_charge === 'string'
+      ? intent.latest_charge
+      : intent.latest_charge?.id || null;
+    if (chargeId) receiptUrl = (await stripe.charges.retrieve(chargeId)).receipt_url;
+  } catch {
+    // A confirmation without a receipt link is still better than no email.
+  }
+
+  const message = initialPaymentSucceededEmail({
+    ...context.email,
+    amount: context.installment.amount,
+    remainingBalance: context.ledger.remainingBalance,
+    receiptUrl,
+    paymentOption: context.version.paymentOption as 'pay_in_full' | 'standard_plan' | 'custom_plan',
+    futureCharges,
+  });
+  return deliverClubSeasonEmail(db, {
+    registrationId: context.registration.id,
+    installmentId: input.installmentId,
+    type: 'payment_succeeded',
+    recipient: context.parentEmail,
+    key: `club-season-success:${input.paymentIntentId}`,
+    ...message,
+  });
 }
 
 export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: string, intent: Stripe.PaymentIntent, siteUrl: string) {

@@ -203,7 +203,15 @@ test.describe.serial('Club season payment checkout', () => {
                      p.status AS plan_status, p.stripe_customer_id,
                      p.stripe_payment_method_id,
                      (SELECT count(*) FROM club_season_payment_transactions t
-                      WHERE t.registration_id = csr.id) AS transaction_count
+                      WHERE t.registration_id = csr.id) AS transaction_count,
+                     (SELECT count(*) FROM club_season_email_deliveries e
+                      WHERE e.registration_id = csr.id AND e.type = 'payment_succeeded') AS email_count,
+                     (SELECT status FROM club_season_email_deliveries e
+                      WHERE e.registration_id = csr.id AND e.type = 'payment_succeeded') AS email_status,
+                     (SELECT attempt_count FROM club_season_email_deliveries e
+                      WHERE e.registration_id = csr.id AND e.type = 'payment_succeeded') AS email_attempt_count,
+                     (SELECT idempotency_key FROM club_season_email_deliveries e
+                      WHERE e.registration_id = csr.id AND e.type = 'payment_succeeded') AS email_key
               FROM club_season_registrations csr
               JOIN club_season_offers cso ON cso.id = csr.offer_id
               JOIN club_season_payment_plans p ON p.registration_id = csr.id
@@ -217,6 +225,10 @@ test.describe.serial('Club season payment checkout', () => {
         stripe_customer_id: 'cus_club_season_parent',
         stripe_payment_method_id: 'pm_club_season_autopay',
         transaction_count: 1,
+        email_count: 1,
+        email_status: 'sent',
+        email_attempt_count: 1,
+        email_key: 'club-season-success:pi_club_season_standard',
       });
       const paidInstallments = await client.execute({
         sql: `SELECT sequence, status FROM club_season_payment_installments
