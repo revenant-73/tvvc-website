@@ -282,6 +282,20 @@ Still deferred:
 
 The refund tool records the approved financial action; it does not replace TVVC's case-by-case refund decision process. Voluntary withdrawals after the first practice remain subject to individual review.
 
+### 4.8 Milestone 3F implementation status — August 8, 2026
+
+Implemented on the dark feature branch:
+
+- A read-only admin launch-readiness gate that evaluates the season record, the confirmed January–May schedule, pricing reconciliation, active team links, published required agreements, the registration window, Stripe/webhook configuration, Resend, and the protected billing worker
+- Separate **pilot readiness** and **live readiness** decisions so Stripe test mode can be used for a controlled rehearsal without implying production is ready
+- A paired-lock display for the season database switch and the Netlify feature flag; both remain independent and neither can be changed from the readiness screen
+- Explicit manual confirmations for agreement/refund-policy approval, Resend domain verification, live Stripe review, and completion of a controlled pilot
+- Database-backed administrator authorization on the season-control and offer-management pages, so a stale session role cannot retain access after an administrator is demoted
+- Environment examples for recording those manual confirmations without storing secrets or approval claims in browser code
+- Automated tests proving that launch locks do not block a dark pilot, configuration defects do block a pilot, and live readiness requires every automated gate, manual confirmation, live Stripe keys, and both access locks
+
+This milestone does **not** publish agreement wording, approve the refund policy, switch Stripe to live mode, or enable parent access. Those remain deliberate TVVC deployment decisions.
+
 ## 5. Information Already Collected at Tryouts
 
 The existing tryout flow already collects or supports:

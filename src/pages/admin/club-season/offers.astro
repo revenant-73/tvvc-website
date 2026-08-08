@@ -2,12 +2,11 @@
 export const prerender = false;
 
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { getSession } from 'auth-astro/server';
+import { getCurrentAdminUser } from '../../../lib/admin-auth';
 
 const SEASON_ID = '2026-2027-club';
-const session = await getSession(Astro.request);
-const user = session?.user as { role?: string } | undefined;
-const isAdmin = user?.role === 'admin';
+const admin = await getCurrentAdminUser(Astro.request);
+const isAdmin = Boolean(admin);
 ---
 
 <BaseLayout
