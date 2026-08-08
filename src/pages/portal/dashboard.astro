@@ -5,6 +5,7 @@ import { db } from '../../db/db';
 import { registrations, registrationItems, events, athletes, playerProfiles } from '../../db/schema';
 import { eq, desc, and, or, gte, inArray, isNull } from 'drizzle-orm';
 import { ensurePortalAccessContext } from '../../lib/portal-ownership';
+import { getPortalClubSeasonPlans } from '../../lib/club-season-portal';
 
 const session = await getSession(Astro.request);
 
@@ -18,6 +19,7 @@ if (!access) {
   return Astro.redirect('/portal/login');
 }
 const userId = access.user.id;
+const clubSeasonPlans = await getPortalClubSeasonPlans(db, access.readableOwnerIds, userId);
 
 const clubDateParts = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/Los_Angeles',
@@ -102,6 +104,50 @@ const formatDate = (dateStr: string | null) => {
   });
 };
 
+const formatClubDate = (dateStr: string | null) => {
+  if (!dateStr) return 'Not available';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${dateStr.slice(0, 10)}T12:00:00Z`));
+};
+
+const paymentOptionLabel = (option: string) => ({
+  standard_plan: 'Standard plan',
+  custom_plan: 'Custom plan',
+  pay_in_full: 'Paid in full',
+}[option] || 'Payment plan');
+
+const installmentTypeLabel = (type: string) => ({
+  deposit: 'Deposit',
+  installment: 'Automatic payment',
+  full_payment: 'Full season payment',
+}[type] || 'Payment');
+
+const installmentStatusLabel = (status: string) => ({
+  paid: 'Paid',
+  satisfied: 'Satisfied',
+  scheduled: 'Scheduled',
+  past_due: 'Past due',
+  action_required: 'Action required',
+  cancelled: 'Cancelled',
+}[status] || status.replaceAll('_', ' '));
+
+const financialStatusLabel = (status: string, remainingBalance: number) => {
+  if (remainingBalance === 0) return 'Paid in full';
+  if (status === 'action_required') return 'Action required';
+  if (status === 'past_due') return 'Past due';
+  return 'Current';
+};
+
+const registrationStatusLabel = (status: string) => ({
+  active: 'Active registration',
+  paid: 'Registration paid',
+  paid_in_full: 'Registration complete',
+}[status] || 'Registration confirmed');
+
 const hasOwnRegistrations = userRegistrations.some(
   (registration) => registration.ownerUserId === userId
 );
@@ -135,6 +181,170 @@ const hasOwnRegistrations = userRegistrations.some(
     <div class="grid lg:grid-cols-3 gap-8">
       <!-- Left Column: Registration History -->
       <div class="lg:col-span-2 space-y-8">
+        {clubSeasonPlans.map((plan) => {
+          const financialLabel = financialStatusLabel(plan.financialStatus, plan.remainingBalance);
+          const requiresAction = plan.financialStatus === 'action_required' || plan.financialStatus === 'past_due';
+          return (
+            <section
+              class="overflow-hidden rounded-3xl border border-brand-teal/25 bg-[#11151d] shadow-2xl shadow-black/20"
+              aria-labelledby={`club-season-heading-${plan.id}`}
+              data-club-season-registration={plan.registrationId}
+              data-plan-player={plan.playerName}
+              data-plan-team={plan.teamName}
+              data-plan-season={plan.seasonName}
+            >
+              <header class="border-b border-white/10 px-6 py-6 md:px-8">
+                <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">{plan.seasonName}</p>
+                    <h2 id={`club-season-heading-${plan.id}`} class="mt-1 font-heading text-2xl font-black uppercase tracking-tight text-white">
+                      Club Season &amp; Payment Plan
+                    </h2>
+                    <p class="mt-2 text-base font-bold text-white">{plan.playerName} <span class="font-medium text-white/45">&middot; {plan.teamName}</span></p>
+                  </div>
+                  <div class="flex flex-wrap gap-2 sm:justify-end">
+                    <span class="rounded-full border border-brand-teal/25 bg-brand-teal/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-brand-teal">{registrationStatusLabel(plan.registrationStatus)}</span>
+                    <span class:list={[
+                      'rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest',
+                      requiresAction
+                        ? 'border-brand-coral/30 bg-brand-coral/10 text-brand-coral'
+                        : 'border-white/15 bg-white/[0.06] text-white/70',
+                    ]}>{financialLabel}</span>
+                    {!plan.isOwned && <span class="rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white/55">Shared view</span>}
+                  </div>
+                </div>
+              </header>
+
+              <div class="px-6 py-7 md:px-8">
+                <div class="rounded-2xl border border-brand-teal/20 bg-brand-teal/[0.055] p-5 md:p-6">
+                  <div class="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 sm:gap-4">
+                    <div>
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/60">Season total</p>
+                      <p class="mt-1 font-heading text-lg font-black tabular-nums text-white sm:text-xl md:text-2xl">{formatCurrency(plan.seasonTotal)}</p>
+                    </div>
+                    <div class="border-l border-white/10 pl-4">
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/60">Paid &amp; credited</p>
+                      <p class="mt-1 font-heading text-lg font-black tabular-nums text-brand-teal sm:text-xl md:text-2xl">{formatCurrency(plan.paidOrCreditedAmount)}</p>
+                    </div>
+                    <div class="col-span-2 border-t border-white/10 pt-4 sm:col-span-1 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0 sm:text-right">
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/60">Remaining</p>
+                      <p class="mt-1 font-heading text-2xl font-black tabular-nums text-white">{formatCurrency(plan.remainingBalance)}</p>
+                    </div>
+                  </div>
+                  <div class="mt-5 h-2 overflow-hidden rounded-full bg-black/30" role="progressbar" aria-label={`${formatCurrency(plan.paidOrCreditedAmount)} of ${formatCurrency(plan.seasonTotal)} resolved`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(plan.progressPercent)}>
+                    <div class="h-full rounded-full bg-brand-teal" style={`width: ${plan.progressPercent}%`}></div>
+                  </div>
+                </div>
+
+                <div class:list={[
+                  'mt-4 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between',
+                  requiresAction ? 'border-brand-coral/30 bg-brand-coral/[0.08]' : 'border-white/10 bg-black/20',
+                ]}>
+                  {plan.remainingBalance === 0 ? (
+                    <div>
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.18em] text-brand-teal">Season balance complete</p>
+                      <p class="mt-1 font-heading text-xl font-black uppercase tracking-tight text-white">Paid in full</p>
+                      <p class="mt-1 text-xs text-white/60">No future automatic payments are scheduled.</p>
+                    </div>
+                  ) : plan.nextPayment ? (
+                    <div>
+                      <p class:list={['text-[10px] font-extrabold uppercase tracking-[0.18em]', requiresAction ? 'text-brand-coral' : 'text-brand-teal']}>
+                        {requiresAction ? 'Payment needs attention' : 'Next automatic payment'}
+                      </p>
+                      <p class="mt-1 font-heading text-xl font-black uppercase tracking-tight text-white sm:text-2xl">
+                        <span class="tabular-nums">{formatCurrency(plan.nextPayment.amount)}</span>
+                        <span class="font-medium text-white/60"> on {formatClubDate(plan.nextPayment.dueDate)}</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/45">Payment schedule</p>
+                      <p class="mt-1 font-bold text-white">No additional automatic payments are scheduled.</p>
+                    </div>
+                  )}
+                  {plan.isOwned && (
+                    <button data-manage-billing data-default-label="Manage payment method" type="button" class="min-h-11 shrink-0 rounded-xl border border-white/15 bg-white/[0.06] px-4 text-xs font-extrabold uppercase tracking-wider text-white transition hover:border-brand-teal/40 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-50">
+                      <span>Manage payment method</span>
+                    </button>
+                  )}
+                </div>
+
+                <div class="mt-7 grid gap-7 md:grid-cols-[minmax(0,1fr)_13rem]">
+                  <div>
+                    <h3 class="text-xs font-extrabold uppercase tracking-[0.18em] text-white/65">Current payment schedule</h3>
+                    <ol class="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-black/15">
+                      {plan.installments.map((installment, index) => (
+                        <li class:list={['grid grid-cols-[minmax(0,1fr)_auto] gap-4 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_9rem_6rem]', index && 'border-t border-white/10']}>
+                          <div class="flex min-w-0 items-center gap-3">
+                            <span class:list={[
+                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-black',
+                              ['paid', 'satisfied'].includes(installment.status)
+                                ? 'border-brand-teal/30 bg-brand-teal/10 text-brand-teal'
+                                : installment.status === 'action_required' || installment.status === 'past_due'
+                                  ? 'border-brand-coral/30 bg-brand-coral/10 text-brand-coral'
+                                  : 'border-white/15 bg-white/[0.04] text-white/40',
+                            ]} aria-hidden="true">
+                              {['paid', 'satisfied'].includes(installment.status) ? '✓' : index + 1}
+                            </span>
+                            <div class="min-w-0">
+                              <p class="truncate text-sm font-bold text-white">{installmentTypeLabel(installment.type)}</p>
+                              <p class="mt-0.5 text-xs tabular-nums text-white/60">{formatClubDate(installment.dueDate)}</p>
+                            </div>
+                          </div>
+                          <p class="self-center text-right font-bold tabular-nums text-white">{formatCurrency(installment.amount)}</p>
+                          <p class:list={[
+                            'col-span-2 self-center text-right text-[10px] font-extrabold uppercase tracking-wider sm:col-span-1',
+                            ['paid', 'satisfied'].includes(installment.status) ? 'text-brand-teal' :
+                              ['past_due', 'action_required'].includes(installment.status) ? 'text-brand-coral' : 'text-white/60',
+                          ]}>{installmentStatusLabel(installment.status)}</p>
+                        </li>
+                      ))}
+                    </ol>
+                    {plan.priorPaidInstallments.length > 0 && (
+                      <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-4">
+                        <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/60">Payments retained from a previous schedule</p>
+                        {plan.priorPaidInstallments.map((installment) => (
+                          <div class="mt-3 flex items-center justify-between gap-4 text-sm">
+                            <span class="text-white/60">{installmentTypeLabel(installment.type)} &middot; {formatClubDate(installment.dueDate)}</span>
+                            <strong class="tabular-nums text-brand-teal">{formatCurrency(installment.amount)} paid</strong>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <aside class="rounded-2xl border border-white/10 bg-white/[0.025] p-5" aria-label="Payment plan facts">
+                    <h3 class="text-xs font-extrabold uppercase tracking-[0.18em] text-white/65">Plan facts</h3>
+                    <dl class="mt-4 space-y-4 text-sm">
+                      <div>
+                        <dt class="text-xs text-white/60">Plan type</dt>
+                        <dd class="mt-1 font-bold text-white">{paymentOptionLabel(plan.paymentOption)}</dd>
+                      </div>
+                      <div>
+                        <dt class="text-xs text-white/60">Automatic payments</dt>
+                        <dd class="mt-1 font-bold text-white">{plan.paymentOption === 'pay_in_full' ? 'Not applicable' : plan.autopayAuthorized ? 'Authorized' : 'Not authorized'}</dd>
+                      </div>
+                      {plan.billingDay && (
+                        <div>
+                          <dt class="text-xs text-white/60">Billing day</dt>
+                          <dd class="mt-1 font-bold text-white">{plan.billingDay}{plan.billingDay === 1 ? 'st' : plan.billingDay === 2 ? 'nd' : plan.billingDay === 3 ? 'rd' : 'th'} of the month</dd>
+                        </div>
+                      )}
+                    </dl>
+                    {!plan.isOwned && (
+                      <p class="mt-5 border-t border-white/10 pt-4 text-xs leading-5 text-white/60">You have view-only household access. Billing and receipt controls remain with the primary parent.</p>
+                    )}
+                  </aside>
+                </div>
+                <p class="mt-6 border-t border-white/10 pt-5 text-xs leading-5 text-white/60">
+                  Amounts and dates are read-only. Contact TVVC if your family needs a different arrangement.
+                  {plan.isOwned ? ' Any proposed revision will appear below for your approval before it takes effect.' : ''}
+                </p>
+              </div>
+            </section>
+          );
+        })}
+
         <section id="club-season-plan" data-plan-revision-card class="hidden overflow-hidden rounded-3xl border border-amber-300/25 bg-[#11151d] shadow-2xl" aria-labelledby="plan-revision-heading">
           <div class="border-b border-white/10 px-6 py-5 md:px-8">
             <div class="flex items-start gap-4">
@@ -144,7 +354,7 @@ const hasOwnRegistrations = userRegistrations.some(
               <div>
                 <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-amber-300">Your review is needed</p>
                 <h2 id="plan-revision-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Revised payment schedule</h2>
-                <p class="mt-2 max-w-2xl text-sm leading-6 text-white/55">TVVC has proposed a different schedule for your remaining balance. Nothing changes until you review and authorize it.</p>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-white/60">The matching current plan remains in effect. Nothing changes until you review and authorize its proposal.</p>
               </div>
             </div>
           </div>
@@ -294,9 +504,9 @@ const hasOwnRegistrations = userRegistrations.some(
           <section class="glass rounded-3xl p-8 border-white/5 bg-gradient-to-br from-white/5 to-transparent">
             <h2 class="text-xl font-heading font-bold mb-4 uppercase tracking-tight">Billing</h2>
             <p class="text-sm text-white/40 mb-6">Update your payment methods and download tax receipts via our secure payment partner.</p>
-            <button id="manage-billing" class="w-full bg-white text-brand-charcoal font-black py-4 rounded-2xl hover:bg-brand-teal transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            <button id="manage-billing" data-manage-billing data-default-label="Manage via Stripe" class="w-full bg-white text-brand-charcoal font-black py-4 rounded-2xl hover:bg-brand-teal transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
               <span>Manage via Stripe</span>
-              <svg id="billing-spinner" class="animate-spin h-4 w-4 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg data-billing-spinner class="animate-spin h-4 w-4 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -350,8 +560,15 @@ const hasOwnRegistrations = userRegistrations.some(
       return;
     }
     revisionCard.classList.remove('hidden');
-    revisionList.innerHTML = revisions.map((revision, index) => `
+    revisionList.innerHTML = revisions.map((revision, index) => {
+      const matchingPlan = Array.from(document.querySelectorAll<HTMLElement>('[data-club-season-registration]'))
+        .find((plan) => plan.dataset.clubSeasonRegistration === revision.registrationId);
+      const planIdentity = matchingPlan
+        ? `${matchingPlan.dataset.planPlayer} · ${matchingPlan.dataset.planTeam} · ${matchingPlan.dataset.planSeason}`
+        : `Registration ${revision.registrationId.slice(0, 8).toUpperCase()}`;
+      return `
       <article class="px-6 py-7 md:px-8 ${index ? 'border-t border-white/10' : ''}" data-revision-id="${revisionEscape(revision.id)}">
+        <p class="mb-5 rounded-xl border border-amber-300/20 bg-amber-300/[.07] px-4 py-3 text-xs font-extrabold uppercase tracking-[.12em] text-amber-200">Proposed revision for <span class="text-white">${revisionEscape(planIdentity)}</span></p>
         <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_15rem]">
           <div>
             <p class="text-sm font-bold text-white">Why this is being offered</p>
@@ -391,7 +608,8 @@ const hasOwnRegistrations = userRegistrations.some(
           </div>
           <p data-revision-form-status class="mt-3 min-h-5 text-sm text-white/55" role="status" aria-live="polite"></p>
         </form>
-      </article>`).join('');
+      </article>`;
+    }).join('');
     revisionList.querySelectorAll<HTMLFormElement>('[data-revision-authorize]').forEach((form) => form.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!form.reportValidity()) return;
@@ -457,10 +675,11 @@ const hasOwnRegistrations = userRegistrations.some(
   revisionCard?.querySelector('[data-plan-revision-retry]')?.addEventListener('click', loadRevisions);
   loadRevisions();
 
-  document.getElementById('manage-billing')?.addEventListener('click', async (e) => {
+  document.querySelectorAll<HTMLButtonElement>('[data-manage-billing]').forEach((billingButton) => billingButton.addEventListener('click', async (e) => {
     const btn = e.currentTarget as HTMLButtonElement;
-    const spinner = btn.querySelector('#billing-spinner');
+    const spinner = btn.querySelector('[data-billing-spinner]');
     const text = btn.querySelector('span');
+    const defaultLabel = btn.dataset.defaultLabel || 'Manage via Stripe';
     
     btn.disabled = true;
     if (text) text.textContent = 'Opening...';
@@ -475,15 +694,15 @@ const hasOwnRegistrations = userRegistrations.some(
       } else {
         window.toast.error(data.error || 'Failed to open billing portal');
         btn.disabled = false;
-        if (text) text.textContent = 'Manage via Stripe';
+        if (text) text.textContent = defaultLabel;
         if (spinner) spinner.classList.add('hidden');
       }
     } catch (err) {
       console.error(err);
       window.toast.error('An error occurred');
       btn.disabled = false;
-      if (text) text.textContent = 'Manage via Stripe';
+      if (text) text.textContent = defaultLabel;
       if (spinner) spinner.classList.add('hidden');
     }
-  });
+  }));
 </script>

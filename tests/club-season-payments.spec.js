@@ -27,7 +27,16 @@ async function contextWithSession(browser, sessionToken) {
   });
 }
 
-function clubSeasonWebhook({ eventId, sessionId, registrationId, planId, versionId }) {
+function clubSeasonWebhook({
+  eventId,
+  sessionId,
+  registrationId,
+  planId,
+  versionId,
+  paymentOption = 'standard_plan',
+  amountTotal = 40000,
+  paymentIntentId = 'pi_club_season_standard',
+}) {
   const payload = JSON.stringify({
     id: eventId,
     object: 'event',
@@ -40,17 +49,17 @@ function clubSeasonWebhook({ eventId, sessionId, registrationId, planId, version
       object: {
         id: sessionId,
         object: 'checkout.session',
-        amount_total: 40000,
+        amount_total: amountTotal,
         currency: 'usd',
         customer: 'cus_club_season_parent',
-        payment_intent: 'pi_club_season_standard',
+        payment_intent: paymentIntentId,
         payment_status: 'paid',
         metadata: {
           flow: 'club_season',
           registrationId,
           paymentPlanId: planId,
           paymentPlanVersionId: versionId,
-          paymentOption: 'standard_plan',
+          paymentOption,
         },
       },
     },
@@ -237,6 +246,66 @@ test.describe.serial('Club season payment checkout', () => {
       });
       expect(paidInstallments.rows[0]).toMatchObject({ sequence: 0, status: 'paid' });
       expect(paidInstallments.rows.slice(1).every((row) => row.status === 'scheduled')).toBeTruthy();
+
+      await page.goto('/portal/dashboard');
+      const planCard = page.locator(
+        `[data-club-season-registration="${paymentFixture.registrationId}"]`
+      );
+      await expect(planCard.getByRole('heading', { name: 'Club Season & Payment Plan' })).toBeVisible();
+      await expect(planCard.getByText(paymentFixture.athleteName, { exact: false })).toBeVisible();
+      await expect(planCard.getByText(fixtures.clubSeason.teamName, { exact: false })).toBeVisible();
+      await expect(planCard.getByText('$400.00', { exact: true }).first()).toBeVisible();
+      await expect(planCard.getByText('$1,100.00', { exact: true })).toBeVisible();
+      await expect(planCard.getByText(/\$220\.00 on January 5, 2027/)).toBeVisible();
+      await expect(planCard.getByText('Automatic payment', { exact: true })).toHaveCount(5);
+      for (const month of ['January', 'February', 'March', 'April', 'May']) {
+        await expect(planCard.locator('ol').getByText(`${month} 5, 2027`, { exact: true })).toBeVisible();
+      }
+      await expect(planCard.getByText('Standard plan', { exact: true })).toBeVisible();
+      await expect(planCard.getByText('Authorized', { exact: true })).toBeVisible();
+      await expect(planCard.locator('input')).toHaveCount(0);
+      await expect(planCard.getByRole('button', { name: 'Manage payment method' })).toBeVisible();
+
+      const unrelatedParent = await contextWithSession(
+        browser,
+        fixtures.clubSeasonPayments.full.sessionToken
+      );
+      try {
+        const unrelatedPage = await unrelatedParent.newPage();
+        await unrelatedPage.goto('/portal/dashboard');
+        await expect(unrelatedPage.locator(
+          `[data-club-season-registration="${paymentFixture.registrationId}"]`
+        )).toHaveCount(0);
+        await expect(unrelatedPage.getByText(paymentFixture.athleteName, { exact: true })).toHaveCount(0);
+      } finally {
+        await unrelatedParent.close();
+      }
+
+      await client.execute({
+        sql: `INSERT INTO household_guardians
+              (owner_user_id, guardian_email, guardian_user_id, status, accepted_at)
+              VALUES (?, ?, ?, 'active', CURRENT_TIMESTAMP)`,
+        args: [paymentFixture.userId, fixtures.guardian.email, fixtures.guardian.id],
+      });
+      const guardian = await contextWithSession(browser, fixtures.guardian.sessionToken);
+      try {
+        const guardianPage = await guardian.newPage();
+        await guardianPage.goto('/portal/dashboard');
+        const sharedPlanCard = guardianPage.locator(
+          `[data-club-season-registration="${paymentFixture.registrationId}"]`
+        );
+        await expect(sharedPlanCard).toBeVisible();
+        await expect(sharedPlanCard.getByText('Shared view', { exact: true })).toBeVisible();
+        await expect(sharedPlanCard.getByText(/view-only household access/i)).toBeVisible();
+        await expect(sharedPlanCard.getByRole('button')).toHaveCount(0);
+      } finally {
+        await guardian.close();
+        await client.execute({
+          sql: `DELETE FROM household_guardians
+                WHERE owner_user_id = ? AND guardian_email = ?`,
+          args: [paymentFixture.userId, fixtures.guardian.email],
+        });
+      }
     } finally {
       client.close();
       await parent.close();
@@ -273,7 +342,8 @@ test.describe.serial('Club season payment checkout', () => {
       expect(checkout.ok()).toBeTruthy();
 
       const planResult = await client.execute({
-        sql: `SELECT v.id, v.stripe_checkout_session_id, v.authorization_text,
+        sql: `SELECT p.id AS plan_id, v.id AS version_id,
+                     v.stripe_checkout_session_id, v.authorization_text,
                      v.authorized_name, v.schedule_snapshot
               FROM club_season_payment_plans p
               JOIN club_season_payment_plan_versions v
@@ -292,6 +362,37 @@ test.describe.serial('Club season payment checkout', () => {
       const stripeRequest = await stripeSession.json();
       expect(stripeRequest.request_params['line_items[0][price_data][unit_amount]']).toBe('150000');
       expect(stripeRequest.request_params['payment_intent_data[setup_future_usage]']).toBeUndefined();
+
+      const webhook = clubSeasonWebhook({
+        eventId: 'evt_club_full',
+        sessionId: plan.stripe_checkout_session_id,
+        registrationId: paymentFixture.registrationId,
+        planId: plan.plan_id,
+        versionId: plan.version_id,
+        paymentOption: 'pay_in_full',
+        amountTotal: 150000,
+        paymentIntentId: 'pi_club_season_full',
+      });
+      const delivery = await request.post('/api/webhooks/stripe', {
+        headers: {
+          'Content-Type': 'application/json',
+          'stripe-signature': webhook.signature,
+        },
+        data: webhook.payload,
+      });
+      expect(delivery.status()).toBe(200);
+
+      await page.goto('/portal/dashboard');
+      const planCard = page.locator(
+        `[data-club-season-registration="${paymentFixture.registrationId}"]`
+      );
+      await expect(planCard).toBeVisible();
+      await expect(planCard.getByText('Registration complete', { exact: true })).toBeVisible();
+      await expect(planCard.getByText('Paid in full', { exact: true })).toHaveCount(3);
+      await expect(planCard.getByText('$0.00', { exact: true })).toBeVisible();
+      await expect(planCard.getByText('No future automatic payments are scheduled.')).toBeVisible();
+      await expect(planCard.getByText('Next automatic payment')).toHaveCount(0);
+      await expect(planCard.getByText('Not applicable', { exact: true })).toBeVisible();
     } finally {
       client.close();
       await parent.close();
