@@ -6,6 +6,8 @@ import {
   createClubSeasonAgreementDraft,
   publishAgreementSchema,
   publishClubSeasonAgreement,
+  recordClubSeasonLaunchEvidence,
+  recordLaunchEvidenceSchema,
   updateAgreementDraftSchema,
   updateClubSeasonAgreementDraft,
   updateClubSeasonRegistrationWindow,
@@ -39,12 +41,23 @@ function serviceError(error: unknown) {
     AGREEMENT_DRAFT_NOT_FOUND: ['The editable agreement draft was not found.', 404],
     PUBLISH_CONFIRMATION_MISMATCH: ['Type the exact publication phrase shown before publishing.', 400],
     AGREEMENT_CONTENT_HASH_MISMATCH: ['The agreement content failed its integrity check. Create a new draft before publishing.', 409],
+    LAUNCH_EVIDENCE_ALREADY_RECORDED: ['This launch check has already been recorded and cannot be replaced.', 409],
+    LAUNCH_EVIDENCE_CONFIRMATION_MISMATCH: ['Type the exact recording phrase shown.', 400],
+    LAUNCH_EVIDENCE_REFERENCE_REQUIRED: ['Provide a meaningful evidence reference.', 400],
+    PILOT_CHECKLIST_INCOMPLETE: ['Complete all six pilot checks before recording evidence.', 400],
+    PILOT_CHECKLIST_NOT_ALLOWED: ['Checklist evidence is only valid for the controlled pilot.', 400],
   };
   const mapped = errors[code];
   if (mapped) return json({ error: mapped[0] }, mapped[1]);
   let current = error;
   for (let depth = 0; depth < 5 && current && typeof current === 'object'; depth += 1) {
     const candidate = current as { code?: unknown; message?: unknown; cause?: unknown };
+    if (
+      typeof candidate.message === 'string' &&
+      candidate.message.includes('club_season_launch_evidence.season_id')
+    ) {
+      return json({ error: 'This launch check has already been recorded and cannot be replaced.' }, 409);
+    }
     if (
       candidate.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
       (typeof candidate.message === 'string' && candidate.message.includes('UNIQUE constraint failed'))
@@ -79,6 +92,15 @@ export const POST: APIRoute = async ({ request }) => {
         adminUserId: authorization.user.id,
       });
       return json({ ok: true, agreement });
+    }
+    if (payload?.action === 'record_launch_evidence') {
+      const parsed = recordLaunchEvidenceSchema.safeParse(payload);
+      if (!parsed.success) return validationError(parsed.error);
+      const evidence = await recordClubSeasonLaunchEvidence(authorization.db, {
+        ...parsed.data,
+        adminUserId: authorization.user.id,
+      });
+      return json({ ok: true, evidence }, 201);
     }
     return json({ error: 'Unsupported season setting action.' }, 400);
   } catch (error) {

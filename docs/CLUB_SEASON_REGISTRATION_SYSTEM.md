@@ -289,9 +289,8 @@ Implemented on the dark feature branch:
 - A read-only admin launch-readiness gate that evaluates the season record, the confirmed January–May schedule, pricing reconciliation, active team links, published required agreements, the registration window, Stripe/webhook configuration, Resend, and the protected billing worker
 - Separate **pilot readiness** and **live readiness** decisions so Stripe test mode can be used for a controlled rehearsal without implying production is ready
 - A paired-lock display for the season database switch and the Netlify feature flag; both remain independent and neither can be changed from the readiness screen
-- Persistent agreement/refund-policy approval references recorded with the exact published versions, plus explicit deployment confirmations for Resend domain verification, live Stripe review, and completion of a controlled pilot
+- Persistent agreement/refund-policy approval references recorded with the exact published versions
 - Database-backed administrator authorization on the season-control and offer-management pages, so a stale session role cannot retain access after an administrator is demoted
-- Environment examples for recording deployment confirmations without storing secrets or approval claims in browser code
 - Automated tests proving that launch locks do not block a dark pilot, configuration defects do block a pilot, and live readiness requires every automated gate, manual confirmation, live Stripe keys, and both access locks
 
 This milestone does **not** publish agreement wording, approve the refund policy, switch Stripe to live mode, or enable parent access. Those remain deliberate TVVC deployment decisions.
@@ -311,6 +310,20 @@ Implemented on the dark feature branch:
 - Database-backed authorization and same-origin protection on every settings write
 
 Publishing an agreement makes that version eligible to appear when parent registration is later enabled. It does not turn on either launch lock, change Stripe mode, or waive TVVC's responsibility to approve the final wording.
+
+### 4.10 Milestone 3H implementation status — August 8, 2026
+
+Implemented on the dark feature branch:
+
+- Complete working drafts for the season commitment, refund/cancellation policy, and player media release, prefilled into the agreement desk when no prior version exists
+- Refund language covering the three-business-day cancellation window, TVVC cancellation, medical inability, pre-practice withdrawal, and case-by-case review for voluntary withdrawal after the first practice
+- A persistent launch-verification console for Resend domain verification, Stripe live-mode review, and the controlled pilot
+- Append-only evidence records that capture the administrator, timestamp, written reference, and—for the pilot—the exact checklist completed
+- Six required pilot checks: registration, payment, email, ledger reconciliation, failure recovery, and idempotency
+- Exact confirmation phrases, database uniqueness, and database triggers preventing launch evidence from being edited, deleted, or silently replaced
+- Launch readiness derived from the stored evidence instead of environment-variable assertions
+
+The agreement text remains a **working draft** until TVVC reviews and deliberately publishes each version with an approval reference. No verification evidence is pre-recorded, and recording evidence never changes Stripe keys, publishes wording, or enables either parent-access lock.
 
 ## 5. Information Already Collected at Tryouts
 

@@ -5,6 +5,7 @@ import {
   clubPricingTiers,
   clubSeasonAdminAuditLog,
   clubSeasonAgreementVersions,
+  clubSeasonLaunchEvidence,
   clubSeasons,
   clubTeams,
 } from '../db/schema.ts';
@@ -40,9 +41,6 @@ export type ClubSeasonLaunchEnvironment = {
   resendApiKey: string;
   cronSecret: string;
   billingEmail: string;
-  resendDomainVerified?: boolean;
-  stripeLiveReviewComplete?: boolean;
-  pilotCompleted?: boolean;
 };
 
 type ReadinessData = {
@@ -52,6 +50,7 @@ type ReadinessData = {
   teams: Array<typeof clubTeams.$inferSelect>;
   agreements: Array<typeof clubSeasonAgreementVersions.$inferSelect>;
   approvedAgreementVersionIds?: string[];
+  launchEvidenceTypes?: string[];
 };
 
 function gate(
@@ -122,6 +121,7 @@ export function evaluateClubSeasonLaunchReadiness(
   const requiredAgreementKeys = ['season-commitment', 'refund-cancellation-policy'];
   const requiredAgreementsPublished = requiredAgreementKeys.every((key) => publishedKeys.has(key));
   const approvedAgreementVersionIds = new Set(data.approvedAgreementVersionIds || []);
+  const launchEvidenceTypes = new Set(data.launchEvidenceTypes || []);
   const requiredAgreementsApproved = requiredAgreementKeys.every((key) => {
     const agreement = data.agreements.find((item) => item.key === key);
     return Boolean(agreement && approvedAgreementVersionIds.has(agreement.id));
@@ -213,25 +213,25 @@ export function evaluateClubSeasonLaunchReadiness(
     manualGate(
       'resend_domain',
       'Resend domain verification',
-      Boolean(environment.resendDomainVerified),
+      launchEvidenceTypes.has('resend_domain'),
       'Production sending-domain verification is recorded.',
-      'Verify the sending domain and set CLUB_SEASON_RESEND_DOMAIN_VERIFIED to true.'
+      'Verify the sending domain, then record the evidence in the launch verification console.'
     ),
     manualGate(
       'stripe_live_review',
       'Stripe live-mode review',
-      Boolean(environment.stripeLiveReviewComplete) && stripeMode === 'live',
+      launchEvidenceTypes.has('stripe_live_review') && stripeMode === 'live',
       'Live Stripe pricing, receipts, payment methods, and webhook delivery have been reviewed.',
       stripeMode === 'live'
-        ? 'Complete the live Stripe review and set CLUB_SEASON_STRIPE_LIVE_REVIEW_COMPLETE to true.'
+        ? 'Complete the live Stripe review, then record the evidence in the launch verification console.'
         : 'The pilot may use test mode; production requires matching live keys and a completed Stripe review.'
     ),
     manualGate(
       'pilot',
       'Controlled pilot registration',
-      Boolean(environment.pilotCompleted),
+      launchEvidenceTypes.has('controlled_pilot'),
       'A controlled end-to-end pilot is recorded as complete.',
-      'Run a complete test-family registration, payment, email, and admin reconciliation before live launch.'
+      'Complete all six pilot checks, then record the evidence in the launch verification console.'
     ),
   ];
 
@@ -288,7 +288,7 @@ export async function getClubSeasonLaunchReadiness(
     .where(eq(clubSeasons.id, seasonId)).limit(1);
   if (!season) throw new Error('Club season not found.');
 
-  const [pricingTiers, ageGroups, teams, agreements] = await Promise.all([
+  const [pricingTiers, ageGroups, teams, agreements, launchEvidence] = await Promise.all([
     db.select().from(clubPricingTiers).where(eq(clubPricingTiers.seasonId, seasonId)),
     db.select().from(clubAgeGroups).where(eq(clubAgeGroups.seasonId, seasonId)),
     db.select().from(clubTeams).where(eq(clubTeams.seasonId, seasonId)),
@@ -296,6 +296,8 @@ export async function getClubSeasonLaunchReadiness(
       eq(clubSeasonAgreementVersions.seasonId, seasonId),
       eq(clubSeasonAgreementVersions.status, 'published')
     )),
+    db.select({ type: clubSeasonLaunchEvidence.type }).from(clubSeasonLaunchEvidence)
+      .where(eq(clubSeasonLaunchEvidence.seasonId, seasonId)),
   ]);
 
   const agreementIds = agreements.map((agreement) => agreement.id);
@@ -313,5 +315,6 @@ export async function getClubSeasonLaunchReadiness(
     teams,
     agreements,
     approvedAgreementVersionIds: approvalAudits.map((item) => item.entityId),
+    launchEvidenceTypes: launchEvidence.map((item) => item.type),
   }, environment);
 }

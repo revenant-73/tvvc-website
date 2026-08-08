@@ -4,7 +4,9 @@ import { getDb } from '../db/index.ts';
 import {
   clubSeasonAdminAuditLog,
   clubSeasonAgreementVersions,
+  clubSeasonLaunchEvidence,
   clubSeasons,
+  users,
 } from '../db/schema.ts';
 
 type Db = ReturnType<typeof getDb>;
@@ -41,6 +43,23 @@ export const CLUB_SEASON_AGREEMENT_TEMPLATES = {
 
 export type ClubSeasonAgreementKey = keyof typeof CLUB_SEASON_AGREEMENT_TEMPLATES;
 export type ClubSeasonRegistrationWindowState = 'not_configured' | 'not_open' | 'open' | 'closed';
+
+export const CLUB_SEASON_LAUNCH_EVIDENCE = {
+  resend_domain: { label: 'Resend domain verification', confirmation: 'RECORD RESEND' },
+  stripe_live_review: { label: 'Stripe live-mode review', confirmation: 'RECORD STRIPE' },
+  controlled_pilot: { label: 'Controlled pilot registration', confirmation: 'RECORD PILOT' },
+} as const;
+
+export const CLUB_SEASON_PILOT_CHECKS = [
+  'registration',
+  'payment',
+  'email',
+  'ledger',
+  'failure_recovery',
+  'idempotency',
+] as const;
+
+export type ClubSeasonLaunchEvidenceType = keyof typeof CLUB_SEASON_LAUNCH_EVIDENCE;
 
 export function getClubSeasonRegistrationWindowState(
   season: { registrationOpensAt?: string | null; registrationClosesAt?: string | null },
@@ -100,6 +119,34 @@ export const publishAgreementSchema = z.object({
   confirmation: z.string().trim().min(1).max(40),
   approvalReference: z.string().trim().min(10).max(1000),
 }).strict();
+
+const launchEvidenceTypeSchema = z.enum([
+  'resend_domain',
+  'stripe_live_review',
+  'controlled_pilot',
+]);
+const pilotCheckSchema = z.enum(CLUB_SEASON_PILOT_CHECKS);
+
+export const recordLaunchEvidenceSchema = z.object({
+  action: z.literal('record_launch_evidence'),
+  seasonId: z.string().trim().min(1).max(100),
+  type: launchEvidenceTypeSchema,
+  confirmation: z.string().trim().min(1).max(40),
+  evidenceReference: z.string().trim().min(10).max(2000),
+  checks: z.array(pilotCheckSchema).max(CLUB_SEASON_PILOT_CHECKS.length).optional(),
+}).strict().superRefine((value, context) => {
+  if (value.confirmation !== CLUB_SEASON_LAUNCH_EVIDENCE[value.type].confirmation) {
+    context.addIssue({ code: 'custom', path: ['confirmation'], message: 'Type the exact recording phrase shown.' });
+  }
+  if (value.type === 'controlled_pilot') {
+    const checks = new Set(value.checks || []);
+    if (checks.size !== CLUB_SEASON_PILOT_CHECKS.length) {
+      context.addIssue({ code: 'custom', path: ['checks'], message: 'Complete all six pilot checks before recording evidence.' });
+    }
+  } else if (value.checks?.length) {
+    context.addIssue({ code: 'custom', path: ['checks'], message: 'Checklist evidence is only valid for the controlled pilot.' });
+  }
+});
 
 export async function hashClubSeasonAgreement(input: {
   key: string;
@@ -324,5 +371,97 @@ export async function publishClubSeasonAgreement(db: Db, input: {
       createdAt: now,
     });
     return published;
+  });
+}
+
+export async function recordClubSeasonLaunchEvidence(db: Db, input: {
+  seasonId: string;
+  type: ClubSeasonLaunchEvidenceType;
+  confirmation: string;
+  evidenceReference: string;
+  checks?: Array<(typeof CLUB_SEASON_PILOT_CHECKS)[number]>;
+  adminUserId: string;
+}) {
+  const definition = CLUB_SEASON_LAUNCH_EVIDENCE[input.type];
+  if (!definition || input.confirmation !== definition.confirmation) {
+    throw new Error('LAUNCH_EVIDENCE_CONFIRMATION_MISMATCH');
+  }
+  const checks = new Set(input.checks || []);
+  if (
+    input.type === 'controlled_pilot' &&
+    (checks.size !== CLUB_SEASON_PILOT_CHECKS.length ||
+      CLUB_SEASON_PILOT_CHECKS.some((check) => !checks.has(check)))
+  ) {
+    throw new Error('PILOT_CHECKLIST_INCOMPLETE');
+  }
+  if (input.type !== 'controlled_pilot' && checks.size > 0) {
+    throw new Error('PILOT_CHECKLIST_NOT_ALLOWED');
+  }
+
+  const [season] = await db.select({ id: clubSeasons.id }).from(clubSeasons)
+    .where(eq(clubSeasons.id, input.seasonId)).limit(1);
+  if (!season) throw new Error('SEASON_NOT_FOUND');
+  const [existing] = await db.select({ id: clubSeasonLaunchEvidence.id })
+    .from(clubSeasonLaunchEvidence).where(and(
+      eq(clubSeasonLaunchEvidence.seasonId, input.seasonId),
+      eq(clubSeasonLaunchEvidence.type, input.type)
+    )).limit(1);
+  if (existing) throw new Error('LAUNCH_EVIDENCE_ALREADY_RECORDED');
+
+  const now = new Date().toISOString();
+  const evidenceReference = input.evidenceReference.trim();
+  if (evidenceReference.length < 10) throw new Error('LAUNCH_EVIDENCE_REFERENCE_REQUIRED');
+
+  return db.transaction(async (tx) => {
+    const [evidence] = await tx.insert(clubSeasonLaunchEvidence).values({
+      id: crypto.randomUUID(),
+      seasonId: input.seasonId,
+      type: input.type,
+      evidenceReference,
+      checksSnapshot: input.type === 'controlled_pilot'
+        ? JSON.stringify(CLUB_SEASON_PILOT_CHECKS)
+        : null,
+      recordedByUserId: input.adminUserId,
+      recordedAt: now,
+      createdAt: now,
+    }).returning();
+    await tx.insert(clubSeasonAdminAuditLog).values({
+      id: crypto.randomUUID(),
+      adminUserId: input.adminUserId,
+      action: 'launch_evidence_recorded',
+      entityType: 'club_season_launch_evidence',
+      entityId: evidence.id,
+      reason: evidenceReference,
+      beforeSnapshot: null,
+      afterSnapshot: JSON.stringify({ type: input.type, checks: [...checks] }),
+      createdAt: now,
+    });
+    return evidence;
+  });
+}
+
+export async function getClubSeasonLaunchEvidence(db: Db, seasonId: string) {
+  const recorded = await db.select({
+    type: clubSeasonLaunchEvidence.type,
+    evidenceReference: clubSeasonLaunchEvidence.evidenceReference,
+    recordedAt: clubSeasonLaunchEvidence.recordedAt,
+    recordedByName: users.name,
+    recordedByEmail: users.email,
+  }).from(clubSeasonLaunchEvidence)
+    .leftJoin(users, eq(users.id, clubSeasonLaunchEvidence.recordedByUserId))
+    .where(eq(clubSeasonLaunchEvidence.seasonId, seasonId));
+  const byType = new Map(recorded.map((item) => [item.type, item]));
+
+  return (Object.keys(CLUB_SEASON_LAUNCH_EVIDENCE) as ClubSeasonLaunchEvidenceType[]).map((type) => {
+    const item = byType.get(type);
+    return {
+      type,
+      label: CLUB_SEASON_LAUNCH_EVIDENCE[type].label,
+      completed: Boolean(item),
+      completedAt: item?.recordedAt || null,
+      completedByName: item?.recordedByName || null,
+      completedByEmail: item?.recordedByEmail || null,
+      evidenceReference: item?.evidenceReference || null,
+    };
   });
 }

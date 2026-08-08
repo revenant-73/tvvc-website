@@ -751,6 +751,23 @@ export const clubSeasonAdminAuditLog = sqliteTable('club_season_admin_audit_log'
   createdAtIdx: index('club_season_admin_audit_created_at_idx').on(table.createdAt),
 }));
 
+// Human-verified launch evidence is append-only and separate from deployment
+// switches. Recording a check never enables parent access or changes keys.
+export const clubSeasonLaunchEvidence = sqliteTable('club_season_launch_evidence', {
+  id: text('id').primaryKey(),
+  seasonId: text('season_id').notNull().references(() => clubSeasons.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // resend_domain, stripe_live_review, controlled_pilot
+  evidenceReference: text('evidence_reference').notNull(),
+  checksSnapshot: text('checks_snapshot'),
+  recordedByUserId: text('recorded_by_user_id').notNull().references(() => users.id),
+  recordedAt: text('recorded_at').notNull(),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  seasonTypeUnique: uniqueIndex('club_season_launch_evidence_season_type_unique').on(table.seasonId, table.type),
+  seasonIdIdx: index('club_season_launch_evidence_season_id_idx').on(table.seasonId),
+  recordedByIdx: index('club_season_launch_evidence_recorded_by_idx').on(table.recordedByUserId),
+}));
+
 // Manual financial activity is append-only. Corrections create an explicit
 // counter-entry so cash, credits, write-offs, and refunds remain auditable.
 export const clubSeasonFinancialAdjustments = sqliteTable('club_season_financial_adjustments', {

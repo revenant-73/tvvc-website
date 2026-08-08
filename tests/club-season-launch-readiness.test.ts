@@ -34,6 +34,7 @@ const baseData = {
     { id: 'agreement-refund', key: 'refund-cancellation-policy', status: 'published' },
   ],
   approvedAgreementVersionIds: [],
+  launchEvidenceTypes: [],
 } as any;
 
 const testEnvironment = {
@@ -81,14 +82,12 @@ test('live readiness requires both launch locks and all manual confirmations', (
     ...baseData,
     season: { ...baseData.season, publicRegistrationEnabled: true },
     approvedAgreementVersionIds: ['agreement-commitment', 'agreement-refund'],
+    launchEvidenceTypes: ['resend_domain', 'stripe_live_review', 'controlled_pilot'],
   }, {
     ...testEnvironment,
     featureFlagEnabled: true,
     stripeSecretKey: 'sk_live_example',
     stripePublishableKey: 'pk_live_example',
-    resendDomainVerified: true,
-    stripeLiveReviewComplete: true,
-    pilotCompleted: true,
   });
 
   assert.equal(readiness.readyForPilot, true);

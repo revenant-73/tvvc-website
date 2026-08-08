@@ -6,8 +6,9 @@ import { getDb } from '../../db';
 import { clubAgeGroups, clubPricingTiers, clubSeasonAgreementVersions, clubSeasons, clubTeams } from '../../db/schema';
 import { asc, eq } from 'drizzle-orm';
 import { getCurrentAdminUser } from '../../lib/admin-auth';
+import { CLUB_SEASON_AGREEMENT_WORKING_DRAFTS } from '../../lib/club-season-agreement-content';
 import { getClubSeasonLaunchReadiness } from '../../lib/club-season-launch-readiness';
-import { getClubSeasonAgreementVersions } from '../../lib/club-season-settings';
+import { getClubSeasonAgreementVersions, getClubSeasonLaunchEvidence } from '../../lib/club-season-settings';
 
 const SEASON_ID = '2026-2027-club';
 const clubSeasonFeatureEnabled = String(
@@ -24,6 +25,16 @@ let pricingTiers: Array<typeof clubPricingTiers.$inferSelect> = [];
 let ageGroups: Array<typeof clubAgeGroups.$inferSelect> = [];
 let teams: Array<typeof clubTeams.$inferSelect> = [];
 let agreementVersions: Array<typeof clubSeasonAgreementVersions.$inferSelect> = [];
+type LaunchEvidence = {
+  type: 'resend_domain' | 'stripe_live_review' | 'controlled_pilot';
+  label: string;
+  completed: boolean;
+  completedAt: string | null;
+  completedByName: string | null;
+  completedByEmail: string | null;
+  evidenceReference: string | null;
+};
+let launchEvidence: LaunchEvidence[] = [];
 let loadError = '';
 
 type LaunchReadiness = {
@@ -59,7 +70,7 @@ if (isAdmin) {
       .limit(1);
 
     if (season) {
-      [pricingTiers, ageGroups, teams, agreementVersions] = await Promise.all([
+      [pricingTiers, ageGroups, teams, agreementVersions, launchEvidence] = await Promise.all([
         db.select().from(clubPricingTiers)
           .where(eq(clubPricingTiers.seasonId, season.id))
           .orderBy(asc(clubPricingTiers.sortOrder)),
@@ -70,6 +81,7 @@ if (isAdmin) {
           .where(eq(clubTeams.seasonId, season.id))
           .orderBy(asc(clubTeams.name)),
         getClubSeasonAgreementVersions(db, season.id),
+        getClubSeasonLaunchEvidence(db, season.id),
       ]);
 
       launchReadiness = await getClubSeasonLaunchReadiness(db, season.id, {
@@ -80,9 +92,6 @@ if (isAdmin) {
         resendApiKey: import.meta.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '',
         cronSecret: import.meta.env.CLUB_SEASON_CRON_SECRET || process.env.CLUB_SEASON_CRON_SECRET || '',
         billingEmail: import.meta.env.CLUB_SEASON_BILLING_EMAIL || process.env.CLUB_SEASON_BILLING_EMAIL || '',
-        resendDomainVerified: String(import.meta.env.CLUB_SEASON_RESEND_DOMAIN_VERIFIED || process.env.CLUB_SEASON_RESEND_DOMAIN_VERIFIED || 'false').toLowerCase() === 'true',
-        stripeLiveReviewComplete: String(import.meta.env.CLUB_SEASON_STRIPE_LIVE_REVIEW_COMPLETE || process.env.CLUB_SEASON_STRIPE_LIVE_REVIEW_COMPLETE || 'false').toLowerCase() === 'true',
-        pilotCompleted: String(import.meta.env.CLUB_SEASON_PILOT_COMPLETED || process.env.CLUB_SEASON_PILOT_COMPLETED || 'false').toLowerCase() === 'true',
       });
     }
   } catch (error) {
@@ -149,12 +158,47 @@ const agreementFamilies = [
   { key: 'media-release', label: 'Media release', response: 'Required choice · granted or declined', defaultTitle: 'Media Release', defaultSummary: 'Permission choice for player photography and club media.' },
 ].map((family) => ({
   ...family,
+  workingDraft: CLUB_SEASON_AGREEMENT_WORKING_DRAFTS[family.key as keyof typeof CLUB_SEASON_AGREEMENT_WORKING_DRAFTS],
   versions: agreementVersions.filter((agreement) => agreement.key === family.key),
 }));
 
 const agreementDate = (value?: string | null) => value
   ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' }).format(new Date(value))
   : 'Date unavailable';
+
+const evidenceDate = (value?: string | null) => value
+  ? new Intl.DateTimeFormat('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles', timeZoneName: 'short',
+    }).format(new Date(value))
+  : '';
+
+const evidenceConfig = {
+  resend_domain: {
+    confirmation: 'RECORD RESEND',
+    referenceLabel: 'Verification reference',
+    referencePlaceholder: 'Domain, verified sender, date checked, and where the verification was confirmed',
+  },
+  stripe_live_review: {
+    confirmation: 'RECORD STRIPE',
+    referenceLabel: 'Review reference',
+    referencePlaceholder: 'Reviewer, date, account/mode reviewed, and result',
+  },
+  controlled_pilot: {
+    confirmation: 'RECORD PILOT',
+    referenceLabel: 'Pilot evidence reference',
+    referencePlaceholder: 'Test family and date, Stripe test object IDs, result, and any issue notes',
+  },
+} as const;
+
+const pilotChecks = [
+  ['registration', 'Family completed registration and agreement flow'],
+  ['payment', 'Test deposit or pay-in-full payment verified'],
+  ['email', 'Reminder/confirmation/failure emails verified'],
+  ['ledger', 'Admin ledger and balance reconciled'],
+  ['failure_recovery', 'Failed-payment recovery completed'],
+  ['idempotency', 'Duplicate webhook/job run caused no duplicate effect'],
+] as const;
 ---
 
 <BaseLayout
@@ -392,6 +436,106 @@ const agreementDate = (value?: string | null) => value
                 </footer>
               </section>
 
+              <section aria-labelledby="verification-evidence-heading" class="overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
+                <header class="flex flex-col gap-3 border-b border-white/10 px-5 py-5 md:flex-row md:items-end md:justify-between md:px-7 md:py-6">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-amber-300">Flight recorder</p>
+                    <h2 id="verification-evidence-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Verification evidence</h2>
+                    <p class="mt-2 max-w-3xl text-sm leading-6 text-white/50">Record the human verification behind each launch gate. These entries are permanent operational history, not automated proof.</p>
+                  </div>
+                  <p class="border-l-2 border-amber-300 pl-3 text-[10px] font-extrabold uppercase leading-5 tracking-[0.14em] text-amber-300">Append-only log<br /><span class="text-white/45">No edit or delete</span></p>
+                </header>
+
+                {launchEvidence.length ? (
+                  <ol class="divide-y divide-white/10">
+                    {launchEvidence.map((evidence, index) => {
+                      const config = evidenceConfig[evidence.type];
+                      const actor = evidence.completedByName || evidence.completedByEmail || 'TVVC administrator';
+                      return (
+                        <li data-evidence-row={evidence.type}>
+                          <div class="grid gap-4 px-5 py-5 md:grid-cols-[8rem_minmax(0,1fr)_auto] md:items-start md:px-7">
+                            <div class="flex items-center gap-3">
+                              <span class:list={[
+                                'flex h-8 w-8 shrink-0 items-center justify-center border font-mono text-[11px] font-black',
+                                evidence.completed ? 'border-brand-teal/50 bg-brand-teal/10 text-brand-teal' : 'border-amber-300/50 bg-amber-300/10 text-amber-300',
+                              ]} aria-hidden="true">{evidence.completed ? '✓' : String(index + 1).padStart(2, '0')}</span>
+                              <span class:list={[
+                                'text-[9px] font-extrabold uppercase tracking-[0.17em]',
+                                evidence.completed ? 'text-brand-teal' : 'text-amber-300',
+                              ]}>{evidence.completed ? 'Recorded' : 'Pending'}</span>
+                            </div>
+
+                            <div class="min-w-0">
+                              <h3 class="font-heading text-base font-extrabold uppercase tracking-[0.03em] text-white">{evidence.label}</h3>
+                              {evidence.completed ? (
+                                <div class="mt-2 border-l-2 border-brand-teal pl-3">
+                                  <p class="text-xs font-semibold text-white/75">Signed by {actor} · {evidenceDate(evidence.completedAt)}</p>
+                                  {evidence.completedByName && evidence.completedByEmail && <p class="mt-0.5 text-[11px] text-white/45">{evidence.completedByEmail}</p>}
+                                  <p class="mt-2 break-words font-mono text-[11px] leading-5 text-white/65">{evidence.evidenceReference}</p>
+                                </div>
+                              ) : (
+                                <p class="mt-1 text-xs leading-5 text-white/45">Manual verification has not been recorded. Completing automated tests does not complete this gate.</p>
+                              )}
+                            </div>
+
+                            {!evidence.completed && (
+                              <button type="button" class="evidence-open min-h-10 justify-self-start border border-amber-300/35 px-4 text-[10px] font-extrabold uppercase tracking-[0.11em] text-amber-300 transition hover:bg-amber-300/10 focus:outline-none focus:ring-2 focus:ring-amber-300 md:justify-self-end" data-evidence-type={evidence.type} aria-expanded="false" aria-controls={`evidence-form-${evidence.type}`}>Record evidence</button>
+                            )}
+                          </div>
+
+                          {!evidence.completed && (
+                            <form id={`evidence-form-${evidence.type}`} class="evidence-form hidden border-t border-amber-300/20 bg-[#0b0e14] px-5 py-5 md:px-7" data-evidence-form data-evidence-type={evidence.type} data-confirm-phrase={config.confirmation}>
+                              <div class="flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                  <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-amber-300">Manual log entry</p>
+                                  <h4 class="mt-1 font-heading text-lg font-extrabold uppercase text-white">Record {evidence.label}</h4>
+                                </div>
+                                <button type="button" class="evidence-close min-h-9 text-xs font-bold text-white/45 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Close form</button>
+                              </div>
+
+                              {evidence.type === 'controlled_pilot' && (
+                                <fieldset class="mt-5">
+                                  <legend class="text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/65">All pilot checks are required</legend>
+                                  <div class="mt-3 grid gap-px border border-white/10 bg-white/10 lg:grid-cols-2">
+                                    {pilotChecks.map(([value, label]) => (
+                                      <label class="flex min-h-14 cursor-pointer items-start gap-3 bg-[#0b0e14] p-3 text-xs font-semibold leading-5 text-white/70 transition hover:bg-white/[0.03] focus-within:bg-white/[0.04]">
+                                        <input type="checkbox" name="checks" value={value} required class="mt-0.5 h-4 w-4 shrink-0 accent-[#009695] focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#0b0e14]" />
+                                        <span>{label}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </fieldset>
+                              )}
+
+                              <div class="mt-5 grid gap-4 lg:grid-cols-2">
+                                <div>
+                                  <label for={`evidence-reference-${evidence.type}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/65">{config.referenceLabel}</label>
+                                  <textarea id={`evidence-reference-${evidence.type}`} name="evidenceReference" required minlength="10" maxlength="2000" rows="4" placeholder={config.referencePlaceholder} class="w-full rounded-lg border border-white/15 bg-black/20 px-3 py-2 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"></textarea>
+                                </div>
+                                <div>
+                                  <label for={`evidence-confirmation-${evidence.type}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/65">Type <span class="font-mono text-amber-300">{config.confirmation}</span></label>
+                                  <input id={`evidence-confirmation-${evidence.type}`} name="confirmation" required autocomplete="off" spellcheck="false" class="min-h-11 w-full rounded-lg border border-amber-300/30 bg-black/20 px-3 font-mono text-sm font-bold text-white outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20" />
+                                  <p class="mt-2 text-[11px] leading-5 text-white/45">This records evidence only. It does not change Stripe keys, Netlify settings, or either launch lock.</p>
+                                </div>
+                              </div>
+
+                              <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <p class="min-h-5 text-xs text-white/55" role="status" aria-live="polite" data-evidence-status></p>
+                                <button type="submit" disabled class="min-h-11 border border-amber-300 bg-amber-300/10 px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-amber-300 transition hover:bg-amber-300 hover:text-[#11151d] focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.03] disabled:text-white/25"><span data-evidence-button-label>Record permanently</span></button>
+                              </div>
+                            </form>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : (
+                  <div class="px-5 py-6 md:px-7" role="status">
+                    <p class="text-sm leading-6 text-white/50">Verification records could not be loaded. No evidence or launch setting has changed.</p>
+                  </div>
+                )}
+              </section>
+
               <section aria-labelledby="registration-setup-heading" class="overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
                 <header class="border-b border-white/10 px-5 py-5 md:px-7 md:py-6">
                   <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-brand-teal">Change control</p>
@@ -510,7 +654,7 @@ const agreementDate = (value?: string | null) => value
                                       ))}
                                     </div>
                                   ) : (
-                                    <button type="button" class="agreement-create-toggle mt-3 min-h-9 border border-white/20 px-3 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white/65 transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal" data-key={family.key} data-version={nextVersion} data-title={published?.title || family.defaultTitle} data-summary={published?.summary || family.defaultSummary}>Create next draft</button>
+                                    <button type="button" class="agreement-create-toggle mt-3 min-h-9 border border-white/20 px-3 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white/65 transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal" data-key={family.key} data-version={nextVersion} data-title={published ? published.title : family.workingDraft.title} data-summary={published ? (published.summary || '') : family.workingDraft.summary} data-body={published ? published.body : family.workingDraft.body}>Create next draft</button>
                                   )}
                                 </div>
                               </div>
@@ -527,6 +671,10 @@ const agreementDate = (value?: string | null) => value
                                     <button type="button" class="agreement-workspace-close text-xs font-bold text-white/45 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Close editor</button>
                                   </div>
                                   <div class="grid gap-4">
+                                    <aside id={`agreement-working-draft-note-${family.key}`} class="border-l-2 border-amber-300 bg-amber-300/[0.05] px-4 py-3">
+                                      <p class="text-xs font-extrabold uppercase tracking-[0.1em] text-amber-300">Working draft only</p>
+                                      <p class="mt-1 text-xs leading-5 text-white/60">Review and revise this language before publication. Publication requires a separate approval reference.</p>
+                                    </aside>
                                     <div>
                                       <label for={`agreement-title-${family.key}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Title</label>
                                       <input id={`agreement-title-${family.key}`} name="title" required maxlength="160" class="min-h-11 w-full rounded-lg border border-white/15 bg-black/20 px-3 text-sm font-semibold text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
@@ -540,7 +688,7 @@ const agreementDate = (value?: string | null) => value
                                         <label for={`agreement-body-${family.key}`} class="text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Exact agreement body</label>
                                         <span id={`agreement-body-count-${family.key}`} class="text-[10px] font-bold tabular-nums text-white/55" data-body-count>0 words · 0 characters</span>
                                       </div>
-                                      <textarea id={`agreement-body-${family.key}`} name="body" required minlength="20" rows="14" aria-describedby={`agreement-body-count-${family.key}`} placeholder="Enter the complete wording families will see and accept." class="w-full rounded-lg border border-white/15 bg-black/20 px-4 py-3 font-body text-sm leading-7 text-white outline-none placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"></textarea>
+                                      <textarea id={`agreement-body-${family.key}`} name="body" required minlength="20" rows="14" aria-describedby={`agreement-working-draft-note-${family.key} agreement-body-count-${family.key}`} placeholder="Enter the complete wording families will see and accept." class="w-full rounded-lg border border-white/15 bg-black/20 px-4 py-3 font-body text-sm leading-7 text-white outline-none placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"></textarea>
                                     </div>
                                     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                       <p class="min-h-5 text-xs text-white/55" role="status" aria-live="polite" data-agreement-status></p>
@@ -922,7 +1070,7 @@ const agreementDate = (value?: string | null) => value
         setValue('key', key);
         setValue('title', button.dataset.title || '');
         setValue('summary', button.dataset.summary || '');
-        setValue('body', isCreate ? '' : button.dataset.body || '');
+        setValue('body', button.dataset.body || '');
         const version = button.dataset.version || '';
         const versionLabel = editor.querySelector('[data-editor-version]');
         const modeLabel = editor.querySelector('[data-editor-mode-label]');
@@ -982,6 +1130,96 @@ const agreementDate = (value?: string | null) => value
         const submit = review?.querySelector('button[type="submit"]');
         if (review instanceof HTMLFormElement && submit instanceof HTMLButtonElement) {
           submit.disabled = field.value !== review.dataset.confirmPhrase;
+        }
+      });
+    });
+
+    const closeEvidenceForms = (exceptType = '') => {
+      document.querySelectorAll('[data-evidence-form]').forEach((form) => {
+        if (!(form instanceof HTMLFormElement) || form.dataset.evidenceType === exceptType) return;
+        form.classList.add('hidden');
+        const button = document.querySelector(`.evidence-open[data-evidence-type="${CSS.escape(form.dataset.evidenceType || '')}"]`);
+        button?.setAttribute('aria-expanded', 'false');
+      });
+    };
+
+    const updateEvidenceSubmit = (form) => {
+      if (!(form instanceof HTMLFormElement)) return;
+      const confirmation = form.elements.namedItem('confirmation');
+      const submit = form.querySelector('button[type="submit"]');
+      const phraseMatches = confirmation instanceof HTMLInputElement && confirmation.value === form.dataset.confirmPhrase;
+      const checks = Array.from(form.querySelectorAll('input[name="checks"]'));
+      const checksComplete = checks.length === 0 || checks.every((check) => check instanceof HTMLInputElement && check.checked);
+      if (submit instanceof HTMLButtonElement) submit.disabled = !(phraseMatches && checksComplete);
+    };
+
+    document.querySelectorAll('.evidence-open').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        const type = button.dataset.evidenceType || '';
+        const form = document.getElementById(`evidence-form-${type}`);
+        if (!(form instanceof HTMLFormElement)) return;
+        const opening = form.classList.contains('hidden');
+        closeEvidenceForms(opening ? type : '');
+        form.classList.toggle('hidden', !opening);
+        button.setAttribute('aria-expanded', String(opening));
+        if (opening) form.querySelector('textarea, input')?.focus();
+      });
+    });
+
+    document.querySelectorAll('.evidence-close').forEach((button) => {
+      button.addEventListener('click', () => {
+        const form = button.closest('[data-evidence-form]');
+        if (!(form instanceof HTMLFormElement)) return;
+        form.classList.add('hidden');
+        const openButton = document.querySelector(`.evidence-open[data-evidence-type="${CSS.escape(form.dataset.evidenceType || '')}"]`);
+        openButton?.setAttribute('aria-expanded', 'false');
+        if (openButton instanceof HTMLButtonElement) openButton.focus();
+      });
+    });
+
+    document.querySelectorAll('[data-evidence-form]').forEach((form) => {
+      form.addEventListener('input', () => updateEvidenceSubmit(form));
+      form.addEventListener('change', () => updateEvidenceSubmit(form));
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+        const data = new FormData(form);
+        const confirmation = String(data.get('confirmation') || '');
+        if (confirmation !== form.dataset.confirmPhrase) return;
+        const type = String(form.dataset.evidenceType || '');
+        const checks = data.getAll('checks').map(String);
+        const status = form.querySelector('[data-evidence-status]');
+        const button = form.querySelector('button[type="submit"]');
+        const label = form.querySelector('[data-evidence-button-label]');
+        if (button instanceof HTMLButtonElement) button.disabled = true;
+        if (label) label.textContent = 'Recording…';
+        setStatus(status, 'Writing immutable evidence entry…');
+        try {
+          const payload = {
+            action: 'record_launch_evidence',
+            seasonId: '2026-2027-club',
+            type,
+            confirmation,
+            evidenceReference: String(data.get('evidenceReference') || '').trim(),
+            ...(type === 'controlled_pilot' ? { checks } : {}),
+          };
+          const response = await fetch(settingsEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'The verification evidence could not be recorded.');
+          setStatus(status, 'Evidence recorded.', 'success');
+          notify('success', 'Verification evidence recorded');
+          window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The verification evidence could not be recorded.';
+          setStatus(status, message, 'error');
+          notify('error', message);
+          if (label) label.textContent = 'Record permanently';
+          updateEvidenceSubmit(form);
         }
       });
     });

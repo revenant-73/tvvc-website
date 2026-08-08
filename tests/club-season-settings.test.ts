@@ -8,13 +8,18 @@ import { getDb } from '../src/db/index.ts';
 import {
   clubSeasonAdminAuditLog,
   clubSeasonAgreementVersions,
+  clubSeasonLaunchEvidence,
   clubSeasons,
 } from '../src/db/schema.ts';
 import {
   createClubSeasonAgreementDraft,
+  CLUB_SEASON_PILOT_CHECKS,
+  getClubSeasonLaunchEvidence,
   getClubSeasonRegistrationWindowState,
   hashClubSeasonAgreement,
   publishClubSeasonAgreement,
+  recordClubSeasonLaunchEvidence,
+  recordLaunchEvidenceSchema,
   updateClubSeasonAgreementDraft,
   updateClubSeasonRegistrationWindow,
 } from '../src/lib/club-season-settings.ts';
@@ -39,6 +44,22 @@ test('registration window state is inclusive and rejects incomplete configuratio
   assert.equal(getClubSeasonRegistrationWindowState(season, new Date(season.registrationClosesAt)), 'open');
   assert.equal(getClubSeasonRegistrationWindowState(season, new Date('2026-11-30T08:00:00.000Z')), 'closed');
   assert.equal(getClubSeasonRegistrationWindowState({ registrationOpensAt: null, registrationClosesAt: null }), 'not_configured');
+});
+
+test('launch evidence validation requires the exact phrase and complete pilot checklist', () => {
+  assert.equal(recordLaunchEvidenceSchema.safeParse({
+    action: 'record_launch_evidence', seasonId: 'season', type: 'resend_domain',
+    confirmation: 'RECORD RESEND', evidenceReference: 'Resend domain dashboard verified.',
+  }).success, true);
+  assert.equal(recordLaunchEvidenceSchema.safeParse({
+    action: 'record_launch_evidence', seasonId: 'season', type: 'controlled_pilot',
+    confirmation: 'RECORD PILOT', evidenceReference: 'Pilot family run on November 1.',
+    checks: ['registration'],
+  }).success, false);
+  assert.equal(recordLaunchEvidenceSchema.safeParse({
+    action: 'record_launch_evidence', seasonId: 'season', type: 'stripe_live_review',
+    confirmation: 'record stripe', evidenceReference: 'Stripe dashboard live review complete.',
+  }).success, false);
 });
 
 test('registration windows and agreement publication preserve an audited immutable version history', async () => {
@@ -68,6 +89,56 @@ test('registration windows and agreement publication preserve an audited immutab
     });
     assert.equal(season.registrationOpensAt, '2026-11-02T17:00:00.000Z');
     assert.equal(season.registrationClosesAt, '2026-11-30T07:59:59.000Z');
+
+    const resendEvidence = await recordClubSeasonLaunchEvidence(db, {
+      seasonId: '2026-2027-club',
+      type: 'resend_domain',
+      confirmation: 'RECORD RESEND',
+      evidenceReference: 'Resend dashboard shows the TVVC sending domain as verified.',
+      adminUserId: 'settings-admin',
+    });
+    assert.equal(resendEvidence.type, 'resend_domain');
+    await assert.rejects(recordClubSeasonLaunchEvidence(db, {
+      seasonId: '2026-2027-club',
+      type: 'resend_domain',
+      confirmation: 'RECORD RESEND',
+      evidenceReference: 'A duplicate record must never replace the original evidence.',
+      adminUserId: 'settings-admin',
+    }), /LAUNCH_EVIDENCE_ALREADY_RECORDED/);
+    await assert.rejects(recordClubSeasonLaunchEvidence(db, {
+      seasonId: '2026-2027-club',
+      type: 'controlled_pilot',
+      confirmation: 'RECORD PILOT',
+      evidenceReference: 'Incomplete pilot run for validation coverage.',
+      checks: ['registration'],
+      adminUserId: 'settings-admin',
+    }), /PILOT_CHECKLIST_INCOMPLETE/);
+    await recordClubSeasonLaunchEvidence(db, {
+      seasonId: '2026-2027-club',
+      type: 'controlled_pilot',
+      confirmation: 'RECORD PILOT',
+      evidenceReference: 'Controlled test-family run reconciled against Stripe, email, and the ledger.',
+      checks: [...CLUB_SEASON_PILOT_CHECKS],
+      adminUserId: 'settings-admin',
+    });
+    const launchEvidence = await getClubSeasonLaunchEvidence(db, '2026-2027-club');
+    assert.equal(launchEvidence.length, 3);
+    assert.deepEqual(
+      launchEvidence.map((item) => [item.type, item.completed]),
+      [['resend_domain', true], ['stripe_live_review', false], ['controlled_pilot', true]]
+    );
+    assert.equal(launchEvidence[0].completedByName, 'TVVC Admin');
+    assert.equal(launchEvidence[0].completedByEmail, 'admin@tvvc.test');
+    await assert.rejects(client.execute({
+      sql: 'UPDATE club_season_launch_evidence SET evidence_reference = ? WHERE id = ?',
+      args: ['Rewritten evidence', resendEvidence.id],
+    }), /immutable/i);
+    await assert.rejects(client.execute({
+      sql: 'DELETE FROM club_season_launch_evidence WHERE id = ?',
+      args: [resendEvidence.id],
+    }), /cannot be deleted/i);
+    const storedEvidence = await db.select().from(clubSeasonLaunchEvidence);
+    assert.equal(storedEvidence.length, 2);
 
     const firstDraft = await createClubSeasonAgreementDraft(db, {
       seasonId: '2026-2027-club',
