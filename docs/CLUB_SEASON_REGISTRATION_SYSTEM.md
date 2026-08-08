@@ -345,6 +345,14 @@ CLUB_SEASON_PILOT_EMAILS=exact.test.family@example.com
 STRIPE_SECRET_KEY=sk_test_...
 ```
 
+The isolated pilot database can be prepared with the checked-in fixture command:
+
+```text
+PILOT_PARENT_EMAIL=exact.test.family@example.com npm run db:seed:club-pilot
+```
+
+The command is idempotent and refuses to run unless `TURSO_DATABASE_URL` identifies the dedicated `tvvc-season-pilot` database. It activates the existing seeded season while leaving its public-registration lock off, then creates a test team, paid tryout-eligibility record, published pilot agreement versions, and one offer for the specified email address. It must never be pointed at the production registration database.
+
 The pilot family uses the normal private `/season-registration` link and must still own a valid tryout registration and team offer. The registration window, published agreements, deadlines, ownership checks, same-origin protection, and all payment validation continue to apply. Automated rehearsal results do not count as completion evidence; the administrator records the controlled-pilot evidence only after supervising the deployed test-family run and reconciling all six checks.
 
 Before live launch, remove the pilot email allowlist and disable `CLUB_SEASON_PILOT_MODE`. The Stripe test-key interlock is defense in depth, not a substitute for removing temporary access.
