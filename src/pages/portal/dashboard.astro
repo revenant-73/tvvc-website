@@ -252,8 +252,8 @@ const hasOwnRegistrations = userRegistrations.some(
                         {requiresAction ? 'Payment needs attention' : 'Next automatic payment'}
                       </p>
                       <p class="mt-1 font-heading text-xl font-black uppercase tracking-tight text-white sm:text-2xl">
-                        <span class="tabular-nums">{formatCurrency(plan.nextPayment.amount)}</span>
-                        <span class="font-medium text-white/60"> on {formatClubDate(plan.nextPayment.dueDate)}</span>
+                        <span class="block tabular-nums sm:inline">{formatCurrency(plan.nextPayment.amount)}</span>
+                        <span class="mt-1 block font-medium text-white/60 sm:mt-0 sm:inline"> on {formatClubDate(plan.nextPayment.dueDate)}</span>
                       </p>
                     </div>
                   ) : (
@@ -287,7 +287,7 @@ const hasOwnRegistrations = userRegistrations.some(
                               {['paid', 'satisfied'].includes(installment.status) ? '✓' : index + 1}
                             </span>
                             <div class="min-w-0">
-                              <p class="truncate text-sm font-bold text-white">{installmentTypeLabel(installment.type)}</p>
+                              <p class="text-sm font-bold leading-5 text-white">{installmentTypeLabel(installment.type)}</p>
                               <p class="mt-0.5 text-xs tabular-nums text-white/60">{formatClubDate(installment.dueDate)}</p>
                             </div>
                           </div>
