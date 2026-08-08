@@ -47,7 +47,7 @@ export default async function globalSetup() {
   await client.batch([
     {
       sql: `UPDATE club_seasons
-            SET public_registration_enabled = 1, status = 'active',
+            SET public_registration_enabled = 0, status = 'active',
                 registration_opens_at = '2000-01-01T08:00:00.000Z',
                 registration_closes_at = '2099-12-31T07:59:59.000Z'
             WHERE id = ?`,

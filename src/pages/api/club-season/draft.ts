@@ -4,7 +4,7 @@ import { db } from '../../../db/db';
 import { clubSeasonRegistrations } from '../../../db/schema';
 import { getOwnedClubSeasonOffers, getVerifiedClubSeasonUser } from '../../../lib/club-season-access';
 import { saveClubSeasonDraftSchema } from '../../../lib/club-season-draft';
-import { isClubSeasonRegistrationEnabled } from '../../../lib/club-season-feature';
+import { canAccessClubSeasonRegistration, isClubSeasonRouteAvailable } from '../../../lib/club-season-feature';
 import { getClubDate } from '../../../lib/event-eligibility';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
 
@@ -20,10 +20,13 @@ function json(data: unknown, status = 200): Response {
 export const PATCH: APIRoute = async ({ request }) => {
   const originRejection = rejectCrossOriginRequest(request);
   if (originRejection) return originRejection;
-  if (!isClubSeasonRegistrationEnabled()) return json({ error: 'Not found.' }, 404);
   if (!db) return json({ error: 'Database configuration missing.' }, 500);
 
   try {
+    const user = await getVerifiedClubSeasonUser(request);
+    if (!user) return json({ error: 'Authentication required.' }, 401);
+    if (!isClubSeasonRouteAvailable(user.email)) return json({ error: 'Not found.' }, 404);
+
     const contentLength = Number(request.headers.get('content-length') || 0);
     if (contentLength > 65_536) return json({ error: 'Registration draft is too large.' }, 413);
     const rawBody = await request.text();
@@ -43,15 +46,12 @@ export const PATCH: APIRoute = async ({ request }) => {
       }, 400);
     }
 
-    const user = await getVerifiedClubSeasonUser(request);
-    if (!user) return json({ error: 'Authentication required.' }, 401);
-
     const ownedOffers = await getOwnedClubSeasonOffers(request);
     const item = ownedOffers.find(({ offer }) => offer.id === parsed.data.offerId);
     if (!item || item.draft?.ownerUserId !== user.id) {
       return json({ error: 'Registration draft not found.' }, 404);
     }
-    if (!item.season.publicRegistrationEnabled) {
+    if (!canAccessClubSeasonRegistration(user.email, item.season.publicRegistrationEnabled)) {
       return json({ error: 'Season registration is not currently available.' }, 403);
     }
     if (item.offer.acceptanceDeadline && item.offer.acceptanceDeadline < getClubDate()) {

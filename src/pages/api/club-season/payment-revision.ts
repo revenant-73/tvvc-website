@@ -7,7 +7,7 @@ import { deliverClubSeasonEmail } from '../../../lib/club-season-billing';
 import { getClubSeasonFinancialAccount, reviewClubSeasonPlanRevision } from '../../../lib/club-season-financials';
 import { paymentPlanRevisionAcceptedEmail } from '../../../lib/club-season-payment-emails';
 import { parentPlanRevisionSchema, revisionAuthorizationText } from '../../../lib/club-season-plan-revision';
-import { isClubSeasonRegistrationEnabled } from '../../../lib/club-season-feature';
+import { canAccessClubSeasonRegistration, isClubSeasonRouteAvailable } from '../../../lib/club-season-feature';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
 
 export const prerender = false;
@@ -25,16 +25,20 @@ async function requestIpHash(request: Request): Promise<string | null> {
   return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function ownedRegistrationIds(request: Request) {
-  return (await getOwnedClubSeasonOffers(request)).flatMap((item) => item.draft ? [item.draft.id] : []);
+async function ownedRegistrationIds(request: Request, email: string) {
+  return (await getOwnedClubSeasonOffers(request)).flatMap((item) => (
+    item.draft && canAccessClubSeasonRegistration(email, item.season.publicRegistrationEnabled)
+      ? [item.draft.id]
+      : []
+  ));
 }
 
 export const GET: APIRoute = async ({ request }) => {
-  if (!isClubSeasonRegistrationEnabled()) return json({ error: 'Not found.' }, 404);
   if (!db) return json({ error: 'Database configuration missing.' }, 500);
   const user = await getVerifiedClubSeasonUser(request);
   if (!user) return json({ error: 'Authentication required.' }, 401);
-  const registrationIds = await ownedRegistrationIds(request);
+  if (!isClubSeasonRouteAvailable(user.email)) return json({ error: 'Not found.' }, 404);
+  const registrationIds = await ownedRegistrationIds(request, user.email);
   const revisions = registrationIds.length ? await db.select({
     revision: clubSeasonPaymentPlanRevisions,
     version: clubSeasonPaymentPlanVersions,
@@ -62,15 +66,15 @@ export const GET: APIRoute = async ({ request }) => {
 export const POST: APIRoute = async ({ request }) => {
   const originRejection = rejectCrossOriginRequest(request);
   if (originRejection) return originRejection;
-  if (!isClubSeasonRegistrationEnabled()) return json({ error: 'Not found.' }, 404);
   if (!db) return json({ error: 'Database configuration missing.' }, 500);
+  const user = await getVerifiedClubSeasonUser(request);
+  if (!user) return json({ error: 'Authentication required.' }, 401);
+  if (!isClubSeasonRouteAvailable(user.email)) return json({ error: 'Not found.' }, 404);
   let body: unknown;
   try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
   const parsed = parentPlanRevisionSchema.safeParse(body);
   if (!parsed.success) return json({ error: parsed.error.issues[0]?.message || 'Invalid response.' }, 400);
-  const user = await getVerifiedClubSeasonUser(request);
-  if (!user) return json({ error: 'Authentication required.' }, 401);
-  const registrationIds = await ownedRegistrationIds(request);
+  const registrationIds = await ownedRegistrationIds(request, user.email);
   const [revision] = await db.select().from(clubSeasonPaymentPlanRevisions).where(eq(clubSeasonPaymentPlanRevisions.id, parsed.data.revisionId)).limit(1);
   if (!revision || !registrationIds.includes(revision.registrationId)) return json({ error: 'Revision not found.' }, 404);
   try {

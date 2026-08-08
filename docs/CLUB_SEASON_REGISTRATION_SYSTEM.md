@@ -325,6 +325,30 @@ Implemented on the dark feature branch:
 
 The agreement text remains a **working draft** until TVVC reviews and deliberately publishes each version with an approval reference. No verification evidence is pre-recorded, and recording evidence never changes Stripe keys, publishes wording, or enables either parent-access lock.
 
+### 4.11 Milestone 3I implementation status — August 8, 2026
+
+Implemented on the dark feature branch:
+
+- A controlled-pilot access mode for exact, comma-separated test-family email addresses
+- Pilot access that works while both the Netlify public feature flag and season-level public-registration lock remain closed
+- Two hard interlocks: pilot access is automatically disabled if the Netlify public feature flag is on or unless the server Stripe secret begins with `sk_test_`; enabling public access or changing to a live key kills the bypass
+- The same pilot authorization check on the parent page and every parent registration, agreement, checkout, draft, and plan-revision endpoint
+- A prominent `CONTROLLED TEST PILOT / TEST MODE` banner confirming that no real card will be charged, public registration remains closed, and pilot data may be removed
+- Automated isolation coverage proving the exact pilot account can see its offer with the season lock closed while another authenticated family cannot
+
+Pilot environment configuration:
+
+```text
+CLUB_SEASON_REGISTRATION_ENABLED=false
+CLUB_SEASON_PILOT_MODE=true
+CLUB_SEASON_PILOT_EMAILS=exact.test.family@example.com
+STRIPE_SECRET_KEY=sk_test_...
+```
+
+The pilot family uses the normal private `/season-registration` link and must still own a valid tryout registration and team offer. The registration window, published agreements, deadlines, ownership checks, same-origin protection, and all payment validation continue to apply. Automated rehearsal results do not count as completion evidence; the administrator records the controlled-pilot evidence only after supervising the deployed test-family run and reconciling all six checks.
+
+Before live launch, remove the pilot email allowlist and disable `CLUB_SEASON_PILOT_MODE`. The Stripe test-key interlock is defense in depth, not a substitute for removing temporary access.
+
 ## 5. Information Already Collected at Tryouts
 
 The existing tryout flow already collects or supports:

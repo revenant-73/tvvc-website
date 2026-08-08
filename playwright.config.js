@@ -42,7 +42,7 @@ module.exports = defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: `npm run dev -- --host 127.0.0.1 --port ${localPort}`,
+      command: `npm run dev -- --host 127.0.0.1 --port ${localPort} --ignore-lock`,
       url: localBaseUrl,
       reuseExistingServer: !process.env.CI,
       env: {
@@ -51,7 +51,15 @@ module.exports = defineConfig({
         ASTRO_DEV_BACKGROUND: '0',
         ASTRO_TELEMETRY_DISABLED: '1',
         AUTH_SECRET: 'playwright-only-auth-secret-not-for-production-use',
-        CLUB_SEASON_REGISTRATION_ENABLED: 'true',
+        CLUB_SEASON_REGISTRATION_ENABLED: 'false',
+        CLUB_SEASON_PILOT_MODE: 'true',
+        CLUB_SEASON_PILOT_EMAILS: [
+          portalFixtures.parentA.email,
+          portalFixtures.parentB.email,
+          portalFixtures.clubSeasonPayments.standard.email,
+          portalFixtures.clubSeasonPayments.full.email,
+          portalFixtures.clubSeasonPayments.custom.email,
+        ].join(','),
         CRON_SECRET: 'playwright-only-cron-secret-not-for-production-use',
         PLAYWRIGHT_TEST: '1',
         RESEND_API_KEY: 're_playwright_not_used',

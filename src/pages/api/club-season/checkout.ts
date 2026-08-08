@@ -13,7 +13,7 @@ import {
   getOwnedClubSeasonOffers,
   getVerifiedClubSeasonUser,
 } from '../../../lib/club-season-access';
-import { isClubSeasonRegistrationEnabled } from '../../../lib/club-season-feature';
+import { canAccessClubSeasonRegistration, isClubSeasonRouteAvailable } from '../../../lib/club-season-feature';
 import {
   buildClubSeasonPaymentTerms,
   CLUB_SEASON_AUTOPAY_AUTHORIZATION,
@@ -56,24 +56,24 @@ async function requestIpHash(request: Request): Promise<string | null> {
 export const POST: APIRoute = async ({ request }) => {
   const originRejection = rejectCrossOriginRequest(request);
   if (originRejection) return originRejection;
-  if (!isClubSeasonRegistrationEnabled()) return json({ error: 'Not found.' }, 404);
   if (!db) return json({ error: 'Database configuration missing.' }, 500);
 
   try {
+    const user = await getVerifiedClubSeasonUser(request);
+    if (!user) return json({ error: 'Authentication required.' }, 401);
+    if (!isClubSeasonRouteAvailable(user.email)) return json({ error: 'Not found.' }, 404);
+
     const parsed = clubSeasonCheckoutSchema.safeParse(await request.json());
     if (!parsed.success) {
       return json({ error: parsed.error.issues[0]?.message || 'Invalid payment selection.' }, 400);
     }
-
-    const user = await getVerifiedClubSeasonUser(request);
-    if (!user) return json({ error: 'Authentication required.' }, 401);
 
     const ownedOffers = await getOwnedClubSeasonOffers(request);
     const item = ownedOffers.find(({ offer }) => offer.id === parsed.data.offerId);
     if (!item || item.draft?.ownerUserId !== user.id) {
       return json({ error: 'Registration not found.' }, 404);
     }
-    if (!item.season.publicRegistrationEnabled) {
+    if (!canAccessClubSeasonRegistration(user.email, item.season.publicRegistrationEnabled)) {
       return json({ error: 'Season registration is not currently available.' }, 403);
     }
     if (item.offer.acceptanceDeadline && item.offer.acceptanceDeadline < getClubDate()) {

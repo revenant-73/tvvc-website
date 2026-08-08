@@ -358,4 +358,49 @@ test.describe.serial('Club season offer authorization', () => {
       await parentB.close();
     }
   });
+
+  test('an exact test-mode pilot account can enter while the season public lock stays closed', async ({ browser }) => {
+    const admin = await contextWithSession(browser, fixtures.admin.sessionToken);
+    const pilotParent = await contextWithSession(browser, fixtures.parentA.sessionToken);
+    const ordinaryParent = await contextWithSession(browser, fixtures.guardian.sessionToken);
+    const client = createClient({ url: fixtures.databaseUrl });
+    try {
+      const offerResponse = await admin.request.post('/api/admin/club-season-offers', {
+        data: {
+          seasonId: fixtures.clubSeason.id,
+          teamId: fixtures.clubSeason.teamId,
+          athleteIds: [fixtures.parentA.athleteId],
+          acceptanceDeadline: '2099-11-30',
+        },
+      });
+      expect(offerResponse.status()).toBe(207);
+      await expect(offerResponse.json()).resolves.toMatchObject({ results: [
+        { athleteId: fixtures.parentA.athleteId, status: expect.stringMatching(/created|already_offered/) },
+      ] });
+      await client.execute({
+        sql: 'UPDATE club_seasons SET public_registration_enabled = 0 WHERE id = ?',
+        args: [fixtures.clubSeason.id],
+      });
+
+      const pilotPage = await pilotParent.newPage();
+      await pilotPage.goto('/season-registration');
+      await expect(pilotPage.getByRole('heading', { name: /controlled test pilot/i })).toBeVisible();
+      await expect(pilotPage.getByText(/no real card will be charged/i)).toBeVisible();
+      await expect(pilotPage.locator(`[data-offer-id]`).first()).toBeVisible();
+
+      const ordinaryPage = await ordinaryParent.newPage();
+      await ordinaryPage.goto('/season-registration');
+      await expect(ordinaryPage.getByRole('heading', { name: /controlled test pilot/i })).toHaveCount(0);
+      await expect(ordinaryPage.getByRole('heading', { name: /no active offer found/i })).toBeVisible();
+    } finally {
+      await client.execute({
+        sql: 'UPDATE club_seasons SET public_registration_enabled = 0 WHERE id = ?',
+        args: [fixtures.clubSeason.id],
+      }).catch(() => {});
+      client.close();
+      await admin.close();
+      await pilotParent.close();
+      await ordinaryParent.close();
+    }
+  });
 });
