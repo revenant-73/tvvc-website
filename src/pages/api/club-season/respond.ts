@@ -13,6 +13,7 @@ import { getVerifiedClubSeasonUser } from '../../../lib/club-season-access';
 import { isClubSeasonRegistrationEnabled } from '../../../lib/club-season-feature';
 import { getClubDate } from '../../../lib/event-eligibility';
 import { rejectCrossOriginRequest } from '../../../lib/request-security';
+import { getClubSeasonRegistrationWindowState } from '../../../lib/club-season-settings';
 
 export const prerender = false;
 
@@ -48,6 +49,8 @@ export const POST: APIRoute = async ({ request }) => {
     const [ownedOffer] = await db.select({
       offer: clubSeasonOffers,
       publicRegistrationEnabled: clubSeasons.publicRegistrationEnabled,
+      registrationOpensAt: clubSeasons.registrationOpensAt,
+      registrationClosesAt: clubSeasons.registrationClosesAt,
       registrationUserId: registrations.userId,
       athleteParentId: athletes.parentId,
       athleteRegistrationId: athletes.registrationId,
@@ -85,6 +88,19 @@ export const POST: APIRoute = async ({ request }) => {
     }
     if (offer.status === 'revoked') return json({ error: 'This offer is no longer available.' }, 410);
     if (offer.status === 'accepted') return json({ error: 'This offer has already been accepted.' }, 409);
+
+    if (parsed.data.action === 'start') {
+      const windowState = getClubSeasonRegistrationWindowState(ownedOffer);
+      if (windowState === 'not_open') {
+        return json({ error: 'Season registration is not open yet. Please return when the invitation window begins.' }, 403);
+      }
+      if (windowState === 'closed') {
+        return json({ error: 'The season registration window has closed. Please contact TVVC.' }, 410);
+      }
+      if (windowState === 'not_configured') {
+        return json({ error: 'Season registration dates are not configured. Please contact TVVC.' }, 503);
+      }
+    }
 
     const now = new Date().toISOString();
 

@@ -3,10 +3,11 @@ export const prerender = false;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getDb } from '../../db';
-import { clubAgeGroups, clubPricingTiers, clubSeasons, clubTeams } from '../../db/schema';
+import { clubAgeGroups, clubPricingTiers, clubSeasonAgreementVersions, clubSeasons, clubTeams } from '../../db/schema';
 import { asc, eq } from 'drizzle-orm';
 import { getCurrentAdminUser } from '../../lib/admin-auth';
 import { getClubSeasonLaunchReadiness } from '../../lib/club-season-launch-readiness';
+import { getClubSeasonAgreementVersions } from '../../lib/club-season-settings';
 
 const SEASON_ID = '2026-2027-club';
 const clubSeasonFeatureEnabled = String(
@@ -22,6 +23,7 @@ let season: typeof clubSeasons.$inferSelect | null = null;
 let pricingTiers: Array<typeof clubPricingTiers.$inferSelect> = [];
 let ageGroups: Array<typeof clubAgeGroups.$inferSelect> = [];
 let teams: Array<typeof clubTeams.$inferSelect> = [];
+let agreementVersions: Array<typeof clubSeasonAgreementVersions.$inferSelect> = [];
 let loadError = '';
 
 type LaunchReadiness = {
@@ -57,7 +59,7 @@ if (isAdmin) {
       .limit(1);
 
     if (season) {
-      [pricingTiers, ageGroups, teams] = await Promise.all([
+      [pricingTiers, ageGroups, teams, agreementVersions] = await Promise.all([
         db.select().from(clubPricingTiers)
           .where(eq(clubPricingTiers.seasonId, season.id))
           .orderBy(asc(clubPricingTiers.sortOrder)),
@@ -67,6 +69,7 @@ if (isAdmin) {
         db.select().from(clubTeams)
           .where(eq(clubTeams.seasonId, season.id))
           .orderBy(asc(clubTeams.name)),
+        getClubSeasonAgreementVersions(db, season.id),
       ]);
 
       launchReadiness = await getClubSeasonLaunchReadiness(db, season.id, {
@@ -77,7 +80,6 @@ if (isAdmin) {
         resendApiKey: import.meta.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '',
         cronSecret: import.meta.env.CLUB_SEASON_CRON_SECRET || process.env.CLUB_SEASON_CRON_SECRET || '',
         billingEmail: import.meta.env.CLUB_SEASON_BILLING_EMAIL || process.env.CLUB_SEASON_BILLING_EMAIL || '',
-        agreementsApproved: String(import.meta.env.CLUB_SEASON_AGREEMENTS_APPROVED || process.env.CLUB_SEASON_AGREEMENTS_APPROVED || 'false').toLowerCase() === 'true',
         resendDomainVerified: String(import.meta.env.CLUB_SEASON_RESEND_DOMAIN_VERIFIED || process.env.CLUB_SEASON_RESEND_DOMAIN_VERIFIED || 'false').toLowerCase() === 'true',
         stripeLiveReviewComplete: String(import.meta.env.CLUB_SEASON_STRIPE_LIVE_REVIEW_COMPLETE || process.env.CLUB_SEASON_STRIPE_LIVE_REVIEW_COMPLETE || 'false').toLowerCase() === 'true',
         pilotCompleted: String(import.meta.env.CLUB_SEASON_PILOT_COMPLETED || process.env.CLUB_SEASON_PILOT_COMPLETED || 'false').toLowerCase() === 'true',
@@ -129,6 +131,30 @@ const scheduleMonths = [
   { month: 'April', label: '5th', tone: 'payment' },
   { month: 'May', label: '5th', tone: 'payment' },
 ];
+
+const pacificDateTimeLocal = (value?: string | null) => {
+  if (!value) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date(value));
+  const get = (type: string) => parts.find((part) => part.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+};
+
+const agreementFamilies = [
+  { key: 'season-commitment', label: 'Season commitment', response: 'Required acknowledgement', defaultTitle: 'Season Commitment Agreement', defaultSummary: 'Family commitment, participation, and season obligations.' },
+  { key: 'refund-cancellation-policy', label: 'Refund & cancellation', response: 'Required acknowledgement', defaultTitle: 'Refund and Cancellation Policy', defaultSummary: 'Payment, withdrawal, cancellation, and case-by-case refund terms.' },
+  { key: 'media-release', label: 'Media release', response: 'Required choice · granted or declined', defaultTitle: 'Media Release', defaultSummary: 'Permission choice for player photography and club media.' },
+].map((family) => ({
+  ...family,
+  versions: agreementVersions.filter((agreement) => agreement.key === family.key),
+}));
+
+const agreementDate = (value?: string | null) => value
+  ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' }).format(new Date(value))
+  : 'Date unavailable';
 ---
 
 <BaseLayout
@@ -364,6 +390,205 @@ const scheduleMonths = [
                   <svg class="mt-0.5 shrink-0 text-amber-300" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.3 3.7 2.2 18a2 2 0 0 0 1.8 3h16a2 2 0 0 0 1.8-3L13.7 3.7a2 2 0 0 0-3.4 0Z"></path></svg>
                   <p class="text-xs leading-5 text-white/55"><strong class="font-extrabold uppercase tracking-[0.08em] text-amber-300">Human approval required.</strong> Agreement and refund language requires TVVC approval. This screen does not publish policy language, enable registration, or switch Stripe to live keys.</p>
                 </footer>
+              </section>
+
+              <section aria-labelledby="registration-setup-heading" class="overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
+                <header class="border-b border-white/10 px-5 py-5 md:px-7 md:py-6">
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-brand-teal">Change control</p>
+                  <div class="mt-1 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <h2 id="registration-setup-heading" class="font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Registration setup</h2>
+                      <p class="mt-2 max-w-3xl text-sm leading-6 text-white/50">Schedule the invitation window and prepare the exact policy versions families will accept. Publishing creates permanent evidence; drafts stay editable.</p>
+                    </div>
+                    <span class="border-l-2 border-amber-300 pl-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-amber-300">Review before release</span>
+                  </div>
+                </header>
+
+                <div class="grid border-b border-white/10 xl:grid-cols-[minmax(0,0.75fr)_minmax(28rem,1.25fr)]">
+                  <div class="border-b border-white/10 px-5 py-6 md:px-7 xl:border-b-0 xl:border-r">
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Window 01</p>
+                    <h3 class="mt-1 font-heading text-lg font-extrabold uppercase tracking-tight text-white">Invitation schedule</h3>
+                    <p class="mt-2 text-xs leading-5 text-white/45">Times are entered in <strong class="text-white/70">Pacific Time</strong>. Saving this window does not open the parent route; both launch locks above remain separate.</p>
+                  </div>
+                  <form id="registration-window-form" class="grid gap-4 px-5 py-6 md:grid-cols-2 md:px-7" data-season-id={season.id}>
+                    <div>
+                      <label for="registration-opens-at" class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/50">Opens · Pacific Time</label>
+                      <input id="registration-opens-at" name="registrationOpensAt" type="datetime-local" required aria-describedby="registration-dst-guidance" value={pacificDateTimeLocal(season.registrationOpensAt)} class="min-h-11 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <div>
+                      <label for="registration-closes-at" class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/50">Closes · Pacific Time</label>
+                      <input id="registration-closes-at" name="registrationClosesAt" type="datetime-local" required aria-describedby="registration-dst-guidance" value={pacificDateTimeLocal(season.registrationClosesAt)} class="min-h-11 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <p id="registration-dst-guidance" class="-mt-2 text-[11px] leading-5 text-white/55 md:col-span-2">On daylight-saving change dates, avoid 1:00–1:59 AM and 2:00–2:59 AM; repeated or nonexistent Pacific times cannot be saved.</p>
+                    <div class="md:col-span-2">
+                      <label for="registration-window-reason" class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/50">Audit reason</label>
+                      <input id="registration-window-reason" name="reason" required minlength="5" maxlength="500" placeholder="Why is this window being set or changed?" class="min-h-11 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none transition placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <div class="flex flex-col gap-2 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p class="min-h-5 text-xs font-medium text-white/55" role="status" aria-live="polite" data-window-status></p>
+                      <button type="submit" class="min-h-11 rounded-lg bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-50"><span data-window-button-label>Save window</span></button>
+                    </div>
+                  </form>
+                </div>
+
+                <div>
+                  <div class="flex flex-col gap-2 border-b border-white/10 px-5 py-5 md:flex-row md:items-end md:justify-between md:px-7">
+                    <div>
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Desk 02</p>
+                      <h3 class="mt-1 font-heading text-lg font-extrabold uppercase tracking-tight text-white">Agreement publishing desk</h3>
+                    </div>
+                    <p class="text-xs text-white/55">Retired history → published evidence → next draft</p>
+                  </div>
+
+                  <div class="divide-y divide-white/10">
+                    {agreementFamilies.map((family, familyIndex) => {
+                      const published = family.versions.find((version) => version.status === 'published');
+                      const drafts = family.versions.filter((version) => version.status === 'draft');
+                      const retired = family.versions.filter((version) => version.status === 'retired');
+                      const nextVersion = Math.max(0, ...family.versions.map((version) => version.version)) + 1;
+                      return (
+                        <article class="group relative px-5 py-6 md:px-7" aria-labelledby={`agreement-family-${familyIndex}`}>
+                          <div class="grid gap-5 xl:grid-cols-[15rem_minmax(0,1fr)]">
+                            <header>
+                              <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Agreement {String(familyIndex + 1).padStart(2, '0')}</p>
+                              <h4 id={`agreement-family-${familyIndex}`} class="mt-1 font-heading text-lg font-extrabold uppercase leading-tight text-white">{family.label}</h4>
+                              <p class="mt-2 border-l-2 border-white/15 pl-3 text-[11px] font-bold uppercase leading-5 tracking-[0.1em] text-white/60">{family.response}</p>
+                            </header>
+
+                            <div class="min-w-0">
+                              <div class="grid items-stretch gap-0 md:grid-cols-[minmax(8rem,0.7fr)_1.5rem_minmax(13rem,1fr)_1.5rem_minmax(11rem,0.8fr)]">
+                                <div class="border-l-2 border-white/10 bg-black/15 p-4">
+                                  <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/55">Retired history</p>
+                                  {retired.length ? (
+                                    <ol class="mt-3 space-y-2">
+                                      {retired.map((version) => (
+                                        <li class="flex items-center justify-between gap-2 text-xs text-white/60">
+                                          <span class="font-heading font-bold">V{version.version}</span>
+                                          <span>{agreementDate(version.retiredAt)}</span>
+                                        </li>
+                                      ))}
+                                    </ol>
+                                  ) : <p class="mt-3 text-xs italic text-white/55">No prior versions</p>}
+                                </div>
+                                <div class="hidden items-center justify-center text-white/20 md:flex" aria-hidden="true">→</div>
+                                <div class:list={[
+                                  'border-l-2 p-4',
+                                  published ? 'border-brand-teal bg-brand-teal/[0.06]' : 'border-amber-300 bg-amber-300/[0.04]',
+                                ]}>
+                                  <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                      <p class:list={['text-[8px] font-extrabold uppercase tracking-[0.17em]', published ? 'text-brand-teal' : 'text-amber-300']}>{published ? 'Published · immutable' : 'Publication needed'}</p>
+                                      <p class="mt-1 font-heading text-xl font-extrabold text-white">{published ? `V${published.version}` : 'No version'}</p>
+                                    </div>
+                                    {published && (
+                                      <span class="flex h-8 w-8 shrink-0 items-center justify-center border border-brand-teal/40 text-brand-teal" title="Published evidence" aria-label="Published evidence">
+                                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m9 12 2 2 4-4"></path><circle cx="12" cy="12" r="9"></circle></svg>
+                                      </span>
+                                    )}
+                                  </div>
+                                  {published ? (
+                                    <>
+                                      <p class="mt-2 truncate text-xs font-semibold text-white/75">{published.title}</p>
+                                      <p class="mt-1 text-[11px] text-white/60">Published {agreementDate(published.publishedAt)}</p>
+                                    </>
+                                  ) : <p class="mt-2 text-xs leading-5 text-white/45">No language has been published for this required family.</p>}
+                                </div>
+                                <div class="hidden items-center justify-center text-white/20 md:flex" aria-hidden="true">→</div>
+                                <div class:list={['border-l-2 p-4', drafts.length ? 'border-brand-teal/60 bg-black/15' : 'border-white/10 bg-black/10']}>
+                                  <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/55">Working draft</p>
+                                  {drafts.length ? (
+                                    <div class="mt-2 space-y-3">
+                                      {drafts.map((draft) => (
+                                        <div>
+                                          <p class="font-heading text-lg font-extrabold text-white">V{draft.version}</p>
+                                          <p class="mt-1 truncate text-xs text-white/60">{draft.title}</p>
+                                          <div class="mt-3 flex flex-wrap gap-2">
+                                            <button type="button" class="agreement-edit-toggle min-h-9 border border-brand-teal/35 px-3 text-[10px] font-extrabold uppercase tracking-[0.1em] text-brand-teal transition hover:bg-brand-teal/10 focus:outline-none focus:ring-2 focus:ring-brand-teal" data-agreement-id={draft.id} data-key={family.key} data-version={draft.version} data-title={draft.title} data-summary={draft.summary || ''} data-body={draft.body}>Edit</button>
+                                            <button type="button" class="agreement-review-toggle min-h-9 border border-amber-300/35 px-3 text-[10px] font-extrabold uppercase tracking-[0.1em] text-amber-300 transition hover:bg-amber-300/10 focus:outline-none focus:ring-2 focus:ring-amber-300" data-agreement-id={draft.id} data-version={draft.version} data-title={draft.title} data-body={draft.body} data-response={family.response} data-replaces={published ? `V${published.version}` : 'No published version'}>Review</button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <button type="button" class="agreement-create-toggle mt-3 min-h-9 border border-white/20 px-3 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white/65 transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal" data-key={family.key} data-version={nextVersion} data-title={published?.title || family.defaultTitle} data-summary={published?.summary || family.defaultSummary}>Create next draft</button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div class="agreement-workspace hidden border-x border-b border-white/10 bg-[#0b0e14] p-5" data-family-workspace={family.key}>
+                                <form class="agreement-editor hidden" data-agreement-editor>
+                                  <input type="hidden" name="agreementId" />
+                                  <input type="hidden" name="key" />
+                                  <div class="mb-5 flex flex-col gap-2 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
+                                    <div>
+                                      <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-brand-teal" data-editor-mode-label>Draft editor</p>
+                                      <h5 class="font-heading text-xl font-extrabold uppercase text-white">Version <span data-editor-version></span></h5>
+                                    </div>
+                                    <button type="button" class="agreement-workspace-close text-xs font-bold text-white/45 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Close editor</button>
+                                  </div>
+                                  <div class="grid gap-4">
+                                    <div>
+                                      <label for={`agreement-title-${family.key}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Title</label>
+                                      <input id={`agreement-title-${family.key}`} name="title" required maxlength="160" class="min-h-11 w-full rounded-lg border border-white/15 bg-black/20 px-3 text-sm font-semibold text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                                    </div>
+                                    <div>
+                                      <label for={`agreement-summary-${family.key}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Summary</label>
+                                      <textarea id={`agreement-summary-${family.key}`} name="summary" maxlength="500" rows="2" class="w-full rounded-lg border border-white/15 bg-black/20 px-3 py-2 text-sm leading-6 text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"></textarea>
+                                    </div>
+                                    <div>
+                                      <div class="mb-1.5 flex items-center justify-between gap-3">
+                                        <label for={`agreement-body-${family.key}`} class="text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Exact agreement body</label>
+                                        <span id={`agreement-body-count-${family.key}`} class="text-[10px] font-bold tabular-nums text-white/55" data-body-count>0 words · 0 characters</span>
+                                      </div>
+                                      <textarea id={`agreement-body-${family.key}`} name="body" required minlength="20" rows="14" aria-describedby={`agreement-body-count-${family.key}`} placeholder="Enter the complete wording families will see and accept." class="w-full rounded-lg border border-white/15 bg-black/20 px-4 py-3 font-body text-sm leading-7 text-white outline-none placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"></textarea>
+                                    </div>
+                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                      <p class="min-h-5 text-xs text-white/55" role="status" aria-live="polite" data-agreement-status></p>
+                                      <button type="submit" class="min-h-11 bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:cursor-wait disabled:opacity-50"><span data-editor-button-label>Save draft</span></button>
+                                    </div>
+                                  </div>
+                                </form>
+
+                                <form class="agreement-review hidden" data-agreement-review>
+                                  <input type="hidden" name="agreementId" />
+                                  <div class="flex flex-col gap-3 border-b border-amber-300/25 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                      <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-amber-300">Publication review</p>
+                                      <h5 class="mt-1 font-heading text-xl font-extrabold uppercase text-white"><span data-review-version></span> · <span data-review-title></span></h5>
+                                      <p class="mt-1 text-xs text-white/60"><span data-review-response></span> · Replaces <span data-review-replaces></span></p>
+                                    </div>
+                                    <button type="button" class="agreement-workspace-close text-xs font-bold text-white/45 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Close review</button>
+                                  </div>
+                                  <div class="my-5 max-h-[34rem] overflow-y-auto border-y border-white/10 py-5">
+                                    <p class="whitespace-pre-wrap font-body text-[15px] leading-7 text-white/80" data-review-body></p>
+                                  </div>
+                                  <div class="border-l-2 border-brand-coral bg-brand-coral/[0.06] p-4">
+                                    <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-brand-coral">Publishing is irreversible</p>
+                                    <p class="mt-1 text-xs leading-5 text-white/55">This exact wording becomes immutable evidence. The currently published version will be retired automatically.</p>
+                                  </div>
+                                  <div class="mt-4 grid gap-4 md:grid-cols-2">
+                                    <div>
+                                      <label for={`agreement-confirmation-${family.key}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Type <span class="font-mono text-brand-coral" data-confirm-phrase></span></label>
+                                      <input id={`agreement-confirmation-${family.key}`} name="confirmation" required autocomplete="off" class="min-h-11 w-full rounded-lg border border-brand-coral/30 bg-black/20 px-3 font-mono text-sm font-bold text-white outline-none focus:border-brand-coral focus:ring-2 focus:ring-brand-coral/20" />
+                                    </div>
+                                    <div>
+                                      <label for={`agreement-approval-${family.key}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Approval reference</label>
+                                      <input id={`agreement-approval-${family.key}`} name="approvalReference" required minlength="10" maxlength="500" placeholder="Who approved this wording, and when?" class="min-h-11 w-full rounded-lg border border-white/15 bg-black/20 px-3 text-sm font-semibold text-white outline-none placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                                    </div>
+                                  </div>
+                                  <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <p class="min-h-5 text-xs text-white/55" role="status" aria-live="polite" data-agreement-status></p>
+                                    <button type="submit" disabled class="min-h-11 border border-brand-coral bg-brand-coral/10 px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-brand-coral transition hover:bg-brand-coral hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-coral disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.03] disabled:text-white/25"><span data-publish-button-label>Publish permanently</span></button>
+                                  </div>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
               </section>
 
               <section aria-labelledby="pricing-heading">
@@ -608,6 +833,7 @@ const scheduleMonths = [
 
   <script>
     const endpoint = '/api/admin/club-season-teams';
+    const settingsEndpoint = '/api/admin/club-season-settings';
 
     const setStatus = (element, message, tone = 'neutral') => {
       if (!(element instanceof HTMLElement)) return;
@@ -621,6 +847,250 @@ const scheduleMonths = [
       const toast = window.toast;
       if (toast && typeof toast[type] === 'function') toast[type](message);
     };
+
+    const pacificLocalToIso = (value) => {
+      const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+      if (!match) return '';
+      const desired = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]));
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      });
+      let instant = desired;
+      for (let pass = 0; pass < 2; pass += 1) {
+        const parts = formatter.formatToParts(new Date(instant));
+        const get = (type) => Number(parts.find((part) => part.type === type)?.value || 0);
+        const rendered = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'));
+        instant += desired - rendered;
+      }
+      return new Date(instant).toISOString();
+    };
+
+    const isoToPacificLocal = (value) => {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      }).formatToParts(new Date(value));
+      const get = (type) => parts.find((part) => part.type === type)?.value || '';
+      return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+    };
+
+    const pacificTimeValidationError = (localValue, isoValue) => {
+      if (!isoValue || isoToPacificLocal(isoValue) !== localValue) {
+        return 'That Pacific time does not exist because the clocks move forward. Choose another time.';
+      }
+      const instant = Date.parse(isoValue);
+      const repeated = [-3_600_000, 3_600_000].some((offset) => isoToPacificLocal(new Date(instant + offset).toISOString()) === localValue);
+      if (repeated) {
+        return 'That Pacific time occurs twice because the clocks move back. Choose a time outside 1:00–1:59 AM.';
+      }
+      return '';
+    };
+
+    const closeAgreementWorkspaces = () => {
+      document.querySelectorAll('[data-family-workspace]').forEach((workspace) => workspace.classList.add('hidden'));
+      document.querySelectorAll('[data-agreement-editor], [data-agreement-review]').forEach((panel) => panel.classList.add('hidden'));
+    };
+
+    const updateBodyCount = (editor) => {
+      const body = editor.querySelector('[name="body"]');
+      const count = editor.querySelector('[data-body-count]');
+      if (!(body instanceof HTMLTextAreaElement) || !(count instanceof HTMLElement)) return;
+      const words = body.value.trim() ? body.value.trim().split(/\s+/).length : 0;
+      count.textContent = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'} · ${body.value.length.toLocaleString()} characters`;
+    };
+
+    document.querySelectorAll('.agreement-workspace-close').forEach((button) => {
+      button.addEventListener('click', closeAgreementWorkspaces);
+    });
+
+    document.querySelectorAll('.agreement-create-toggle, .agreement-edit-toggle').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        closeAgreementWorkspaces();
+        const key = button.dataset.key || '';
+        const workspace = document.querySelector(`[data-family-workspace="${CSS.escape(key)}"]`);
+        const editor = workspace?.querySelector('[data-agreement-editor]');
+        if (!(workspace instanceof HTMLElement) || !(editor instanceof HTMLFormElement)) return;
+        const isCreate = button.classList.contains('agreement-create-toggle');
+        editor.dataset.mode = isCreate ? 'create' : 'update';
+        const setValue = (name, value) => {
+          const field = editor.querySelector(`[name="${name}"]`);
+          if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) field.value = value;
+        };
+        setValue('agreementId', button.dataset.agreementId || '');
+        setValue('key', key);
+        setValue('title', button.dataset.title || '');
+        setValue('summary', button.dataset.summary || '');
+        setValue('body', isCreate ? '' : button.dataset.body || '');
+        const version = button.dataset.version || '';
+        const versionLabel = editor.querySelector('[data-editor-version]');
+        const modeLabel = editor.querySelector('[data-editor-mode-label]');
+        if (versionLabel) versionLabel.textContent = `V${version}`;
+        if (modeLabel) modeLabel.textContent = isCreate ? 'Create next draft' : 'Editable draft';
+        workspace.classList.remove('hidden');
+        editor.classList.remove('hidden');
+        updateBodyCount(editor);
+        editor.querySelector('[name="title"]')?.focus();
+      });
+    });
+
+    document.querySelectorAll('.agreement-review-toggle').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        closeAgreementWorkspaces();
+        const key = button.closest('article')?.querySelector('.agreement-edit-toggle')?.dataset.key || '';
+        const workspace = document.querySelector(`[data-family-workspace="${CSS.escape(key)}"]`);
+        const review = workspace?.querySelector('[data-agreement-review]');
+        if (!(workspace instanceof HTMLElement) || !(review instanceof HTMLFormElement)) return;
+        const version = button.dataset.version || '';
+        const phrase = `PUBLISH V${version}`;
+        const put = (selector, value) => { const node = review.querySelector(selector); if (node) node.textContent = value; };
+        put('[data-review-version]', `V${version}`);
+        put('[data-review-title]', button.dataset.title || 'Untitled agreement');
+        put('[data-review-response]', button.dataset.response || '');
+        put('[data-review-replaces]', button.dataset.replaces || 'No published version');
+        put('[data-review-body]', button.dataset.body || '');
+        put('[data-confirm-phrase]', phrase);
+        review.dataset.confirmPhrase = phrase;
+        const idField = review.querySelector('[name="agreementId"]');
+        const confirmation = review.querySelector('[name="confirmation"]');
+        const approval = review.querySelector('[name="approvalReference"]');
+        const submit = review.querySelector('button[type="submit"]');
+        if (idField instanceof HTMLInputElement) idField.value = button.dataset.agreementId || '';
+        if (confirmation instanceof HTMLInputElement) confirmation.value = '';
+        if (approval instanceof HTMLInputElement) approval.value = '';
+        if (submit instanceof HTMLButtonElement) submit.disabled = true;
+        workspace.classList.remove('hidden');
+        review.classList.remove('hidden');
+        review.querySelector('[data-review-body]')?.scrollTo(0, 0);
+        confirmation?.focus();
+      });
+    });
+
+    document.querySelectorAll('[data-agreement-editor] [name="body"]').forEach((body) => {
+      body.addEventListener('input', () => {
+        const editor = body.closest('[data-agreement-editor]');
+        if (editor instanceof HTMLFormElement) updateBodyCount(editor);
+      });
+    });
+
+    document.querySelectorAll('[data-agreement-review] [name="confirmation"]').forEach((field) => {
+      field.addEventListener('input', () => {
+        if (!(field instanceof HTMLInputElement)) return;
+        const review = field.closest('[data-agreement-review]');
+        const submit = review?.querySelector('button[type="submit"]');
+        if (review instanceof HTMLFormElement && submit instanceof HTMLButtonElement) {
+          submit.disabled = field.value !== review.dataset.confirmPhrase;
+        }
+      });
+    });
+
+    document.getElementById('registration-window-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+      const data = new FormData(form);
+      const opensLocal = String(data.get('registrationOpensAt') || '');
+      const closesLocal = String(data.get('registrationClosesAt') || '');
+      const opensAt = pacificLocalToIso(opensLocal);
+      const closesAt = pacificLocalToIso(closesLocal);
+      const status = form.querySelector('[data-window-status]');
+      const button = form.querySelector('button[type="submit"]');
+      const label = form.querySelector('[data-window-button-label]');
+      const opensError = pacificTimeValidationError(opensLocal, opensAt);
+      const closesError = pacificTimeValidationError(closesLocal, closesAt);
+      if (opensError || closesError) {
+        const fieldLabel = opensError ? 'Opening time' : 'Closing time';
+        setStatus(status, `${fieldLabel}: ${opensError || closesError}`, 'error');
+        const field = form.elements.namedItem(opensError ? 'registrationOpensAt' : 'registrationClosesAt');
+        if (field instanceof HTMLInputElement) {
+          field.setCustomValidity(opensError || closesError);
+          field.reportValidity();
+          field.addEventListener('input', () => field.setCustomValidity(''), { once: true });
+        }
+        return;
+      }
+      if (!opensAt || !closesAt || new Date(opensAt) >= new Date(closesAt)) {
+        setStatus(status, 'Closing time must be after opening time.', 'error');
+        return;
+      }
+      if (button instanceof HTMLButtonElement) button.disabled = true;
+      if (label) label.textContent = 'Saving…';
+      setStatus(status, 'Saving registration window…');
+      try {
+        const response = await fetch(settingsEndpoint, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_registration_window', seasonId: form.dataset.seasonId, registrationOpensAt: opensAt, registrationClosesAt: closesAt, reason: String(data.get('reason') || '').trim() }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || 'The registration window could not be saved.');
+        setStatus(status, 'Registration window saved.', 'success');
+        notify('success', 'Registration window saved');
+        window.location.reload();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'The registration window could not be saved.';
+        setStatus(status, message, 'error'); notify('error', message);
+        if (button instanceof HTMLButtonElement) button.disabled = false;
+        if (label) label.textContent = 'Save window';
+      }
+    });
+
+    document.querySelectorAll('[data-agreement-editor]').forEach((form) => {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+        const data = new FormData(form);
+        const isCreate = form.dataset.mode === 'create';
+        const status = form.querySelector('[data-agreement-status]');
+        const button = form.querySelector('button[type="submit"]');
+        const label = form.querySelector('[data-editor-button-label]');
+        if (button instanceof HTMLButtonElement) button.disabled = true;
+        if (label) label.textContent = 'Saving…';
+        setStatus(status, 'Saving draft…');
+        const payload = isCreate
+          ? { action: 'create_agreement_draft', seasonId: '2026-2027-club', key: String(data.get('key') || ''), title: String(data.get('title') || '').trim(), summary: String(data.get('summary') || '').trim(), body: String(data.get('body') || '') }
+          : { action: 'update_agreement_draft', agreementId: String(data.get('agreementId') || ''), title: String(data.get('title') || '').trim(), summary: String(data.get('summary') || '').trim(), body: String(data.get('body') || '') };
+        try {
+          const response = await fetch(settingsEndpoint, { method: isCreate ? 'POST' : 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'The agreement draft could not be saved.');
+          setStatus(status, 'Draft saved.', 'success'); notify('success', 'Agreement draft saved'); window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The agreement draft could not be saved.';
+          setStatus(status, message, 'error'); notify('error', message);
+          if (button instanceof HTMLButtonElement) button.disabled = false;
+          if (label) label.textContent = 'Save draft';
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-agreement-review]').forEach((form) => {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+        const data = new FormData(form);
+        const confirmation = String(data.get('confirmation') || '');
+        if (confirmation !== form.dataset.confirmPhrase) return;
+        const status = form.querySelector('[data-agreement-status]');
+        const button = form.querySelector('button[type="submit"]');
+        const label = form.querySelector('[data-publish-button-label]');
+        if (button instanceof HTMLButtonElement) button.disabled = true;
+        if (label) label.textContent = 'Publishing…';
+        setStatus(status, 'Publishing immutable version…');
+        try {
+          const response = await fetch(settingsEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'publish_agreement', agreementId: String(data.get('agreementId') || ''), confirmation, approvalReference: String(data.get('approvalReference') || '').trim() }) });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'The agreement could not be published.');
+          setStatus(status, 'Agreement published.', 'success'); notify('success', 'Agreement published'); window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The agreement could not be published.';
+          setStatus(status, message, 'error'); notify('error', message);
+          if (button instanceof HTMLButtonElement) button.disabled = false;
+          if (label) label.textContent = 'Publish permanently';
+        }
+      });
+    });
 
     document.querySelectorAll('.team-edit-toggle').forEach((button) => {
       button.addEventListener('click', () => {

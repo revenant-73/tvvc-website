@@ -1,8 +1,9 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { getDb } from '../db/index.ts';
 import {
   clubAgeGroups,
   clubPricingTiers,
+  clubSeasonAdminAuditLog,
   clubSeasonAgreementVersions,
   clubSeasons,
   clubTeams,
@@ -39,7 +40,6 @@ export type ClubSeasonLaunchEnvironment = {
   resendApiKey: string;
   cronSecret: string;
   billingEmail: string;
-  agreementsApproved?: boolean;
   resendDomainVerified?: boolean;
   stripeLiveReviewComplete?: boolean;
   pilotCompleted?: boolean;
@@ -51,6 +51,7 @@ type ReadinessData = {
   ageGroups: Array<typeof clubAgeGroups.$inferSelect>;
   teams: Array<typeof clubTeams.$inferSelect>;
   agreements: Array<typeof clubSeasonAgreementVersions.$inferSelect>;
+  approvedAgreementVersionIds?: string[];
 };
 
 function gate(
@@ -120,6 +121,11 @@ export function evaluateClubSeasonLaunchReadiness(
   const publishedKeys = new Set(data.agreements.map((item) => item.key));
   const requiredAgreementKeys = ['season-commitment', 'refund-cancellation-policy'];
   const requiredAgreementsPublished = requiredAgreementKeys.every((key) => publishedKeys.has(key));
+  const approvedAgreementVersionIds = new Set(data.approvedAgreementVersionIds || []);
+  const requiredAgreementsApproved = requiredAgreementKeys.every((key) => {
+    const agreement = data.agreements.find((item) => item.key === key);
+    return Boolean(agreement && approvedAgreementVersionIds.has(agreement.id));
+  });
   const stripeMode = keyMode(environment.stripeSecretKey, environment.stripePublishableKey);
   const stripeConfigured = stripeMode !== 'invalid' && environment.stripeWebhookSecret.startsWith('whsec_');
   const scheduleConfigured = data.season.defaultBillingDay === 5 &&
@@ -200,9 +206,9 @@ export function evaluateClubSeasonLaunchReadiness(
     manualGate(
       'agreement_approval',
       'Agreement and refund-policy approval',
-      Boolean(environment.agreementsApproved),
-      'TVVC approval is recorded in the deployment configuration.',
-      'Board/legal review must be completed and CLUB_SEASON_AGREEMENTS_APPROVED set to true.'
+      requiredAgreementsApproved,
+      'Each required published version has a persistent administrator approval reference.',
+      'Publish each approved required agreement through the publishing desk with its approval reference.'
     ),
     manualGate(
       'resend_domain',
@@ -292,5 +298,20 @@ export async function getClubSeasonLaunchReadiness(
     )),
   ]);
 
-  return evaluateClubSeasonLaunchReadiness({ season, pricingTiers, ageGroups, teams, agreements }, environment);
+  const agreementIds = agreements.map((agreement) => agreement.id);
+  const approvalAudits = agreementIds.length ? await db.select({
+    entityId: clubSeasonAdminAuditLog.entityId,
+  }).from(clubSeasonAdminAuditLog).where(and(
+    eq(clubSeasonAdminAuditLog.action, 'agreement_published'),
+    inArray(clubSeasonAdminAuditLog.entityId, agreementIds)
+  )) : [];
+
+  return evaluateClubSeasonLaunchReadiness({
+    season,
+    pricingTiers,
+    ageGroups,
+    teams,
+    agreements,
+    approvedAgreementVersionIds: approvalAudits.map((item) => item.entityId),
+  }, environment);
 }

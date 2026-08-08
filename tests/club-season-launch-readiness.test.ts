@@ -30,9 +30,10 @@ const baseData = {
     { id: 'team-14-black', seasonId: '2026-2027-club', ageGroupId: 'age-14u', active: true },
   ],
   agreements: [
-    { key: 'season-commitment', status: 'published' },
-    { key: 'refund-cancellation-policy', status: 'published' },
+    { id: 'agreement-commitment', key: 'season-commitment', status: 'published' },
+    { id: 'agreement-refund', key: 'refund-cancellation-policy', status: 'published' },
   ],
+  approvedAgreementVersionIds: [],
 } as any;
 
 const testEnvironment = {
@@ -79,12 +80,12 @@ test('live readiness requires both launch locks and all manual confirmations', (
   const readiness = evaluateClubSeasonLaunchReadiness({
     ...baseData,
     season: { ...baseData.season, publicRegistrationEnabled: true },
+    approvedAgreementVersionIds: ['agreement-commitment', 'agreement-refund'],
   }, {
     ...testEnvironment,
     featureFlagEnabled: true,
     stripeSecretKey: 'sk_live_example',
     stripePublishableKey: 'pk_live_example',
-    agreementsApproved: true,
     resendDomainVerified: true,
     stripeLiveReviewComplete: true,
     pilotCompleted: true,

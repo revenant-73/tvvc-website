@@ -289,12 +289,28 @@ Implemented on the dark feature branch:
 - A read-only admin launch-readiness gate that evaluates the season record, the confirmed January–May schedule, pricing reconciliation, active team links, published required agreements, the registration window, Stripe/webhook configuration, Resend, and the protected billing worker
 - Separate **pilot readiness** and **live readiness** decisions so Stripe test mode can be used for a controlled rehearsal without implying production is ready
 - A paired-lock display for the season database switch and the Netlify feature flag; both remain independent and neither can be changed from the readiness screen
-- Explicit manual confirmations for agreement/refund-policy approval, Resend domain verification, live Stripe review, and completion of a controlled pilot
+- Persistent agreement/refund-policy approval references recorded with the exact published versions, plus explicit deployment confirmations for Resend domain verification, live Stripe review, and completion of a controlled pilot
 - Database-backed administrator authorization on the season-control and offer-management pages, so a stale session role cannot retain access after an administrator is demoted
-- Environment examples for recording those manual confirmations without storing secrets or approval claims in browser code
+- Environment examples for recording deployment confirmations without storing secrets or approval claims in browser code
 - Automated tests proving that launch locks do not block a dark pilot, configuration defects do block a pilot, and live readiness requires every automated gate, manual confirmation, live Stripe keys, and both access locks
 
 This milestone does **not** publish agreement wording, approve the refund policy, switch Stripe to live mode, or enable parent access. Those remain deliberate TVVC deployment decisions.
+
+### 4.9 Milestone 3G implementation status — August 8, 2026
+
+Implemented on the dark feature branch:
+
+- Admin controls for the season registration opening and closing timestamps, with required audit reasons and validation that closing follows opening
+- Parent-flow enforcement that blocks starting a new registration before the opening timestamp or after closing while allowing an already-started draft to finish through its offer deadline
+- A versioned agreement publishing desk for the season commitment, refund/cancellation policy, and player media-release choice
+- Server-assigned agreement versions, fixed response behavior, and SHA-256 integrity hashes matching the acceptance-time verification
+- Editable drafts with exactly one working draft per agreement family
+- Deliberate publication requiring the exact version phrase and a written approval reference
+- Atomic replacement: publishing a new version retires the prior published version without creating a window where two versions are current
+- Immutable published and retired content, plus administrator audit history for window changes, draft creation/changes, approvals, and publication
+- Database-backed authorization and same-origin protection on every settings write
+
+Publishing an agreement makes that version eligible to appear when parent registration is later enabled. It does not turn on either launch lock, change Stripe mode, or waive TVVC's responsibility to approve the final wording.
 
 ## 5. Information Already Collected at Tryouts
 
