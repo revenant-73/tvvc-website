@@ -28,8 +28,10 @@ test('initial standard-plan confirmation includes the deposit, receipt, and comp
 
   assert.match(email.subject, /registration confirmed/i);
   assert.match(email.html, /Deposit paid/);
+  assert.match(email.html, /Deposit paid on/);
   assert.match(email.html, /\$400\.00/);
   assert.match(email.html, /\$1,100\.00/);
+  assert.match(email.html, /Next automatic payment:<\/strong> \$220\.00 on January 5, 2027/);
   assert.match(email.html, /January 5, 2027/);
   assert.match(email.html, /May 5, 2027/);
   assert.match(email.html, /no December charge/i);

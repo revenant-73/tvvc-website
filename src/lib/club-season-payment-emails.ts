@@ -50,13 +50,13 @@ function shell(title: string, eyebrow: string, body: string): string {
     </div>`;
 }
 
-function details(context: PaymentEmailContext, paymentLabel: string): string {
+function details(context: PaymentEmailContext, paymentLabel: string, dateLabel = 'Scheduled date'): string {
   return `
     <div style="margin:24px 0;padding:20px;border-radius:12px;background:#f8fafc;border-left:4px solid #009695">
       <p style="margin:0 0 7px"><strong>Player:</strong> ${escapeHtml(context.playerName)}</p>
       <p style="margin:0 0 7px"><strong>Team:</strong> ${escapeHtml(context.teamName)}</p>
       <p style="margin:0 0 7px"><strong>${paymentLabel}:</strong> ${money(context.amount)}</p>
-      <p style="margin:0 0 7px"><strong>Scheduled date:</strong> ${date(context.dueDate)}</p>
+      <p style="margin:0 0 7px"><strong>${dateLabel}:</strong> ${date(context.dueDate)}</p>
       <p style="margin:0"><strong>Remaining season balance:</strong> ${money(context.remainingBalance)}</p>
     </div>`;
 }
@@ -101,6 +101,9 @@ export function initialPaymentSucceededEmail(
     : 'Stripe securely stores the authorized payment method for these scheduled payments.';
   const schedule = context.futureCharges.length > 0
     ? `
+      <div style="margin:28px 0 0;padding:16px 18px;border-radius:10px;background:#ecfeff;color:#164e63">
+        <strong>Next automatic payment:</strong> ${money(context.futureCharges[0].amount)} on ${date(context.futureCharges[0].dueDate)}
+      </div>
       <h2 style="margin:30px 0 12px;color:#0f172a;font-size:20px">Remaining automatic-payment schedule</h2>
       <ul style="margin:0;padding-left:22px">
         ${context.futureCharges.map((charge) => `<li style="margin:6px 0">${date(charge.dueDate)}: <strong>${money(charge.amount)}</strong></li>`).join('')}
@@ -113,7 +116,11 @@ export function initialPaymentSucceededEmail(
     html: shell('Your TVVC roster spot is confirmed', 'Registration and payment confirmation', `
       <p>Hi ${escapeHtml(context.parentName)},</p>
       <p>We received your ${context.paymentOption === 'pay_in_full' ? 'club-season payment' : 'initial club-season payment'} and confirmed ${escapeHtml(context.playerName)}'s roster spot.</p>
-      ${details(context, context.paymentOption === 'pay_in_full' ? 'Amount paid' : 'Deposit paid')}
+      ${details(
+        context,
+        context.paymentOption === 'pay_in_full' ? 'Amount paid' : 'Deposit paid',
+        context.paymentOption === 'pay_in_full' ? 'Payment date' : 'Deposit paid on'
+      )}
       ${schedule}
       ${context.receiptUrl ? button('View Stripe receipt', context.receiptUrl) : ''}
       ${button('Open parent portal', context.portalUrl)}
