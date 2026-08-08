@@ -7,7 +7,7 @@ import {
   getClubSeasonFinancialAccounts,
   proposeClubSeasonPlanRevision,
 } from '../../../lib/club-season-financials';
-import { initialCustomPlanProposedEmail, paymentPlanRevisionProposedEmail } from '../../../lib/club-season-payment-emails';
+import { financialAccountUpdatedEmail, initialCustomPlanProposedEmail, paymentPlanRevisionProposedEmail } from '../../../lib/club-season-payment-emails';
 import { cancelPlanRevisionSchema, createPlanRevisionSchema } from '../../../lib/club-season-plan-revision';
 import { getClubDate } from '../../../lib/event-eligibility';
 import {
@@ -17,12 +17,43 @@ import {
   proposeInitialCustomPlan,
   proposeInitialPlanSchema,
 } from '../../../lib/club-season-initial-plan';
+import {
+  recordAdjustmentSchema,
+  recordClubSeasonAdjustment,
+  refundClubSeasonPayment,
+  refundPaymentSchema,
+  reverseAdjustmentSchema,
+  reverseClubSeasonAdjustment,
+} from '../../../lib/club-season-adjustments';
+import { createStripeClient } from '../../../lib/stripe-client';
 
 export const prerender = false;
 const SEASON_ID = '2026-2027-club';
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
+}
+
+async function sendFinancialUpdateEmail(db: Parameters<typeof getClubSeasonFinancialAccount>[0], request: Request, input: {
+  registrationId: string; key: string; heading: string; explanation: string; amount: number; reason: string;
+}) {
+  const account = await getClubSeasonFinancialAccount(db, input.registrationId);
+  if (!account) return false;
+  const message = financialAccountUpdatedEmail({
+    parentName: account.parentName, playerName: account.playerName, teamName: account.teamName,
+    amount: input.amount, dueDate: getClubDate(), remainingBalance: account.remainingBalance,
+    portalUrl: `${new URL(request.url).origin}/portal/dashboard`, heading: input.heading,
+    explanation: input.explanation, reason: input.reason,
+  });
+  try {
+    return await deliverClubSeasonEmail(db, {
+      registrationId: input.registrationId, type: 'financial_account_updated', recipient: account.parentEmail,
+      key: input.key, ...message,
+    });
+  } catch (error) {
+    console.error('Financial account update email failed:', error);
+    return false;
+  }
 }
 
 function revisionError(error: unknown) {
@@ -44,6 +75,16 @@ function revisionError(error: unknown) {
     INVALID_DUE_NOW_AMOUNT: ['The due-now amount must be less than the season total.', 422],
     INVALID_SEASON_TOTAL: ['The registration has an invalid season total.', 422],
     INITIAL_PLAN_TOTAL_MISMATCH: ['The due-now amount plus scheduled charges must equal the season total.', 422],
+    PAYMENT_PLAN_NOT_FOUND: ['The payment account could not be found.', 404],
+    EFFECTIVE_DATE_FUTURE: ['The effective date cannot be in the future.', 422],
+    ADJUSTMENT_EXCEEDS_BALANCE: ['That amount is greater than the current balance due.', 422],
+    ADJUSTMENT_REQUEST_REUSED: ['That request was already used. Reload the account before trying again.', 409],
+    TRANSACTION_NOT_REFUNDABLE: ['That Stripe payment is not eligible for a refund.', 409],
+    REFUND_EXCEEDS_AVAILABLE: ['The refund is greater than the amount still refundable on that payment.', 422],
+    STRIPE_REFUND_FAILED: ['Stripe did not complete the refund. No ledger entry was recorded.', 502],
+    ADJUSTMENT_NOT_REVERSIBLE: ['That entry cannot be reversed in this system.', 409],
+    ADJUSTMENT_ALREADY_REVERSED: ['That entry has already been reversed.', 409],
+    FINANCIAL_OPERATION_IN_PROGRESS: ['Another financial operation is already in progress for this account.', 409],
   };
   const [message, status] = messages[code] || ['Unable to update the payment plan.', 500];
   if (status === 500) console.error('Club season finance error:', error);
@@ -75,6 +116,57 @@ export const POST: APIRoute = async ({ request }) => {
   if (!auth.authorized) return auth.response;
   let body: unknown;
   try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
+  const adjustment = recordAdjustmentSchema.safeParse(body);
+  if (adjustment.success) {
+    try {
+      const recorded = await recordClubSeasonAdjustment(auth.db, {
+        ...adjustment.data, today: getClubDate(), adminUserId: auth.user.id,
+      });
+      const copy = adjustment.data.type === 'offline_payment'
+        ? ['Offline payment recorded', 'TVVC recorded a payment received outside Stripe.']
+        : adjustment.data.type === 'credit'
+          ? ['Account credit applied', 'TVVC applied a non-cash credit to your club-season account.']
+          : ['Balance write-off recorded', 'TVVC approved an amount that will no longer be collected.'];
+      const emailSent = await sendFinancialUpdateEmail(auth.db, request, {
+        registrationId: adjustment.data.registrationId, key: `club-season-adjustment:${adjustment.data.requestId}`,
+        heading: copy[0], explanation: copy[1], amount: adjustment.data.amount, reason: adjustment.data.reason,
+      });
+      return json({ adjustment: recorded, emailSent }, 201);
+    } catch (error) { return revisionError(error); }
+  }
+  const refund = refundPaymentSchema.safeParse(body);
+  if (refund.success) {
+    const stripeSecretKey = import.meta.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+    if (!stripeSecretKey) return json({ error: 'Stripe refund processing is not configured.' }, 503);
+    try {
+      const recorded = await refundClubSeasonPayment(auth.db, createStripeClient(stripeSecretKey), {
+        ...refund.data, today: getClubDate(), adminUserId: auth.user.id,
+      });
+      const account = await getClubSeasonFinancialAccount(auth.db, recorded.registrationId);
+      const emailSent = account ? await sendFinancialUpdateEmail(auth.db, request, {
+        registrationId: recorded.registrationId, key: `club-season-refund:${refund.data.requestId}`,
+        heading: 'Stripe refund issued',
+        explanation: 'TVVC returned funds through Stripe. Unless TVVC separately applies a credit or write-off, the refunded amount is restored to the account balance.',
+        amount: refund.data.amount, reason: refund.data.reason,
+      }) : false;
+      return json({ adjustment: recorded, emailSent }, 201);
+    } catch (error) { return revisionError(error); }
+  }
+  const reversal = reverseAdjustmentSchema.safeParse(body);
+  if (reversal.success) {
+    try {
+      const recorded = await reverseClubSeasonAdjustment(auth.db, {
+        ...reversal.data, today: getClubDate(), adminUserId: auth.user.id,
+      });
+      const emailSent = await sendFinancialUpdateEmail(auth.db, request, {
+        registrationId: recorded.registrationId, key: `club-season-adjustment-reversal:${reversal.data.requestId}`,
+        heading: 'Account adjustment reversed',
+        explanation: 'TVVC recorded a counter-entry that reverses a previous manual account adjustment.',
+        amount: recorded.amount, reason: reversal.data.reason,
+      });
+      return json({ adjustment: recorded, emailSent }, 201);
+    } catch (error) { return revisionError(error); }
+  }
   const initial = proposeInitialPlanSchema.safeParse(body);
   if (initial.success) {
     try {

@@ -22,6 +22,8 @@ import {
   revisionSnapshot,
   type RevisionCharge,
 } from './club-season-plan-revision.ts';
+import { getClubSeasonAdjustments } from './club-season-adjustments.ts';
+import { getClubSeasonLedgerState, getClubSeasonLedgerStates } from './club-season-ledger.ts';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -42,27 +44,24 @@ export async function getClubSeasonFinancialAccounts(db: Db, seasonId: string) {
     .innerJoin(clubTeams, eq(clubSeasonRegistrations.teamId, clubTeams.id))
     .where(eq(clubSeasonRegistrations.seasonId, seasonId));
   if (!accounts.length) return [];
-  const registrationIds = accounts.map((row) => row.registration.id);
   const planIds = accounts.map((row) => row.plan.id);
-  const [versions, totals, revisions] = await Promise.all([
+  const [versions, revisions] = await Promise.all([
     db.select().from(clubSeasonPaymentPlanVersions).where(inArray(clubSeasonPaymentPlanVersions.paymentPlanId, planIds)),
-    db.select({ registrationId: clubSeasonPaymentTransactions.registrationId, paid: sql<number>`coalesce(sum(${clubSeasonPaymentTransactions.amount}), 0)` })
-      .from(clubSeasonPaymentTransactions).where(and(
-        inArray(clubSeasonPaymentTransactions.registrationId, registrationIds),
-        eq(clubSeasonPaymentTransactions.status, 'succeeded')
-      )).groupBy(clubSeasonPaymentTransactions.registrationId),
     db.select().from(clubSeasonPaymentPlanRevisions).where(and(
       inArray(clubSeasonPaymentPlanRevisions.paymentPlanId, planIds),
       eq(clubSeasonPaymentPlanRevisions.status, 'pending_authorization')
     )),
   ]);
-  const paidByRegistration = new Map(totals.map((row) => [row.registrationId, Number(row.paid)]));
   const versionByPlanAndNumber = new Map(versions.map((version) => [`${version.paymentPlanId}:${version.version}`, version]));
   const revisionByPlan = new Map(revisions.map((revision) => [revision.paymentPlanId, revision]));
+  const ledgerByRegistration = await getClubSeasonLedgerStates(db, accounts.map((row) => ({
+    registrationId: row.registration.id,
+    seasonTotal: versionByPlanAndNumber.get(`${row.plan.id}:${row.plan.currentVersion}`)?.totalAmount || 0,
+  })));
   return accounts.map((row) => {
     const currentVersion = versionByPlanAndNumber.get(`${row.plan.id}:${row.plan.currentVersion}`);
     const seasonTotal = currentVersion?.totalAmount || 0;
-    const paidAmount = paidByRegistration.get(row.registration.id) || 0;
+    const ledger = ledgerByRegistration.get(row.registration.id)!;
     return {
       registrationId: row.registration.id,
       planId: row.plan.id,
@@ -77,8 +76,8 @@ export async function getClubSeasonFinancialAccounts(db: Db, seasonId: string) {
       currentVersion: row.plan.currentVersion,
       paymentOption: currentVersion?.paymentOption || null,
       seasonTotal,
-      paidAmount,
-      remainingBalance: Math.max(0, seasonTotal - paidAmount),
+      paidAmount: ledger.netCollectedAmount,
+      ...ledger,
       pendingRevisionId: revisionByPlan.get(row.plan.id)?.id || null,
     };
   });
@@ -91,13 +90,29 @@ export async function getClubSeasonFinancialAccount(db: Db, registrationId: stri
   const versions = await db.select().from(clubSeasonPaymentPlanVersions)
     .where(eq(clubSeasonPaymentPlanVersions.paymentPlanId, account.planId)).orderBy(asc(clubSeasonPaymentPlanVersions.version));
   const versionIds = versions.map((version) => version.id);
-  const [installments, transactions, attempts, revisions] = await Promise.all([
+  const [installments, transactions, attempts, revisions, adjustments] = await Promise.all([
     db.select().from(clubSeasonPaymentInstallments).where(inArray(clubSeasonPaymentInstallments.paymentPlanVersionId, versionIds)).orderBy(asc(clubSeasonPaymentInstallments.dueDate)),
     db.select().from(clubSeasonPaymentTransactions).where(eq(clubSeasonPaymentTransactions.registrationId, registrationId)).orderBy(asc(clubSeasonPaymentTransactions.processedAt)),
     db.select().from(clubSeasonPaymentAttempts).where(eq(clubSeasonPaymentAttempts.registrationId, registrationId)).orderBy(asc(clubSeasonPaymentAttempts.attemptedAt)),
     db.select().from(clubSeasonPaymentPlanRevisions).where(eq(clubSeasonPaymentPlanRevisions.registrationId, registrationId)).orderBy(asc(clubSeasonPaymentPlanRevisions.proposedAt)),
+    getClubSeasonAdjustments(db, registrationId),
   ]);
-  return { ...account, versions, installments, transactions, attempts, revisions };
+  const refundedByTransaction = new Map<string, number>();
+  for (const adjustment of adjustments) {
+    if (adjustment.type === 'stripe_refund' && adjustment.transactionId) {
+      refundedByTransaction.set(adjustment.transactionId, (refundedByTransaction.get(adjustment.transactionId) || 0) + adjustment.amount);
+    }
+  }
+  return {
+    ...account, versions, installments,
+    transactions: transactions.map((transaction) => ({
+      ...transaction,
+      refundableAmount: transaction.status === 'succeeded'
+        ? Math.max(0, transaction.amount - (refundedByTransaction.get(transaction.id) || 0))
+        : 0,
+    })),
+    attempts, revisions, adjustments,
+  };
 }
 
 async function getClubSeasonFinancialAccountsForRegistration(db: Db, registrationId: string) {
@@ -129,13 +144,9 @@ export async function proposeClubSeasonPlanRevision(db: Db, input: {
     eq(clubSeasonPaymentInstallments.status, 'processing')
   )).limit(1);
   if (processing) throw new Error('PAYMENT_PROCESSING');
-  const [paid] = await db.select({ amount: sql<number>`coalesce(sum(${clubSeasonPaymentTransactions.amount}), 0)` })
-    .from(clubSeasonPaymentTransactions).where(and(
-      eq(clubSeasonPaymentTransactions.registrationId, plan.registrationId),
-      eq(clubSeasonPaymentTransactions.status, 'succeeded')
-    ));
-  const paidAmount = Number(paid?.amount || 0);
-  const remainingBalance = currentVersion.totalAmount - paidAmount;
+  const ledger = await getClubSeasonLedgerState(db, plan.registrationId, currentVersion.totalAmount);
+  const paidAmount = currentVersion.totalAmount - ledger.summary.remainingBalance;
+  const remainingBalance = ledger.summary.remainingBalance;
   const charges = normalizeRevisionCharges(input.charges, input.today, remainingBalance);
   const [latest] = await db.select({ version: sql<number>`max(${clubSeasonPaymentPlanVersions.version})` })
     .from(clubSeasonPaymentPlanVersions).where(eq(clubSeasonPaymentPlanVersions.paymentPlanId, plan.id));
@@ -236,9 +247,8 @@ export async function reviewClubSeasonPlanRevision(db: Db, input: {
   )).limit(1);
   if (unresolvedIntent) throw new Error('PAYMENT_ATTEMPT_UNRESOLVED');
   const snapshot = JSON.parse(proposedVersion.scheduleSnapshot) as { remainingBalance: number; charges: RevisionCharge[] };
-  const [paid] = await db.select({ amount: sql<number>`coalesce(sum(${clubSeasonPaymentTransactions.amount}), 0)` })
-    .from(clubSeasonPaymentTransactions).where(and(eq(clubSeasonPaymentTransactions.registrationId, plan.registrationId), eq(clubSeasonPaymentTransactions.status, 'succeeded')));
-  if (proposedVersion.totalAmount - Number(paid?.amount || 0) !== snapshot.remainingBalance) throw new Error('BALANCE_CHANGED');
+  const ledger = await getClubSeasonLedgerState(db, plan.registrationId, proposedVersion.totalAmount);
+  if (ledger.summary.remainingBalance !== snapshot.remainingBalance) throw new Error('BALANCE_CHANGED');
   const authorizationText = revisionAuthorizationText(snapshot.charges, snapshot.remainingBalance);
   const authorizationHash = await hashRevisionTerms({ authorizationText, termsFingerprint: proposedVersion.termsFingerprint });
   await db.transaction(async (tx) => {

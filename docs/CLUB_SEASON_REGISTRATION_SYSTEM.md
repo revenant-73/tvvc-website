@@ -258,6 +258,30 @@ Still deferred:
 
 The feature remains disabled in production while final agreement/refund language and live-environment readiness are completed.
 
+### 4.7 Milestone 3E implementation status — August 7, 2026
+
+Implemented on the dark feature branch:
+
+- An append-only financial-adjustment ledger for offline payments, account credits, write-offs, Stripe refunds, and explicit counter-entry reversals
+- Separate reconciliation of gross Stripe payments, offline cash, refunds, net collected cash, non-cash credits/write-offs, and balance due
+- Administrator actions with required reasons, optional internal notes, effective dates, live before-and-after balance previews, and unique request IDs
+- Partial or full Stripe refunds limited to each transaction's still-refundable amount and protected by stable Stripe idempotency keys
+- A temporary per-account refund lock that prevents the installment worker from racing an outgoing refund with an automatic charge
+- Refund behavior that restores the refunded amount to the balance due unless TVVC separately approves a credit or write-off
+- Immutable database triggers and administrator audit entries; corrections never edit or delete the original entry
+- Automatic installment amounts capped at the true ledger balance so credits, write-offs, and offline payments cannot produce an overcharge
+- Completed plans reopened for staff review when a refund or reversal restores a balance, allowing a new parent-authorized schedule to be proposed
+- Parent notification emails for offline payments, credits, write-offs, refunds, and reversals
+
+Still deferred:
+
+- Charge disputes and Stripe dispute-webhook handling
+- Manual pause/resume controls and manual email resend controls
+- Resend delivery/bounce webhook tracking and household email consolidation
+- Final production launch checklist, approved agreement versions, and live Stripe configuration verification
+
+The refund tool records the approved financial action; it does not replace TVVC's case-by-case refund decision process. Voluntary withdrawals after the first practice remain subject to individual review.
+
 ## 5. Information Already Collected at Tryouts
 
 The existing tryout flow already collects or supports:

@@ -21,3 +21,6 @@ export function retryDate(dueDate: string, nextAttemptNumber: number): string | 
   if (nextAttemptNumber === 3) return addDays(dueDate, 7);
   return null;
 }
+export function installmentChargeAmount(scheduledAmount: number, remainingBalance: number) {
+  return Math.max(0, Math.min(scheduledAmount, remainingBalance));
+}

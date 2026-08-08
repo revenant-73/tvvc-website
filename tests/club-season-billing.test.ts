@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addDays, reminderDate, retryDate } from '../src/lib/club-season-billing-dates.ts';
+import { addDays, installmentChargeAmount, reminderDate, retryDate } from '../src/lib/club-season-billing-dates.ts';
 
 test('January reminder waits until January 2 for the holiday pause', () => {
   assert.equal(reminderDate('2027-01-05'), '2027-01-02');
@@ -16,4 +16,10 @@ test('retries stay anchored to the original due date', () => {
   assert.equal(retryDate('2027-03-05', 3), '2027-03-12');
   assert.equal(retryDate('2027-03-05', 4), null);
   assert.equal(addDays('2028-02-28', 1), '2028-02-29');
+});
+
+test('manual credits cap an automatic charge at the true remaining balance', () => {
+  assert.equal(installmentChargeAmount(22000, 7000), 7000);
+  assert.equal(installmentChargeAmount(22000, 0), 0);
+  assert.equal(installmentChargeAmount(22000, 50000), 22000);
 });

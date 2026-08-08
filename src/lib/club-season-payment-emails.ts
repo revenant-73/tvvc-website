@@ -154,3 +154,21 @@ export function paymentPlanRevisionAcceptedEmail(context: PaymentEmailContext) {
     `),
   };
 }
+
+export function financialAccountUpdatedEmail(context: PaymentEmailContext & {
+  heading: string;
+  explanation: string;
+  reason: string;
+}) {
+  return {
+    subject: `TVVC account update for ${context.playerName}: ${context.heading}`,
+    html: shell(context.heading, 'Club-season financial update', `
+      <p>Hi ${escapeHtml(context.parentName)},</p>
+      <p>${escapeHtml(context.explanation)}</p>
+      <p><strong>Amount:</strong> ${money(context.amount)}</p>
+      <p><strong>Reason:</strong> ${escapeHtml(context.reason)}</p>
+      <p><strong>Current balance due:</strong> ${money(context.remainingBalance)}</p>
+      ${button('Review your TVVC account', context.portalUrl)}
+    `),
+  };
+}

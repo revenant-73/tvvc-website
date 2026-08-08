@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type Stripe from 'stripe';
-import { getDb } from '../db';
+import { getDb } from '../db/index.ts';
 import {
   athletes,
   clubSeasonEmailDeliveries,
@@ -13,17 +13,18 @@ import {
   clubSeasonRegistrations,
   clubTeams,
   registrations,
-} from '../db/schema';
-import { sendEmail } from './email';
+} from '../db/schema.ts';
+import { sendEmail } from './email.ts';
 import {
   adminPaymentAlertEmail,
   paymentFailedEmail,
   paymentSucceededEmail,
   upcomingPaymentEmail,
-} from './club-season-payment-emails';
-import { clubDate, reminderDate, retryDate } from './club-season-billing-dates';
+} from './club-season-payment-emails.ts';
+import { clubDate, installmentChargeAmount, reminderDate, retryDate } from './club-season-billing-dates.ts';
+import { getClubSeasonLedgerState } from './club-season-ledger.ts';
 
-export { addDays, clubDate, reminderDate, retryDate } from './club-season-billing-dates';
+export { addDays, clubDate, installmentChargeAmount, reminderDate, retryDate } from './club-season-billing-dates.ts';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -50,20 +51,17 @@ async function getContext(db: Db, installmentId: string, siteUrl: string) {
     .innerJoin(clubTeams, eq(clubSeasonRegistrations.teamId, clubTeams.id))
     .where(eq(clubSeasonPaymentInstallments.id, installmentId)).limit(1);
   if (!row) throw new Error(`Installment ${installmentId} was not found.`);
-  const [paid] = await db.select({ amount: sql<number>`coalesce(sum(${clubSeasonPaymentTransactions.amount}), 0)` })
-    .from(clubSeasonPaymentTransactions).where(and(
-      eq(clubSeasonPaymentTransactions.registrationId, row.registration.id),
-      eq(clubSeasonPaymentTransactions.status, 'succeeded')
-    ));
+  const ledger = await getClubSeasonLedgerState(db, row.registration.id, row.version.totalAmount);
   return {
     ...row,
+    ledger: ledger.summary,
     email: {
       parentName: row.parentName,
       playerName: `${row.playerFirstName} ${row.playerLastName}`.trim(),
       teamName: row.teamName,
-      amount: row.installment.amount,
+      amount: installmentChargeAmount(row.installment.amount, ledger.summary.remainingBalance),
       dueDate: row.installment.dueDate,
-      remainingBalance: Math.max(0, row.version.totalAmount - Number(paid?.amount || 0)),
+      remainingBalance: ledger.summary.remainingBalance,
       portalUrl: `${siteUrl.replace(/\/$/, '')}/portal/dashboard`,
     },
   };
@@ -107,7 +105,19 @@ export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: 
   const context = await getContext(db, installmentId, siteUrl);
   const alreadyPaid = context.installment.status === 'paid';
   const isCurrentVersion = context.plan.currentVersion === context.version.version;
-  if (intent.amount_received !== context.installment.amount || intent.currency !== context.version.currency) {
+  let [attempt] = await db.select().from(clubSeasonPaymentAttempts).where(and(
+    eq(clubSeasonPaymentAttempts.installmentId, installmentId),
+    eq(clubSeasonPaymentAttempts.stripePaymentIntentId, intent.id)
+  )).limit(1);
+  const metadataAttemptNumber = Number(intent.metadata?.attemptNumber || 0);
+  if (!attempt && metadataAttemptNumber > 0) {
+    [attempt] = await db.select().from(clubSeasonPaymentAttempts).where(and(
+      eq(clubSeasonPaymentAttempts.installmentId, installmentId),
+      eq(clubSeasonPaymentAttempts.attemptNumber, metadataAttemptNumber)
+    )).limit(1);
+  }
+  const expectedAmount = attempt?.amount || context.installment.amount;
+  if (intent.amount_received !== expectedAmount || intent.currency !== context.version.currency) {
     await db.update(clubSeasonPaymentPlans).set({ needsReview: true, updatedAt: new Date().toISOString() })
       .where(eq(clubSeasonPaymentPlans.id, context.plan.id));
     throw new Error('Installment PaymentIntent amount or currency did not match the stored schedule.');
@@ -119,7 +129,9 @@ export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: 
       status: 'paid', stripePaymentIntentId: intent.id, nextAttemptDate: null, paidAt: now, updatedAt: now,
     }).where(and(eq(clubSeasonPaymentInstallments.id, installmentId), sql`${clubSeasonPaymentInstallments.status} <> 'paid'`));
     await tx.update(clubSeasonPaymentAttempts).set({ status: 'succeeded', resolvedAt: now, updatedAt: now })
-      .where(eq(clubSeasonPaymentAttempts.stripePaymentIntentId, intent.id));
+      .where(attempt
+        ? eq(clubSeasonPaymentAttempts.id, attempt.id)
+        : eq(clubSeasonPaymentAttempts.stripePaymentIntentId, intent.id));
     await tx.insert(clubSeasonPaymentTransactions).values({
       id: crypto.randomUUID(), registrationId: context.registration.id, paymentPlanVersionId: context.version.id,
       installmentId, stripeEventId: eventId, source: 'installment', stripePaymentIntentId: intent.id,
@@ -127,9 +139,13 @@ export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: 
       status: 'succeeded', processedAt: now, createdAt: now,
     }).onConflictDoNothing();
     if (isCurrentVersion) {
-      const [outstanding] = await tx.select({ count: sql<number>`count(*)` }).from(clubSeasonPaymentInstallments)
-        .where(and(eq(clubSeasonPaymentInstallments.paymentPlanVersionId, context.version.id), sql`${clubSeasonPaymentInstallments.status} <> 'paid'`));
-      const completed = Number(outstanding?.count || 0) === 0;
+      const completed = Math.max(0, context.ledger.remainingBalance - intent.amount_received) === 0;
+      if (completed) await tx.update(clubSeasonPaymentInstallments).set({
+        status: 'satisfied', nextAttemptDate: null, updatedAt: now,
+      }).where(and(
+        eq(clubSeasonPaymentInstallments.paymentPlanVersionId, context.version.id),
+        inArray(clubSeasonPaymentInstallments.status, ['scheduled', 'past_due', 'action_required'])
+      ));
       await tx.update(clubSeasonPaymentPlans).set({
         status: completed ? 'completed' : 'active', financialStatus: completed ? 'paid_in_full' : 'current',
         completedAt: completed ? now : null, needsReview: false, updatedAt: now,
@@ -149,7 +165,7 @@ export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: 
     ...context.email,
     remainingBalance: alreadyPaid
       ? context.email.remainingBalance
-      : Math.max(0, context.email.remainingBalance - context.installment.amount),
+      : Math.max(0, context.email.remainingBalance - intent.amount_received),
     receiptUrl,
   });
   await deliverClubSeasonEmail(db, { registrationId: context.registration.id, installmentId, type: 'payment_succeeded',
@@ -191,6 +207,12 @@ export async function recordInstallmentFailure(db: Db, intent: Stripe.PaymentInt
 async function chargeInstallment(db: Db, stripe: Stripe, installmentId: string, siteUrl: string) {
   const context = await getContext(db, installmentId, siteUrl);
   if (context.plan.status !== 'active' || context.version.status !== 'active' || context.installment.status === 'paid') return false;
+  const chargeAmount = installmentChargeAmount(context.installment.amount, context.ledger.remainingBalance);
+  if (chargeAmount <= 0) {
+    await db.update(clubSeasonPaymentInstallments).set({ status: 'satisfied', nextAttemptDate: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(clubSeasonPaymentInstallments.id, installmentId), inArray(clubSeasonPaymentInstallments.status, ['scheduled', 'past_due'])));
+    return false;
+  }
   const attemptNumber = context.installment.attemptCount + 1;
   if (attemptNumber > 3 || !context.plan.stripeCustomerId || !context.plan.stripePaymentMethodId) {
     await recordFailure(db, installmentId, Math.min(attemptNumber, 3), 'payment_method_missing', 'A reusable payment method is not available.', true, siteUrl);
@@ -200,7 +222,7 @@ async function chargeInstallment(db: Db, stripe: Stripe, installmentId: string, 
   const key = `club-season:${installmentId}:attempt:${attemptNumber}`;
   const [attempt] = await db.insert(clubSeasonPaymentAttempts).values({
     id: crypto.randomUUID(), registrationId: context.registration.id, paymentPlanVersionId: context.version.id,
-    installmentId, attemptNumber, idempotencyKey: key, amount: context.installment.amount,
+    installmentId, attemptNumber, idempotencyKey: key, amount: chargeAmount,
     currency: context.version.currency, status: 'processing', attemptedAt: now, createdAt: now, updatedAt: now,
   }).onConflictDoNothing().returning();
   if (!attempt) return false;
@@ -238,9 +260,13 @@ async function chargeInstallment(db: Db, stripe: Stripe, installmentId: string, 
       paymentPlanVersionId: context.version.id, attemptNumber: String(attemptNumber) },
   };
   try {
-    const intent = context.installment.stripePaymentIntentId
+    const [priorAttempt] = context.installment.stripePaymentIntentId
+      ? await db.select({ amount: clubSeasonPaymentAttempts.amount }).from(clubSeasonPaymentAttempts)
+        .where(eq(clubSeasonPaymentAttempts.stripePaymentIntentId, context.installment.stripePaymentIntentId)).limit(1)
+      : [];
+    const intent = context.installment.stripePaymentIntentId && priorAttempt?.amount === chargeAmount
       ? await stripe.paymentIntents.confirm(context.installment.stripePaymentIntentId, confirmParams, { idempotencyKey: key })
-      : await stripe.paymentIntents.create({ amount: context.installment.amount, currency: context.version.currency,
+      : await stripe.paymentIntents.create({ amount: chargeAmount, currency: context.version.currency,
           confirm: true, ...confirmParams }, { idempotencyKey: key });
     await db.update(clubSeasonPaymentAttempts).set({ stripePaymentIntentId: intent.id, updatedAt: now })
       .where(eq(clubSeasonPaymentAttempts.id, attempt.id));
@@ -276,7 +302,7 @@ export async function runClubSeasonBilling(input: { db: Db; stripe: Stripe; site
     if (item.status === 'scheduled' && reminderDate(item.dueDate) === today) {
       const context = await getContext(input.db, item.id, input.siteUrl);
       const message = upcomingPaymentEmail(context.email);
-      if (await deliverClubSeasonEmail(input.db, { registrationId: context.registration.id, installmentId: item.id, type: 'payment_reminder',
+      if (context.email.amount > 0 && await deliverClubSeasonEmail(input.db, { registrationId: context.registration.id, installmentId: item.id, type: 'payment_reminder',
         recipient: context.parentEmail, key: `club-season-reminder:${item.id}`, ...message })) reminders++;
     }
     const chargeDate = item.status === 'scheduled' ? item.dueDate : item.nextAttemptDate;

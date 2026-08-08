@@ -751,6 +751,32 @@ export const clubSeasonAdminAuditLog = sqliteTable('club_season_admin_audit_log'
   createdAtIdx: index('club_season_admin_audit_created_at_idx').on(table.createdAt),
 }));
 
+// Manual financial activity is append-only. Corrections create an explicit
+// counter-entry so cash, credits, write-offs, and refunds remain auditable.
+export const clubSeasonFinancialAdjustments = sqliteTable('club_season_financial_adjustments', {
+  id: text('id').primaryKey(),
+  registrationId: text('registration_id').notNull().references(() => clubSeasonRegistrations.id),
+  paymentPlanId: text('payment_plan_id').notNull().references(() => clubSeasonPaymentPlans.id),
+  transactionId: text('transaction_id').references(() => clubSeasonPaymentTransactions.id),
+  type: text('type').notNull(), // offline_payment, credit, write_off, stripe_refund, reversal
+  amount: integer('amount').notNull(),
+  balanceEffect: integer('balance_effect').notNull(), // signed cents; negative lowers amount due
+  effectiveDate: text('effective_date').notNull(),
+  reason: text('reason').notNull(),
+  note: text('note'),
+  stripeRefundId: text('stripe_refund_id'),
+  reversesAdjustmentId: text('reverses_adjustment_id').references((): AnySQLiteColumn => clubSeasonFinancialAdjustments.id),
+  createdByUserId: text('created_by_user_id').notNull().references(() => users.id),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  registrationIdIdx: index('club_season_adjustments_registration_id_idx').on(table.registrationId),
+  paymentPlanIdIdx: index('club_season_adjustments_plan_id_idx').on(table.paymentPlanId),
+  transactionIdIdx: index('club_season_adjustments_transaction_id_idx').on(table.transactionId),
+  stripeRefundUnique: uniqueIndex('club_season_adjustments_stripe_refund_unique').on(table.stripeRefundId),
+  reversalUnique: uniqueIndex('club_season_adjustments_reversal_unique').on(table.reversesAdjustmentId),
+  createdAtIdx: index('club_season_adjustments_created_at_idx').on(table.createdAt),
+}));
+
 export const clubSeasonEmailDeliveries = sqliteTable('club_season_email_deliveries', {
   id: text('id').primaryKey(),
   registrationId: text('registration_id')

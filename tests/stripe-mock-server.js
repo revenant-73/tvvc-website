@@ -5,6 +5,8 @@ const port = 4322;
 let checkoutCounter = 0;
 const checkoutSessions = new Map();
 const checkoutSessionsByIdempotencyKey = new Map();
+const refundsByIdempotencyKey = new Map();
+let refundCounter = 0;
 
 function readRequestBody(request) {
   return new Promise((resolve, reject) => {
@@ -74,6 +76,27 @@ const server = http.createServer(async (request, response) => {
       object: 'billing_portal.session',
       url: `http://${host}:${port}/mock-billing`,
     });
+    return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/v1/refunds') {
+    const requestBody = await readRequestBody(request);
+    const params = new URLSearchParams(requestBody);
+    const idempotencyKey = request.headers['idempotency-key'] || '';
+    if (idempotencyKey && refundsByIdempotencyKey.has(idempotencyKey)) {
+      sendJson(response, 200, refundsByIdempotencyKey.get(idempotencyKey));
+      return;
+    }
+    refundCounter += 1;
+    const refund = {
+      id: `re_test_playwright_${refundCounter}`,
+      object: 'refund',
+      amount: Number(params.get('amount')),
+      payment_intent: params.get('payment_intent'),
+      status: 'succeeded',
+    };
+    if (idempotencyKey) refundsByIdempotencyKey.set(idempotencyKey, refund);
+    sendJson(response, 200, refund);
     return;
   }
 
