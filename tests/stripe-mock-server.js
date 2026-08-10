@@ -131,6 +131,11 @@ const server = http.createServer(async (request, response) => {
       customer: 'cus_club_season_parent',
       payment_method: 'pm_club_season_autopay',
       status: 'succeeded',
+      latest_charge: {
+        id: `ch_${paymentIntentId}`,
+        object: 'charge',
+        receipt_url: `http://${host}:${port}/mock-receipt/${paymentIntentId}`,
+      },
     });
     return;
   }

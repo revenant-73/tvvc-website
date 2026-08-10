@@ -38,6 +38,7 @@ export type PortalClubSeasonPlan = {
   paymentOption: string;
   billingDay: number | null;
   autopayAuthorized: boolean;
+  initialTransactionId: string | null;
   seasonTotal: number;
   paidOrCreditedAmount: number;
   remainingBalance: number;
@@ -121,6 +122,7 @@ export async function getPortalClubSeasonPlans(
       .where(inArray(clubSeasonPaymentInstallments.paymentPlanVersionId, versionIds))
       .orderBy(asc(clubSeasonPaymentInstallments.sequence)),
     db.select({
+      transactionId: clubSeasonPaymentTransactions.id,
       registrationId: clubSeasonPaymentTransactions.registrationId,
       installmentId: clubSeasonPaymentInstallments.id,
       versionId: clubSeasonPaymentInstallments.paymentPlanVersionId,
@@ -142,7 +144,11 @@ export async function getPortalClubSeasonPlans(
       .where(and(
         inArray(clubSeasonPaymentTransactions.registrationId, registrationIds),
         eq(clubSeasonPaymentTransactions.status, 'succeeded')
-      )),
+      ))
+      .orderBy(
+        asc(clubSeasonPaymentTransactions.processedAt),
+        asc(clubSeasonPaymentTransactions.id)
+      ),
     getClubSeasonLedgerStates(
       db,
       rows.map((row) => ({ registrationId: row.registrationId, seasonTotal: row.seasonTotal }))
@@ -169,6 +175,11 @@ export async function getPortalClubSeasonPlans(
         paidAt: payment.paidAt || payment.processedAt,
       }));
     const ledger = ledgerStates.get(row.registrationId);
+    const isOwned = row.ownerUserId === currentUserId;
+    const initialTransaction = paidHistory.find((payment) => (
+      payment.registrationId === row.registrationId
+      && ['deposit', 'full_payment'].includes(payment.type)
+    ));
     const remainingBalance = ledger?.remainingBalance ?? row.seasonTotal;
     const paidOrCreditedAmount = Math.max(0, row.seasonTotal - remainingBalance);
     const nextPayment = installments.find((installment) => (
@@ -179,7 +190,7 @@ export async function getPortalClubSeasonPlans(
       id: row.planId,
       registrationId: row.registrationId,
       ownerUserId: row.ownerUserId,
-      isOwned: row.ownerUserId === currentUserId,
+      isOwned,
       playerName: `${row.playerFirstName} ${row.playerLastName}`,
       teamName: row.teamName,
       seasonName: row.seasonName,
@@ -189,6 +200,7 @@ export async function getPortalClubSeasonPlans(
       billingDay: row.billingDay,
       autopayAuthorized: row.paymentOption !== 'pay_in_full'
         && Boolean(row.authorizedAt || row.authorizationId),
+      initialTransactionId: isOwned ? initialTransaction?.transactionId || null : null,
       seasonTotal: row.seasonTotal,
       paidOrCreditedAmount,
       remainingBalance,

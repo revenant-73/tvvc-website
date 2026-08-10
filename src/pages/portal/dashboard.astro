@@ -263,9 +263,24 @@ const hasOwnRegistrations = userRegistrations.some(
                     </div>
                   )}
                   {plan.isOwned && (
-                    <button data-manage-billing data-default-label="Manage payment method" type="button" class="min-h-11 shrink-0 rounded-xl border border-white/15 bg-white/[0.06] px-4 text-xs font-extrabold uppercase tracking-wider text-white transition hover:border-brand-teal/40 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-50">
-                      <span>Manage payment method</span>
-                    </button>
+                    <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+                      <button data-manage-billing data-default-label="Manage payment method" type="button" class="min-h-11 w-full rounded-xl border border-white/15 bg-white/[0.06] px-4 text-xs font-extrabold uppercase tracking-wider text-white transition hover:border-brand-teal/40 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-50 sm:w-auto">
+                        <span>Manage payment method</span>
+                      </button>
+                      {plan.initialTransactionId && (
+                        <button
+                          data-club-season-receipt
+                          data-transaction-id={plan.initialTransactionId}
+                          data-default-label={plan.paymentOption === 'pay_in_full' ? 'View payment receipt' : 'View deposit receipt'}
+                          type="button"
+                          class="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-teal/40 bg-brand-teal/[0.08] px-4 text-xs font-extrabold uppercase tracking-wider text-brand-teal transition hover:border-brand-teal hover:bg-brand-teal/[0.14] focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-50 sm:w-auto"
+                        >
+                          <svg data-receipt-icon aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v20l3-2 3 2 3-2 3 2V2l-3 2-3-2-3 2-3-2Z"/><path d="M9 9h6"/><path d="M9 13h6"/></svg>
+                          <span>{plan.paymentOption === 'pay_in_full' ? 'View payment receipt' : 'View deposit receipt'}</span>
+                          <svg data-receipt-spinner aria-hidden="true" class="hidden h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -674,6 +689,35 @@ const hasOwnRegistrations = userRegistrations.some(
   };
   revisionCard?.querySelector('[data-plan-revision-retry]')?.addEventListener('click', loadRevisions);
   loadRevisions();
+
+  document.querySelectorAll<HTMLButtonElement>('[data-club-season-receipt]').forEach((receiptButton) => receiptButton.addEventListener('click', async (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    const label = button.querySelector('span');
+    const icon = button.querySelector<HTMLElement>('[data-receipt-icon]');
+    const spinner = button.querySelector<HTMLElement>('[data-receipt-spinner]');
+    const defaultLabel = button.dataset.defaultLabel || 'View receipt';
+    const transactionId = button.dataset.transactionId;
+
+    if (!transactionId) return;
+    button.disabled = true;
+    if (label) label.textContent = 'Opening receipt...';
+    icon?.classList.add('hidden');
+    spinner?.classList.remove('hidden');
+
+    try {
+      const response = await fetch(`/api/stripe/club-season-receipt?transactionId=${encodeURIComponent(transactionId)}`);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.url) throw new Error(data.error || 'The receipt could not be opened.');
+      window.location.assign(data.url);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'The receipt could not be opened.';
+      window.toast?.error(message);
+      button.disabled = false;
+      if (label) label.textContent = defaultLabel;
+      icon?.classList.remove('hidden');
+      spinner?.classList.add('hidden');
+    }
+  }));
 
   document.querySelectorAll<HTMLButtonElement>('[data-manage-billing]').forEach((billingButton) => billingButton.addEventListener('click', async (e) => {
     const btn = e.currentTarget as HTMLButtonElement;

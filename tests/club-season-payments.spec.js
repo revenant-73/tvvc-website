@@ -220,7 +220,10 @@ test.describe.serial('Club season payment checkout', () => {
                      (SELECT attempt_count FROM club_season_email_deliveries e
                       WHERE e.registration_id = csr.id AND e.type = 'payment_succeeded') AS email_attempt_count,
                      (SELECT idempotency_key FROM club_season_email_deliveries e
-                      WHERE e.registration_id = csr.id AND e.type = 'payment_succeeded') AS email_key
+                      WHERE e.registration_id = csr.id AND e.type = 'payment_succeeded') AS email_key,
+                     (SELECT id FROM club_season_payment_transactions t
+                      WHERE t.registration_id = csr.id AND t.status = 'succeeded'
+                      ORDER BY t.processed_at LIMIT 1) AS initial_transaction_id
               FROM club_season_registrations csr
               JOIN club_season_offers cso ON cso.id = csr.offer_id
               JOIN club_season_payment_plans p ON p.registration_id = csr.id
@@ -240,7 +243,7 @@ test.describe.serial('Club season payment checkout', () => {
         email_key: 'club-season-success:pi_club_season_standard',
       });
       const paidInstallments = await client.execute({
-        sql: `SELECT sequence, status FROM club_season_payment_installments
+        sql: `SELECT id, sequence, status FROM club_season_payment_installments
               WHERE payment_plan_version_id = ? ORDER BY sequence`,
         args: [plan.version_id],
       });
@@ -265,6 +268,21 @@ test.describe.serial('Club season payment checkout', () => {
       await expect(planCard.getByText('Authorized', { exact: true })).toBeVisible();
       await expect(planCard.locator('input')).toHaveCount(0);
       await expect(planCard.getByRole('button', { name: 'Manage payment method' })).toBeVisible();
+      const receiptButton = planCard.getByRole('button', { name: 'View deposit receipt' });
+      await expect(receiptButton).toBeVisible();
+
+      const initialTransactionId = String(finalState.rows[0].initial_transaction_id);
+      const ownerReceipt = await parent.request.get(
+        `/api/stripe/club-season-receipt?transactionId=${initialTransactionId}`
+      );
+      expect(ownerReceipt.status()).toBe(200);
+      expect(await ownerReceipt.json()).toEqual({
+        url: 'http://127.0.0.1:4322/mock-receipt/pi_club_season_standard',
+      });
+      expect((await parent.request.get('/api/stripe/club-season-receipt')).status()).toBe(404);
+      expect((await parent.request.get(
+        '/api/stripe/club-season-receipt?transactionId=not-a-real-transaction'
+      )).status()).toBe(404);
 
       const unrelatedParent = await contextWithSession(
         browser,
@@ -277,6 +295,9 @@ test.describe.serial('Club season payment checkout', () => {
           `[data-club-season-registration="${paymentFixture.registrationId}"]`
         )).toHaveCount(0);
         await expect(unrelatedPage.getByText(paymentFixture.athleteName, { exact: true })).toHaveCount(0);
+        expect((await unrelatedParent.request.get(
+          `/api/stripe/club-season-receipt?transactionId=${initialTransactionId}`
+        )).status()).toBe(404);
       } finally {
         await unrelatedParent.close();
       }
@@ -298,6 +319,9 @@ test.describe.serial('Club season payment checkout', () => {
         await expect(sharedPlanCard.getByText('Shared view', { exact: true })).toBeVisible();
         await expect(sharedPlanCard.getByText(/view-only household access/i)).toBeVisible();
         await expect(sharedPlanCard.getByRole('button')).toHaveCount(0);
+        expect((await guardian.request.get(
+          `/api/stripe/club-season-receipt?transactionId=${initialTransactionId}`
+        )).status()).toBe(404);
       } finally {
         await guardian.close();
         await client.execute({
@@ -306,6 +330,36 @@ test.describe.serial('Club season payment checkout', () => {
           args: [paymentFixture.userId, fixtures.guardian.email],
         });
       }
+
+      await client.batch([
+        {
+          sql: `INSERT INTO club_season_payment_transactions
+                (id, registration_id, payment_plan_version_id, installment_id, stripe_event_id,
+                 source, stripe_payment_intent_id, amount, currency, status, processed_at)
+                VALUES ('tx-failed-receipt', ?, ?, ?, 'evt-failed-receipt',
+                        'checkout', 'pi_failed_receipt', 40000, 'usd', 'failed', CURRENT_TIMESTAMP)`,
+          args: [paymentFixture.registrationId, plan.version_id, paidInstallments.rows[0].id],
+        },
+        {
+          sql: `INSERT INTO club_season_payment_transactions
+                (id, registration_id, payment_plan_version_id, installment_id, stripe_event_id,
+                 source, stripe_payment_intent_id, amount, currency, status, processed_at)
+                VALUES ('tx-unsupported-receipt', ?, ?, ?, 'evt-unsupported-receipt',
+                        'installment', 'pi_unsupported_receipt', 22000, 'usd', 'succeeded', CURRENT_TIMESTAMP)`,
+          args: [paymentFixture.registrationId, plan.version_id, paidInstallments.rows[1].id],
+        },
+      ], 'write');
+      expect((await parent.request.get(
+        '/api/stripe/club-season-receipt?transactionId=tx-failed-receipt'
+      )).status()).toBe(404);
+      expect((await parent.request.get(
+        '/api/stripe/club-season-receipt?transactionId=tx-unsupported-receipt'
+      )).status()).toBe(404);
+
+      await Promise.all([
+        page.waitForURL('http://127.0.0.1:4322/mock-receipt/pi_club_season_standard'),
+        receiptButton.click(),
+      ]);
     } finally {
       client.close();
       await parent.close();
@@ -393,6 +447,7 @@ test.describe.serial('Club season payment checkout', () => {
       await expect(planCard.getByText('No future automatic payments are scheduled.')).toBeVisible();
       await expect(planCard.getByText('Next automatic payment')).toHaveCount(0);
       await expect(planCard.getByText('Not applicable', { exact: true })).toBeVisible();
+      await expect(planCard.getByRole('button', { name: 'View payment receipt' })).toBeVisible();
     } finally {
       client.close();
       await parent.close();
