@@ -366,6 +366,155 @@ test.describe.serial('Club season payment checkout', () => {
     }
   });
 
+  test('admin revises an active plan after three payments and the parent authorizes it without losing history', async ({ browser }) => {
+    const paymentFixture = fixtures.clubSeasonPayments.standard;
+    const admin = await contextWithSession(browser, fixtures.admin.sessionToken);
+    const parent = await contextWithSession(browser, paymentFixture.sessionToken);
+    const client = createClient({ url: fixtures.databaseUrl });
+    try {
+      const planResult = await client.execute({
+        sql: `SELECT p.id AS plan_id, v.id AS version_id
+              FROM club_season_payment_plans p
+              JOIN club_season_payment_plan_versions v
+                ON v.payment_plan_id = p.id AND v.version = p.current_version
+              WHERE p.registration_id = ?`,
+        args: [paymentFixture.registrationId],
+      });
+      expect(planResult.rows).toHaveLength(1);
+      const originalPlan = planResult.rows[0];
+      const installmentResult = await client.execute({
+        sql: `SELECT id, sequence, amount
+              FROM club_season_payment_installments
+              WHERE payment_plan_version_id = ? AND sequence BETWEEN 1 AND 3
+              ORDER BY sequence`,
+        args: [originalPlan.version_id],
+      });
+      expect(installmentResult.rows).toHaveLength(3);
+
+      await client.batch([
+        ...installmentResult.rows.map((installment) => ({
+          sql: `UPDATE club_season_payment_installments
+                SET status = 'paid', paid_at = CURRENT_TIMESTAMP
+                WHERE id = ?`,
+          args: [installment.id],
+        })),
+        ...installmentResult.rows.slice(1).map((installment) => ({
+          sql: `INSERT INTO club_season_payment_transactions
+                (id, registration_id, payment_plan_version_id, installment_id,
+                 stripe_event_id, source, stripe_payment_intent_id, amount,
+                 currency, status, processed_at)
+                VALUES (?, ?, ?, ?, ?, 'installment', ?, ?, 'usd', 'succeeded', CURRENT_TIMESTAMP)`,
+          args: [
+            `tx-revision-paid-${installment.sequence}`,
+            paymentFixture.registrationId,
+            originalPlan.version_id,
+            installment.id,
+            `evt-revision-paid-${installment.sequence}`,
+            `pi_revision_paid_${installment.sequence}`,
+            Number(installment.amount),
+          ],
+        })),
+      ], 'write');
+
+      const adminPage = await admin.newPage();
+      await adminPage.goto('/admin/club-season/finances');
+      const accountButton = adminPage.locator(
+        `[data-account-id="${paymentFixture.registrationId}"]`
+      );
+      await expect(accountButton).toBeVisible();
+      await accountButton.click();
+
+      const detail = adminPage.locator('[data-detail]');
+      await expect(detail.getByRole('heading', { name: paymentFixture.athleteName })).toBeVisible();
+      await expect(detail.getByText('$1,060.00', { exact: true }).first()).toBeVisible();
+      await expect(detail.getByText('$440.00', { exact: true }).first()).toBeVisible();
+
+      await detail.locator('[data-installment-count]').selectOption('4');
+      const dates = ['2027-06-05', '2027-07-05', '2027-08-05', '2027-09-05'];
+      for (let index = 0; index < dates.length; index += 1) {
+        await detail.locator('[data-charge-date]').nth(index).fill(dates[index]);
+        await detail.locator('[data-charge-amount]').nth(index).fill('110.00');
+      }
+      await detail.locator('#revision-reason').fill(
+        'Extend the remaining balance after the third monthly payment.'
+      );
+      await detail.locator('#revision-note').fill(
+        'Seeded end-to-end test of a family-requested extension.'
+      );
+      await expect(detail.getByText('Exact match. Ready to send for family authorization.')).toBeVisible();
+      await detail.getByRole('button', { name: 'Send for authorization' }).click();
+      await expect(detail.getByText('Awaiting parent authorization')).toBeVisible();
+      await expect(detail.getByText(
+        'Extend the remaining balance after the third monthly payment.',
+        { exact: true }
+      )).toBeVisible();
+
+      const parentPage = await parent.newPage();
+      await parentPage.goto('/portal/dashboard');
+      const revisionCard = parentPage.locator('[data-plan-revision-card]');
+      await expect(revisionCard).toBeVisible();
+      await expect(revisionCard.getByText(
+        'Extend the remaining balance after the third monthly payment.'
+      )).toBeVisible();
+      await expect(revisionCard.getByText('$440.00', { exact: true }).first()).toBeVisible();
+      for (const date of ['June 5, 2027', 'July 5, 2027', 'August 5, 2027', 'September 5, 2027']) {
+        await expect(revisionCard.getByText(date, { exact: false })).toBeVisible();
+      }
+      await expect(revisionCard.getByText('$110.00', { exact: true })).toHaveCount(4);
+
+      const authorizationForm = revisionCard.locator('[data-revision-authorize]');
+      await authorizationForm.locator('input[name="autopayAuthorized"]').check();
+      await authorizationForm.locator('input[name="authorizedName"]').fill('Sam Standard Parent');
+      await authorizationForm.getByRole('button', { name: 'Authorize revised schedule' }).click();
+      await expect(parentPage.locator('[data-plan-revision-card]')).toBeHidden();
+
+      await parentPage.reload();
+      const planCard = parentPage.locator(
+        `[data-club-season-registration="${paymentFixture.registrationId}"]`
+      );
+      await expect(planCard.getByText('$1,060.00', { exact: true })).toBeVisible();
+      await expect(planCard.getByText('$440.00', { exact: true })).toBeVisible();
+      await expect(planCard.getByText(/\$110\.00 on June 5, 2027/)).toBeVisible();
+      await expect(planCard.getByText('Custom plan', { exact: true })).toBeVisible();
+      await expect(planCard.getByText('Payments retained from a previous schedule')).toBeVisible();
+      await expect(planCard.getByText('$400.00 paid', { exact: true })).toHaveCount(1);
+      await expect(planCard.getByText('$220.00 paid', { exact: true })).toHaveCount(3);
+      await expect(planCard.getByRole('button', { name: 'View deposit receipt' })).toBeVisible();
+
+      const finalState = await client.execute({
+        sql: `SELECT p.current_version,
+                     (SELECT count(*) FROM club_season_payment_plan_revisions r
+                      WHERE r.payment_plan_id = p.id AND r.status = 'proposed')
+                       AS pending_revision_count,
+                     (SELECT count(*) FROM club_season_payment_plan_authorizations a
+                      JOIN club_season_payment_plan_versions av
+                        ON av.id = a.payment_plan_version_id
+                      WHERE av.payment_plan_id = p.id) AS authorization_count,
+                     (SELECT count(*) FROM club_season_payment_installments i
+                      JOIN club_season_payment_plan_versions iv
+                        ON iv.id = i.payment_plan_version_id
+                      WHERE iv.payment_plan_id = p.id AND iv.version = p.current_version
+                        AND i.status = 'scheduled') AS scheduled_count,
+                     (SELECT count(*) FROM club_season_payment_transactions t
+                      WHERE t.registration_id = p.registration_id
+                        AND t.status = 'succeeded') AS successful_payment_count
+              FROM club_season_payment_plans p
+              WHERE p.registration_id = ?`,
+        args: [paymentFixture.registrationId],
+      });
+      expect(finalState.rows[0]).toMatchObject({
+        current_version: 2,
+        pending_revision_count: 0,
+        authorization_count: 1,
+        scheduled_count: 4,
+        successful_payment_count: 4,
+      });
+    } finally {
+      client.close();
+      await Promise.all([admin.close(), parent.close()]);
+    }
+  });
+
   test('pay in full creates one charge without an off-session authorization', async ({ browser, request }) => {
     const paymentFixture = fixtures.clubSeasonPayments.full;
     const parent = await contextWithSession(browser, paymentFixture.sessionToken);
