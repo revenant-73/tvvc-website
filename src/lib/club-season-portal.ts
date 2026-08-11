@@ -23,6 +23,7 @@ export type PortalClubSeasonInstallment = {
   amount: number;
   status: string;
   paidAt: string | null;
+  nextAttemptDate: string | null;
 };
 
 export type PortalClubSeasonPlan = {
@@ -116,6 +117,7 @@ export async function getPortalClubSeasonPlans(
       amount: clubSeasonPaymentInstallments.amount,
       status: clubSeasonPaymentInstallments.status,
       paidAt: clubSeasonPaymentInstallments.paidAt,
+      nextAttemptDate: clubSeasonPaymentInstallments.nextAttemptDate,
       sequence: clubSeasonPaymentInstallments.sequence,
     })
       .from(clubSeasonPaymentInstallments)
@@ -158,8 +160,8 @@ export async function getPortalClubSeasonPlans(
   return rows.map((row) => {
     const installments = currentInstallments
       .filter((installment) => installment.versionId === row.versionId)
-      .map(({ id, type, dueDate, amount, status, paidAt }) => ({
-        id, type, dueDate, amount, status, paidAt,
+      .map(({ id, type, dueDate, amount, status, paidAt, nextAttemptDate }) => ({
+        id, type, dueDate, amount, status, paidAt, nextAttemptDate,
       }));
     const currentIds = new Set(installments.map((installment) => installment.id));
     const priorPaidInstallments = paidHistory
@@ -173,6 +175,7 @@ export async function getPortalClubSeasonPlans(
         amount: payment.amount,
         status: 'paid',
         paidAt: payment.paidAt || payment.processedAt,
+        nextAttemptDate: null,
       }));
     const ledger = ledgerStates.get(row.registrationId);
     const isOwned = row.ownerUserId === currentUserId;

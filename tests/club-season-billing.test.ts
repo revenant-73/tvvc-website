@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { addDays, installmentChargeAmount, reminderDate, retryDate } from '../src/lib/club-season-billing-dates.ts';
+import { paymentFailedEmail } from '../src/lib/club-season-payment-emails.ts';
 
 test('January reminder waits until January 2 for the holiday pause', () => {
   assert.equal(reminderDate('2027-01-05'), '2027-01-02');
@@ -22,4 +23,22 @@ test('manual credits cap an automatic charge at the true remaining balance', () 
   assert.equal(installmentChargeAmount(22000, 7000), 7000);
   assert.equal(installmentChargeAmount(22000, 0), 0);
   assert.equal(installmentChargeAmount(22000, 50000), 22000);
+});
+
+test('failed-payment email names the exact automatic retry date', () => {
+  const message = paymentFailedEmail({
+    parentName: 'Taylor Parent',
+    playerName: 'Jordan Player',
+    teamName: '14U Teal',
+    amount: 22000,
+    dueDate: '2027-03-05',
+    remainingBalance: 66000,
+    portalUrl: 'https://example.test/portal/dashboard',
+    attemptNumber: 1,
+    nextAttemptDate: '2027-03-08',
+  }, false);
+
+  assert.match(message.html, /automatically retry on March 8, 2027/);
+  assert.match(message.html, /attempt 1 of 3/);
+  assert.match(message.html, /player remains on the roster/i);
 });

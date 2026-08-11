@@ -184,6 +184,8 @@ const hasOwnRegistrations = userRegistrations.some(
         {clubSeasonPlans.map((plan) => {
           const financialLabel = financialStatusLabel(plan.financialStatus, plan.remainingBalance);
           const requiresAction = plan.financialStatus === 'action_required' || plan.financialStatus === 'past_due';
+          const retryScheduled = plan.nextPayment?.status === 'past_due' && Boolean(plan.nextPayment.nextAttemptDate);
+          const actionRequired = plan.nextPayment?.status === 'action_required';
           return (
             <section
               class="overflow-hidden rounded-3xl border border-brand-teal/25 bg-[#11151d] shadow-2xl shadow-black/20"
@@ -249,12 +251,16 @@ const hasOwnRegistrations = userRegistrations.some(
                   ) : plan.nextPayment ? (
                     <div>
                       <p class:list={['text-[10px] font-extrabold uppercase tracking-[0.18em]', requiresAction ? 'text-brand-coral' : 'text-brand-teal']}>
-                        {requiresAction ? 'Payment needs attention' : 'Next automatic payment'}
+                        {actionRequired ? 'Payment method update required' : retryScheduled ? 'Automatic retry scheduled' : 'Next automatic payment'}
                       </p>
                       <p class="mt-1 font-heading text-xl font-black uppercase tracking-tight text-white sm:text-2xl">
                         <span class="block tabular-nums sm:inline">{formatCurrency(plan.nextPayment.amount)}</span>
-                        <span class="mt-1 block font-medium text-white/60 sm:mt-0 sm:inline"> on {formatClubDate(plan.nextPayment.dueDate)}</span>
+                        {!actionRequired && (
+                          <span class="mt-1 block font-medium text-white/60 sm:mt-0 sm:inline"> on {formatClubDate(retryScheduled ? plan.nextPayment.nextAttemptDate! : plan.nextPayment.dueDate)}</span>
+                        )}
                       </p>
+                      {retryScheduled && <p class="mt-2 max-w-xl text-xs leading-5 text-white/65">No action is required if your saved payment method is current. Your player remains registered while the automatic recovery schedule is in progress.</p>}
+                      {actionRequired && <p class="mt-2 max-w-xl text-xs leading-5 text-white/65">Automatic retries are paused. Update the saved payment method, then contact TVVC so the payment can be completed securely. Your player remains registered.</p>}
                     </div>
                   ) : (
                     <div>

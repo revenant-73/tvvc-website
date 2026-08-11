@@ -366,6 +366,93 @@ test.describe.serial('Club season payment checkout', () => {
     }
   });
 
+  test('parent portal shows the retry date and distinguishes a stopped recovery sequence', async ({ browser }) => {
+    const paymentFixture = fixtures.clubSeasonPayments.standard;
+    const parent = await contextWithSession(browser, paymentFixture.sessionToken);
+    const client = createClient({ url: fixtures.databaseUrl });
+    let planId;
+    let installmentId;
+    try {
+      const result = await client.execute({
+        sql: `SELECT p.id AS plan_id, i.id AS installment_id
+              FROM club_season_payment_plans p
+              JOIN club_season_payment_plan_versions v
+                ON v.payment_plan_id = p.id AND v.version = p.current_version
+              JOIN club_season_payment_installments i
+                ON i.payment_plan_version_id = v.id AND i.sequence = 1
+              WHERE p.registration_id = ?`,
+        args: [paymentFixture.registrationId],
+      });
+      expect(result.rows).toHaveLength(1);
+      planId = result.rows[0].plan_id;
+      installmentId = result.rows[0].installment_id;
+
+      await client.batch([
+        {
+          sql: `UPDATE club_season_payment_installments
+                SET status = 'past_due', next_attempt_date = '2027-01-08',
+                    last_failure_code = 'card_declined', last_failure_message = 'The card was declined.'
+                WHERE id = ?`,
+          args: [installmentId],
+        },
+        {
+          sql: `UPDATE club_season_payment_plans
+                SET financial_status = 'past_due', needs_review = 0
+                WHERE id = ?`,
+          args: [planId],
+        },
+      ], 'write');
+
+      const page = await parent.newPage();
+      await page.goto('/portal/dashboard');
+      const planCard = page.locator(
+        `[data-club-season-registration="${paymentFixture.registrationId}"]`
+      );
+      await expect(planCard.getByText('Automatic retry scheduled', { exact: true })).toBeVisible();
+      await expect(planCard.getByText(/\$220\.00 on January 8, 2027/)).toBeVisible();
+      await expect(planCard.getByText(/Your player remains registered while the automatic recovery schedule is in progress/)).toBeVisible();
+
+      await client.batch([
+        {
+          sql: `UPDATE club_season_payment_installments
+                SET status = 'action_required', next_attempt_date = NULL
+                WHERE id = ?`,
+          args: [installmentId],
+        },
+        {
+          sql: `UPDATE club_season_payment_plans
+                SET financial_status = 'action_required', needs_review = 1
+                WHERE id = ?`,
+          args: [planId],
+        },
+      ], 'write');
+      await page.reload();
+      await expect(planCard.getByText('Payment method update required', { exact: true })).toBeVisible();
+      await expect(planCard.getByText(/Automatic retries are paused/)).toBeVisible();
+      await expect(planCard.getByText(/\$220\.00 on January 5, 2027/)).toHaveCount(0);
+    } finally {
+      if (installmentId && planId) {
+        await client.batch([
+          {
+            sql: `UPDATE club_season_payment_installments
+                  SET status = 'scheduled', next_attempt_date = NULL,
+                      last_failure_code = NULL, last_failure_message = NULL
+                  WHERE id = ?`,
+            args: [installmentId],
+          },
+          {
+            sql: `UPDATE club_season_payment_plans
+                  SET financial_status = 'current', needs_review = 0
+                  WHERE id = ?`,
+            args: [planId],
+          },
+        ], 'write');
+      }
+      client.close();
+      await parent.close();
+    }
+  });
+
   test('admin revises an active plan after three payments and the parent authorizes it without losing history', async ({ browser }) => {
     const paymentFixture = fixtures.clubSeasonPayments.standard;
     const admin = await contextWithSession(browser, fixtures.admin.sessionToken);

@@ -8,6 +8,7 @@ type PaymentEmailContext = {
   portalUrl: string;
   receiptUrl?: string | null;
   attemptNumber?: number;
+  nextAttemptDate?: string | null;
 };
 
 type FutureCharge = {
@@ -131,7 +132,9 @@ export function initialPaymentSucceededEmail(
 export function paymentFailedEmail(context: PaymentEmailContext, actionRequired: boolean) {
   const retryCopy = actionRequired
     ? 'Automatic attempts have stopped. Please update your payment method and contact TVVC so we can complete the payment securely.'
-    : `This attempt did not complete. TVVC will retry according to the agreed recovery schedule; this was attempt ${context.attemptNumber || 1} of 3.`;
+    : context.nextAttemptDate
+      ? `This attempt did not complete. TVVC will automatically retry on ${date(context.nextAttemptDate)}; this was attempt ${context.attemptNumber || 1} of 3.`
+      : `This attempt did not complete. TVVC will retry according to the agreed recovery schedule; this was attempt ${context.attemptNumber || 1} of 3.`;
   return {
     subject: `Action needed: TVVC payment of ${money(context.amount)} did not complete`,
     html: shell('Payment needs attention', 'Club-season payment update', `

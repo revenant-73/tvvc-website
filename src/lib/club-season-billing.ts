@@ -233,7 +233,7 @@ async function recordFailure(db: Db, installmentId: string, attemptNumber: numbe
     await tx.update(clubSeasonPaymentPlans).set({ financialStatus: final ? 'action_required' : 'past_due', needsReview: final, updatedAt: now })
       .where(eq(clubSeasonPaymentPlans.id, context.plan.id));
   });
-  const emailContext = { ...context.email, attemptNumber };
+  const emailContext = { ...context.email, attemptNumber, nextAttemptDate: next };
   await deliverClubSeasonEmail(db, { registrationId: context.registration.id, installmentId, type: 'payment_failed', recipient: context.parentEmail,
     key: `club-season-failure:${installmentId}:${attemptNumber}`, ...paymentFailedEmail(emailContext, final) });
   if (final) await deliverClubSeasonEmail(db, { registrationId: context.registration.id, installmentId, type: 'admin_payment_alert', recipient: ADMIN_BILLING_EMAIL,
