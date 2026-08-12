@@ -19,7 +19,15 @@ if (!access) {
   return Astro.redirect('/portal/login');
 }
 const userId = access.user.id;
-const clubSeasonPlans = await getPortalClubSeasonPlans(db, access.readableOwnerIds, userId);
+let clubSeasonPlans: Awaited<ReturnType<typeof getPortalClubSeasonPlans>> = [];
+try {
+  clubSeasonPlans = await getPortalClubSeasonPlans(db, access.readableOwnerIds, userId);
+} catch (error) {
+  // Club-season billing is an additive portal feature. Keep the established
+  // dashboard available if a production database deploy briefly lags behind
+  // the application schema during rollout.
+  console.error('Club-season portal plans are temporarily unavailable:', error);
+}
 
 const clubDateParts = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/Los_Angeles',
