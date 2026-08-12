@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import { getDb } from '../db/index.ts';
 import {
@@ -174,7 +174,9 @@ export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: 
     await tx.update(clubSeasonPaymentInstallments).set({
       status: 'paid', stripePaymentIntentId: intent.id, nextAttemptDate: null, paidAt: now, updatedAt: now,
     }).where(and(eq(clubSeasonPaymentInstallments.id, installmentId), sql`${clubSeasonPaymentInstallments.status} <> 'paid'`));
-    await tx.update(clubSeasonPaymentAttempts).set({ status: 'succeeded', resolvedAt: now, updatedAt: now })
+    await tx.update(clubSeasonPaymentAttempts).set({
+      status: 'succeeded', failureCode: null, failureMessage: null, resolvedAt: now, updatedAt: now,
+    })
       .where(attempt
         ? eq(clubSeasonPaymentAttempts.id, attempt.id)
         : eq(clubSeasonPaymentAttempts.stripePaymentIntentId, intent.id));
@@ -248,6 +250,148 @@ export async function recordInstallmentFailure(db: Db, intent: Stripe.PaymentInt
   const actionRequired = intent.status === 'requires_action' || error?.code === 'authentication_required';
   await recordFailure(db, installmentId, attemptNumber, error?.code || intent.status, error?.message || 'The card payment did not complete.', actionRequired, siteUrl);
   return true;
+}
+
+export type ClubSeasonBillingSimulationScenario =
+  | 'card_declined'
+  | 'authentication_required'
+  | 'payment_succeeded';
+
+/**
+ * Exercise the normal installment result handlers without contacting Stripe.
+ * The caller is responsible for enforcing the pilot/test-mode safety locks.
+ */
+export async function simulateClubSeasonBilling(input: {
+  db: Db;
+  registrationId: string;
+  scenario: ClubSeasonBillingSimulationScenario;
+  siteUrl: string;
+}) {
+  const acceptedStatuses = input.scenario === 'payment_succeeded'
+    ? ['scheduled', 'past_due', 'action_required']
+    : ['scheduled', 'past_due'];
+  const [candidate] = await input.db.select({
+    installment: clubSeasonPaymentInstallments,
+    version: clubSeasonPaymentPlanVersions,
+    plan: clubSeasonPaymentPlans,
+  }).from(clubSeasonPaymentInstallments)
+    .innerJoin(clubSeasonPaymentPlanVersions, eq(clubSeasonPaymentInstallments.paymentPlanVersionId, clubSeasonPaymentPlanVersions.id))
+    .innerJoin(clubSeasonPaymentPlans, eq(clubSeasonPaymentPlanVersions.paymentPlanId, clubSeasonPaymentPlans.id))
+    .where(and(
+      eq(clubSeasonPaymentPlans.registrationId, input.registrationId),
+      eq(clubSeasonPaymentPlans.status, 'active'),
+      eq(clubSeasonPaymentPlanVersions.status, 'active'),
+      sql`${clubSeasonPaymentPlanVersions.version} = ${clubSeasonPaymentPlans.currentVersion}`,
+      eq(clubSeasonPaymentInstallments.type, 'installment'),
+      inArray(clubSeasonPaymentInstallments.status, acceptedStatuses),
+    ))
+    .orderBy(asc(clubSeasonPaymentInstallments.sequence))
+    .limit(1);
+  if (!candidate) throw new Error('SIMULATOR_NO_ELIGIBLE_INSTALLMENT');
+  if (
+    (input.scenario === 'card_declined' && candidate.installment.attemptCount >= 2)
+    || (input.scenario === 'authentication_required' && candidate.installment.attemptCount >= 3)
+  ) {
+    throw new Error('SIMULATOR_NO_RETRY_SLOT');
+  }
+
+  const context = await getContext(input.db, candidate.installment.id, input.siteUrl);
+  const amount = installmentChargeAmount(candidate.installment.amount, context.ledger.remainingBalance);
+  if (amount <= 0) throw new Error('SIMULATOR_NO_ELIGIBLE_INSTALLMENT');
+  const now = new Date().toISOString();
+  const runId = crypto.randomUUID().replaceAll('-', '');
+  let attemptNumber = candidate.installment.attemptCount + 1;
+  let intentId = `pi_test_tvvc_sim_${runId}`;
+  let attemptId: string | null = null;
+
+  if (input.scenario === 'payment_succeeded' && candidate.installment.stripePaymentIntentId) {
+    const [existingAttempt] = await input.db.select().from(clubSeasonPaymentAttempts).where(and(
+      eq(clubSeasonPaymentAttempts.installmentId, candidate.installment.id),
+      eq(clubSeasonPaymentAttempts.stripePaymentIntentId, candidate.installment.stripePaymentIntentId),
+    )).limit(1);
+    if (existingAttempt) {
+      attemptId = existingAttempt.id;
+      attemptNumber = existingAttempt.attemptNumber;
+      intentId = existingAttempt.stripePaymentIntentId!;
+    }
+  }
+
+  if (!attemptId) {
+    attemptId = crypto.randomUUID();
+    await input.db.insert(clubSeasonPaymentAttempts).values({
+      id: attemptId,
+      registrationId: input.registrationId,
+      paymentPlanVersionId: candidate.version.id,
+      installmentId: candidate.installment.id,
+      attemptNumber,
+      idempotencyKey: `club-season-test-simulator:${runId}`,
+      amount,
+      currency: candidate.version.currency,
+      status: 'processing',
+      stripePaymentIntentId: intentId,
+      attemptedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  } else {
+    await input.db.update(clubSeasonPaymentAttempts).set({
+      status: 'processing', attemptedAt: now, resolvedAt: null, updatedAt: now,
+    }).where(eq(clubSeasonPaymentAttempts.id, attemptId));
+  }
+  await input.db.update(clubSeasonPaymentInstallments).set({
+    status: 'processing', attemptCount: Math.max(candidate.installment.attemptCount, attemptNumber),
+    stripePaymentIntentId: intentId, lastAttemptedAt: now, updatedAt: now,
+  }).where(eq(clubSeasonPaymentInstallments.id, candidate.installment.id));
+
+  const baseIntent = {
+    id: intentId,
+    object: 'payment_intent',
+    amount,
+    amount_received: input.scenario === 'payment_succeeded' ? amount : 0,
+    currency: candidate.version.currency,
+    latest_charge: input.scenario === 'payment_succeeded' ? `ch_test_tvvc_sim_${runId}` : null,
+    metadata: {
+      flow: 'club_season_installment',
+      installmentId: candidate.installment.id,
+      registrationId: input.registrationId,
+      paymentPlanVersionId: candidate.version.id,
+      attemptNumber: String(attemptNumber),
+      testSimulator: 'true',
+    },
+  } as unknown as Stripe.PaymentIntent;
+
+  if (input.scenario === 'payment_succeeded') {
+    const testStripe = {
+      charges: { retrieve: async () => ({ receipt_url: null }) },
+    } as unknown as Stripe;
+    await recordInstallmentSuccess(
+      input.db,
+      testStripe,
+      `evt_test_tvvc_sim_${runId}`,
+      { ...baseIntent, status: 'succeeded' },
+      input.siteUrl,
+    );
+  } else {
+    const authenticationRequired = input.scenario === 'authentication_required';
+    await recordInstallmentFailure(input.db, {
+      ...baseIntent,
+      status: authenticationRequired ? 'requires_action' : 'requires_payment_method',
+      last_payment_error: {
+        code: input.scenario,
+        message: authenticationRequired
+          ? 'Test-mode payment requires cardholder authentication.'
+          : 'Test-mode card was declined.',
+      },
+    } as Stripe.PaymentIntent, input.siteUrl);
+  }
+
+  return {
+    scenario: input.scenario,
+    installmentId: candidate.installment.id,
+    attemptNumber,
+    amount,
+    testProcessorId: intentId,
+  };
 }
 
 async function chargeInstallment(db: Db, stripe: Stripe, installmentId: string, siteUrl: string) {

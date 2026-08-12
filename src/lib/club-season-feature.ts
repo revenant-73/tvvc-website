@@ -19,6 +19,14 @@ export function isClubSeasonRegistrationEnabled(): boolean {
   return String(value).toLowerCase() === 'true';
 }
 
+export function isClubSeasonBillingSimulatorAvailable(): boolean {
+  return (
+    !isClubSeasonRegistrationEnabled()
+    && environmentValue('CLUB_SEASON_PILOT_MODE').toLowerCase() === 'true'
+    && environmentValue('STRIPE_SECRET_KEY').startsWith('sk_test_')
+  );
+}
+
 /**
  * A pilot account may enter while both public-access locks remain closed, but
  * only when the deployment explicitly enables pilot mode and Stripe is using

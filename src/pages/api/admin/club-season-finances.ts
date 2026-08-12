@@ -26,6 +26,7 @@ import {
   reverseClubSeasonAdjustment,
 } from '../../../lib/club-season-adjustments';
 import { createStripeClient } from '../../../lib/stripe-client';
+import { isClubSeasonBillingSimulatorAvailable } from '../../../lib/club-season-feature';
 
 export const prerender = false;
 const SEASON_ID = '2026-2027-club';
@@ -98,7 +99,10 @@ export const GET: APIRoute = async ({ request }) => {
     const registrationId = new URL(request.url).searchParams.get('registrationId');
     if (registrationId) {
       const account = await getClubSeasonFinancialAccount(auth.db, registrationId);
-      return account ? json({ account }) : json({ error: 'Financial account not found.' }, 404);
+      return account ? json({ account: {
+        ...account,
+        billingSimulatorAvailable: isClubSeasonBillingSimulatorAvailable(),
+      } }) : json({ error: 'Financial account not found.' }, 404);
     }
     const [accounts, candidates] = await Promise.all([
       getClubSeasonFinancialAccounts(auth.db, SEASON_ID),

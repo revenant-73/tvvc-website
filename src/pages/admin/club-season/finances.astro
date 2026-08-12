@@ -94,7 +94,7 @@ const admin = await getCurrentAdminUser(Astro.request);
     type InitialCharge = { dueDate:string; amount:number };
     type InitialProposal = { proposalId:string; versionId:string; termsFingerprint:string; dueNowAmount:number; charges:InitialCharge[]; reason:string; adminNote?:string|null; status:string };
     type Candidate = { registrationId:string; playerName:string; parentName:string; parentEmail:string; teamName:string; seasonTotal:number; standardDeposit:number; pendingInitialPlan:InitialProposal|null };
-    type Detail = Account & { stripePaidAmount:number; offlinePaidAmount:number; creditAmount:number; writeOffAmount:number; refundedAmount:number; netCollectedAmount:number; versions:any[]; installments:any[]; transactions:any[]; attempts:any[]; revisions:any[]; adjustments:any[] };
+    type Detail = Account & { billingSimulatorAvailable:boolean; stripePaidAmount:number; offlinePaidAmount:number; creditAmount:number; writeOffAmount:number; refundedAmount:number; netCollectedAmount:number; versions:any[]; installments:any[]; transactions:any[]; attempts:any[]; revisions:any[]; adjustments:any[] };
     const root = document.querySelector<HTMLElement>('[data-finance-workspace]');
     if (root) {
       const endpoint = '/api/admin/club-season-finances';
@@ -112,6 +112,7 @@ const admin = await getCurrentAdminUser(Astro.request);
       let accounts:Account[]=[]; let candidates:Candidate[]=[]; let mode:'accounts'|'candidates'='accounts'; let selectedId=''; let selectedDetail:Detail|null=null;
       const setText=(selector:string,value:string|number)=>{const el=root.querySelector<HTMLElement>(selector);if(el)el.textContent=String(value)};
       const notify=(tone:'success'|'error',message:string)=>{ const toast=(window as any).toast; toast?.[tone]?.(message); if(live)live.textContent=message; };
+      const billingSimulator=(d:Detail)=>d.billingSimulatorAvailable?`<section data-billing-simulator class="border-t border-amber-300/25 bg-amber-300/[.035] p-5 md:p-7" aria-labelledby="billing-simulator-heading"><div class="rounded-2xl border border-amber-300/35 bg-[#11130f] p-4 shadow-[inset_4px_0_0_rgba(253,224,71,.72)] md:p-5"><div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"><div class="max-w-2xl"><div class="flex flex-wrap items-center gap-2"><p class="text-[10px] font-extrabold uppercase tracking-[.18em] text-amber-200">Controlled pilot · Stripe test mode</p><span class="rounded-md border border-amber-200/60 bg-amber-300 px-2 py-1 text-[10px] font-black uppercase tracking-[.15em] text-[#17170d]">Test mode only</span></div><h3 id="billing-simulator-heading" class="mt-2 font-heading text-2xl font-extrabold uppercase text-white">Billing recovery simulator</h3><p class="mt-2 text-sm leading-6 text-white/70">This mutates <strong class="text-white">${esc(d.playerName)}’s</strong> pilot account and sends the normal test notifications. It never contacts live Stripe.</p></div><p class="max-w-sm border-l-2 border-amber-300 pl-3 text-xs font-semibold leading-5 text-amber-100">Before you click: each run writes a real test attempt to the ledger. Success can also reduce the test balance.</p></div><div class="mt-5 grid gap-2 lg:grid-cols-3"><button data-billing-scenario="card_declined" data-scenario-label="declined card" type="button" class="min-h-[4.5rem] rounded-xl border border-brand-coral/40 bg-brand-coral/[.055] px-4 text-left transition hover:bg-brand-coral/10 focus:outline-none focus:ring-2 focus:ring-brand-coral disabled:cursor-wait disabled:opacity-40"><span class="block text-xs font-extrabold uppercase tracking-wider text-brand-coral">Simulate declined card</span><span class="mt-1 block text-xs leading-5 text-white/65">Schedules the next retry.</span></button><button data-billing-scenario="authentication_required" data-scenario-label="authentication required" type="button" class="min-h-[4.5rem] rounded-xl border border-amber-300/35 bg-amber-300/[.045] px-4 text-left transition hover:bg-amber-300/10 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-wait disabled:opacity-40"><span class="block text-xs font-extrabold uppercase tracking-wider text-amber-200">Simulate authentication required</span><span class="mt-1 block text-xs leading-5 text-white/65">Stops retries and flags manual action.</span></button><button data-billing-scenario="payment_succeeded" data-scenario-label="successful recovery" type="button" class="min-h-[4.5rem] rounded-xl border border-brand-teal/40 bg-brand-teal/[.055] px-4 text-left transition hover:bg-brand-teal/10 focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:cursor-wait disabled:opacity-40"><span class="block text-xs font-extrabold uppercase tracking-wider text-brand-teal">Simulate successful recovery</span><span class="mt-1 block text-xs leading-5 text-white/65">Records payment and restores current status when appropriate.</span></button></div><p data-billing-simulator-status class="mt-3 min-h-5 text-sm font-semibold text-white/70" role="status" aria-live="polite"></p></div></section>`:'';
       const filtered=()=>{
         const query=(search?.value||'').trim().toLowerCase();
         const source=mode==='accounts'?accounts:candidates;
@@ -199,8 +200,32 @@ const admin = await getCurrentAdminUser(Astro.request);
       const bindDetail=(d:Detail)=>{const count=detail?.querySelector<HTMLSelectElement>('[data-installment-count]');count?.addEventListener('change',()=>buildCharges(d));if(count)buildCharges(d);detail?.querySelector<HTMLButtonElement>('[data-cancel-toggle]')?.addEventListener('click',event=>{const button=event.currentTarget as HTMLButtonElement;const form=detail.querySelector<HTMLElement>('[data-cancel-form]');if(!form)return;const opening=form.classList.contains('hidden');form.classList.toggle('hidden',!opening);button.setAttribute('aria-expanded',String(opening));if(opening)form.querySelector('textarea')?.focus();});detail?.querySelector<HTMLFormElement>('[data-revision-form]')?.addEventListener('submit',async event=>{event.preventDefault();const form=event.currentTarget as HTMLFormElement;if(!form.reportValidity())return;const button=form.querySelector<HTMLButtonElement>('[data-submit-revision]');const status=form.querySelector<HTMLElement>('[data-revision-status]');const dates=[...form.querySelectorAll<HTMLInputElement>('[data-charge-date]')],amounts=[...form.querySelectorAll<HTMLInputElement>('[data-charge-amount]')];const charges=dates.map((input,i)=>({dueDate:input.value,amount:Math.round(Number(amounts[i].value)*100)}));const formData=new FormData(form);if(button)button.disabled=true;if(status)status.textContent='Sending proposal…';try{const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'propose',paymentPlanId:d.planId,reason:String(formData.get('reason')||'').trim(),adminNote:String(formData.get('adminNote')||'').trim()||undefined,charges})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'The proposal could not be created.');notify('success','Revised schedule sent for parent authorization.');await loadAccounts();await loadDetail(d.registrationId);}catch(err){const message=err instanceof Error?err.message:'The proposal could not be created.';if(status)status.textContent=message;notify('error',message);if(button)button.disabled=false;}});detail?.querySelector<HTMLFormElement>('[data-cancel-form]')?.addEventListener('submit',async event=>{event.preventDefault();const form=event.currentTarget as HTMLFormElement;if(!form.reportValidity())return;const button=form.querySelector<HTMLButtonElement>('[data-cancel-revision]');const status=form.querySelector<HTMLElement>('[data-cancel-status]');const reason=String(new FormData(form).get('reason')||'').trim();if(!button||!reason)return;button.disabled=true;button.textContent='Cancelling…';if(status)status.textContent='Cancelling proposal…';try{const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'cancel',revisionId:button.dataset.cancelRevision,reason})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'The proposal could not be cancelled.');notify('success','Pending proposal cancelled.');await loadAccounts();await loadDetail(d.registrationId);}catch(err){const message=err instanceof Error?err.message:'The proposal could not be cancelled.';notify('error',message);if(status)status.textContent=message;button.disabled=false;button.textContent='Confirm cancellation';}});};
       const bindFinancialActions=(d:Detail)=>{
         if(!detail||!detail.querySelector('[data-account-actions]'))return;
+        const actionRoot=detail.querySelector<HTMLElement>('[data-account-actions]');
+        if(d.billingSimulatorAvailable&&!detail.querySelector('[data-billing-simulator]')){
+          actionRoot?.insertAdjacentHTML('afterend',billingSimulator(d));
+        }
         const closeComposers=()=>detail.querySelectorAll<HTMLElement>('[data-action-composer]').forEach(composer=>composer.classList.add('hidden'));
         const refresh=async(message:string)=>{notify('success',message);await loadAccounts();await loadDetail(d.registrationId);};
+        const simulatorButtons=[...detail.querySelectorAll<HTMLButtonElement>('[data-billing-scenario]')];
+        const simulatorStatus=detail.querySelector<HTMLElement>('[data-billing-simulator-status]');
+        simulatorButtons.forEach(button=>button.addEventListener('click',async()=>{
+          const scenario=button.dataset.billingScenario||'';
+          const scenarioLabel=button.dataset.scenarioLabel||'billing recovery';
+          if(!window.confirm(`Run the ${scenarioLabel} test for ${d.playerName}? This will change the pilot ledger and send test notifications.`))return;
+          simulatorButtons.forEach(control=>control.disabled=true);
+          if(simulatorStatus)simulatorStatus.textContent=`Running ${scenarioLabel} scenario…`;
+          try{
+            const response=await fetch('/api/admin/club-season-billing-simulator',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({registrationId:d.registrationId,scenario})});
+            const data=await response.json().catch(()=>({}));
+            if(!response.ok)throw new Error(data.error||'The test billing scenario could not be completed.');
+            await refresh(`${label(scenario)} test completed. Account and attempt history refreshed.`);
+          }catch(error){
+            const message=error instanceof Error?error.message:'The test billing scenario could not be completed.';
+            if(simulatorStatus)simulatorStatus.textContent=message;
+            notify('error',message);
+            simulatorButtons.forEach(control=>control.disabled=false);
+          }
+        }));
         const adjustmentForm=detail.querySelector<HTMLFormElement>('[data-adjustment-form]');
         const actionCopy={
           offline_payment:{eyebrow:'Money received outside Stripe',heading:'Record offline payment',explanation:'Increases collected cash and lowers the balance due.'},
@@ -233,7 +258,10 @@ const admin = await getCurrentAdminUser(Astro.request);
         detail?.querySelectorAll<HTMLElement>('.text-\\[9px\\]').forEach(element=>{element.classList.remove('text-[9px]');element.classList.add('text-[10px]');});
         detail?.querySelectorAll<HTMLElement>('.text-white\\/35, .text-white\\/40').forEach(element=>{element.classList.remove('text-white/35','text-white/40');element.classList.add('text-white/60');});
         const actionRoot=detail?.querySelector<HTMLElement>('[data-account-actions]');
-        if(actionRoot&&selectedDetail&&!actionRoot.dataset.bound){actionRoot.dataset.bound='true';bindFinancialActions(selectedDetail);}
+        if(actionRoot&&selectedDetail&&!actionRoot.dataset.bound){
+          actionRoot.dataset.bound='true';
+          bindFinancialActions(selectedDetail);
+        }
       };
       const detailObserver=new MutationObserver(normalizeDetailMarkup);
       if(detail)detailObserver.observe(detail,{childList:true,subtree:true});

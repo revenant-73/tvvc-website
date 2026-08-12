@@ -760,4 +760,88 @@ test.describe.serial('Club season payment checkout', () => {
       await parent.close();
     }
   });
+
+  test('test-mode admin simulator records decline, authentication, and recovery through the real ledger', async ({ browser }) => {
+    const paymentFixture = fixtures.clubSeasonPayments.standard;
+    const admin = await contextWithSession(browser, fixtures.admin.sessionToken);
+    const parent = await contextWithSession(browser, paymentFixture.sessionToken);
+    const client = createClient({ url: fixtures.databaseUrl });
+    try {
+      const unauthenticated = await browser.newContext({
+        baseURL: `http://127.0.0.1:${process.env.PLAYWRIGHT_PORT || '4321'}`,
+      });
+      try {
+        expect((await unauthenticated.request.post('/api/admin/club-season-billing-simulator', {
+          data: { registrationId: paymentFixture.registrationId, scenario: 'card_declined' },
+        })).status()).toBe(401);
+      } finally {
+        await unauthenticated.close();
+      }
+      expect((await parent.request.post('/api/admin/club-season-billing-simulator', {
+        data: { registrationId: paymentFixture.registrationId, scenario: 'card_declined' },
+      })).status()).toBe(403);
+      expect((await admin.request.post('/api/admin/club-season-billing-simulator', {
+        headers: { Origin: 'https://attacker.example' },
+        data: { registrationId: paymentFixture.registrationId, scenario: 'card_declined' },
+      })).status()).toBe(403);
+
+      const accountResponse = await admin.request.get(
+        `/api/admin/club-season-finances?registrationId=${paymentFixture.registrationId}`
+      );
+      expect(accountResponse.ok()).toBeTruthy();
+      expect((await accountResponse.json()).account.billingSimulatorAvailable).toBe(true);
+
+      const page = await admin.newPage();
+      await page.goto('/admin/club-season/finances');
+      await page.locator(`[data-account-id="${paymentFixture.registrationId}"]`).click();
+      const detail = page.locator('[data-detail]');
+      const simulator = detail.locator('[data-billing-simulator]');
+      await expect(simulator.getByText(/test mode only/i, { exact: true })).toBeVisible();
+
+      page.once('dialog', (dialog) => dialog.accept());
+      await simulator.getByRole('button', { name: /simulate declined card/i }).click();
+      await expect(detail.getByText('Past Due', { exact: true }).first()).toBeVisible();
+      await expect(detail.getByText('Test-mode card was declined.', { exact: true })).toBeVisible();
+
+      const parentPage = await parent.newPage();
+      await parentPage.goto('/portal/dashboard');
+      const planCard = parentPage.locator(`[data-club-season-registration="${paymentFixture.registrationId}"]`);
+      await expect(planCard.getByText('Automatic retry scheduled', { exact: true })).toBeVisible();
+      await expect(planCard.getByText(/Your player remains registered while/)).toBeVisible();
+
+      page.once('dialog', (dialog) => dialog.accept());
+      await simulator.getByRole('button', { name: /simulate authentication required/i }).click();
+      await expect(detail.getByText('Action Required', { exact: true }).first()).toBeVisible();
+      await expect(detail.getByText('Test-mode payment requires cardholder authentication.', { exact: true })).toBeVisible();
+
+      page.once('dialog', (dialog) => dialog.accept());
+      await simulator.getByRole('button', { name: /simulate successful recovery/i }).click();
+      await expect(detail.getByText('Current', { exact: true }).first()).toBeVisible();
+      await expect(detail.getByText('Test-mode card was declined.', { exact: true })).toBeVisible();
+
+      const audit = await client.execute({
+        sql: `SELECT p.financial_status, p.needs_review,
+                     (SELECT count(*) FROM club_season_payment_attempts a
+                      WHERE a.registration_id = p.registration_id) AS attempt_count,
+                     (SELECT count(*) FROM club_season_payment_transactions t
+                      WHERE t.registration_id = p.registration_id
+                        AND t.stripe_payment_intent_id LIKE 'pi_test_tvvc_sim_%') AS simulator_payment_count,
+                     (SELECT count(*) FROM club_season_email_deliveries e
+                      WHERE e.registration_id = p.registration_id
+                        AND e.type IN ('payment_failed', 'admin_payment_alert', 'payment_succeeded')) AS notification_count
+              FROM club_season_payment_plans p WHERE p.registration_id = ?`,
+        args: [paymentFixture.registrationId],
+      });
+      expect(audit.rows[0]).toMatchObject({
+        financial_status: 'current',
+        needs_review: 0,
+        attempt_count: 2,
+        simulator_payment_count: 1,
+        notification_count: 5,
+      });
+    } finally {
+      client.close();
+      await Promise.all([admin.close(), parent.close()]);
+    }
+  });
 });

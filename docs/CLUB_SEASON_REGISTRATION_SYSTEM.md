@@ -537,6 +537,20 @@ The retry behavior and decline handling must be verified in Stripe test mode bef
 
 The system must never automatically remove a player from a roster, cancel the season registration, or expose financial status to coaches. Those decisions remain with authorized TVVC administrators.
 
+### 10.1 Controlled-pilot billing simulator
+
+The admin financial workspace includes a billing-recovery simulator during the controlled pilot. It can record a declined-card attempt, an authentication-required result, and a successful recovery against the next eligible installment without waiting for the scheduled billing date.
+
+The simulator uses the production billing state-transition and notification code but never contacts live Stripe. It is available only when all of the following are true:
+
+- The requester is authenticated as a current administrator.
+- The request passes the same-origin check.
+- `CLUB_SEASON_PILOT_MODE` is `true`.
+- Public club-season registration remains disabled.
+- `STRIPE_SECRET_KEY` begins with `sk_test_`.
+
+Every run writes test payment-attempt history, sends the normal test notifications, and requires administrator confirmation in the browser. Switching to live Stripe, enabling public registration, or ending pilot mode automatically hides the controls and makes the simulator endpoint return `404`.
+
 ## 11. Reminder and Confirmation Emails
 
 ### 11.1 Standard email sequence

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   canAccessClubSeasonRegistration,
+  isClubSeasonBillingSimulatorAvailable,
   isClubSeasonPilotAccess,
   isClubSeasonRegistrationEnabled,
   isClubSeasonRouteAvailable,
@@ -23,6 +24,7 @@ test('controlled pilot access is exact, test-mode-only, and independent of publi
     process.env.STRIPE_SECRET_KEY = 'sk_test_pilot_only';
 
     assert.equal(isClubSeasonRegistrationEnabled(), false);
+    assert.equal(isClubSeasonBillingSimulatorAvailable(), true);
     assert.equal(isClubSeasonPilotAccess('pilot.parent@example.com'), true);
     assert.equal(isClubSeasonPilotAccess('PILOT.PARENT@EXAMPLE.COM'), true);
     assert.equal(isClubSeasonPilotAccess('not-pilot@example.com'), false);
@@ -33,14 +35,17 @@ test('controlled pilot access is exact, test-mode-only, and independent of publi
     assert.equal(canAccessClubSeasonRegistration('not-pilot@example.com', false), false);
 
     process.env.STRIPE_SECRET_KEY = 'sk_live_never_allow_pilot';
+    assert.equal(isClubSeasonBillingSimulatorAvailable(), false);
     assert.equal(isClubSeasonPilotAccess('pilot.parent@example.com'), false);
     assert.equal(canAccessClubSeasonRegistration('pilot.parent@example.com', false), false);
 
     process.env.STRIPE_SECRET_KEY = 'sk_test_pilot_only';
     process.env.CLUB_SEASON_PILOT_MODE = 'false';
+    assert.equal(isClubSeasonBillingSimulatorAvailable(), false);
     assert.equal(isClubSeasonPilotAccess('pilot.parent@example.com'), false);
 
     process.env.CLUB_SEASON_REGISTRATION_ENABLED = 'true';
+    assert.equal(isClubSeasonBillingSimulatorAvailable(), false);
     assert.equal(isClubSeasonPilotAccess('pilot.parent@example.com'), false);
     assert.equal(canAccessClubSeasonRegistration('ordinary@example.com', true), true);
     assert.equal(canAccessClubSeasonRegistration('ordinary@example.com', false), false);
