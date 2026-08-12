@@ -70,6 +70,68 @@ function clubSeasonWebhook({
   };
 }
 
+function clubSeasonExpirationWebhook({ eventId, sessionId, registrationId, planId, versionId }) {
+  const payload = JSON.stringify({
+    id: eventId,
+    object: 'event',
+    api_version: '2025-01-27.acacia',
+    created: Math.floor(Date.now() / 1000),
+    livemode: false,
+    pending_webhooks: 1,
+    type: 'checkout.session.expired',
+    data: {
+      object: {
+        id: sessionId,
+        object: 'checkout.session',
+        metadata: {
+          flow: 'club_season',
+          registrationId,
+          paymentPlanId: planId,
+          paymentPlanVersionId: versionId,
+        },
+      },
+    },
+  });
+  return {
+    payload,
+    signature: stripe.webhooks.generateTestHeaderString({ payload, secret: webhookSecret }),
+  };
+}
+
+function clubSeasonInstallmentFailureWebhook({ eventId, intentId, installmentId, registrationId, versionId, attemptNumber }) {
+  const payload = JSON.stringify({
+    id: eventId,
+    object: 'event',
+    api_version: '2025-01-27.acacia',
+    created: Math.floor(Date.now() / 1000),
+    livemode: false,
+    pending_webhooks: 1,
+    type: 'payment_intent.payment_failed',
+    data: {
+      object: {
+        id: intentId,
+        object: 'payment_intent',
+        status: 'requires_payment_method',
+        metadata: {
+          flow: 'club_season_installment',
+          installmentId,
+          registrationId,
+          paymentPlanVersionId: versionId,
+          attemptNumber: String(attemptNumber),
+        },
+        last_payment_error: {
+          code: 'card_declined',
+          message: 'Delayed test decline.',
+        },
+      },
+    },
+  });
+  return {
+    payload,
+    signature: stripe.webhooks.generateTestHeaderString({ payload, secret: webhookSecret }),
+  };
+}
+
 test.describe.serial('Club season payment checkout', () => {
   test('standard plan requires authorization, snapshots terms, and activates once after webhook', async ({ browser, request }) => {
     const paymentFixture = fixtures.clubSeasonPayments.standard;
@@ -185,13 +247,63 @@ test.describe.serial('Club season payment checkout', () => {
       expect(stripeRequest.request_params['payment_intent_data[setup_future_usage]']).toBe('off_session');
       expect(stripeRequest.idempotency_key).toBe(`club-season-checkout-${plan.version_id}`);
 
+      const postExpirationWebhook = async (eventId, checkout) => {
+        const webhook = clubSeasonExpirationWebhook({
+          eventId,
+          sessionId: checkout.stripe_checkout_session_id,
+          registrationId: paymentFixture.registrationId,
+          planId: checkout.plan_id,
+          versionId: checkout.version_id,
+        });
+        return request.post('/api/webhooks/stripe', {
+          headers: {
+            'Content-Type': 'application/json',
+            'stripe-signature': webhook.signature,
+          },
+          data: webhook.payload,
+        });
+      };
+
+      const firstExpiration = await postExpirationWebhook('evt_club_standard_expired', plan);
+      expect(firstExpiration.status()).toBe(200);
+      const renewedCheckout = await parent.request.post('/api/club-season/checkout', {
+        data: checkoutPayload,
+      });
+      expect(renewedCheckout.status()).toBe(200);
+      const renewedPlanResult = await client.execute({
+        sql: `SELECT p.id AS plan_id, p.status AS plan_status, p.current_version,
+                     v.id AS version_id, v.stripe_checkout_session_id
+              FROM club_season_payment_plans p
+              JOIN club_season_payment_plan_versions v
+                ON v.payment_plan_id = p.id AND v.version = p.current_version
+              WHERE p.registration_id = ?`,
+        args: [paymentFixture.registrationId],
+      });
+      const currentPlan = renewedPlanResult.rows[0];
+      expect(currentPlan.current_version).toBe(2);
+      expect(currentPlan.plan_status).toBe('checkout_open');
+
+      const duplicateOldExpiration = await postExpirationWebhook(
+        'evt_club_standard_expired_duplicate',
+        plan
+      );
+      expect(duplicateOldExpiration.status()).toBe(200);
+      const afterStaleExpiration = await client.execute({
+        sql: `SELECT status, current_version FROM club_season_payment_plans WHERE id = ?`,
+        args: [plan.plan_id],
+      });
+      expect(afterStaleExpiration.rows[0]).toMatchObject({
+        status: 'checkout_open',
+        current_version: 2,
+      });
+
       const postWebhook = async (eventId) => {
         const webhook = clubSeasonWebhook({
           eventId,
-          sessionId: plan.stripe_checkout_session_id,
+          sessionId: currentPlan.stripe_checkout_session_id,
           registrationId: paymentFixture.registrationId,
-          planId: plan.plan_id,
-          versionId: plan.version_id,
+          planId: currentPlan.plan_id,
+          versionId: currentPlan.version_id,
         });
         return request.post('/api/webhooks/stripe', {
           headers: {
@@ -245,7 +357,7 @@ test.describe.serial('Club season payment checkout', () => {
       const paidInstallments = await client.execute({
         sql: `SELECT id, sequence, status FROM club_season_payment_installments
               WHERE payment_plan_version_id = ? ORDER BY sequence`,
-        args: [plan.version_id],
+        args: [currentPlan.version_id],
       });
       expect(paidInstallments.rows[0]).toMatchObject({ sequence: 0, status: 'paid' });
       expect(paidInstallments.rows.slice(1).every((row) => row.status === 'scheduled')).toBeTruthy();
@@ -460,7 +572,7 @@ test.describe.serial('Club season payment checkout', () => {
     const client = createClient({ url: fixtures.databaseUrl });
     try {
       const planResult = await client.execute({
-        sql: `SELECT p.id AS plan_id, v.id AS version_id
+        sql: `SELECT p.id AS plan_id, p.current_version, v.id AS version_id
               FROM club_season_payment_plans p
               JOIN club_season_payment_plan_versions v
                 ON v.payment_plan_id = p.id AND v.version = p.current_version
@@ -590,7 +702,7 @@ test.describe.serial('Club season payment checkout', () => {
         args: [paymentFixture.registrationId],
       });
       expect(finalState.rows[0]).toMatchObject({
-        current_version: 2,
+        current_version: Number(originalPlan.current_version) + 1,
         pending_revision_count: 0,
         authorization_count: 1,
         scheduled_count: 4,
@@ -813,6 +925,43 @@ test.describe.serial('Club season payment checkout', () => {
       await simulator.getByRole('button', { name: /simulate authentication required/i }).click();
       await expect(detail.getByText('Action Required', { exact: true }).first()).toBeVisible();
       await expect(detail.getByText('Test-mode payment requires cardholder authentication.', { exact: true })).toBeVisible();
+
+      const attemptState = await client.execute({
+        sql: `SELECT a.stripe_payment_intent_id, a.installment_id, a.payment_plan_version_id
+              FROM club_season_payment_attempts a
+              WHERE a.registration_id = ? AND a.attempt_number = 1`,
+        args: [paymentFixture.registrationId],
+      });
+      const oldAttempt = attemptState.rows[0];
+      const delayedFailure = clubSeasonInstallmentFailureWebhook({
+        eventId: 'evt_club_delayed_failure',
+        intentId: oldAttempt.stripe_payment_intent_id,
+        installmentId: oldAttempt.installment_id,
+        registrationId: paymentFixture.registrationId,
+        versionId: oldAttempt.payment_plan_version_id,
+        attemptNumber: 1,
+      });
+      const delayedFailureResponse = await admin.request.post('/api/webhooks/stripe', {
+        headers: {
+          'Content-Type': 'application/json',
+          'stripe-signature': delayedFailure.signature,
+        },
+        data: delayedFailure.payload,
+      });
+      expect(delayedFailureResponse.status()).toBe(200);
+      const afterDelayedFailure = await client.execute({
+        sql: `SELECT i.status, i.next_attempt_date, i.attempt_count,
+                     (SELECT failure_message FROM club_season_payment_attempts a
+                      WHERE a.installment_id = i.id AND a.attempt_number = 1) AS first_failure_message
+              FROM club_season_payment_installments i WHERE i.id = ?`,
+        args: [oldAttempt.installment_id],
+      });
+      expect(afterDelayedFailure.rows[0]).toMatchObject({
+        status: 'action_required',
+        next_attempt_date: null,
+        attempt_count: 2,
+        first_failure_message: 'Test-mode card was declined.',
+      });
 
       page.once('dialog', (dialog) => dialog.accept());
       await simulator.getByRole('button', { name: /simulate successful recovery/i }).click();

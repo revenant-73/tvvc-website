@@ -221,25 +221,62 @@ export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: 
   return !alreadyPaid;
 }
 
-async function recordFailure(db: Db, installmentId: string, attemptNumber: number, code: string, message: string, actionRequired: boolean, siteUrl: string) {
+async function recordFailure(
+  db: Db,
+  installmentId: string,
+  attemptNumber: number,
+  code: string,
+  message: string,
+  actionRequired: boolean,
+  siteUrl: string,
+  stripePaymentIntentId?: string | null,
+) {
   const context = await getContext(db, installmentId, siteUrl);
-  if (context.installment.status === 'paid') return;
+  if (
+    context.installment.status === 'paid'
+    || context.plan.currentVersion !== context.version.version
+    || context.version.status !== 'active'
+  ) return false;
   const now = new Date().toISOString();
   const next = actionRequired ? null : retryDate(context.installment.dueDate, attemptNumber + 1);
   const final = actionRequired || !next;
-  await db.transaction(async (tx) => {
-    await tx.update(clubSeasonPaymentAttempts).set({ status: final ? 'requires_action' : 'failed', failureCode: code, failureMessage: message, resolvedAt: now, updatedAt: now })
-      .where(and(eq(clubSeasonPaymentAttempts.installmentId, installmentId), eq(clubSeasonPaymentAttempts.attemptNumber, attemptNumber)));
-    await tx.update(clubSeasonPaymentInstallments).set({ status: final ? 'action_required' : 'past_due', nextAttemptDate: next,
-      lastFailureCode: code, lastFailureMessage: message, updatedAt: now }).where(eq(clubSeasonPaymentInstallments.id, installmentId));
+  const transitioned = await db.transaction(async (tx) => {
+    const conditions = [
+      eq(clubSeasonPaymentInstallments.id, installmentId),
+      eq(clubSeasonPaymentInstallments.attemptCount, attemptNumber),
+      sql`${clubSeasonPaymentInstallments.status} <> 'paid'`,
+    ];
+    if (stripePaymentIntentId) {
+      conditions.push(eq(clubSeasonPaymentInstallments.stripePaymentIntentId, stripePaymentIntentId));
+    }
+    const [updatedInstallment] = await tx.update(clubSeasonPaymentInstallments).set({
+      status: final ? 'action_required' : 'past_due', nextAttemptDate: next,
+      lastFailureCode: code, lastFailureMessage: message, updatedAt: now,
+    }).where(and(...conditions)).returning({ id: clubSeasonPaymentInstallments.id });
+    if (!updatedInstallment) return false;
+
+    const attemptConditions = [
+      eq(clubSeasonPaymentAttempts.installmentId, installmentId),
+      eq(clubSeasonPaymentAttempts.attemptNumber, attemptNumber),
+    ];
+    if (stripePaymentIntentId) {
+      attemptConditions.push(eq(clubSeasonPaymentAttempts.stripePaymentIntentId, stripePaymentIntentId));
+    }
+    await tx.update(clubSeasonPaymentAttempts).set({
+      status: final ? 'requires_action' : 'failed', failureCode: code,
+      failureMessage: message, resolvedAt: now, updatedAt: now,
+    }).where(and(...attemptConditions));
     await tx.update(clubSeasonPaymentPlans).set({ financialStatus: final ? 'action_required' : 'past_due', needsReview: final, updatedAt: now })
       .where(eq(clubSeasonPaymentPlans.id, context.plan.id));
+    return true;
   });
+  if (!transitioned) return false;
   const emailContext = { ...context.email, attemptNumber, nextAttemptDate: next };
   await deliverClubSeasonEmail(db, { registrationId: context.registration.id, installmentId, type: 'payment_failed', recipient: context.parentEmail,
     key: `club-season-failure:${installmentId}:${attemptNumber}`, ...paymentFailedEmail(emailContext, final) });
   if (final) await deliverClubSeasonEmail(db, { registrationId: context.registration.id, installmentId, type: 'admin_payment_alert', recipient: ADMIN_BILLING_EMAIL,
     key: `club-season-admin-alert:${installmentId}`, ...adminPaymentAlertEmail(emailContext, message) });
+  return true;
 }
 
 export async function recordInstallmentFailure(db: Db, intent: Stripe.PaymentIntent, siteUrl: string) {
@@ -248,8 +285,16 @@ export async function recordInstallmentFailure(db: Db, intent: Stripe.PaymentInt
   const attemptNumber = Number(intent.metadata.attemptNumber || 1);
   const error = intent.last_payment_error;
   const actionRequired = intent.status === 'requires_action' || error?.code === 'authentication_required';
-  await recordFailure(db, installmentId, attemptNumber, error?.code || intent.status, error?.message || 'The card payment did not complete.', actionRequired, siteUrl);
-  return true;
+  return recordFailure(
+    db,
+    installmentId,
+    attemptNumber,
+    error?.code || intent.status,
+    error?.message || 'The card payment did not complete.',
+    actionRequired,
+    siteUrl,
+    intent.id,
+  );
 }
 
 export type ClubSeasonBillingSimulationScenario =

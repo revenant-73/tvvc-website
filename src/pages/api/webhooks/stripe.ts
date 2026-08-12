@@ -442,19 +442,22 @@ export const POST: APIRoute = async ({ request }) => {
       if (versionId && planId) {
         const expiredAt = new Date().toISOString();
         await db.transaction(async (tx) => {
-          await tx.update(clubSeasonPaymentPlanVersions).set({
+          const [expiredVersion] = await tx.update(clubSeasonPaymentPlanVersions).set({
             status: 'checkout_expired',
             updatedAt: expiredAt,
           }).where(and(
             eq(clubSeasonPaymentPlanVersions.id, versionId),
             eq(clubSeasonPaymentPlanVersions.stripeCheckoutSessionId, session.id),
             eq(clubSeasonPaymentPlanVersions.status, 'pending_checkout')
-          ));
+          )).returning({ version: clubSeasonPaymentPlanVersions.version });
+          if (!expiredVersion) return;
+
           await tx.update(clubSeasonPaymentPlans).set({
             status: 'checkout_expired',
             updatedAt: expiredAt,
           }).where(and(
             eq(clubSeasonPaymentPlans.id, planId),
+            eq(clubSeasonPaymentPlans.currentVersion, expiredVersion.version),
             eq(clubSeasonPaymentPlans.status, 'checkout_open')
           ));
         });
