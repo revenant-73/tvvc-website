@@ -1,0 +1,489 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getCurrentAdminUser } from '../../../lib/admin-auth';
+
+const SEASON_ID = '2026-2027-club';
+const admin = await getCurrentAdminUser(Astro.request);
+const isAdmin = Boolean(admin);
+---
+
+<BaseLayout
+  title="Club Season Offers"
+  description="Create and manage TVVC club season offers."
+  noindex={true}
+>
+  <main class="relative min-h-screen overflow-hidden px-4 pb-32 pt-28 md:px-6 md:pt-32">
+    <div aria-hidden="true" class="court-lines pointer-events-none absolute inset-0 opacity-[0.045]"></div>
+
+    <div class="relative mx-auto max-w-[92rem]">
+      {!isAdmin ? (
+        <section class="mx-auto max-w-lg rounded-3xl border border-white/10 bg-[#11151d] p-7 text-center shadow-2xl md:p-10" aria-labelledby="restricted-title">
+          <div class="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-brand-coral/30 bg-brand-coral/10 text-brand-coral">
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.28em] text-brand-coral">Restricted area</p>
+          <h1 id="restricted-title" class="font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Admin access required</h1>
+          <p class="mx-auto mt-3 max-w-sm text-sm leading-6 text-white/55">Sign in with a TVVC administrator account to prepare club season offers.</p>
+          <a href="/portal/login?callbackUrl=/admin/club-season/offers" class="mt-7 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-teal px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-charcoal">Sign in</a>
+        </section>
+      ) : (
+        <div class="space-y-5" data-offer-workspace data-season-id={SEASON_ID}>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <a href="/admin/club-season" class="group inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.18em] text-white/60 transition hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"></path></svg>
+              Season control
+            </a>
+            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-white/55">
+              <span class="h-2 w-2 rounded-full bg-brand-teal shadow-glow-teal" aria-hidden="true"></span>
+              Offer workspace
+            </div>
+          </div>
+
+          <header class="border-b border-white/10 pb-5 lg:flex lg:items-end lg:justify-between lg:gap-8">
+            <div>
+              <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-brand-teal">2026–2027 club season</p>
+              <h1 class="mt-2 font-heading text-4xl font-extrabold uppercase leading-none tracking-[-0.04em] text-white md:text-6xl">Build the <span class="text-brand-teal">roster.</span></h1>
+              <p class="mt-3 max-w-2xl text-sm leading-6 text-white/50">Select eligible tryout players, assign one team, and create the batch. No bespoke links. No spreadsheet aerobics.</p>
+            </div>
+            <dl class="mt-5 grid grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-[#11151d] lg:mt-0 lg:min-w-[29rem]">
+              <div class="px-4 py-3">
+                <dt class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Players</dt>
+                <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-white" data-total-count>—</dd>
+              </div>
+              <div class="px-4 py-3">
+                <dt class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Available</dt>
+                <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-brand-teal" data-available-count>—</dd>
+              </div>
+              <div class="px-4 py-3">
+                <dt class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Offered</dt>
+                <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-white" data-offered-count>—</dd>
+              </div>
+            </dl>
+          </header>
+
+          <section class="grid gap-3 rounded-2xl border border-white/10 bg-[#11151d] p-4 xl:grid-cols-[minmax(15rem,1.15fr)_minmax(13rem,.9fr)_minmax(12rem,.7fr)_auto] xl:items-end" aria-label="Offer controls">
+            <div>
+              <label for="team-select" class="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.15em] text-white/60">Offer team</label>
+              <select id="team-select" data-team-select class="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm font-bold text-white outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20">
+                <option value="">Choose a team</option>
+              </select>
+            </div>
+            <div>
+              <label for="deadline-input" class="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.15em] text-white/60">Acceptance deadline <span class="normal-case tracking-normal text-white/55">(optional)</span></label>
+              <input id="deadline-input" data-deadline-input type="date" class="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm font-semibold text-white outline-none transition [color-scheme:dark] focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+            </div>
+            <div>
+              <label for="status-filter" class="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.15em] text-white/60">Show</label>
+              <select id="status-filter" data-status-filter class="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm font-semibold text-white outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20">
+                <option value="available">Available players</option>
+                <option value="all">Everyone</option>
+                <option value="offered">Existing offers</option>
+                <option value="ineligible">Needs attention</option>
+              </select>
+            </div>
+            <button type="button" data-retry-button class="hidden min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 px-4 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal">
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6v6h-6"></path><path d="M20 12a8 8 0 1 0-2.34 5.66L20 15"></path></svg>
+              Retry
+            </button>
+          </section>
+
+          <section class="overflow-hidden rounded-2xl border border-white/10 bg-[#0e1219]" aria-labelledby="player-list-heading">
+            <div class="flex flex-col gap-3 border-b border-white/10 bg-[#11151d] p-4 md:flex-row md:items-center md:justify-between">
+              <div class="flex items-center gap-3">
+                <label class="flex min-h-10 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/15 px-3 text-xs font-bold text-white/70 transition hover:border-brand-teal/40">
+                  <input type="checkbox" data-select-visible class="h-4 w-4 rounded border-white/30 bg-transparent text-brand-teal focus:ring-brand-teal focus:ring-offset-[#11151d]" />
+                  Select visible
+                </label>
+                <p id="player-list-heading" class="text-xs font-bold uppercase tracking-[0.14em] text-white/55"><span data-visible-count>0</span> shown</p>
+              </div>
+              <div class="relative w-full md:max-w-sm">
+                <svg aria-hidden="true" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                <label for="player-search" class="sr-only">Search players, parents, or tryouts</label>
+                <input id="player-search" data-search type="search" autocomplete="off" placeholder="Search player, parent, or tryout…" class="min-h-10 w-full rounded-lg border border-white/10 bg-black/20 pl-10 pr-3 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+              </div>
+            </div>
+
+            <div data-live-status class="sr-only" role="status" aria-live="polite"></div>
+            <div data-loading-state class="space-y-px" aria-label="Loading tryout players">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <div class="grid animate-pulse grid-cols-[2.5rem_1fr_auto] items-center gap-3 border-b border-white/[0.06] px-4 py-4" style={`animation-delay:${index * 80}ms`}>
+                  <span class="h-4 w-4 rounded bg-white/10"></span>
+                  <span class="h-4 max-w-md rounded bg-white/10"></span>
+                  <span class="h-7 w-20 rounded bg-white/10"></span>
+                </div>
+              ))}
+            </div>
+            <div data-error-state class="hidden px-5 py-16 text-center" role="alert">
+              <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-brand-coral/30 bg-brand-coral/10 text-brand-coral">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6"></path><path d="M12 17h.01"></path></svg>
+              </div>
+              <h2 class="mt-4 font-heading text-xl font-extrabold uppercase text-white">Couldn’t load tryout players</h2>
+              <p class="mx-auto mt-2 max-w-md text-sm text-white/50" data-error-message>Check the connection and try again.</p>
+            </div>
+            <div data-empty-state class="hidden px-5 py-16 text-center">
+              <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-brand-teal">All clear</p>
+              <h2 class="mt-2 font-heading text-xl font-extrabold uppercase text-white">No players match this view</h2>
+              <p class="mx-auto mt-2 max-w-md text-sm text-white/55">Adjust the filter or search. Your current selections are still saved.</p>
+            </div>
+            <div data-player-list class="hidden divide-y divide-white/[0.06]"></div>
+          </section>
+
+          <aside data-batch-tray class="pointer-events-none fixed inset-x-3 bottom-3 z-40 translate-y-6 opacity-0 transition duration-200 md:inset-x-auto md:bottom-5 md:left-1/2 md:w-[min(48rem,calc(100%-3rem))] md:-translate-x-1/2" aria-label="Selected offer batch">
+            <div class="pointer-events-auto flex flex-col gap-3 rounded-2xl border border-brand-teal/35 bg-[#0a0e14]/95 p-3 shadow-2xl backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-teal text-base font-extrabold tabular-nums text-white" data-selected-count>0</div>
+                <div>
+                  <p class="text-xs font-extrabold uppercase tracking-[0.15em] text-white">Players selected</p>
+                  <p class="mt-0.5 text-xs text-white/55" data-batch-summary>Choose a team to prepare the batch.</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" data-clear-selection class="min-h-10 rounded-lg px-3 text-xs font-extrabold uppercase tracking-[0.12em] text-white/60 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Clear</button>
+                <button type="button" data-create-offers disabled class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#0a0e14] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none">
+                  <span data-create-label>Create offers</span>
+                  <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+    </div>
+  </main>
+
+  {isAdmin && (
+    <script>
+      type Team = {
+        id: string;
+        name: string;
+        ageGroupId: string;
+        ageGroupLabel: string;
+        acceptanceDeadlineOverride: string | null;
+      };
+      type Offer = { id: string; status: string; teamId: string; acceptanceDeadline: string | null };
+      type Candidate = {
+        athleteId: number;
+        firstName: string;
+        lastName: string;
+        grade: string | null;
+        tryoutName: string;
+        parentName: string;
+        parentEmail: string;
+        eligible: boolean;
+        issue: string | null;
+        offer: Offer | null;
+      };
+      type WorkspaceResponse = { season: { name: string }; teams: Team[]; candidates: Candidate[] };
+
+      const root = document.querySelector<HTMLElement>('[data-offer-workspace]');
+      if (root) {
+        const endpoint = '/api/admin/club-season-offers';
+        const seasonId = root.dataset.seasonId || '';
+        const teamSelect = root.querySelector<HTMLSelectElement>('[data-team-select]');
+        const deadlineInput = root.querySelector<HTMLInputElement>('[data-deadline-input]');
+        const statusFilter = root.querySelector<HTMLSelectElement>('[data-status-filter]');
+        const searchInput = root.querySelector<HTMLInputElement>('[data-search]');
+        const playerList = root.querySelector<HTMLElement>('[data-player-list]');
+        const loadingState = root.querySelector<HTMLElement>('[data-loading-state]');
+        const errorState = root.querySelector<HTMLElement>('[data-error-state]');
+        const emptyState = root.querySelector<HTMLElement>('[data-empty-state]');
+        const retryButton = root.querySelector<HTMLButtonElement>('[data-retry-button]');
+        const selectVisible = root.querySelector<HTMLInputElement>('[data-select-visible]');
+        const batchTray = root.querySelector<HTMLElement>('[data-batch-tray]');
+        const createButton = root.querySelector<HTMLButtonElement>('[data-create-offers]');
+        const clearButton = root.querySelector<HTMLButtonElement>('[data-clear-selection]');
+        const liveStatus = root.querySelector<HTMLElement>('[data-live-status]');
+
+        let teams: Team[] = [];
+        let candidates: Candidate[] = [];
+        const selected = new Set<number>();
+
+        const setText = (selector: string, value: string | number) => {
+          const element = root.querySelector<HTMLElement>(selector);
+          if (element) element.textContent = String(value);
+        };
+        const announce = (message: string) => {
+          if (liveStatus) liveStatus.textContent = message;
+        };
+        const notify = (type: 'success' | 'error', message: string) => {
+          const toast = (window as Window & { toast?: Record<string, (text: string) => void> }).toast;
+          toast?.[type]?.(message);
+        };
+        const offerLabel = (status: string) => ({
+          offered: 'Offer sent',
+          registration_started: 'Registration started',
+          declined: 'Declined',
+          revoked: 'Revoked',
+          accepted: 'Accepted',
+        }[status] || status.replaceAll('_', ' '));
+
+        const filteredCandidates = () => {
+          const query = (searchInput?.value || '').trim().toLowerCase();
+          const filter = statusFilter?.value || 'available';
+          return candidates.filter((candidate) => {
+            const searchable = `${candidate.firstName} ${candidate.lastName} ${candidate.parentName} ${candidate.parentEmail} ${candidate.tryoutName}`.toLowerCase();
+            if (query && !searchable.includes(query)) return false;
+            if (filter === 'available') return candidate.eligible && !candidate.offer;
+            if (filter === 'offered') return Boolean(candidate.offer);
+            if (filter === 'ineligible') return !candidate.eligible;
+            return true;
+          });
+        };
+
+        const updateBatch = () => {
+          const count = selected.size;
+          setText('[data-selected-count]', count);
+          batchTray?.classList.toggle('translate-y-6', count === 0);
+          batchTray?.classList.toggle('opacity-0', count === 0);
+          batchTray?.classList.toggle('pointer-events-none', count === 0);
+          batchTray?.classList.toggle('translate-y-0', count > 0);
+          batchTray?.classList.toggle('opacity-100', count > 0);
+          const team = teams.find((item) => item.id === teamSelect?.value);
+          setText('[data-batch-summary]', team ? `${team.name} · ${deadlineInput?.value ? `reply by ${deadlineInput.value}` : 'team default deadline'}` : 'Choose a team to prepare the batch.');
+          if (createButton) createButton.disabled = count === 0 || !team;
+        };
+
+        const makeText = (tag: string, classes: string, text: string) => {
+          const element = document.createElement(tag);
+          element.className = classes;
+          element.textContent = text;
+          return element;
+        };
+
+        const updateOffer = async (offer: Offer, action: 'revoke' | 'restore', button: HTMLButtonElement) => {
+          const original = button.textContent;
+          button.disabled = true;
+          button.textContent = action === 'revoke' ? 'Revoking…' : 'Restoring…';
+          try {
+            const response = await fetch(endpoint, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ offerId: offer.id, action }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'The offer could not be updated.');
+            notify('success', action === 'revoke' ? 'Offer revoked' : 'Offer restored');
+            await loadWorkspace(false);
+            announce(`Offer for ${button.getAttribute('data-player-name') || 'player'} ${action === 'revoke' ? 'revoked' : 'restored'}.`);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'The offer could not be updated.';
+            notify('error', message);
+            announce(message);
+            button.disabled = false;
+            button.textContent = original;
+          }
+        };
+
+        const render = () => {
+          if (!playerList) return;
+          playerList.replaceChildren();
+          const visible = filteredCandidates();
+          setText('[data-visible-count]', visible.length);
+          emptyState?.classList.toggle('hidden', visible.length > 0);
+          playerList.classList.toggle('hidden', visible.length === 0);
+
+          const selectableVisible = visible.filter((candidate) => candidate.eligible && !candidate.offer);
+          if (selectVisible) {
+            const selectedVisible = selectableVisible.filter((candidate) => selected.has(candidate.athleteId)).length;
+            selectVisible.checked = selectableVisible.length > 0 && selectedVisible === selectableVisible.length;
+            selectVisible.indeterminate = selectedVisible > 0 && selectedVisible < selectableVisible.length;
+            selectVisible.disabled = selectableVisible.length === 0;
+          }
+
+          visible.forEach((candidate) => {
+            const row = document.createElement('article');
+            row.className = 'grid gap-2 px-4 py-3 transition hover:bg-white/[0.025] md:grid-cols-[2.5rem_minmax(13rem,1.2fr)_minmax(12rem,1fr)_minmax(9rem,.8fr)_auto] md:items-center md:gap-3 md:py-3.5';
+            row.dataset.athleteId = String(candidate.athleteId);
+
+            const identityCell = document.createElement('div');
+            identityCell.className = 'grid grid-cols-[2.5rem_minmax(0,1fr)] items-center md:contents';
+            const checkCell = document.createElement('div');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'h-4 w-4 rounded border-white/30 bg-transparent text-brand-teal focus:ring-brand-teal focus:ring-offset-[#0e1219] disabled:cursor-not-allowed disabled:opacity-20';
+            checkbox.checked = selected.has(candidate.athleteId);
+            checkbox.disabled = !candidate.eligible || Boolean(candidate.offer);
+            checkbox.setAttribute('aria-label', `Select ${candidate.firstName} ${candidate.lastName}`);
+            checkbox.addEventListener('change', () => {
+              if (checkbox.checked) selected.add(candidate.athleteId);
+              else selected.delete(candidate.athleteId);
+              updateBatch();
+              announce(`${candidate.firstName} ${candidate.lastName} ${checkbox.checked ? 'selected' : 'removed'}. ${selected.size} player${selected.size === 1 ? '' : 's'} selected.`);
+              render();
+            });
+            checkCell.append(checkbox);
+
+            const playerCell = document.createElement('div');
+            playerCell.append(
+              makeText('h3', 'font-heading text-base font-extrabold uppercase tracking-tight text-white', `${candidate.lastName}, ${candidate.firstName}`),
+              makeText('p', 'mt-0.5 text-xs font-bold uppercase tracking-[0.11em] text-white/55', `${candidate.grade ? `Grade ${candidate.grade} · ` : ''}${candidate.tryoutName}`)
+            );
+
+            const detailCell = document.createElement('div');
+            detailCell.className = 'grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border-t border-white/[0.06] pt-2 md:contents';
+
+            const parentCell = document.createElement('div');
+            parentCell.append(
+              makeText('p', 'text-xs font-semibold text-white/75', candidate.parentName || 'Parent name unavailable'),
+              makeText('p', 'mt-0.5 truncate text-xs text-white/55', candidate.parentEmail || 'No email')
+            );
+
+            const statusCell = document.createElement('div');
+            const statusText = candidate.offer ? offerLabel(candidate.offer.status) : candidate.eligible ? 'Ready' : 'Needs attention';
+            const statusClass = candidate.offer?.status === 'revoked' || !candidate.eligible
+              ? 'text-brand-coral border-brand-coral/25 bg-brand-coral/10'
+              : candidate.offer
+                ? 'text-white/65 border-white/10 bg-white/[0.04]'
+                : 'text-brand-teal border-brand-teal/25 bg-brand-teal/10';
+            statusCell.append(makeText('span', `inline-flex rounded-md border px-2 py-1 text-xs font-extrabold uppercase tracking-[0.1em] ${statusClass}`, statusText));
+            if (candidate.issue) statusCell.append(makeText('p', 'mt-1.5 max-w-[15rem] text-xs leading-4 text-brand-coral', candidate.issue));
+
+            const actionCell = document.createElement('div');
+            actionCell.className = 'md:text-right';
+            if (candidate.offer && ['offered', 'declined', 'revoked'].includes(candidate.offer.status)) {
+              const action = candidate.offer.status === 'revoked' ? 'restore' : 'revoke';
+              const button = makeText('button', 'min-h-9 rounded-lg border border-white/10 px-3 text-xs font-extrabold uppercase tracking-[0.1em] text-white/60 transition hover:border-brand-teal/40 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:opacity-50', action === 'restore' ? 'Restore' : 'Revoke') as HTMLButtonElement;
+              button.type = 'button';
+              button.setAttribute('data-player-name', `${candidate.firstName} ${candidate.lastName}`);
+              button.addEventListener('click', () => updateOffer(candidate.offer!, action, button));
+              actionCell.append(button);
+            } else if (candidate.offer) {
+              actionCell.append(makeText('span', 'text-xs font-semibold text-white/55', 'Locked'));
+            } else {
+              actionCell.append(makeText('span', 'text-xs font-semibold text-white/55', 'No offer'));
+            }
+
+            identityCell.append(checkCell, playerCell);
+            detailCell.append(parentCell, statusCell, actionCell);
+            row.append(identityCell, detailCell);
+            playerList.append(row);
+          });
+          updateBatch();
+        };
+
+        const loadWorkspace = async (showLoading = true) => {
+          if (showLoading) loadingState?.classList.remove('hidden');
+          errorState?.classList.add('hidden');
+          emptyState?.classList.add('hidden');
+          playerList?.classList.add('hidden');
+          retryButton?.classList.add('hidden');
+          try {
+            const response = await fetch(`${endpoint}?seasonId=${encodeURIComponent(seasonId)}`);
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'The offer workspace could not be loaded.');
+            const payload = data as WorkspaceResponse;
+            teams = payload.teams || [];
+            candidates = payload.candidates || [];
+            for (const athleteId of Array.from(selected)) {
+              const candidate = candidates.find((item) => item.athleteId === athleteId);
+              if (!candidate?.eligible || candidate.offer) selected.delete(athleteId);
+            }
+            if (teamSelect) {
+              const currentTeam = teamSelect.value;
+              teamSelect.replaceChildren(new Option('Choose a team', ''));
+              teams.forEach((team) => teamSelect.add(new Option(`${team.ageGroupLabel} · ${team.name}`, team.id)));
+              teamSelect.value = teams.some((team) => team.id === currentTeam) ? currentTeam : '';
+            }
+            setText('[data-total-count]', candidates.length);
+            setText('[data-available-count]', candidates.filter((candidate) => candidate.eligible && !candidate.offer).length);
+            setText('[data-offered-count]', candidates.filter((candidate) => candidate.offer).length);
+            announce(`${candidates.length} tryout players loaded.`);
+            render();
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'The offer workspace could not be loaded.';
+            const target = errorState?.querySelector<HTMLElement>('[data-error-message]');
+            if (target) target.textContent = message;
+            errorState?.classList.remove('hidden');
+            retryButton?.classList.remove('hidden');
+            announce(message);
+          } finally {
+            loadingState?.classList.add('hidden');
+          }
+        };
+
+        searchInput?.addEventListener('input', render);
+        statusFilter?.addEventListener('change', render);
+        teamSelect?.addEventListener('change', () => {
+          const team = teams.find((item) => item.id === teamSelect.value);
+          if (deadlineInput) deadlineInput.value = team?.acceptanceDeadlineOverride || '';
+          updateBatch();
+        });
+        deadlineInput?.addEventListener('change', updateBatch);
+        retryButton?.addEventListener('click', () => loadWorkspace());
+        clearButton?.addEventListener('click', () => {
+          selected.clear();
+          render();
+          announce('Selection cleared.');
+        });
+        selectVisible?.addEventListener('change', () => {
+          filteredCandidates().forEach((candidate) => {
+            if (!candidate.eligible || candidate.offer) return;
+            if (selectVisible.checked) selected.add(candidate.athleteId);
+            else selected.delete(candidate.athleteId);
+          });
+          render();
+          announce(`${selected.size} players selected.`);
+        });
+        createButton?.addEventListener('click', async () => {
+          if (!teamSelect?.value || selected.size === 0 || !createButton) return;
+          const team = teams.find((item) => item.id === teamSelect.value);
+          const count = selected.size;
+          if (!window.confirm(`Create ${count} offer${count === 1 ? '' : 's'} for ${team?.name || 'this team'}?`)) return;
+          createButton.disabled = true;
+          setText('[data-create-label]', 'Creating…');
+          announce(`Creating ${count} offers.`);
+          try {
+            const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                seasonId,
+                teamId: teamSelect.value,
+                athleteIds: Array.from(selected),
+                acceptanceDeadline: deadlineInput?.value || null,
+              }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok && response.status !== 207) throw new Error(data.error || 'The offers could not be created.');
+            const results = Array.isArray(data.results) ? data.results : [];
+            const created = results.filter((item: { status?: string }) => item.status === 'created').length;
+            const existing = results.filter((item: { status?: string }) => item.status === 'already_offered').length;
+            const invalid = results.filter((item: { status?: string }) => item.status === 'invalid').length;
+            selected.clear();
+            const summary = `${created} created${existing ? `, ${existing} already offered` : ''}${invalid ? `, ${invalid} need attention` : ''}.`;
+            notify(invalid ? 'error' : 'success', summary);
+            announce(summary);
+            await loadWorkspace(false);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'The offers could not be created.';
+            notify('error', message);
+            announce(message);
+          } finally {
+            setText('[data-create-label]', 'Create offers');
+            updateBatch();
+          }
+        });
+
+        loadWorkspace();
+      }
+    </script>
+  )}
+
+  <style>
+    .court-lines {
+      background-image:
+        linear-gradient(90deg, transparent calc(50% - .5px), white 50%, transparent calc(50% + .5px)),
+        linear-gradient(0deg, transparent calc(50% - .5px), white 50%, transparent calc(50% + .5px)),
+        linear-gradient(90deg, transparent 11%, white 11%, white calc(11% + 1px), transparent calc(11% + 1px), transparent 89%, white 89%, white calc(89% + 1px), transparent calc(89% + 1px));
+      background-size: min(86rem, 94vw) 40rem;
+      background-position: center 9rem;
+      background-repeat: no-repeat;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      [data-loading-state] > *, [data-batch-tray] { animation: none !important; transition: none !important; }
+    }
+  </style>
+</BaseLayout>

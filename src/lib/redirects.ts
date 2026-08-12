@@ -9,7 +9,7 @@ export function getSafeCallbackUrl(
   try {
     const baseUrl = new URL('https://tvvc.invalid');
     const callbackUrl = new URL(requestedUrl, baseUrl);
-    const allowedPath = /^\/(?:portal|admin)(?:\/|$)/.test(callbackUrl.pathname);
+    const allowedPath = /^\/(?:portal|admin|season-registration)(?:\/|$)/.test(callbackUrl.pathname);
 
     if (callbackUrl.origin !== baseUrl.origin || !allowedPath) {
       return fallback;

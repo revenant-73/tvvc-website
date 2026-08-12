@@ -1,0 +1,1669 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import {
+  getOwnedClubSeasonOffers,
+  getPublishedClubSeasonAgreements,
+  getVerifiedClubSeasonUser,
+} from '../lib/club-season-access';
+import { parseClubSeasonDraftData } from '../lib/club-season-draft';
+import {
+  canAccessClubSeasonRegistration,
+  isClubSeasonPilotAccess,
+  isClubSeasonRegistrationEnabled,
+} from '../lib/club-season-feature';
+import { getClubDate } from '../lib/event-eligibility';
+import { getClubSeasonRegistrationWindowState } from '../lib/club-season-settings';
+import {
+  CLUB_SEASON_AUTOPAY_AUTHORIZATION,
+  buildClubSeasonPaymentTerms,
+  hashClubSeasonPaymentTerms,
+} from '../lib/club-season-payment';
+
+const session = await getSession(Astro.request);
+const isSignedIn = Boolean(session?.user);
+const verifiedUser = isSignedIn ? await getVerifiedClubSeasonUser(Astro.request) : null;
+const featureEnabled = isClubSeasonRegistrationEnabled();
+const pilotAccess = isClubSeasonPilotAccess(verifiedUser?.email);
+const ownedOffers = (featureEnabled || pilotAccess) && verifiedUser
+  ? (await getOwnedClubSeasonOffers(Astro.request)).filter((item) => (
+      canAccessClubSeasonRegistration(verifiedUser.email, item.season.publicRegistrationEnabled)
+    ))
+  : [];
+const clubDate = getClubDate();
+const paymentRedirectState = Astro.url.searchParams.get('payment');
+const seasonIdsWithDrafts = [...new Set(ownedOffers.filter(({ draft }) => Boolean(draft)).map(({ season }) => season.id))];
+const agreementsBySeason = new Map(await Promise.all(
+  seasonIdsWithDrafts.map(async (seasonId) => [seasonId, await getPublishedClubSeasonAgreements(seasonId)] as const)
+));
+const paymentTermsByOffer = new Map(await Promise.all(
+  ownedOffers
+    .filter(({ draft }) => draft?.status === 'awaiting_payment')
+    .map(async ({ offer, season, team, pricingTier }) => {
+      const sharedInput = {
+        registrationDate: clubDate,
+        firstInstallmentDate: season.firstInstallmentDate,
+        billingDay: team.billingDayOverride || season.defaultBillingDay,
+        pricing: {
+          totalAmount: pricingTier.totalAmount,
+          depositAmount: pricingTier.depositAmount,
+          installmentAmount: pricingTier.installmentAmount,
+          installmentCount: season.standardInstallmentCount,
+        },
+      };
+      const payInFull = buildClubSeasonPaymentTerms({ ...sharedInput, paymentOption: 'pay_in_full' });
+      const standardPlan = buildClubSeasonPaymentTerms({ ...sharedInput, paymentOption: 'standard_plan' });
+      return [offer.id, {
+        payInFull: { terms: payInFull, fingerprint: await hashClubSeasonPaymentTerms(payInFull) },
+        standardPlan: { terms: standardPlan, fingerprint: await hashClubSeasonPaymentTerms(standardPlan) },
+      }] as const;
+    })
+));
+
+const money = (cents: number) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+}).format(cents / 100);
+
+const displayDate = (value?: string | null) => {
+  if (!value) return 'Contact TVVC for your response date';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T12:00:00Z`));
+};
+
+const displayScheduleDate = (value: string) => new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+}).format(new Date(`${value}T12:00:00Z`));
+
+const displayPacificDateTime = (value?: string | null) => value
+  ? new Intl.DateTimeFormat('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
+      timeZone: 'America/Los_Angeles', timeZoneName: 'short',
+    }).format(new Date(value))
+  : 'a date set by TVVC';
+
+const firstName = (value: string) => value.trim().split(/\s+/)[0] || value;
+const offerState = (status: string, deadline?: string | null) => {
+  if (status === 'offered' && deadline && deadline < clubDate) return 'expired';
+  return status;
+};
+
+const installmentMonths = [
+  { month: 'January', due: 'Due Jan 5' },
+  { month: 'February', due: 'Due Feb 5' },
+  { month: 'March', due: 'Due Mar 5' },
+  { month: 'April', due: 'Due Apr 5' },
+  { month: 'May', due: 'Due May 5' },
+];
+
+const sizeOptions = ['YS', 'YM', 'YL', 'YXL', 'AS', 'AM', 'AL', 'AXL', 'A2XL', 'A3XL'];
+const humanizeResponse = (value: string) => value
+  .replace(/[_-]+/g, ' ')
+  .replace(/\b\w/g, (letter) => letter.toUpperCase());
+const parseAllowedResponses = (value?: string | null): string[] => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+};
+const fieldClass = 'min-h-12 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm text-white outline-none placeholder:text-white/25 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20 disabled:cursor-not-allowed disabled:opacity-60';
+const textareaClass = `${fieldClass} min-h-28 resize-y py-3 leading-6`;
+const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-white/65';
+---
+
+<BaseLayout
+  title="Club Season Invitation"
+  description="Review your private TVVC club season invitation."
+  noindex={true}
+>
+  <main class="relative min-h-screen px-4 pb-24 pt-28 md:px-6 md:pb-32 md:pt-36">
+    <div aria-hidden="true" class="offer-court pointer-events-none absolute inset-x-0 top-20 mx-auto h-[34rem] max-w-7xl opacity-[0.055]"></div>
+    <div class="relative mx-auto max-w-6xl">
+      {!isSignedIn ? (
+        <section class="mx-auto max-w-xl overflow-hidden rounded-3xl border border-white/10 bg-[#11151d] shadow-2xl" aria-labelledby="invitation-title">
+          <div class="h-1.5 bg-brand-teal"></div>
+          <div class="p-7 text-center md:p-11">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-teal/25 bg-brand-teal/10 text-brand-teal">
+              <svg aria-hidden="true" width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
+            </div>
+            <p class="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-brand-teal">Private club season link</p>
+            <h1 id="invitation-title" class="mt-2 font-heading text-3xl font-extrabold uppercase leading-tight tracking-[-0.035em] text-white md:text-5xl">Open your invitation</h1>
+            <p class="mx-auto mt-4 max-w-md text-sm leading-6 text-white/55">Sign in with the email used for tryout registration. We’ll show only invitations connected to your family’s verified account.</p>
+            <a href="/portal/login?callbackUrl=%2Fseason-registration" class="mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-teal px-6 text-sm font-extrabold uppercase tracking-[0.11em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d]">
+              Sign in securely
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+            </a>
+            <p class="mt-5 text-xs leading-5 text-white/55">This shared page does not expose invitation details before sign-in.</p>
+          </div>
+        </section>
+      ) : (
+        <div class="space-y-10">
+          {pilotAccess && (
+            <aside
+              class="relative overflow-hidden border border-amber-300/35 bg-[#17160f] shadow-[0_18px_55px_rgba(0,0,0,0.26)]"
+              aria-labelledby="controlled-pilot-title"
+              data-pilot-access-banner
+            >
+              <div class="absolute inset-y-0 left-0 w-1 bg-amber-300" aria-hidden="true"></div>
+              <div class="absolute right-0 top-0 h-px w-32 bg-gradient-to-l from-amber-300/70 to-transparent" aria-hidden="true"></div>
+              <div class="grid gap-5 px-5 py-5 pl-7 sm:px-7 sm:pl-9 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-center lg:gap-7">
+                <div class="flex items-center gap-3 lg:border-r lg:border-amber-200/15 lg:pr-7">
+                  <div class="relative flex h-11 w-11 shrink-0 items-center justify-center border border-amber-300/30 bg-amber-300/[0.07] text-amber-200" aria-hidden="true">
+                    <span class="absolute left-1 top-1 h-1.5 w-1.5 bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.75)]"></span>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                      <path d="M12 3v4"></path>
+                      <path d="M12 17v4"></path>
+                      <path d="M3 12h4"></path>
+                      <path d="M17 12h4"></path>
+                      <circle cx="12" cy="12" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-[0.65rem] font-extrabold uppercase tracking-[0.2em] text-amber-200/65">Operating status</p>
+                    <div class="mt-1 inline-flex items-center gap-2 border border-amber-300/40 bg-black/25 px-2.5 py-1 font-mono text-[0.68rem] font-bold uppercase tracking-[0.18em] text-amber-200">
+                      <span class="h-1.5 w-1.5 bg-amber-300 shadow-[0_0_7px_rgba(252,211,77,0.7)]" aria-hidden="true"></span>
+                      Test mode
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-[0.65rem] font-extrabold uppercase tracking-[0.2em] text-amber-200/65">Authorized verification account</p>
+                  <h2 id="controlled-pilot-title" class="mt-1 font-heading text-xl font-extrabold uppercase tracking-[-0.01em] text-amber-100 md:text-2xl">Controlled test pilot</h2>
+                  <p class="mt-2 max-w-3xl text-sm leading-6 text-amber-50/75">
+                    Your family is testing the registration flow with Stripe test mode. <strong class="font-bold text-amber-50">No real card will be charged</strong>, public registration remains closed, and test data may be removed after verification.
+                  </p>
+                </div>
+              </div>
+            </aside>
+          )}
+          {ownedOffers.length === 0 ? (
+            <section class="mx-auto max-w-xl rounded-3xl border border-white/10 bg-[#11151d] p-7 text-center shadow-2xl md:p-11" aria-labelledby="no-offer-title">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/45">
+            <svg aria-hidden="true" width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 17h.01"></path></svg>
+          </div>
+          <p class="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-white/60">Club season registration</p>
+          <h1 id="no-offer-title" class="mt-2 font-heading text-3xl font-extrabold uppercase tracking-[-0.03em] text-white">No active offer found</h1>
+          <p class="mx-auto mt-4 max-w-md text-sm leading-6 text-white/55">If you expected an invitation, confirm that you signed in with the email used at tryouts. TVVC can help check the record without changing your account ownership.</p>
+          <a href="mailto:info@tualatinvalleyvb.com?subject=Club%20season%20offer%20help" class="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal">Contact TVVC</a>
+            </section>
+          ) : (
+            <div class="space-y-10">
+              <h1 class="sr-only">Your TVVC club season invitations</h1>
+          {ownedOffers.map((item, index) => {
+            const state = offerState(item.offer.status, item.offer.acceptanceDeadline);
+            const playerName = `${item.athlete.firstName} ${item.athlete.lastName}`;
+            const started = state === 'registration_started' || (state === 'offered' && Boolean(item.draft));
+            const canRespond = state === 'offered' && !started;
+            const registrationWindowState = getClubSeasonRegistrationWindowState(item.season);
+            const canStartRegistration = registrationWindowState === 'open';
+            const editableDraft = started && item.draft?.status === 'draft';
+            const awaitingPayment = started && item.draft?.status === 'awaiting_payment';
+            const savedDraftData = parseClubSeasonDraftData(item.draft?.draftData) || {
+              schemaVersion: 1 as const,
+              family: {
+                addressLine1: '', addressLine2: '', city: '', state: '', postalCode: '',
+                emergencyContactName: '', emergencyContactRelationship: '',
+                emergencyContactPhone: item.sourceRegistration.emergencyPhone || '',
+                communicationPreference: '' as const, informationConfirmed: false,
+              },
+              player: {
+                preferredName: item.athlete.preferredName || '', jerseySize: (item.athlete.jerseySize || '') as '', apparelSize: '' as const,
+                jerseyNumberPreferences: [] as number[], medicalInfo: item.athlete.medicalInfo || '',
+                medicalInformationConfirmed: false, cevaMembershipStatus: '' as const,
+                cevaMembershipNumber: '', medicalReleaseStatus: '' as const, seasonConflicts: '',
+              },
+            };
+            const currentStep = Math.min(3, Math.max(1, item.draft?.currentStep || 1));
+            const agreements = agreementsBySeason.get(item.season.id) || [];
+            const paymentChoices = paymentTermsByOffer.get(item.offer.id);
+            const customPaymentTerms = (item as typeof item & { customPaymentTerms?: any }).customPaymentTerms;
+            const customFutureCharges = customPaymentTerms?.charges?.slice(1) || [];
+            const stateCopy = state === 'revoked'
+              ? { eyebrow: 'Invitation updated', title: 'This offer is no longer active', body: 'TVVC has withdrawn this invitation. Contact the club if you believe this was unexpected.', tone: 'coral' }
+              : state === 'declined'
+                ? { eyebrow: 'Response received', title: 'You declined this offer', body: 'Your response has been saved. If your plans change, contact TVVC to ask whether the spot is still available.', tone: 'quiet' }
+                : state === 'expired'
+                  ? { eyebrow: 'Response window closed', title: 'This offer has expired', body: 'The response deadline has passed. Contact TVVC before making any plans; the roster spot may have been reassigned.', tone: 'coral' }
+                  : awaitingPayment
+                    ? { eyebrow: 'Information complete', title: 'Ready for the payment handoff', body: 'Your registration details and agreement acknowledgements are recorded. The roster spot is not final until the deposit is paid.', tone: 'teal' }
+                    : started
+                      ? { eyebrow: 'Draft started', title: 'Your registration is underway', body: 'Complete the three short sections below. Your work saves as you go, and the roster spot is not final until the deposit is paid.', tone: 'teal' }
+                    : state === 'accepted'
+                      ? { eyebrow: 'Welcome to TVVC', title: 'Your spot is confirmed', body: 'This registration has been accepted and recorded. TVVC will share the next team details with your family.', tone: 'teal' }
+                      : registrationWindowState === 'not_open'
+                        ? { eyebrow: 'Invitation received', title: 'Registration opens soon', body: `This invitation is ready. Registration opens ${displayPacificDateTime(item.season.registrationOpensAt)}; return then to begin.`, tone: 'quiet' }
+                        : registrationWindowState === 'closed'
+                          ? { eyebrow: 'Registration window closed', title: 'Contact TVVC about this offer', body: 'The season registration window has closed. TVVC can review the invitation and advise whether registration can be reopened.', tone: 'coral' }
+                          : registrationWindowState === 'not_configured'
+                            ? { eyebrow: 'Invitation received', title: 'Registration timing is being finalized', body: 'TVVC has not opened the season registration window yet. Your invitation remains private and linked to this account.', tone: 'quiet' }
+                            : { eyebrow: 'You’re invited', title: `${firstName(item.athlete.firstName)}, this spot is yours to claim.`, body: `TVVC is offering ${playerName} a place on ${item.team.name} for the ${item.season.name}.`, tone: 'teal' };
+            return (
+              <article class:list={[editableDraft ? 'overflow-visible' : 'overflow-hidden', 'rounded-[1.75rem] border border-white/10 bg-[#11151d] shadow-2xl']} data-parent-offer data-offer-id={item.offer.id} style={`animation-delay:${index * 100}ms`}>
+                <div class:list={[
+                  'h-1.5 rounded-t-[1.75rem]',
+                  stateCopy.tone === 'coral' ? 'bg-brand-coral' : stateCopy.tone === 'teal' ? 'bg-brand-teal' : 'bg-white/20',
+                ]}></div>
+                <div class:list={[editableDraft ? 'overflow-visible' : 'overflow-hidden', 'relative px-6 pb-7 pt-7 md:px-10 md:pb-10 md:pt-10']}>
+                  <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden rounded-[1.7rem]">
+                    <div class="absolute -right-20 -top-24 h-72 w-72 rounded-full border border-white/[0.05]"></div>
+                    <div class="absolute -right-8 -top-12 h-52 w-52 rounded-full border border-white/[0.05]"></div>
+                  </div>
+
+                  <header class="relative grid gap-7 border-b border-white/10 pb-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                    <div>
+                      <div class="flex flex-wrap items-center gap-3">
+                        <p class:list={[
+                          'text-xs font-extrabold uppercase tracking-[0.16em]',
+                          stateCopy.tone === 'coral' ? 'text-brand-coral' : stateCopy.tone === 'teal' ? 'text-brand-teal' : 'text-white/40',
+                        ]}>{stateCopy.eyebrow}</p>
+                        <span class="h-px w-10 bg-white/15" aria-hidden="true"></span>
+                        <p class="text-xs font-bold uppercase tracking-[0.14em] text-white/55">{item.ageGroup.label}</p>
+                      </div>
+                      <h2 class="mt-3 max-w-3xl font-heading text-3xl font-extrabold uppercase leading-[0.98] tracking-[-0.04em] text-white md:text-5xl lg:text-6xl">{stateCopy.title}</h2>
+                      <p class="mt-4 max-w-2xl text-sm leading-6 text-white/60 md:text-base">{stateCopy.body}</p>
+                    </div>
+                    <div class="min-w-52 border-l-2 border-brand-teal pl-4">
+                      <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Player</p>
+                      <p class="mt-1 font-heading text-lg font-extrabold uppercase tracking-tight text-white">{playerName}</p>
+                      <p class="mt-3 text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Team assignment</p>
+                      <p class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">{item.team.name}</p>
+                      <p class="mt-1 text-xs font-semibold text-brand-teal">{item.ageGroup.label} · {item.season.name}</p>
+                    </div>
+                  </header>
+
+                  {canRespond && (
+                    <div class="relative mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,.75fr)]">
+                      <section aria-labelledby={`payment-heading-${item.offer.id}`}>
+                        <div class="flex flex-wrap items-end justify-between gap-3">
+                          <div>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Choose later during registration</p>
+                            <h2 id={`payment-heading-${item.offer.id}`} class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Two payment options</h2>
+                          </div>
+                          <p class="text-xs text-white/55">Automatic card setup comes in the payment step.</p>
+                        </div>
+
+                        <div class="mt-4 overflow-hidden rounded-2xl border border-white/10">
+                          <div class="grid gap-4 border-b border-white/10 bg-black/15 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                            <div>
+                              <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/60">Option 01 · Pay in full</p>
+                              <p class="mt-1 text-sm text-white/55">One card payment during the final registration step.</p>
+                            </div>
+                            <p class="font-heading text-4xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(item.pricingTier.totalAmount)}</p>
+                          </div>
+                          <div class="bg-[#0d1118] p-5">
+                            <div class="flex flex-wrap items-end justify-between gap-3">
+                              <div>
+                                <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Option 02 · Standard plan</p>
+                                <p class="mt-1 text-sm text-white/55"><strong class="font-bold text-white">{money(item.pricingTier.depositAmount)}</strong> deposit in November, then five payments of <strong class="font-bold text-white">{money(item.pricingTier.installmentAmount)}</strong>.</p>
+                              </div>
+                              <p class="text-xs font-bold uppercase tracking-[0.12em] text-white/55">Total {money(item.pricingTier.totalAmount)}</p>
+                            </div>
+                            <ol class="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-4 lg:grid-cols-7" aria-label="Standard payment schedule">
+                              <li class="bg-[#11151d] p-3">
+                                <p class="text-xs font-extrabold uppercase tracking-[0.11em] text-white/60">November</p>
+                                <p class="mt-2 text-sm font-extrabold text-white">{money(item.pricingTier.depositAmount)}</p>
+                                <p class="mt-0.5 text-xs text-white/55">Deposit due</p>
+                              </li>
+                              <li class="border-x border-brand-teal/20 bg-brand-teal/[0.08] p-3">
+                                <p class="text-xs font-extrabold uppercase tracking-[0.11em] text-white/60">December</p>
+                                <p class="mt-2 text-sm font-extrabold text-brand-teal">No charge</p>
+                                <p class="mt-0.5 text-xs text-white/55">Holiday pause</p>
+                              </li>
+                              {installmentMonths.map((installment) => (
+                                <li class="bg-[#11151d] p-3">
+                                  <p class="text-xs font-extrabold uppercase tracking-[0.11em] text-white/60">{installment.month}</p>
+                                  <p class="mt-2 text-sm font-extrabold text-white">{money(item.pricingTier.installmentAmount)}</p>
+                                  <p class="mt-0.5 text-xs font-semibold text-white/60">{installment.due}</p>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                        </div>
+                        <p class="mt-3 text-xs leading-5 text-white/60">Need a different arrangement? Contact TVVC before the deadline. Individual plans can be discussed and documented separately.</p>
+                      </section>
+
+                      <aside class="self-start rounded-2xl border border-brand-teal/25 bg-brand-teal/[0.06] p-5 md:p-6" aria-labelledby={`next-heading-${item.offer.id}`}>
+                        <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Your next serve</p>
+                        <h2 id={`next-heading-${item.offer.id}`} class="mt-1 font-heading text-2xl font-extrabold uppercase text-white">{canStartRegistration ? 'Start the draft' : 'Invitation window'}</h2>
+                        <p class="mt-3 text-sm leading-6 text-white/55">{canStartRegistration ? 'This opens the secure registration process. Starting does not accept the offer or reserve the roster spot by itself.' : registrationWindowState === 'not_open' ? `Registration opens ${displayPacificDateTime(item.season.registrationOpensAt)}.` : 'Registration cannot be started online right now. Contact TVVC if you need help with this invitation.'}</p>
+                        <div class="mt-5 border-y border-white/10 py-4">
+                          <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Reply by</p>
+                          <p class="mt-1 font-heading text-lg font-extrabold text-white">{displayDate(item.offer.acceptanceDeadline)}</p>
+                        </div>
+                        <button type="button" data-start-registration disabled={!canStartRegistration} class="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-not-allowed disabled:opacity-40">
+                          <span data-action-label>{canStartRegistration ? 'Start registration' : registrationWindowState === 'not_open' ? 'Registration opens soon' : 'Registration unavailable'}</span>
+                          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+                        </button>
+                        <button type="button" data-open-decline class="mt-2 min-h-10 w-full text-xs font-extrabold uppercase tracking-[0.12em] text-white/60 transition hover:text-brand-coral focus:outline-none focus:ring-2 focus:ring-brand-coral">Decline this offer</button>
+                        <p class="mt-3 text-center text-xs leading-5 text-white/55">The spot is finalized only after the later deposit is paid.</p>
+                      </aside>
+                    </div>
+                  )}
+
+                  {editableDraft && item.draft && (
+                    <form
+                      class="relative mt-8"
+                      data-registration-draft
+                      data-offer-id={item.offer.id}
+                      data-version={item.draft.version}
+                      data-current-step={currentStep}
+                      data-draft-data={JSON.stringify(savedDraftData)}
+                      data-has-agreements={agreements.length > 0 ? 'true' : 'false'}
+                      novalidate
+                    >
+                      <div class="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
+                        <nav aria-label="Registration progress" class="lg:sticky lg:top-28 lg:self-start">
+                          <div class="rotation-clipboard rounded-2xl border border-white/12 bg-[#0d1118] p-3 lg:p-4">
+                            <div class="clipboard-clip" aria-hidden="true"></div>
+                            <div class="mb-3 flex items-end justify-between gap-3 px-1 lg:mb-4">
+                              <div>
+                                <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Rotation card</p>
+                                <p class="mt-0.5 text-xs text-white/55">Three touches, then payment</p>
+                              </div>
+                              <span class="font-heading text-lg font-extrabold text-white/20">TVVC</span>
+                            </div>
+                            <ol class="rotation-court relative grid grid-cols-3 lg:block">
+                              <svg class="rotation-path" aria-hidden="true" viewBox="0 0 180 260" preserveAspectRatio="none">
+                                <path d="M38 42 L142 130 L38 218 L145 246" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 5"></path>
+                                <path d="m136 238 9 8-11 4" fill="none" stroke="currentColor" stroke-width="2"></path>
+                              </svg>
+                            {[
+                              ['01', 'Family', 'Contact & address'],
+                              ['02', 'Player', 'Gear & readiness'],
+                              ['03', 'Commit', 'Review & agreements'],
+                            ].map(([number, title, detail], stepIndex) => (
+                              <li class={`rotation-position rotation-position-${stepIndex + 1} relative`} data-progress-step={stepIndex + 1}>
+                                <div class="flex min-h-[4.75rem] items-center justify-center gap-2 px-1 py-2 lg:min-h-0 lg:justify-start lg:p-0">
+                                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white/15 bg-[#11151d] font-heading text-sm font-extrabold text-white/50" data-progress-number>{number}</span>
+                                  <span class="min-w-0">
+                                    <span class="block text-xs font-extrabold uppercase tracking-[0.1em] text-white/70">{title}</span>
+                                    <span class="mt-0.5 hidden text-xs leading-4 text-white/55 lg:block">{detail}</span>
+                                  </span>
+                                </div>
+                              </li>
+                            ))}
+                              <li class="payment-handoff hidden lg:flex" aria-hidden="true">
+                                <span class="h-2.5 w-2.5 rounded-full bg-brand-coral"></span>
+                                <span class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/65">Payment handoff</span>
+                              </li>
+                            </ol>
+                          </div>
+                          <div class="mt-3 flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white/60" aria-live="polite" data-save-status>
+                            <span class="h-2 w-2 rounded-full bg-brand-teal" data-save-dot></span>
+                            <span data-save-label>Saved</span>
+                          </div>
+                        </nav>
+
+                        <div class="min-w-0 rounded-2xl border border-white/10 bg-[#0d1118]">
+                          <div data-save-callout class="hidden border-b border-brand-coral/30 bg-brand-coral/10 p-4" role="alert">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <p class="text-sm leading-6 text-white" data-save-error></p>
+                              <div class="flex shrink-0 gap-2">
+                                <button type="button" data-retry-save class="hidden min-h-11 rounded-lg border border-brand-coral/40 px-4 text-xs font-extrabold uppercase tracking-[0.1em] text-brand-coral focus:outline-none focus:ring-2 focus:ring-brand-coral">Retry save</button>
+                                <button type="button" data-reload-draft class="hidden min-h-11 rounded-lg bg-brand-coral px-4 text-xs font-extrabold uppercase tracking-[0.1em] text-white focus:outline-none focus:ring-2 focus:ring-brand-coral">Reload draft</button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <section data-draft-step="1" aria-labelledby={`family-heading-${item.offer.id}`} class="p-5 pb-28 md:p-8 md:pb-28" hidden={currentStep !== 1}>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Position one · First touch</p>
+                            <h2 id={`family-heading-${item.offer.id}`} class="mt-1 font-heading text-3xl font-extrabold uppercase tracking-[-0.025em] text-white">Family & contact</h2>
+                            <p class="mt-2 max-w-2xl text-sm leading-6 text-white/55">Confirm the primary family record, then add the address and emergency contact TVVC should use this season.</p>
+
+                            <div class="mt-7 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
+                              {[
+                                ['Primary parent', item.sourceRegistration.parentName || 'Not provided'],
+                                ['Email', item.sourceRegistration.parentEmail],
+                                ['Phone', item.sourceRegistration.parentPhone || 'Not provided'],
+                              ].map(([label, value]) => (
+                                <div class="bg-[#11151d] p-4">
+                                  <p class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/65">{label}</p>
+                                  <p class="mt-1 break-words text-sm font-semibold text-white">{value}</p>
+                                </div>
+                              ))}
+                            </div>
+
+                            <fieldset class="mt-8">
+                              <legend class="font-heading text-lg font-extrabold uppercase tracking-tight text-white">Mailing address</legend>
+                              <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                                <div class="sm:col-span-2">
+                                  <label class={labelClass} for={`address-1-${item.offer.id}`}>Address line 1</label>
+                                  <input class={fieldClass} id={`address-1-${item.offer.id}`} name="addressLine1" maxlength="120" autocomplete="address-line1" required value={savedDraftData.family.addressLine1} />
+                                </div>
+                                <div class="sm:col-span-2">
+                                  <label class={labelClass} for={`address-2-${item.offer.id}`}>Address line 2 <span class="normal-case tracking-normal text-white/40">(optional)</span></label>
+                                  <input class={fieldClass} id={`address-2-${item.offer.id}`} name="addressLine2" maxlength="120" autocomplete="address-line2" value={savedDraftData.family.addressLine2} />
+                                </div>
+                                <div>
+                                  <label class={labelClass} for={`city-${item.offer.id}`}>City</label>
+                                  <input class={fieldClass} id={`city-${item.offer.id}`} name="city" maxlength="80" autocomplete="address-level2" required value={savedDraftData.family.city} />
+                                </div>
+                                <div class="grid grid-cols-[6.5rem_1fr] gap-3">
+                                  <div>
+                                    <label class={labelClass} for={`state-${item.offer.id}`}>State</label>
+                                    <input class={fieldClass} id={`state-${item.offer.id}`} name="state" maxlength="2" minlength="2" pattern="[A-Za-z]{2}" autocomplete="address-level1" autocapitalize="characters" required value={savedDraftData.family.state} />
+                                  </div>
+                                  <div>
+                                    <label class={labelClass} for={`zip-${item.offer.id}`}>ZIP</label>
+                                    <input class={fieldClass} id={`zip-${item.offer.id}`} name="postalCode" maxlength="10" pattern="\d{5}(-\d{4})?" inputmode="numeric" autocomplete="postal-code" required value={savedDraftData.family.postalCode} />
+                                  </div>
+                                </div>
+                              </div>
+                            </fieldset>
+
+                            <fieldset class="mt-8 border-t border-white/10 pt-7">
+                              <legend class="font-heading text-lg font-extrabold uppercase tracking-tight text-white">Emergency contact</legend>
+                              <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                                <div>
+                                  <label class={labelClass} for={`emergency-name-${item.offer.id}`}>Name</label>
+                                  <input class={fieldClass} id={`emergency-name-${item.offer.id}`} name="emergencyContactName" maxlength="100" autocomplete="name" required value={savedDraftData.family.emergencyContactName} />
+                                </div>
+                                <div>
+                                  <label class={labelClass} for={`emergency-relationship-${item.offer.id}`}>Relationship</label>
+                                  <input class={fieldClass} id={`emergency-relationship-${item.offer.id}`} name="emergencyContactRelationship" maxlength="60" required value={savedDraftData.family.emergencyContactRelationship} />
+                                </div>
+                                <div>
+                                  <label class={labelClass} for={`emergency-phone-${item.offer.id}`}>Phone</label>
+                                  <input class={fieldClass} id={`emergency-phone-${item.offer.id}`} name="emergencyContactPhone" maxlength="30" type="tel" autocomplete="tel" required value={savedDraftData.family.emergencyContactPhone} />
+                                </div>
+                                <div>
+                                  <label class={labelClass} for={`communication-${item.offer.id}`}>Communication preference</label>
+                                  <select class={fieldClass} id={`communication-${item.offer.id}`} name="communicationPreference" required>
+                                    <option value="" selected={!savedDraftData.family.communicationPreference}>Select one</option>
+                                    <option value="email" selected={savedDraftData.family.communicationPreference === 'email'}>Email</option>
+                                    <option value="sms" selected={savedDraftData.family.communicationPreference === 'sms'}>Text message</option>
+                                    <option value="both" selected={savedDraftData.family.communicationPreference === 'both'}>Email and text</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </fieldset>
+                            <label class="mt-7 flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-brand-teal/25 bg-brand-teal/[0.06] p-4 text-sm leading-6 text-white/75">
+                              <input class="mt-1 h-5 w-5 shrink-0 accent-[#009695]" type="checkbox" name="informationConfirmed" required checked={savedDraftData.family.informationConfirmed} />
+                              <span>I confirm this family and contact information is accurate for the upcoming club season.</span>
+                            </label>
+                          </section>
+
+                          <section data-draft-step="2" aria-labelledby={`player-heading-${item.offer.id}`} class="p-5 pb-28 md:p-8 md:pb-28" hidden={currentStep !== 2}>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Position two · Second touch</p>
+                            <h2 id={`player-heading-${item.offer.id}`} class="mt-1 font-heading text-3xl font-extrabold uppercase tracking-[-0.025em] text-white">Player & readiness</h2>
+                            <p class="mt-2 max-w-2xl text-sm leading-6 text-white/55">Add gear sizing and the practical details coaches need to plan a safe, organized season.</p>
+
+                            <div class="mt-7 flex flex-wrap gap-x-8 gap-y-3 border-y border-white/10 py-4">
+                              <div><p class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/65">Player</p><p class="mt-1 text-sm font-bold text-white">{playerName}</p></div>
+                              <div><p class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/65">Team</p><p class="mt-1 text-sm font-bold text-white">{item.team.name}</p></div>
+                              <div><p class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/65">Age group</p><p class="mt-1 text-sm font-bold text-white">{item.ageGroup.label}</p></div>
+                            </div>
+
+                            <div class="mt-7 grid gap-4 sm:grid-cols-2">
+                              <div class="sm:col-span-2">
+                                <label class={labelClass} for={`preferred-name-${item.offer.id}`}>Preferred name <span class="normal-case tracking-normal text-white/40">(optional)</span></label>
+                                <input class={fieldClass} id={`preferred-name-${item.offer.id}`} name="preferredName" maxlength="80" value={savedDraftData.player.preferredName} />
+                              </div>
+                              <div>
+                                <label class={labelClass} for={`jersey-size-${item.offer.id}`}>Jersey size</label>
+                                <select class={fieldClass} id={`jersey-size-${item.offer.id}`} name="jerseySize" required>
+                                  <option value="">Select size</option>
+                                  {sizeOptions.map((size) => <option value={size} selected={savedDraftData.player.jerseySize === size}>{size}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label class={labelClass} for={`apparel-size-${item.offer.id}`}>Apparel size</label>
+                                <select class={fieldClass} id={`apparel-size-${item.offer.id}`} name="apparelSize" required>
+                                  <option value="">Select size</option>
+                                  {sizeOptions.map((size) => <option value={size} selected={savedDraftData.player.apparelSize === size}>{size}</option>)}
+                                </select>
+                              </div>
+                            </div>
+
+                            <fieldset class="mt-8 border-t border-white/10 pt-7">
+                              <legend class="font-heading text-lg font-extrabold uppercase tracking-tight text-white">Jersey number preferences</legend>
+                              <p class="mt-1 text-xs leading-5 text-white/50">Choose up to three different numbers from 0–99. Preferences are not guaranteed.</p>
+                              <div class="mt-4 grid grid-cols-3 gap-3">
+                                {[0, 1, 2].map((numberIndex) => (
+                                  <div>
+                                    <label class={labelClass} for={`jersey-number-${item.offer.id}-${numberIndex}`}>Choice {numberIndex + 1}</label>
+                                    <input class={fieldClass} id={`jersey-number-${item.offer.id}-${numberIndex}`} data-jersey-number type="number" min="0" max="99" inputmode="numeric" value={savedDraftData.player.jerseyNumberPreferences[numberIndex] ?? ''} />
+                                  </div>
+                                ))}
+                              </div>
+                              <p id={`jersey-error-${item.offer.id}`} class="mt-2 hidden text-xs font-semibold text-brand-coral" data-jersey-error role="alert">Jersey number choices must be different.</p>
+                            </fieldset>
+
+                            <div class="mt-8 border-t border-white/10 pt-7">
+                              <label class={labelClass} for={`medical-${item.offer.id}`}>Medical information</label>
+                              <p class="mb-3 text-xs leading-5 text-white/50">Share only what coaches need for safe participation—not a full medical history. Enter “None” when there is nothing to report.</p>
+                              <textarea class={textareaClass} id={`medical-${item.offer.id}`} name="medicalInfo" maxlength="2000">{savedDraftData.player.medicalInfo}</textarea>
+                              <label class="mt-3 flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-brand-teal/25 bg-brand-teal/[0.06] p-4 text-sm leading-6 text-white/75">
+                                <input class="mt-1 h-5 w-5 shrink-0 accent-[#009695]" type="checkbox" name="medicalInformationConfirmed" required checked={savedDraftData.player.medicalInformationConfirmed} />
+                                <span>I confirm the medical information is current, including when the answer is “None.”</span>
+                              </label>
+                            </div>
+
+                            <div class="mt-8 grid gap-4 border-t border-white/10 pt-7 sm:grid-cols-2">
+                              <div>
+                                <label class={labelClass} for={`ceva-status-${item.offer.id}`}>CEVA membership status</label>
+                                <select class={fieldClass} id={`ceva-status-${item.offer.id}`} name="cevaMembershipStatus" required>
+                                  <option value="">Select status</option>
+                                  <option value="not_started" selected={savedDraftData.player.cevaMembershipStatus === 'not_started'}>Not started</option>
+                                  <option value="in_progress" selected={savedDraftData.player.cevaMembershipStatus === 'in_progress'}>In progress</option>
+                                  <option value="complete" selected={savedDraftData.player.cevaMembershipStatus === 'complete'}>Complete</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label class={labelClass} for={`ceva-number-${item.offer.id}`}>CEVA membership number</label>
+                                <input class={fieldClass} id={`ceva-number-${item.offer.id}`} name="cevaMembershipNumber" maxlength="50" value={savedDraftData.player.cevaMembershipNumber} />
+                                <p class="mt-1.5 text-xs text-white/45">Required when membership is complete.</p>
+                              </div>
+                              <div>
+                                <label class={labelClass} for={`release-status-${item.offer.id}`}>Medical-release form</label>
+                                <select class={fieldClass} id={`release-status-${item.offer.id}`} name="medicalReleaseStatus" required>
+                                  <option value="">Select status</option>
+                                  <option value="not_started" selected={savedDraftData.player.medicalReleaseStatus === 'not_started'}>Not started</option>
+                                  <option value="in_progress" selected={savedDraftData.player.medicalReleaseStatus === 'in_progress'}>In progress</option>
+                                  <option value="complete" selected={savedDraftData.player.medicalReleaseStatus === 'complete'}>Complete</option>
+                                </select>
+                              </div>
+                              <div class="sm:col-span-2">
+                                <label class={labelClass} for={`conflicts-${item.offer.id}`}>Known season conflicts <span class="normal-case tracking-normal text-white/40">(optional)</span></label>
+                                <textarea class={textareaClass} id={`conflicts-${item.offer.id}`} name="seasonConflicts" maxlength="1500" placeholder="School events, travel, recurring commitments…">{savedDraftData.player.seasonConflicts}</textarea>
+                              </div>
+                            </div>
+                          </section>
+
+                          <section data-draft-step="3" aria-labelledby={`commit-heading-${item.offer.id}`} class="p-5 pb-28 md:p-8 md:pb-28" hidden={currentStep !== 3}>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Position three · Set for payment</p>
+                            <h2 id={`commit-heading-${item.offer.id}`} class="mt-1 font-heading text-3xl font-extrabold uppercase tracking-[-0.025em] text-white">Commitments & review</h2>
+                            <p class="mt-2 max-w-2xl text-sm leading-6 text-white/55">Review the essentials, then read and respond to the club agreements currently published for this season.</p>
+
+                            <div class="mt-7 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-2" data-review-grid>
+                              <div class="bg-[#11151d] p-4"><p class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/65">Player & team</p><p class="mt-1 text-sm font-bold text-white">{playerName} · {item.team.name}</p></div>
+                              <div class="bg-[#11151d] p-4"><p class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/65">Mailing address</p><p class="mt-1 text-sm leading-5 text-white" data-review-address>Complete step one</p></div>
+                              <div class="bg-[#11151d] p-4"><p class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/65">Emergency contact</p><p class="mt-1 text-sm leading-5 text-white" data-review-emergency>Complete step one</p></div>
+                              <div class="bg-[#11151d] p-4"><p class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/65">Sizing & readiness</p><p class="mt-1 text-sm leading-5 text-white" data-review-readiness>Complete step two</p></div>
+                            </div>
+
+                            <section class="mt-7 overflow-hidden rounded-xl border border-brand-teal/25 bg-brand-teal/[0.05]" aria-labelledby={`financial-${item.offer.id}`}>
+                              <div class="flex flex-wrap items-end justify-between gap-3 p-4 md:p-5">
+                                <div><p class="text-xs font-extrabold uppercase tracking-[0.12em] text-brand-teal">Financial summary</p><h3 id={`financial-${item.offer.id}`} class="mt-1 font-heading text-xl font-extrabold uppercase text-white">Payment choice comes next</h3></div>
+                                <p class="font-heading text-3xl font-extrabold text-white">{money(item.pricingTier.totalAmount)}</p>
+                              </div>
+                              <div class="grid gap-px bg-white/10 sm:grid-cols-2">
+                                <p class="bg-[#11151d] p-4 text-sm leading-6 text-white/60"><strong class="text-white">Pay in full:</strong> {money(item.pricingTier.totalAmount)} at the payment handoff.</p>
+                                <p class="bg-[#11151d] p-4 text-sm leading-6 text-white/60"><strong class="text-white">Standard plan:</strong> {money(item.pricingTier.depositAmount)} deposit, then 5 × {money(item.pricingTier.installmentAmount)} Jan–May. December is skipped.</p>
+                              </div>
+                            </section>
+
+                            {agreements.length === 0 ? (
+                              <div class="mt-8 rounded-xl border border-amber-300/30 bg-amber-300/[0.06] p-5" role="status">
+                                <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-amber-200">Wording awaiting approval</p>
+                                <h3 class="mt-1 font-heading text-xl font-extrabold uppercase text-white">Agreements are not published yet</h3>
+                                <p class="mt-2 text-sm leading-6 text-white/65">TVVC’s agreement wording is still awaiting approval. Your saved information remains safe, but you cannot continue to payment until the published agreements are ready.</p>
+                              </div>
+                            ) : (
+                              <div class="mt-8 space-y-5" data-agreements>
+                                {agreements.map((agreement) => {
+                                  const allowedResponses = parseAllowedResponses(agreement.allowedResponses);
+                                  return (
+                                    <article class="overflow-hidden rounded-xl border border-white/12 bg-[#11151d]" data-agreement data-agreement-id={agreement.id} data-response-type={agreement.responseType} data-required={agreement.required ? 'true' : 'false'}>
+                                      <header class="border-b border-white/10 px-5 py-4">
+                                        <div class="flex flex-wrap items-center justify-between gap-2">
+                                          <h3 class="font-heading text-lg font-extrabold uppercase tracking-tight text-white">{agreement.title}</h3>
+                                          <span class="text-xs font-extrabold uppercase tracking-[0.08em] text-white/65">Version {agreement.version}{agreement.required ? ' · Required' : ' · Optional'}</span>
+                                        </div>
+                                        {agreement.summary && <p class="mt-1 text-sm leading-6 text-white/55">{agreement.summary}</p>}
+                                      </header>
+                                      <div class="space-y-4 px-5 py-5 text-sm leading-7 text-white/70">
+                                        {agreement.body.split(/\n\s*\n/).map((paragraph) => <p>{paragraph}</p>)}
+                                      </div>
+                                      <div class="border-t border-white/10 bg-black/15 p-4">
+                                        {agreement.responseType === 'choice' ? (
+                                          <fieldset>
+                                            <legend class="text-xs font-extrabold uppercase tracking-[0.12em] text-white/65">Choose your response</legend>
+                                            <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                              {allowedResponses.map((response) => (
+                                                <label class="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-white/15 px-3 text-sm font-semibold text-white/75 transition hover:border-brand-teal/45 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal/10 has-[:checked]:text-white">
+                                                  <input type="radio" name={`agreement-${agreement.id}`} value={response} required={agreement.required} class="h-5 w-5 accent-[#009695]" />
+                                                  <span>{humanizeResponse(response)}</span>
+                                                </label>
+                                              ))}
+                                            </div>
+                                          </fieldset>
+                                        ) : (
+                                          <label class="flex min-h-12 cursor-pointer items-start gap-3 text-sm font-semibold leading-6 text-white/75">
+                                            <input type="checkbox" data-agreement-ack required={agreement.required} class="mt-0.5 h-5 w-5 shrink-0 accent-[#009695]" />
+                                            <span>I have read and accept this agreement.</span>
+                                          </label>
+                                        )}
+                                      </div>
+                                    </article>
+                                  );
+                                })}
+
+                                <div class="rounded-xl border border-white/12 bg-[#11151d] p-5">
+                                  <label class={labelClass} for={`legal-name-${item.offer.id}`}>Type your full legal name</label>
+                                  <input class={fieldClass} id={`legal-name-${item.offer.id}`} data-accepted-name maxlength="120" autocomplete="name" required placeholder="Full legal name" />
+                                  <p class="mt-3 text-xs leading-5 text-white/50">This records your registration information and agreement acknowledgements. It does not accept or finalize the roster spot. The deposit and payment choice come next.</p>
+                                </div>
+                              </div>
+                            )}
+
+                            <div class="mt-5 hidden rounded-xl border border-brand-coral/30 bg-brand-coral/10 p-4" data-submit-error role="alert" tabindex="-1">
+                              <p class="text-sm font-bold text-white" data-submit-error-message></p>
+                              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-white/70" data-missing-fields></ul>
+                              <button type="button" data-missing-step class="mt-3 hidden min-h-11 rounded-lg border border-brand-coral/40 px-4 text-xs font-extrabold uppercase tracking-[0.1em] text-brand-coral focus:outline-none focus:ring-2 focus:ring-brand-coral"></button>
+                            </div>
+                          </section>
+
+                          <footer class="draft-action-footer sticky bottom-0 z-20 flex min-h-[5.25rem] items-center justify-between gap-3 rounded-b-2xl border-t border-white/10 bg-[#0d1118]/95 px-4 py-3 backdrop-blur md:px-8">
+                            <button type="button" data-back-step class="min-h-11 rounded-xl px-4 text-xs font-extrabold uppercase tracking-[0.11em] text-white/60 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Back</button>
+                            <p class="hidden text-xs text-white/45 sm:block" data-step-counter>Step {currentStep} of 3</p>
+                            <button type="button" data-next-step class="min-h-12 rounded-xl bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-[0.11em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:cursor-wait disabled:opacity-55">
+                              <span data-next-label>{currentStep === 3 ? 'Save agreements & continue' : 'Save & continue'}</span>
+                            </button>
+                          </footer>
+                        </div>
+                      </div>
+                    </form>
+                  )}
+
+                  {awaitingPayment && paymentChoices && (
+                    <section class="relative mt-8 min-w-0 max-w-full" aria-labelledby={`awaiting-payment-${item.offer.id}`} data-payment-checkout>
+                      {paymentRedirectState === 'success' && (
+                        <div class="mb-5 flex gap-4 rounded-xl border border-brand-teal/35 bg-brand-teal/[0.08] p-4 md:p-5" role="status" aria-live="polite">
+                          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-brand-teal/30 bg-brand-teal/10 text-brand-teal" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 9 18l-5-5"></path></svg>
+                          </span>
+                          <div>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Payment submitted</p>
+                            <p class="mt-1 text-sm font-bold text-white">Stripe is confirming your payment.</p>
+                            <p class="mt-1 text-xs leading-5 text-white/60">Your spot is not marked confirmed until that verification finishes. This usually takes a moment; reload this page if the status has not updated.</p>
+                          </div>
+                        </div>
+                      )}
+                      {paymentRedirectState === 'cancelled' && (
+                        <div class="mb-5 flex gap-4 rounded-xl border border-white/15 bg-white/[0.035] p-4 md:p-5" role="status">
+                          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/[0.04] text-white/65" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+                          </span>
+                          <div>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/65">Checkout cancelled</p>
+                            <p class="mt-1 text-sm font-bold text-white">Your registration information is still saved.</p>
+                            <p class="mt-1 text-xs leading-5 text-white/60">Cancelling checkout did not create a new charge. Choose an option below whenever you are ready to resume.</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <form class="min-w-0 max-w-full overflow-hidden rounded-2xl border border-white/12 bg-[#0d1118]" data-payment-form novalidate>
+                        <header class="grid gap-5 border-b border-white/10 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:p-8">
+                          <div>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-teal">Final rotation · Secure payment</p>
+                            <h2 id={`awaiting-payment-${item.offer.id}`} class="mt-1 font-heading text-3xl font-extrabold uppercase tracking-[-0.03em] text-white md:text-4xl">Choose how to pay</h2>
+                            <p class="mt-2 max-w-2xl text-sm leading-6 text-white/60">Select one option, review what is charged today, then continue to Stripe. Your roster spot becomes final only after payment is confirmed.</p>
+                          </div>
+                          <div class="border-l-2 border-brand-teal pl-4 md:text-right">
+                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-white/55">Season dues</p>
+                            <p class="mt-1 font-heading text-4xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(item.pricingTier.totalAmount)}</p>
+                          </div>
+                        </header>
+
+                        <fieldset class="p-5 md:p-8">
+                          <legend class="sr-only">Payment option</legend>
+                          <div class="grid gap-4 lg:grid-cols-2">
+                            <label class="payment-choice relative cursor-pointer rounded-xl border border-white/15 bg-[#11151d] p-5 transition hover:border-white/30 focus-within:ring-2 focus-within:ring-brand-teal has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal/[0.075] md:p-6">
+                              <div class="flex items-start justify-between gap-4">
+                                <span>
+                                  <span class="text-xs font-extrabold uppercase tracking-[0.13em] text-white/60">One charge</span>
+                                  <span class="mt-1 block font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Pay in full</span>
+                                </span>
+                                <input
+                                  type="radio"
+                                  name={`payment-option-${item.offer.id}`}
+                                  value="pay_in_full"
+                                  class="mt-1 h-6 w-6 shrink-0 accent-[#009695]"
+                                  data-payment-option
+                                  data-terms-fingerprint={paymentChoices.payInFull.fingerprint}
+                                  data-due-now-amount={paymentChoices.payInFull.terms.dueNowAmount}
+                                  checked
+                                />
+                              </div>
+                              <p class="mt-5 font-heading text-4xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(paymentChoices.payInFull.terms.dueNowAmount)}</p>
+                              <p class="mt-1 text-sm leading-6 text-white/60">Full season total charged today. No automatic future charges.</p>
+                            </label>
+
+                            <label class="payment-choice relative cursor-pointer rounded-xl border border-white/15 bg-[#11151d] p-5 transition hover:border-white/30 focus-within:ring-2 focus-within:ring-brand-teal has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal/[0.075] md:p-6">
+                              <div class="flex items-start justify-between gap-4">
+                                <span>
+                                  <span class="text-xs font-extrabold uppercase tracking-[0.13em] text-brand-teal">Six scheduled charges</span>
+                                  <span class="mt-1 block font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Standard plan</span>
+                                </span>
+                                <input
+                                  type="radio"
+                                  name={`payment-option-${item.offer.id}`}
+                                  value="standard_plan"
+                                  class="mt-1 h-6 w-6 shrink-0 accent-[#009695]"
+                                  data-payment-option
+                                  data-terms-fingerprint={paymentChoices.standardPlan.fingerprint}
+                                  data-due-now-amount={paymentChoices.standardPlan.terms.dueNowAmount}
+                                />
+                              </div>
+                              <p class="mt-5 font-heading text-4xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(paymentChoices.standardPlan.terms.dueNowAmount)} <span class="text-sm tracking-normal text-white/55">today</span></p>
+                              <p class="mt-1 text-sm leading-6 text-white/60">Then {item.season.standardInstallmentCount} automatic payments of {money(item.pricingTier.installmentAmount)}. <strong class="text-brand-teal">No December charge.</strong></p>
+                            </label>
+
+                            {customPaymentTerms && (
+                              <label class="payment-choice relative cursor-pointer overflow-hidden rounded-xl border border-amber-300/30 bg-amber-300/[0.045] p-5 transition hover:border-amber-200/60 focus-within:ring-2 focus-within:ring-brand-teal has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal/[0.075] md:p-6 lg:col-span-2">
+                                <span class="absolute inset-y-0 left-0 w-1 bg-amber-300" aria-hidden="true"></span>
+                                <div class="flex items-start justify-between gap-4">
+                                  <span>
+                                    <span class="text-xs font-extrabold uppercase tracking-[0.13em] text-amber-300">Prepared specifically for your family</span>
+                                    <span class="mt-1 block font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Custom arrangement</span>
+                                  </span>
+                                  <input
+                                    type="radio"
+                                    name={`payment-option-${item.offer.id}`}
+                                    value="custom_plan"
+                                    class="mt-1 h-6 w-6 shrink-0 accent-[#009695]"
+                                    data-payment-option
+                                    data-terms-fingerprint={customPaymentTerms.termsFingerprint}
+                                    data-due-now-amount={customPaymentTerms.dueNowAmount}
+                                  />
+                                </div>
+                                <div class="mt-5 grid gap-4 sm:grid-cols-[auto_1fr] sm:items-end">
+                                  <div><p class="text-[10px] font-extrabold uppercase tracking-wider text-white/60">Due today</p><p class="mt-1 font-heading text-4xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(customPaymentTerms.dueNowAmount)}</p></div>
+                                  <div class="sm:border-l sm:border-white/10 sm:pl-4"><p class="text-[10px] font-extrabold uppercase tracking-wider text-white/60">Later by automatic payment</p><p class="mt-1 font-heading text-2xl font-extrabold tabular-nums text-white">{money(customFutureCharges.reduce((sum:number, charge:any) => sum + charge.amount, 0))}</p></div>
+                                </div>
+                                <p class="mt-4 text-sm leading-6 text-white/70">{customPaymentTerms.reason}</p>
+                              </label>
+                            )}
+                          </div>
+                        </fieldset>
+
+                        <div class="hidden border-t border-white/10" data-standard-plan-details>
+                          <section class="p-5 md:p-8" aria-labelledby={`schedule-heading-${item.offer.id}`}>
+                            <div class="flex flex-wrap items-end justify-between gap-3">
+                              <div>
+                                <p class="text-xs font-extrabold uppercase tracking-[0.13em] text-brand-teal">Your exact schedule</p>
+                                <h3 id={`schedule-heading-${item.offer.id}`} class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Deposit, holiday pause, then Jan–May</h3>
+                              </div>
+                              <span class="rounded-lg border border-brand-teal/25 bg-brand-teal/[0.07] px-3 py-2 text-xs font-extrabold uppercase tracking-[0.1em] text-brand-teal">No December charge</span>
+                            </div>
+                            <ol class="mt-5 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3" aria-label="Standard payment schedule">
+                              {paymentChoices.standardPlan.terms.charges.map((charge, chargeIndex) => (
+                                <li class:list={[
+                                  'bg-[#11151d] p-4',
+                                  chargeIndex === 0 && 'border-l-2 border-brand-teal',
+                                ]}>
+                                  <p class="text-xs font-extrabold uppercase tracking-[0.1em] text-white/60">{chargeIndex === 0 ? 'Due today' : `Payment ${chargeIndex}`}</p>
+                                  <p class="mt-2 font-heading text-2xl font-extrabold tabular-nums text-white">{money(charge.amount)}</p>
+                                  <p class="mt-1 text-xs font-semibold text-white/55">{displayScheduleDate(charge.dueDate)}</p>
+                                </li>
+                              ))}
+                            </ol>
+                          </section>
+
+                          <section class="border-t border-white/10 bg-black/15 p-5 md:p-8" aria-labelledby={`authorization-heading-${item.offer.id}`}>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.13em] text-brand-teal">Automatic payment authorization</p>
+                            <h3 id={`authorization-heading-${item.offer.id}`} class="mt-1 font-heading text-xl font-extrabold uppercase tracking-tight text-white">Authorize the listed charges</h3>
+                            <p class="mt-3 max-w-4xl text-sm leading-7 text-white/70">{CLUB_SEASON_AUTOPAY_AUTHORIZATION}</p>
+                            <div class="mt-5 grid min-w-0 gap-4 lg:grid-cols-2 lg:items-start">
+                              <div>
+                                <label class={labelClass} for={`autopay-name-${item.offer.id}`}>Type your full name</label>
+                                <input class={fieldClass} id={`autopay-name-${item.offer.id}`} data-autopay-name maxlength="120" autocomplete="name" placeholder="Full name" />
+                              </div>
+                              <label class="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-white/15 bg-[#11151d] p-4 text-sm font-semibold leading-6 text-white/75 transition hover:border-brand-teal/40 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal/[0.07]">
+                                <input type="checkbox" data-autopay-authorized class="mt-0.5 h-5 w-5 shrink-0 accent-[#009695]" />
+                                <span>I authorize TVVC to automatically charge the card saved by Stripe according to the exact schedule above.</span>
+                              </label>
+                            </div>
+                            <p class="mt-4 text-xs leading-5 text-white/55">Stripe stores your card details; TVVC never receives your full card number. A failed payment may be retried and may prompt TVVC to contact you, but it does not automatically remove the player.</p>
+                          </section>
+                        </div>
+
+                        {customPaymentTerms && (
+                          <div class="hidden border-t border-white/10" data-custom-plan-details>
+                            <section class="p-5 md:p-8" aria-labelledby={`custom-schedule-heading-${item.offer.id}`}>
+                              <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                                <div><p class="text-xs font-extrabold uppercase tracking-[0.13em] text-amber-300">Your exact custom arrangement</p><h3 id={`custom-schedule-heading-${item.offer.id}`} class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Today is separate from later charges</h3></div>
+                                <p class="text-sm leading-6 text-white/65">{customPaymentTerms.reason}</p>
+                              </div>
+                              <div class="mt-5 grid gap-3 lg:grid-cols-[minmax(13rem,.65fr)_minmax(0,1.35fr)]">
+                                <article class="rounded-xl border border-brand-teal/30 bg-brand-teal/[0.07] p-5">
+                                  <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-brand-teal">Charged at Stripe Checkout</p>
+                                  <p class="mt-2 font-heading text-4xl font-extrabold tabular-nums text-white">{money(customPaymentTerms.dueNowAmount)}</p>
+                                  <p class="mt-2 text-xs leading-5 text-white/60">This is the only amount charged today.</p>
+                                </article>
+                                <article class="overflow-hidden rounded-xl border border-white/10 bg-[#11151d]">
+                                  <header class="flex items-center justify-between border-b border-white/10 px-4 py-3"><p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/65">Later automatic charges</p><strong class="tabular-nums text-white">{money(customFutureCharges.reduce((sum:number, charge:any) => sum + charge.amount, 0))}</strong></header>
+                                  <ol class="divide-y divide-white/10">
+                                    {customFutureCharges.map((charge:any, chargeIndex:number) => (
+                                      <li class="flex min-h-14 items-center justify-between gap-4 px-4 py-3"><span><span class="block text-[10px] font-extrabold uppercase tracking-wider text-white/55">Automatic payment {chargeIndex + 1}</span><span class="mt-1 block text-sm font-semibold tabular-nums text-white">{displayScheduleDate(charge.dueDate)}</span></span><strong class="font-heading text-xl font-extrabold tabular-nums text-white">{money(charge.amount)}</strong></li>
+                                    ))}
+                                  </ol>
+                                </article>
+                              </div>
+                              <div class="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-black/20 px-4 py-3"><span class="text-xs font-extrabold uppercase tracking-wider text-white/65">Exact season total</span><strong class="font-heading text-2xl font-extrabold tabular-nums text-white">{money(customPaymentTerms.totalAmount)}</strong></div>
+                            </section>
+
+                            <section class="border-t border-white/10 bg-black/15 p-5 md:p-8" aria-labelledby={`custom-authorization-heading-${item.offer.id}`}>
+                              <p class="text-xs font-extrabold uppercase tracking-[0.13em] text-brand-teal">Automatic payment authorization</p>
+                              <h3 id={`custom-authorization-heading-${item.offer.id}`} class="mt-1 font-heading text-xl font-extrabold uppercase tracking-tight text-white">Authorize this exact arrangement</h3>
+                              <p class="mt-3 max-w-4xl rounded-xl border border-brand-teal/20 bg-brand-teal/[0.055] p-4 text-sm leading-7 text-white/80">{customPaymentTerms.authorizationText}</p>
+                              <div class="mt-5 grid min-w-0 gap-4 lg:grid-cols-2 lg:items-start">
+                                <div><label class={labelClass} for={`custom-autopay-name-${item.offer.id}`}>Type your full name</label><input class={fieldClass} id={`custom-autopay-name-${item.offer.id}`} data-custom-autopay-name maxlength="120" autocomplete="name" placeholder="Full name" /></div>
+                                <label class="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-white/15 bg-[#11151d] p-4 text-sm font-semibold leading-6 text-white/75 transition hover:border-brand-teal/40 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal/[0.07]"><input type="checkbox" data-custom-autopay-authorized class="mt-0.5 h-5 w-5 shrink-0 accent-[#009695]" /><span>I have reviewed and authorize the exact custom automatic-payment schedule above.</span></label>
+                              </div>
+                              <p class="mt-4 text-xs leading-5 text-white/55">Stripe stores your card details; TVVC never receives your full card number. No custom schedule becomes active until you authorize it and complete checkout.</p>
+                            </section>
+                          </div>
+                        )}
+
+                        <footer class="grid gap-5 border-t border-white/10 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:p-8">
+                          <div>
+                            <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-white/55">Charged today</p>
+                            <p class="mt-1 font-heading text-3xl font-extrabold tabular-nums text-white" data-due-now-display>{money(paymentChoices.payInFull.terms.dueNowAmount)}</p>
+                            <p class="mt-2 text-xs leading-5 text-white/55">Need a different arrangement? <a href="mailto:info@tualatinvalleyvb.com?subject=Custom%20club%20season%20payment%20plan" class="font-bold text-brand-teal underline decoration-brand-teal/30 underline-offset-4 hover:text-white">Contact TVVC before paying</a> so we can document a custom plan.</p>
+                          </div>
+                          <div class="md:min-w-72">
+                            <button type="submit" data-payment-submit class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-teal px-6 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#0d1118] disabled:cursor-wait disabled:opacity-55">
+                              <span data-payment-submit-label>Continue to secure payment</span>
+                              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+                            </button>
+                            <p class="mt-2 text-center text-xs text-white/45">Secure checkout powered by Stripe</p>
+                          </div>
+                          <div class="hidden md:col-span-2 rounded-xl border border-brand-coral/30 bg-brand-coral/10 p-4 text-sm font-semibold text-white" data-payment-error role="alert" aria-live="assertive" tabindex="-1"></div>
+                        </footer>
+                      </form>
+                    </section>
+                  )}
+
+                  {!canRespond && !editableDraft && !awaitingPayment && (
+                    <div class:list={[
+                      'relative mt-8 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between md:p-6',
+                      stateCopy.tone === 'coral' ? 'border-brand-coral/25 bg-brand-coral/[0.06]' : stateCopy.tone === 'teal' ? 'border-brand-teal/25 bg-brand-teal/[0.06]' : 'border-white/10 bg-black/15',
+                    ]}>
+                      <div>
+                        <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Recorded status</p>
+                        <p class="mt-1 text-sm font-bold text-white">{stateCopy.eyebrow}</p>
+                        {item.offer.acceptanceDeadline && <p class="mt-1 text-xs text-white/55">Original reply date: {displayDate(item.offer.acceptanceDeadline)}</p>}
+                      </div>
+                      <a href="mailto:info@tualatinvalleyvb.com?subject=Club%20season%20offer%20question" class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-white/15 px-4 text-xs font-extrabold uppercase tracking-[0.11em] text-white transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal">Contact TVVC</a>
+                    </div>
+                  )}
+
+                  <p class="mt-5 text-xs leading-5 text-white/55">Private family record · Invitation #{item.offer.id.slice(0, 8).toUpperCase()}</p>
+                </div>
+
+                {canRespond && (
+                  <dialog data-decline-dialog class="w-[min(32rem,calc(100%-2rem))] rounded-2xl border border-white/15 bg-[#11151d] p-0 text-white shadow-2xl backdrop:bg-black/80">
+                    <form method="dialog" class="p-6 md:p-7">
+                      <div class="flex items-start justify-between gap-4">
+                        <div>
+                          <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-coral">Please confirm</p>
+                          <h2 class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight">Decline {item.team.name}?</h2>
+                        </div>
+                        <button type="submit" value="cancel" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/45 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal" aria-label="Close decline form">×</button>
+                      </div>
+                      <p class="mt-3 text-sm leading-6 text-white/55">This releases the offer from your registration flow. If you are unsure, contact TVVC before declining.</p>
+                      <div class="mt-5">
+                        <label for={`decline-reason-${item.offer.id}`} class="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.14em] text-white/60">Reason <span class="normal-case tracking-normal text-white/55">(optional)</span></label>
+                        <select id={`decline-reason-${item.offer.id}`} data-decline-reason class="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20">
+                          <option value="">Prefer not to say</option>
+                          <option value="Schedule conflict">Schedule conflict</option>
+                          <option value="Financial considerations">Financial considerations</option>
+                          <option value="Accepted another opportunity">Accepted another opportunity</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div class="mt-4">
+                        <label for={`decline-details-${item.offer.id}`} class="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.14em] text-white/60">Anything else? <span class="normal-case tracking-normal text-white/55">(optional)</span></label>
+                        <textarea id={`decline-details-${item.offer.id}`} data-decline-details maxlength="500" rows="3" class="w-full resize-y rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 py-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" placeholder="A short note for the club"></textarea>
+                      </div>
+                      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <button type="submit" value="cancel" class="min-h-11 rounded-xl px-4 text-xs font-extrabold uppercase tracking-[0.11em] text-white/60 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Keep the offer</button>
+                        <button type="button" data-confirm-decline class="min-h-11 rounded-xl border border-brand-coral/35 bg-brand-coral/10 px-5 text-xs font-extrabold uppercase tracking-[0.11em] text-brand-coral transition hover:bg-brand-coral hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-coral disabled:cursor-wait disabled:opacity-55"><span data-decline-label>Confirm decline</span></button>
+                      </div>
+                    </form>
+                  </dialog>
+                )}
+              </article>
+            );
+          })}
+
+          <p class="text-center text-xs leading-5 text-white/55">Have a question about the team, schedule, or a custom payment arrangement? <a href="mailto:info@tualatinvalleyvb.com?subject=Club%20season%20registration" class="font-bold text-brand-teal underline decoration-brand-teal/30 underline-offset-4 hover:text-white">Contact TVVC</a>.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  </main>
+
+  {ownedOffers.length > 0 && (
+    <script>
+      type ToastWindow = Window & { toast?: { success?: (message: string) => void; error?: (message: string) => void } };
+      const endpoint = '/api/club-season/respond';
+      const notify = (type: 'success' | 'error', message: string) => (window as ToastWindow).toast?.[type]?.(message);
+
+      document.querySelectorAll<HTMLElement>('[data-parent-offer]').forEach((card) => {
+        const offerId = card.dataset.offerId || '';
+        const startButton = card.querySelector<HTMLButtonElement>('[data-start-registration]');
+        const startLabel = card.querySelector<HTMLElement>('[data-action-label]');
+        const openDecline = card.querySelector<HTMLButtonElement>('[data-open-decline]');
+        const dialog = card.querySelector<HTMLDialogElement>('[data-decline-dialog]');
+        const confirmDecline = card.querySelector<HTMLButtonElement>('[data-confirm-decline]');
+        const declineLabel = card.querySelector<HTMLElement>('[data-decline-label]');
+        const declineReason = card.querySelector<HTMLSelectElement>('[data-decline-reason]');
+        const declineDetails = card.querySelector<HTMLTextAreaElement>('[data-decline-details]');
+        const paymentForm = card.querySelector<HTMLFormElement>('[data-payment-form]');
+        const paymentOptions = [...card.querySelectorAll<HTMLInputElement>('[data-payment-option]')];
+        const standardDetails = card.querySelector<HTMLElement>('[data-standard-plan-details]');
+        const customDetails = card.querySelector<HTMLElement>('[data-custom-plan-details]');
+        const autopayName = card.querySelector<HTMLInputElement>('[data-autopay-name]');
+        const autopayAuthorized = card.querySelector<HTMLInputElement>('[data-autopay-authorized]');
+        const customAutopayName = card.querySelector<HTMLInputElement>('[data-custom-autopay-name]');
+        const customAutopayAuthorized = card.querySelector<HTMLInputElement>('[data-custom-autopay-authorized]');
+        const dueNowDisplay = card.querySelector<HTMLElement>('[data-due-now-display]');
+        const paymentSubmit = card.querySelector<HTMLButtonElement>('[data-payment-submit]');
+        const paymentSubmitLabel = card.querySelector<HTMLElement>('[data-payment-submit-label]');
+        const paymentError = card.querySelector<HTMLElement>('[data-payment-error]');
+
+        const respond = async (payload: Record<string, unknown>) => {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ offerId, ...payload }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'Your response could not be saved.');
+          return data;
+        };
+
+        startButton?.addEventListener('click', async () => {
+          startButton.disabled = true;
+          if (startLabel) startLabel.textContent = 'Starting…';
+          try {
+            await respond({ action: 'start' });
+            notify('success', 'Registration draft started');
+            window.location.reload();
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Registration could not be started.';
+            notify('error', message);
+            startButton.disabled = false;
+            if (startLabel) startLabel.textContent = 'Start registration';
+          }
+        });
+
+        openDecline?.addEventListener('click', () => {
+          dialog?.showModal();
+          dialog?.querySelector<HTMLSelectElement>('[data-decline-reason]')?.focus();
+        });
+        dialog?.addEventListener('click', (event) => {
+          if (event.target === dialog) dialog.close('cancel');
+        });
+        confirmDecline?.addEventListener('click', async () => {
+          confirmDecline.disabled = true;
+          if (declineLabel) declineLabel.textContent = 'Saving…';
+          try {
+            await respond({
+              action: 'decline',
+              declineReason: declineReason?.value || undefined,
+              declineDetails: declineDetails?.value.trim() || undefined,
+            });
+            dialog?.close('confirmed');
+            notify('success', 'Your response has been saved');
+            window.location.reload();
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Your response could not be saved.';
+            notify('error', message);
+            confirmDecline.disabled = false;
+            if (declineLabel) declineLabel.textContent = 'Confirm decline';
+          }
+        });
+
+        const selectedPaymentOption = () => paymentOptions.find((option) => option.checked);
+        const formatPaymentAmount = (cents: number) => new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: 0,
+        }).format(cents / 100);
+        const updatePaymentChoice = () => {
+          const selected = selectedPaymentOption();
+          const standardSelected = selected?.value === 'standard_plan';
+          const customSelected = selected?.value === 'custom_plan';
+          standardDetails?.classList.toggle('hidden', !standardSelected);
+          customDetails?.classList.toggle('hidden', !customSelected);
+          if (autopayName) autopayName.required = standardSelected;
+          if (autopayAuthorized) autopayAuthorized.required = standardSelected;
+          if (customAutopayName) customAutopayName.required = customSelected;
+          if (customAutopayAuthorized) customAutopayAuthorized.required = customSelected;
+          if (dueNowDisplay && selected) dueNowDisplay.textContent = formatPaymentAmount(Number(selected.dataset.dueNowAmount || 0));
+          paymentError?.classList.add('hidden');
+        };
+
+        paymentOptions.forEach((option) => option.addEventListener('change', updatePaymentChoice));
+        updatePaymentChoice();
+
+        paymentForm?.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          if (paymentSubmit?.disabled) return;
+          const selected = selectedPaymentOption();
+          if (!selected) {
+            paymentOptions[0]?.focus();
+            return;
+          }
+          if (!paymentForm.checkValidity()) {
+            paymentForm.reportValidity();
+            return;
+          }
+
+          paymentError?.classList.add('hidden');
+          if (paymentSubmit) paymentSubmit.disabled = true;
+          if (paymentSubmitLabel) paymentSubmitLabel.textContent = 'Opening Stripe…';
+          try {
+            const isStandardPlan = selected.value === 'standard_plan';
+            const isCustomPlan = selected.value === 'custom_plan';
+            const requiresAutopayAuthorization = isStandardPlan || isCustomPlan;
+            const response = await fetch('/api/club-season/checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                offerId,
+                paymentOption: selected.value,
+                termsFingerprint: selected.dataset.termsFingerprint || '',
+                ...(requiresAutopayAuthorization ? {
+                  authorizedName: (isCustomPlan ? customAutopayName : autopayName)?.value.trim() || '',
+                  autopayAuthorized: Boolean((isCustomPlan ? customAutopayAuthorized : autopayAuthorized)?.checked),
+                } : {}),
+              }),
+            });
+            const responseData = await response.json().catch(() => ({}));
+            if (!response.ok || typeof responseData.url !== 'string') {
+              throw new Error(responseData.error || 'Secure checkout could not be started. Please try again.');
+            }
+            window.location.assign(responseData.url);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Secure checkout could not be started. Please try again.';
+            if (paymentError) {
+              paymentError.textContent = message;
+              paymentError.classList.remove('hidden');
+              paymentError.focus();
+            }
+            if (paymentSubmit) paymentSubmit.disabled = false;
+            if (paymentSubmitLabel) paymentSubmitLabel.textContent = 'Continue to secure payment';
+          }
+        });
+      });
+
+      document.querySelectorAll<HTMLFormElement>('[data-registration-draft]').forEach((form) => {
+        const draftEndpoint = '/api/club-season/draft';
+        const agreementEndpoint = '/api/club-season/agreements';
+        const offerId = form.dataset.offerId || '';
+        let version = Number(form.dataset.version || 1);
+        let currentStep = Number(form.dataset.currentStep || 1);
+        let dirty = false;
+        let saveBlocked = false;
+        let savePromise: Promise<boolean> | null = null;
+        let saveTimer: number | undefined;
+
+        const panels = [...form.querySelectorAll<HTMLElement>('[data-draft-step]')];
+        const progressItems = [...form.querySelectorAll<HTMLElement>('[data-progress-step]')];
+        const saveStatus = form.querySelector<HTMLElement>('[data-save-status]');
+        const saveLabel = form.querySelector<HTMLElement>('[data-save-label]');
+        const saveDot = form.querySelector<HTMLElement>('[data-save-dot]');
+        const saveCallout = form.querySelector<HTMLElement>('[data-save-callout]');
+        const saveError = form.querySelector<HTMLElement>('[data-save-error]');
+        const retrySave = form.querySelector<HTMLButtonElement>('[data-retry-save]');
+        const reloadDraft = form.querySelector<HTMLButtonElement>('[data-reload-draft]');
+        const backButton = form.querySelector<HTMLButtonElement>('[data-back-step]');
+        const nextButton = form.querySelector<HTMLButtonElement>('[data-next-step]');
+        const nextLabel = form.querySelector<HTMLElement>('[data-next-label]');
+        const stepCounter = form.querySelector<HTMLElement>('[data-step-counter]');
+        const submitError = form.querySelector<HTMLElement>('[data-submit-error]');
+        const submitErrorMessage = form.querySelector<HTMLElement>('[data-submit-error-message]');
+        const missingFieldsList = form.querySelector<HTMLElement>('[data-missing-fields]');
+        const missingStepButton = form.querySelector<HTMLButtonElement>('[data-missing-step]');
+        const hasAgreements = form.dataset.hasAgreements === 'true';
+
+        const named = <T extends HTMLElement>(name: string) => form.elements.namedItem(name) as T | null;
+        const valueOf = (name: string) => named<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(name)?.value.trim() || '';
+        const checked = (name: string) => Boolean(named<HTMLInputElement>(name)?.checked);
+        const inlineErrors = new Map<string, HTMLElement>();
+        const cevaStatus = named<HTMLSelectElement>('cevaMembershipStatus');
+        const cevaNumber = named<HTMLInputElement>('cevaMembershipNumber');
+
+        const validationKey = (control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement) =>
+          control.type === 'radio' ? `radio-${control.name}` : control.name || control.id;
+
+        const validationMessage = (control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement) => {
+          if (control.validity.customError) return control.validationMessage;
+          if (control.validity.patternMismatch && control.name === 'state') return 'Use the two-letter state abbreviation.';
+          if (control.validity.patternMismatch && control.name === 'postalCode') return 'Enter a five-digit ZIP code, with an optional four-digit extension.';
+          if (control.type === 'radio') return 'Choose one response before continuing.';
+          if (control.type === 'checkbox') return 'Confirm this item before continuing.';
+          if (control instanceof HTMLSelectElement) return 'Choose an option before continuing.';
+          return 'Complete this field before continuing.';
+        };
+
+        const ensureInlineError = (control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement) => {
+          const key = validationKey(control);
+          let error = inlineErrors.get(key);
+          if (!error) {
+            error = document.createElement('p');
+            error.id = `draft-error-${offerId.slice(0, 8)}-${key.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+            error.className = 'mt-1.5 hidden text-xs font-semibold leading-5 text-brand-coral';
+            error.setAttribute('role', 'alert');
+            const anchor = control.type === 'radio'
+              ? control.closest('fieldset')
+              : control.type === 'checkbox' ? control.closest('label') : control;
+            anchor?.insertAdjacentElement('afterend', error);
+            inlineErrors.set(key, error);
+          }
+          const describedBy = new Set((control.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean));
+          describedBy.add(error.id);
+          control.setAttribute('aria-describedby', [...describedBy].join(' '));
+          return error;
+        };
+
+        const controlsForKey = (key: string) => [...form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea')]
+          .filter((control) => validationKey(control) === key);
+
+        const setInlineError = (control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement, visible: boolean) => {
+          const key = validationKey(control);
+          const error = ensureInlineError(control);
+          error.textContent = visible ? validationMessage(control) : '';
+          error.classList.toggle('hidden', !visible);
+          controlsForKey(key).forEach((related) => {
+            related.toggleAttribute('aria-invalid', visible);
+            related.dataset.validationAttempted = visible ? 'true' : related.dataset.validationAttempted;
+          });
+        };
+
+        const syncConditionalRequirements = () => {
+          if (cevaNumber) cevaNumber.required = cevaStatus?.value === 'complete';
+        };
+
+        syncConditionalRequirements();
+        [...form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input[required], select[required], textarea[required]')]
+          .forEach(ensureInlineError);
+        if (cevaNumber) ensureInlineError(cevaNumber);
+        form.querySelectorAll<HTMLInputElement>('[data-jersey-number]').forEach((control) => {
+          control.setAttribute('aria-describedby', `${control.getAttribute('aria-describedby') || ''} ${form.querySelector<HTMLElement>('[data-jersey-error]')?.id || ''}`.trim());
+        });
+
+        const serializeDraft = () => {
+          const jerseyNumberPreferences = [...form.querySelectorAll<HTMLInputElement>('[data-jersey-number]')]
+            .map((input) => input.value.trim())
+            .filter(Boolean)
+            .map(Number);
+          return {
+            schemaVersion: 1,
+            family: {
+              addressLine1: valueOf('addressLine1'),
+              addressLine2: valueOf('addressLine2'),
+              city: valueOf('city'),
+              state: valueOf('state').toUpperCase(),
+              postalCode: valueOf('postalCode'),
+              emergencyContactName: valueOf('emergencyContactName'),
+              emergencyContactRelationship: valueOf('emergencyContactRelationship'),
+              emergencyContactPhone: valueOf('emergencyContactPhone'),
+              communicationPreference: valueOf('communicationPreference'),
+              informationConfirmed: checked('informationConfirmed'),
+            },
+            player: {
+              preferredName: valueOf('preferredName'),
+              jerseySize: valueOf('jerseySize'),
+              apparelSize: valueOf('apparelSize'),
+              jerseyNumberPreferences,
+              medicalInfo: valueOf('medicalInfo'),
+              medicalInformationConfirmed: checked('medicalInformationConfirmed'),
+              cevaMembershipStatus: valueOf('cevaMembershipStatus'),
+              cevaMembershipNumber: valueOf('cevaMembershipNumber'),
+              medicalReleaseStatus: valueOf('medicalReleaseStatus'),
+              seasonConflicts: valueOf('seasonConflicts'),
+            },
+          };
+        };
+
+        const setSaveState = (state: 'saved' | 'dirty' | 'saving' | 'error' | 'conflict', detail?: string) => {
+          if (!saveLabel || !saveDot || !saveStatus) return;
+          saveStatus.dataset.state = state;
+          saveDot.className = `h-2 w-2 rounded-full ${state === 'saved' ? 'bg-brand-teal' : state === 'dirty' || state === 'saving' ? 'bg-amber-300' : 'bg-brand-coral'}`;
+          saveLabel.textContent = state === 'saved'
+            ? `Saved ${detail || ''}`.trim()
+            : state === 'dirty' ? 'Unsaved changes'
+              : state === 'saving' ? 'Saving…'
+                : state === 'conflict' ? 'Save conflict'
+                  : 'Save failed';
+        };
+
+        const showSaveError = (message: string, conflict = false) => {
+          saveCallout?.classList.remove('hidden');
+          if (saveError) saveError.textContent = message;
+          retrySave?.classList.toggle('hidden', conflict);
+          reloadDraft?.classList.toggle('hidden', !conflict);
+          setSaveState(conflict ? 'conflict' : 'error');
+        };
+
+        const clearSaveError = () => {
+          saveCallout?.classList.add('hidden');
+          retrySave?.classList.add('hidden');
+          reloadDraft?.classList.add('hidden');
+        };
+
+        const performSave = async (): Promise<boolean> => {
+          if (!dirty || saveBlocked) return !dirty;
+          dirty = false;
+          setSaveState('saving');
+          try {
+            const response = await fetch(draftEndpoint, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ offerId, version, currentStep, data: serializeDraft() }),
+            });
+            const responseData = await response.json().catch(() => ({}));
+            if (response.status === 409) {
+              saveBlocked = true;
+              dirty = true;
+              showSaveError(responseData.error || 'This registration changed in another tab. Reload before continuing.', true);
+              return false;
+            }
+            if (!response.ok) {
+              dirty = true;
+              showSaveError(responseData.error || 'We could not save your changes. Your entries are still in this browser.');
+              return false;
+            }
+            version = Number(responseData.draft?.version || version);
+            form.dataset.version = String(version);
+            clearSaveError();
+            const savedTime = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date());
+            setSaveState('saved', savedTime);
+            return true;
+          } catch {
+            dirty = true;
+            showSaveError('We could not reach TVVC to save. Your entries are still in this browser; retry when the connection returns.');
+            return false;
+          }
+        };
+
+        const flushSave = async (): Promise<boolean> => {
+          window.clearTimeout(saveTimer);
+          if (savePromise) {
+            await savePromise;
+            if (dirty && !saveBlocked) return flushSave();
+            return !dirty;
+          }
+          if (!dirty || saveBlocked) return !dirty;
+          savePromise = performSave();
+          const result = await savePromise;
+          savePromise = null;
+          if (result && dirty && !saveBlocked) return flushSave();
+          return result;
+        };
+
+        const scheduleSave = () => {
+          if (saveBlocked) return;
+          dirty = true;
+          setSaveState('dirty');
+          window.clearTimeout(saveTimer);
+          saveTimer = window.setTimeout(() => void flushSave(), 900);
+          updateReview();
+        };
+
+        const updateReview = () => {
+          const data = serializeDraft();
+          const address = [data.family.addressLine1, data.family.addressLine2, data.family.city, data.family.state, data.family.postalCode].filter(Boolean).join(', ');
+          const emergency = [data.family.emergencyContactName, data.family.emergencyContactRelationship, data.family.emergencyContactPhone].filter(Boolean).join(' · ');
+          const readiness = [
+            data.player.jerseySize && `Jersey ${data.player.jerseySize}`,
+            data.player.apparelSize && `Apparel ${data.player.apparelSize}`,
+            data.player.cevaMembershipStatus && `CEVA ${data.player.cevaMembershipStatus.replace('_', ' ')}`,
+          ].filter(Boolean).join(' · ');
+          const addressTarget = form.querySelector<HTMLElement>('[data-review-address]');
+          const emergencyTarget = form.querySelector<HTMLElement>('[data-review-emergency]');
+          const readinessTarget = form.querySelector<HTMLElement>('[data-review-readiness]');
+          if (addressTarget) addressTarget.textContent = address || 'Complete step one';
+          if (emergencyTarget) emergencyTarget.textContent = emergency || 'Complete step one';
+          if (readinessTarget) readinessTarget.textContent = readiness || 'Complete step two';
+        };
+
+        const renderStep = () => {
+          panels.forEach((panel) => { panel.hidden = Number(panel.dataset.draftStep) !== currentStep; });
+          progressItems.forEach((item) => {
+            const step = Number(item.dataset.progressStep);
+            const number = item.querySelector<HTMLElement>('[data-progress-number]');
+            item.dataset.active = step === currentStep ? 'true' : 'false';
+            item.dataset.complete = step < currentStep ? 'true' : 'false';
+            number?.classList.toggle('border-brand-teal', step <= currentStep);
+            number?.classList.toggle('bg-brand-teal', step === currentStep);
+            number?.classList.toggle('text-white', step <= currentStep);
+          });
+          if (backButton) backButton.classList.toggle('invisible', currentStep === 1);
+          if (stepCounter) stepCounter.textContent = `Step ${currentStep} of 3`;
+          if (nextLabel) nextLabel.textContent = currentStep === 3 ? 'Save agreements & continue' : 'Save & continue';
+          if (nextButton) nextButton.disabled = currentStep === 3 && !hasAgreements;
+          updateReview();
+          panels.find((panel) => Number(panel.dataset.draftStep) === currentStep)?.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
+        };
+
+        const validateStep = (step: number): boolean => {
+          const panel = panels.find((candidate) => Number(candidate.dataset.draftStep) === step);
+          if (!panel) return true;
+          syncConditionalRequirements();
+          if (step === 2 && cevaNumber) {
+            cevaNumber.setCustomValidity(cevaStatus?.value === 'complete' && !cevaNumber.value.trim() ? 'Enter the CEVA membership number.' : '');
+          }
+          const numberInputs = [...form.querySelectorAll<HTMLInputElement>('[data-jersey-number]')];
+          const numberValues = numberInputs.map((input) => input.value.trim()).filter(Boolean);
+          const duplicateNumbers = numberValues.length !== new Set(numberValues).size;
+          numberInputs.forEach((input) => input.setCustomValidity(duplicateNumbers ? 'Choose different jersey numbers.' : ''));
+          const jerseyError = form.querySelector<HTMLElement>('[data-jersey-error]');
+          jerseyError?.classList.toggle('hidden', !duplicateNumbers);
+          numberInputs.forEach((input) => input.toggleAttribute('aria-invalid', duplicateNumbers));
+
+          const panelControls = [...panel.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea')];
+          const invalidControls = panelControls.filter((control) => !control.checkValidity());
+          panelControls.filter((control) => control.required || inlineErrors.has(validationKey(control)))
+            .forEach((control) => setInlineError(control, !control.checkValidity()));
+          const invalid = invalidControls[0];
+          if (invalid) {
+            invalid.focus();
+            invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+          }
+          return true;
+        };
+
+        const moveToStep = async (targetStep: number) => {
+          if (targetStep > currentStep && !validateStep(currentStep)) return;
+          const previousStep = currentStep;
+          currentStep = targetStep;
+          dirty = true;
+          setSaveState('dirty');
+          const saved = await flushSave();
+          if (!saved) {
+            currentStep = previousStep;
+            return;
+          }
+          renderStep();
+          form.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+        };
+
+        const showSubmitError = (message: string, missingFields: string[] = []) => {
+          submitError?.classList.remove('hidden');
+          if (submitErrorMessage) submitErrorMessage.textContent = message;
+          if (missingFieldsList) {
+            missingFieldsList.replaceChildren(...missingFields.map((field) => {
+              const item = document.createElement('li');
+              item.textContent = field;
+              return item;
+            }));
+          }
+          if (missingStepButton) {
+            const familyTerms = ['address', 'city', 'state', 'zip', 'emergency', 'communication', 'family'];
+            const targetStep = missingFields.some((field) => familyTerms.some((term) => field.toLowerCase().includes(term))) ? 1 : 2;
+            missingStepButton.dataset.targetStep = String(targetStep);
+            missingStepButton.textContent = targetStep === 1 ? 'Go to family & contact' : 'Go to player & readiness';
+            missingStepButton.classList.toggle('hidden', missingFields.length === 0);
+          }
+          submitError?.focus();
+        };
+
+        const submitAgreements = async () => {
+          if (!hasAgreements || !validateStep(3)) return;
+          submitError?.classList.add('hidden');
+          const saved = await flushSave();
+          if (!saved || !nextButton) return;
+          nextButton.disabled = true;
+          if (nextLabel) nextLabel.textContent = 'Recording…';
+
+          const responses = [...form.querySelectorAll<HTMLElement>('[data-agreement]')].flatMap((agreement) => {
+            const agreementVersionId = agreement.dataset.agreementId || '';
+            if (agreement.dataset.responseType === 'choice') {
+              const response = agreement.querySelector<HTMLInputElement>('input[type="radio"]:checked')?.value;
+              return response ? [{ agreementVersionId, response }] : [];
+            }
+            const accepted = agreement.querySelector<HTMLInputElement>('[data-agreement-ack]')?.checked;
+            return accepted ? [{ agreementVersionId, response: 'accepted' }] : [];
+          });
+          const acceptedName = form.querySelector<HTMLInputElement>('[data-accepted-name]')?.value.trim() || '';
+
+          try {
+            const response = await fetch(agreementEndpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ offerId, version, acceptedName, responses }),
+            });
+            const responseData = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              if (response.status === 409) {
+                saveBlocked = true;
+                showSaveError(responseData.error || 'This registration changed in another tab. Reload before continuing.', true);
+              }
+              const missing = Array.isArray(responseData.missingFields) ? responseData.missingFields.filter((field: unknown): field is string => typeof field === 'string') : [];
+              showSubmitError(responseData.error || 'The agreements could not be recorded.', missing);
+              return;
+            }
+            window.location.reload();
+          } catch {
+            showSubmitError('We could not reach TVVC to record the agreements. Your form entries are still here; please try again.');
+          } finally {
+            if (!saveBlocked) nextButton.disabled = false;
+            if (nextLabel) nextLabel.textContent = 'Save agreements & continue';
+          }
+        };
+
+        panels.slice(0, 2).forEach((panel) => {
+          panel.addEventListener('input', scheduleSave);
+          panel.addEventListener('change', scheduleSave);
+        });
+        form.addEventListener('input', (event) => {
+          const control = event.target;
+          if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)) return;
+          if (control === cevaStatus) syncConditionalRequirements();
+          const key = validationKey(control);
+          const error = inlineErrors.get(key);
+          if (error && (!error.classList.contains('hidden') || control.dataset.validationAttempted === 'true')) {
+            if (control === cevaNumber) {
+              control.setCustomValidity(cevaStatus?.value === 'complete' && !control.value.trim() ? 'Enter the CEVA membership number.' : '');
+            }
+            setInlineError(control, !control.checkValidity());
+          }
+          if (control.matches('[data-jersey-number]')) {
+            const numberInputs = [...form.querySelectorAll<HTMLInputElement>('[data-jersey-number]')];
+            const numberValues = numberInputs.map((input) => input.value.trim()).filter(Boolean);
+            const duplicateNumbers = numberValues.length !== new Set(numberValues).size;
+            numberInputs.forEach((input) => {
+              input.setCustomValidity(duplicateNumbers ? 'Choose different jersey numbers.' : '');
+              input.toggleAttribute('aria-invalid', duplicateNumbers);
+            });
+            form.querySelector<HTMLElement>('[data-jersey-error]')?.classList.toggle('hidden', !duplicateNumbers);
+          }
+        });
+        retrySave?.addEventListener('click', () => void flushSave());
+        reloadDraft?.addEventListener('click', () => window.location.reload());
+        backButton?.addEventListener('click', () => { if (currentStep > 1) void moveToStep(currentStep - 1); });
+        nextButton?.addEventListener('click', () => {
+          if (currentStep < 3) void moveToStep(currentStep + 1);
+          else void submitAgreements();
+        });
+        missingStepButton?.addEventListener('click', () => {
+          const targetStep = Number(missingStepButton.dataset.targetStep || 2);
+          void moveToStep(targetStep);
+        });
+        window.addEventListener('beforeunload', (event) => {
+          if (!dirty && !savePromise) return;
+          event.preventDefault();
+        });
+
+        updateReview();
+        renderStep();
+        setSaveState('saved');
+      });
+    </script>
+  )}
+
+  <style>
+    .offer-court {
+      background-image:
+        linear-gradient(90deg, transparent calc(50% - .5px), white 50%, transparent calc(50% + .5px)),
+        linear-gradient(0deg, transparent calc(50% - .5px), white 50%, transparent calc(50% + .5px)),
+        linear-gradient(90deg, transparent 8%, white 8%, white calc(8% + 1px), transparent calc(8% + 1px), transparent 92%, white 92%, white calc(92% + 1px), transparent calc(92% + 1px));
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+    }
+
+    [data-parent-offer] {
+      animation: offer-in 480ms ease-out both;
+    }
+
+    @keyframes offer-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    dialog[open] {
+      animation: dialog-in 180ms ease-out both;
+    }
+
+    .rotation-clipboard {
+      position: relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.025), 0 18px 40px rgba(0,0,0,.18);
+    }
+
+    .clipboard-clip {
+      position: absolute;
+      left: 50%;
+      top: -0.45rem;
+      width: 4.75rem;
+      height: 0.8rem;
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 0.25rem;
+      background: #202630;
+    }
+
+    .rotation-court {
+      border: 1px solid rgba(0,150,149,.24);
+      border-radius: .75rem;
+    }
+
+    .rotation-court::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(0,150,149,.18);
+    }
+
+    .rotation-position + .rotation-position {
+      border-left: 1px solid rgba(255,255,255,.08);
+    }
+
+    .rotation-path {
+      display: none;
+      color: rgba(0,150,149,.52);
+      pointer-events: none;
+    }
+
+    [data-progress-step][data-active='true'] [data-progress-number] {
+      box-shadow: 0 0 0 5px rgba(0,150,149,.13);
+    }
+
+    [data-progress-step][data-complete='true'] [data-progress-number]::after {
+      content: '✓';
+      margin-left: 0.15rem;
+      font-size: 0.65rem;
+    }
+
+    [data-save-status][data-state='saving'] [data-save-dot] {
+      animation: save-pulse 900ms ease-in-out infinite alternate;
+    }
+
+    @keyframes save-pulse {
+      from { opacity: 0.35; }
+      to { opacity: 1; }
+    }
+
+    @keyframes dialog-in {
+      from { opacity: 0; transform: translateY(8px) scale(.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      [data-parent-offer], dialog[open], [data-save-dot] { animation: none !important; }
+      html:focus-within { scroll-behavior: auto; }
+    }
+
+    @media (min-width: 1024px) {
+      .rotation-court {
+        height: 18rem;
+        overflow: hidden;
+      }
+
+      .rotation-court::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 1px;
+        background: rgba(0,150,149,.18);
+      }
+
+      .rotation-path {
+        display: block;
+        position: absolute;
+        inset: .75rem;
+        z-index: 0;
+        width: calc(100% - 1.5rem);
+        height: calc(100% - 1.5rem);
+      }
+
+      .rotation-position {
+        position: absolute;
+        z-index: 1;
+        width: 8.8rem;
+      }
+
+      .rotation-position-1 { left: .65rem; top: .85rem; }
+      .rotation-position-2 { right: .2rem; top: 6.6rem; }
+      .rotation-position-3 { left: .65rem; bottom: 1.15rem; }
+
+      .rotation-position + .rotation-position { border-left: 0; }
+
+      .payment-handoff {
+        position: absolute;
+        z-index: 1;
+        right: .55rem;
+        bottom: .65rem;
+        align-items: center;
+        gap: .4rem;
+        max-width: 5.5rem;
+      }
+
+      .draft-action-footer {
+        padding-bottom: max(.75rem, env(safe-area-inset-bottom));
+      }
+    }
+
+    @media (max-width: 1023px) {
+      .draft-action-footer {
+        padding-bottom: max(.75rem, env(safe-area-inset-bottom));
+      }
+    }
+  </style>
+</BaseLayout>

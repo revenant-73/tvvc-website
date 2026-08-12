@@ -1,19 +1,207 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
-import { registrations, events, registrationItems, users, athletes } from '../../../db/schema';
+import {
+  registrations,
+  events,
+  registrationItems,
+  users,
+  athletes,
+  clubSeasonOffers,
+  clubSeasonPaymentInstallments,
+  clubSeasonPaymentPlans,
+  clubSeasonPaymentPlanVersions,
+  clubSeasonPaymentTransactions,
+  clubSeasonRegistrations,
+} from '../../../db/schema';
 import { eq, sql, and, inArray } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { sendEmail } from '../../../lib/email';
 import { generateRegistrationEmail } from '../../../lib/email-templates';
 import { expirePendingRegistration } from '../../../lib/registration-reservations';
+import { createStripeClient } from '../../../lib/stripe-client';
+import {
+  deliverClubSeasonCheckoutSuccess,
+  recordInstallmentFailure,
+  recordInstallmentSuccess,
+} from '../../../lib/club-season-billing';
 
-const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-01-27.acacia' as any,
-});
+const stripe = createStripeClient(import.meta.env.STRIPE_SECRET_KEY || '');
 
 const endpointSecret = import.meta.env.STRIPE_WEBHOOK_SECRET;
 
 export const prerender = false;
+
+async function processClubSeasonCheckout(
+  db: ReturnType<typeof getDb>,
+  event: Stripe.Event,
+  session: Stripe.Checkout.Session,
+  siteUrl: string
+) {
+  const registrationId = session.metadata?.registrationId;
+  const paymentPlanId = session.metadata?.paymentPlanId;
+  const paymentPlanVersionId = session.metadata?.paymentPlanVersionId;
+  if (!registrationId || !paymentPlanId || !paymentPlanVersionId) {
+    console.error(`Club season Stripe event ${event.id} is missing required metadata.`);
+    return false;
+  }
+
+  const paymentIntentId = typeof session.payment_intent === 'string'
+    ? session.payment_intent
+    : session.payment_intent?.id || null;
+  if (!paymentIntentId) {
+    console.error(`Club season Stripe event ${event.id} has no PaymentIntent.`);
+    return false;
+  }
+
+  const [version] = await db.select().from(clubSeasonPaymentPlanVersions)
+    .where(eq(clubSeasonPaymentPlanVersions.id, paymentPlanVersionId))
+    .limit(1);
+  if (!version) {
+    console.error(`Club season payment plan version ${paymentPlanVersionId} was not found.`);
+    return false;
+  }
+
+  const paymentIsValid =
+    version.paymentPlanId === paymentPlanId &&
+    version.stripeCheckoutSessionId === session.id &&
+    session.payment_status === 'paid' &&
+    session.amount_total === version.dueNowAmount &&
+    session.currency?.toLowerCase() === version.currency;
+  if (!paymentIsValid) {
+    if (version.stripeCheckoutSessionId === session.id) {
+      await db.update(clubSeasonPaymentPlans).set({
+        needsReview: true,
+        updatedAt: new Date().toISOString(),
+      }).where(eq(clubSeasonPaymentPlans.id, version.paymentPlanId));
+    }
+    console.error(`Club season Stripe payment verification failed for event ${event.id}.`);
+    return false;
+  }
+
+  const stripeCustomerId = typeof session.customer === 'string'
+    ? session.customer
+    : session.customer?.id || null;
+  let stripePaymentMethodId: string | null = null;
+  if (version.paymentOption !== 'pay_in_full') {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    stripePaymentMethodId = typeof paymentIntent.payment_method === 'string'
+      ? paymentIntent.payment_method
+      : paymentIntent.payment_method?.id || null;
+    if (!stripeCustomerId || !stripePaymentMethodId) {
+      throw new Error('Installment plan checkout did not return a reusable Stripe payment method.');
+    }
+  }
+
+  const [deposit] = await db.select().from(clubSeasonPaymentInstallments)
+    .where(and(
+      eq(clubSeasonPaymentInstallments.paymentPlanVersionId, paymentPlanVersionId),
+      eq(clubSeasonPaymentInstallments.sequence, 0)
+    ))
+    .limit(1);
+  if (!deposit) {
+    throw new Error('Club season checkout references an incomplete payment record.');
+  }
+
+  const processedAt = new Date().toISOString();
+  const processed = await db.transaction(async (tx) => {
+    const [plan] = await tx.select().from(clubSeasonPaymentPlans)
+      .where(eq(clubSeasonPaymentPlans.id, paymentPlanId))
+      .limit(1);
+    const [registration] = await tx.select().from(clubSeasonRegistrations)
+      .where(eq(clubSeasonRegistrations.id, registrationId))
+      .limit(1);
+    if (!plan || !registration) {
+      throw new Error('Club season checkout references an incomplete payment record.');
+    }
+    if (
+      plan.registrationId !== registrationId ||
+      plan.currentVersion !== version.version ||
+      registration.ownerUserId !== plan.ownerUserId
+    ) {
+      throw new Error('Club season checkout references mismatched payment ownership.');
+    }
+
+    if (registration.status === 'active' || registration.status === 'paid_in_full') {
+      return false;
+    }
+    if (registration.status !== 'awaiting_payment' || version.status !== 'pending_checkout') {
+      throw new Error('Club season checkout is no longer eligible for activation.');
+    }
+
+    const registrationStatus = version.paymentOption === 'pay_in_full' ? 'paid_in_full' : 'active';
+    const planStatus = version.paymentOption === 'pay_in_full' ? 'completed' : 'active';
+    const [activated] = await tx.update(clubSeasonRegistrations).set({
+      status: registrationStatus,
+      acceptedAt: processedAt,
+      updatedAt: processedAt,
+    }).where(and(
+      eq(clubSeasonRegistrations.id, registrationId),
+      eq(clubSeasonRegistrations.status, 'awaiting_payment')
+    )).returning({ id: clubSeasonRegistrations.id });
+    if (!activated) return false;
+
+    const [acceptedOffer] = await tx.update(clubSeasonOffers).set({
+      status: 'accepted',
+      respondedAt: processedAt,
+      updatedAt: processedAt,
+    }).where(and(
+      eq(clubSeasonOffers.id, registration.offerId),
+      eq(clubSeasonOffers.status, 'registration_started')
+    )).returning({ id: clubSeasonOffers.id });
+    if (!acceptedOffer) {
+      throw new Error('Club season offer is no longer eligible for acceptance.');
+    }
+    await tx.update(clubSeasonPaymentPlans).set({
+      status: planStatus,
+      financialStatus: version.paymentOption === 'pay_in_full' ? 'paid_in_full' : 'current',
+      stripeCustomerId,
+      stripePaymentMethodId,
+      activatedAt: processedAt,
+      completedAt: version.paymentOption === 'pay_in_full' ? processedAt : null,
+      updatedAt: processedAt,
+    }).where(eq(clubSeasonPaymentPlans.id, plan.id));
+    await tx.update(clubSeasonPaymentPlanVersions).set({
+      status: planStatus,
+      stripePaymentIntentId: paymentIntentId,
+      updatedAt: processedAt,
+    }).where(eq(clubSeasonPaymentPlanVersions.id, version.id));
+    await tx.update(clubSeasonPaymentInstallments).set({
+      status: 'paid',
+      stripePaymentIntentId: paymentIntentId,
+      paidAt: processedAt,
+      updatedAt: processedAt,
+    }).where(eq(clubSeasonPaymentInstallments.id, deposit.id));
+    await tx.insert(clubSeasonPaymentTransactions).values({
+      id: crypto.randomUUID(),
+      registrationId,
+      paymentPlanVersionId,
+      installmentId: deposit.id,
+      stripeEventId: event.id,
+      source: 'checkout',
+      stripeCheckoutSessionId: session.id,
+      stripePaymentIntentId: paymentIntentId,
+      amount: version.dueNowAmount,
+      currency: version.currency,
+      status: 'succeeded',
+      processedAt,
+      createdAt: processedAt,
+    });
+    if (stripeCustomerId) {
+      await tx.update(users).set({ stripeCustomerId }).where(and(
+        eq(users.id, plan.ownerUserId),
+        sql`${users.stripeCustomerId} IS NULL`
+      ));
+    }
+    return true;
+  });
+
+  await deliverClubSeasonCheckoutSuccess(db, stripe, {
+    paymentIntentId,
+    installmentId: deposit.id,
+    siteUrl,
+  });
+  return processed;
+}
 
 export const POST: APIRoute = async ({ request }) => {
   const sig = request.headers.get('stripe-signature');
@@ -43,8 +231,44 @@ export const POST: APIRoute = async ({ request }) => {
     import.meta.env.TURSO_AUTH_TOKEN || ''
   );
 
+  if (event.type === 'payment_intent.succeeded' || event.type === 'payment_intent.payment_failed') {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    if (intent.metadata?.flow === 'club_season_installment') {
+      try {
+        const siteUrl = new URL(request.url).origin;
+        const processed = event.type === 'payment_intent.succeeded'
+          ? await recordInstallmentSuccess(db, stripe, event.id, intent, siteUrl)
+          : await recordInstallmentFailure(db, intent, siteUrl);
+        return new Response(JSON.stringify({ received: true, processed }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('Club season installment webhook processing error:', error);
+        return new Response('Database error', { status: 500 });
+      }
+    }
+  }
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
+    if (session.metadata?.flow === 'club_season') {
+      try {
+        const processed = await processClubSeasonCheckout(
+          db,
+          event,
+          session,
+          new URL(request.url).origin
+        );
+        return new Response(JSON.stringify({ received: true, processed }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('Club season webhook processing error:', error);
+        return new Response('Database error', { status: 500 });
+      }
+    }
     const registrationId = session.metadata?.registrationId;
     const stripeCustomerId = typeof session.customer === 'string'
       ? session.customer
@@ -212,6 +436,37 @@ export const POST: APIRoute = async ({ request }) => {
     }
   } else if (event.type === 'checkout.session.expired') {
     const session = event.data.object as Stripe.Checkout.Session;
+    if (session.metadata?.flow === 'club_season') {
+      const versionId = session.metadata.paymentPlanVersionId;
+      const planId = session.metadata.paymentPlanId;
+      if (versionId && planId) {
+        const expiredAt = new Date().toISOString();
+        await db.transaction(async (tx) => {
+          const [expiredVersion] = await tx.update(clubSeasonPaymentPlanVersions).set({
+            status: 'checkout_expired',
+            updatedAt: expiredAt,
+          }).where(and(
+            eq(clubSeasonPaymentPlanVersions.id, versionId),
+            eq(clubSeasonPaymentPlanVersions.stripeCheckoutSessionId, session.id),
+            eq(clubSeasonPaymentPlanVersions.status, 'pending_checkout')
+          )).returning({ version: clubSeasonPaymentPlanVersions.version });
+          if (!expiredVersion) return;
+
+          await tx.update(clubSeasonPaymentPlans).set({
+            status: 'checkout_expired',
+            updatedAt: expiredAt,
+          }).where(and(
+            eq(clubSeasonPaymentPlans.id, planId),
+            eq(clubSeasonPaymentPlans.currentVersion, expiredVersion.version),
+            eq(clubSeasonPaymentPlans.status, 'checkout_open')
+          ));
+        });
+      }
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     const registrationId = session.metadata?.registrationId;
 
     console.log('Received checkout.session.expired for registration:', registrationId);

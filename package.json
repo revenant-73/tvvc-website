@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed:club-pilot": "tsx src/db/seed-club-season-pilot.ts",
     "test": "playwright test",
     "test:unit": "node --experimental-strip-types --test tests/*.test.ts",
     "test:prod": "set BASE_URL=https://tualatinvalleyvb.com && playwright test",

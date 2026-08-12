@@ -1,0 +1,1439 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getDb } from '../../db';
+import { clubAgeGroups, clubPricingTiers, clubSeasonAgreementVersions, clubSeasons, clubTeams } from '../../db/schema';
+import { asc, eq } from 'drizzle-orm';
+import { getCurrentAdminUser } from '../../lib/admin-auth';
+import { CLUB_SEASON_AGREEMENT_WORKING_DRAFTS } from '../../lib/club-season-agreement-content';
+import { getClubSeasonLaunchReadiness } from '../../lib/club-season-launch-readiness';
+import { getClubSeasonAgreementVersions, getClubSeasonLaunchEvidence } from '../../lib/club-season-settings';
+
+const SEASON_ID = '2026-2027-club';
+const clubSeasonFeatureEnabled = String(
+  import.meta.env.CLUB_SEASON_REGISTRATION_ENABLED ||
+  process.env.CLUB_SEASON_REGISTRATION_ENABLED ||
+  'false'
+).toLowerCase() === 'true';
+
+const admin = await getCurrentAdminUser(Astro.request);
+const isAdmin = Boolean(admin);
+
+let season: typeof clubSeasons.$inferSelect | null = null;
+let pricingTiers: Array<typeof clubPricingTiers.$inferSelect> = [];
+let ageGroups: Array<typeof clubAgeGroups.$inferSelect> = [];
+let teams: Array<typeof clubTeams.$inferSelect> = [];
+let agreementVersions: Array<typeof clubSeasonAgreementVersions.$inferSelect> = [];
+type LaunchEvidence = {
+  type: 'resend_domain' | 'stripe_live_review' | 'controlled_pilot';
+  label: string;
+  completed: boolean;
+  completedAt: string | null;
+  completedByName: string | null;
+  completedByEmail: string | null;
+  evidenceReference: string | null;
+};
+let launchEvidence: LaunchEvidence[] = [];
+let loadError = '';
+
+type LaunchReadiness = {
+  readyForPilot: boolean;
+  readyForLive: boolean;
+  summary: { passed: number; total: number; blocking: number };
+  gates: Array<{
+    key: string;
+    label: string;
+    detail: string;
+    status: 'passed' | 'blocked' | 'manual';
+    blocking: boolean;
+  }>;
+  featureFlagEnabled: boolean;
+  seasonRegistrationEnabled: boolean;
+  activeTeamCount: number;
+  publishedAgreementCount: number;
+};
+
+let launchReadiness: LaunchReadiness | null = null;
+
+if (isAdmin) {
+  try {
+    const db = getDb(
+      import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL || '',
+      import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || ''
+    );
+
+    [season] = await db
+      .select()
+      .from(clubSeasons)
+      .where(eq(clubSeasons.id, SEASON_ID))
+      .limit(1);
+
+    if (season) {
+      [pricingTiers, ageGroups, teams, agreementVersions, launchEvidence] = await Promise.all([
+        db.select().from(clubPricingTiers)
+          .where(eq(clubPricingTiers.seasonId, season.id))
+          .orderBy(asc(clubPricingTiers.sortOrder)),
+        db.select().from(clubAgeGroups)
+          .where(eq(clubAgeGroups.seasonId, season.id))
+          .orderBy(asc(clubAgeGroups.sortOrder)),
+        db.select().from(clubTeams)
+          .where(eq(clubTeams.seasonId, season.id))
+          .orderBy(asc(clubTeams.name)),
+        getClubSeasonAgreementVersions(db, season.id),
+        getClubSeasonLaunchEvidence(db, season.id),
+      ]);
+
+      launchReadiness = await getClubSeasonLaunchReadiness(db, season.id, {
+        featureFlagEnabled: clubSeasonFeatureEnabled,
+        stripeSecretKey: import.meta.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || '',
+        stripePublishableKey: import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
+        stripeWebhookSecret: import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET || '',
+        resendApiKey: import.meta.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '',
+        cronSecret: import.meta.env.CLUB_SEASON_CRON_SECRET || process.env.CLUB_SEASON_CRON_SECRET || '',
+        billingEmail: import.meta.env.CLUB_SEASON_BILLING_EMAIL || process.env.CLUB_SEASON_BILLING_EMAIL || '',
+      });
+    }
+  } catch (error) {
+    console.error('Club season admin load error:', error);
+    loadError = 'Season configuration could not be loaded. Check the database connection and try again.';
+  }
+}
+
+const activeAgeGroups = ageGroups.filter((group) => group.active);
+const activeTeams = teams.filter((team) => team.active);
+const tierById = new Map(pricingTiers.map((tier) => [tier.id, tier]));
+const ageGroupById = new Map(ageGroups.map((group) => [group.id, group]));
+const teamsByAgeGroup = new Map(
+  ageGroups.map((group) => [group.id, teams.filter((team) => team.ageGroupId === group.id)])
+);
+
+const money = (cents: number) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+}).format(cents / 100);
+
+const displayDate = (value?: string | null) => {
+  if (!value) return 'Not set';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T12:00:00Z`));
+};
+
+const statusLabel = season?.status
+  ? season.status.charAt(0).toUpperCase() + season.status.slice(1)
+  : 'Not configured';
+const parentRegistrationEnabled = Boolean(
+  clubSeasonFeatureEnabled && season?.publicRegistrationEnabled
+);
+
+const scheduleMonths = [
+  { month: 'November', label: 'Deposit', tone: 'deposit' },
+  { month: 'December', label: 'No charge', tone: 'pause' },
+  { month: 'January', label: '5th', tone: 'payment' },
+  { month: 'February', label: '5th', tone: 'payment' },
+  { month: 'March', label: '5th', tone: 'payment' },
+  { month: 'April', label: '5th', tone: 'payment' },
+  { month: 'May', label: '5th', tone: 'payment' },
+];
+
+const pacificDateTimeLocal = (value?: string | null) => {
+  if (!value) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date(value));
+  const get = (type: string) => parts.find((part) => part.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+};
+
+const agreementFamilies = [
+  { key: 'season-commitment', label: 'Season commitment', response: 'Required acknowledgement', defaultTitle: 'Season Commitment Agreement', defaultSummary: 'Family commitment, participation, and season obligations.' },
+  { key: 'refund-cancellation-policy', label: 'Refund & cancellation', response: 'Required acknowledgement', defaultTitle: 'Refund and Cancellation Policy', defaultSummary: 'Payment, withdrawal, cancellation, and case-by-case refund terms.' },
+  { key: 'media-release', label: 'Media release', response: 'Required choice · granted or declined', defaultTitle: 'Media Release', defaultSummary: 'Permission choice for player photography and club media.' },
+].map((family) => ({
+  ...family,
+  workingDraft: CLUB_SEASON_AGREEMENT_WORKING_DRAFTS[family.key as keyof typeof CLUB_SEASON_AGREEMENT_WORKING_DRAFTS],
+  versions: agreementVersions.filter((agreement) => agreement.key === family.key),
+}));
+
+const agreementDate = (value?: string | null) => value
+  ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' }).format(new Date(value))
+  : 'Date unavailable';
+
+const evidenceDate = (value?: string | null) => value
+  ? new Intl.DateTimeFormat('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles', timeZoneName: 'short',
+    }).format(new Date(value))
+  : '';
+
+const evidenceConfig = {
+  resend_domain: {
+    confirmation: 'RECORD RESEND',
+    referenceLabel: 'Verification reference',
+    referencePlaceholder: 'Domain, verified sender, date checked, and where the verification was confirmed',
+  },
+  stripe_live_review: {
+    confirmation: 'RECORD STRIPE',
+    referenceLabel: 'Review reference',
+    referencePlaceholder: 'Reviewer, date, account/mode reviewed, and result',
+  },
+  controlled_pilot: {
+    confirmation: 'RECORD PILOT',
+    referenceLabel: 'Pilot evidence reference',
+    referencePlaceholder: 'Test family and date, Stripe test object IDs, result, and any issue notes',
+  },
+} as const;
+
+const pilotChecks = [
+  ['registration', 'Family completed registration and agreement flow'],
+  ['payment', 'Test deposit or pay-in-full payment verified'],
+  ['email', 'Reminder/confirmation/failure emails verified'],
+  ['ledger', 'Admin ledger and balance reconciled'],
+  ['failure_recovery', 'Failed-payment recovery completed'],
+  ['idempotency', 'Duplicate webhook/job run caused no duplicate effect'],
+] as const;
+---
+
+<BaseLayout
+  title="Club Season Control"
+  description="Configure TVVC club season teams and payment schedules."
+  noindex={true}
+>
+  <main class="min-h-screen px-4 pb-24 pt-28 md:px-6 md:pt-32">
+    <div class="mx-auto max-w-7xl">
+      {!isAdmin ? (
+        <section class="mx-auto max-w-lg rounded-3xl border border-white/10 bg-white/[0.04] p-7 text-center shadow-2xl md:p-10" aria-labelledby="restricted-title">
+          <div class="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-brand-coral/30 bg-brand-coral/10 text-brand-coral">
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.28em] text-brand-coral">Restricted area</p>
+          <h1 id="restricted-title" class="text-2xl font-heading font-extrabold uppercase tracking-tight text-white">Admin access required</h1>
+          <p class="mx-auto mt-3 max-w-sm text-sm leading-6 text-white/55">Sign in with a TVVC administrator account to configure the club season.</p>
+          <a href="/portal/login?callbackUrl=/admin/club-season" class="mt-7 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-teal px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-charcoal">Sign in</a>
+        </section>
+      ) : (
+        <div class="space-y-7">
+          <nav aria-label="Breadcrumb">
+            <a href="/admin" class="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-white/45 transition hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"></path></svg>
+              Admin dashboard
+            </a>
+          </nav>
+
+          <header class="flex flex-col gap-5 border-b border-white/10 pb-7 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div class="mb-3 flex flex-wrap items-center gap-2">
+                <span class="rounded-md border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/70">{statusLabel}</span>
+                <span class:list={[
+                  'rounded-md border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em]',
+                  parentRegistrationEnabled
+                    ? 'border-brand-teal/30 bg-brand-teal/10 text-brand-teal'
+                    : 'border-brand-coral/30 bg-brand-coral/10 text-brand-coral',
+                ]}>
+                  Parent registration {parentRegistrationEnabled ? 'on' : 'off'}
+                </span>
+              </div>
+              <h1 class="font-heading text-4xl font-extrabold uppercase leading-none tracking-[-0.04em] text-white md:text-6xl">
+                Club Season <span class="text-brand-teal">Control</span>
+              </h1>
+              <p class="mt-3 max-w-2xl text-sm leading-6 text-white/50">Configure the season once. Add teams after tryouts without touching the payment math.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-4">
+              <a href="/admin/club-season/finances" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-teal px-4 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-charcoal">
+                Manage finances
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19V9M10 19V5M16 19v-7M22 19V2"></path></svg>
+              </a>
+              <a href="/admin/club-season/offers" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-brand-teal/35 bg-brand-teal/10 px-4 text-xs font-extrabold uppercase tracking-[0.12em] text-brand-teal transition hover:border-brand-teal hover:bg-brand-teal hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-charcoal">
+                Manage offers
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+              </a>
+              <div class="flex items-center gap-3 text-left lg:text-right">
+                <span class="block h-2.5 w-2.5 rounded-full bg-brand-teal shadow-glow-teal" aria-hidden="true"></span>
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Pricing foundation</p>
+                  <p class="text-sm font-bold text-white">Ready for team setup</p>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {loadError && (
+            <section class="rounded-2xl border border-brand-coral/30 bg-brand-coral/10 p-5" role="alert">
+              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-coral">Couldn’t load configuration</p>
+              <p class="mt-2 text-sm text-white/70">{loadError}</p>
+            </section>
+          )}
+
+          {!loadError && !season && (
+            <section class="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5" role="alert">
+              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-300">Season not found</p>
+              <p class="mt-2 text-sm text-white/70">The 2026–2027 club season has not been seeded yet. Run the foundation migration and seed before configuring teams.</p>
+            </section>
+          )}
+
+          {season && (
+            <>
+              <section aria-label="Season configuration" class="grid overflow-hidden rounded-2xl border border-white/10 bg-[#11151d] sm:grid-cols-2 xl:grid-cols-4">
+                <div class="border-b border-white/10 p-4 sm:border-r xl:border-b-0">
+                  <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Season</p>
+                  <p class="mt-1.5 font-heading text-lg font-bold text-white">{season.name}</p>
+                </div>
+                <div class="border-b border-white/10 p-4 xl:border-b-0 xl:border-r">
+                  <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Timezone</p>
+                  <p class="mt-1.5 font-heading text-lg font-bold text-white">Pacific Time</p>
+                  <p class="text-[10px] text-white/35">{season.timezone}</p>
+                </div>
+                <div class="border-b border-white/10 p-4 sm:border-b-0 sm:border-r">
+                  <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Default billing day</p>
+                  <p class="mt-1.5 font-heading text-2xl font-extrabold text-brand-teal">{season.defaultBillingDay}<sup class="text-xs">th</sup></p>
+                </div>
+                <div class="p-4">
+                  <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">First installment</p>
+                  <p class="mt-1.5 font-heading text-lg font-bold text-white">{displayDate(season.firstInstallmentDate)}</p>
+                </div>
+              </section>
+
+              <section aria-labelledby="launch-readiness-heading" class="overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
+                <header class="border-b border-white/10 px-5 py-5 md:px-7 md:py-6">
+                  <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-brand-teal">Launch control</p>
+                      <h2 id="launch-readiness-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Readiness gate</h2>
+                      <p class="mt-2 max-w-2xl text-sm leading-6 text-white/50">Database configuration and the Netlify feature flag are independent locks. Both must clear before a family can reach registration.</p>
+                    </div>
+
+                    {launchReadiness ? (
+                      <div class:list={[
+                        'min-w-60 border-l-2 pl-4',
+                        launchReadiness.readyForPilot ? 'border-brand-teal' : 'border-brand-coral',
+                      ]} role="status">
+                        <p class:list={[
+                          'text-[10px] font-extrabold uppercase tracking-[0.2em]',
+                          launchReadiness.readyForPilot ? 'text-brand-teal' : 'text-brand-coral',
+                        ]}>{launchReadiness.readyForPilot ? 'Ready for pilot' : 'Launch blocked'}</p>
+                        <div class="mt-1 flex items-baseline gap-2">
+                          <strong class="font-heading text-3xl font-extrabold tabular-nums text-white">{launchReadiness.summary.passed}/{launchReadiness.summary.total}</strong>
+                          <span class="text-xs font-semibold text-white/45">checks passed</span>
+                        </div>
+                        {!launchReadiness.readyForPilot && (
+                          <p class="mt-1 text-xs font-semibold text-brand-coral">{launchReadiness.summary.blocking} blocking {launchReadiness.summary.blocking === 1 ? 'item' : 'items'} remain</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div class="min-w-60 border-l-2 border-amber-300 pl-4" role="status">
+                        <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-amber-300">Preflight unavailable</p>
+                        <p class="mt-1 max-w-xs text-sm font-semibold leading-5 text-white/65">Readiness could not be calculated. Registration state has not changed.</p>
+                      </div>
+                    )}
+                  </div>
+                </header>
+
+                {launchReadiness ? (
+                  <div class="grid xl:grid-cols-[minmax(0,1.35fr)_minmax(24rem,0.65fr)]">
+                    <div class="border-b border-white/10 xl:border-b-0 xl:border-r">
+                      <div class="flex items-center justify-between border-b border-white/10 px-5 py-3 md:px-7">
+                        <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Preflight checklist</p>
+                        <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-white/30">Auto + manual gates</p>
+                      </div>
+                      <ol class="divide-y divide-white/10">
+                        {launchReadiness.gates.map((gate) => (
+                          <li class="grid gap-3 px-5 py-4 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-4 md:px-7">
+                            <div class="flex items-start gap-2">
+                              <span class:list={[
+                                'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border text-[10px] font-black',
+                                gate.status === 'passed' && 'border-brand-teal/50 bg-brand-teal/10 text-brand-teal',
+                                gate.status === 'blocked' && 'border-brand-coral/50 bg-brand-coral/10 text-brand-coral',
+                                gate.status === 'manual' && 'border-amber-300/50 bg-amber-300/10 text-amber-300',
+                              ]} aria-hidden="true">
+                                {gate.status === 'passed' ? '✓' : gate.status === 'blocked' ? '!' : '—'}
+                              </span>
+                              <span class:list={[
+                                'pt-0.5 text-[9px] font-extrabold uppercase tracking-[0.15em]',
+                                gate.status === 'passed' && 'text-brand-teal',
+                                gate.status === 'blocked' && 'text-brand-coral',
+                                gate.status === 'manual' && 'text-amber-300',
+                              ]}>{gate.status === 'manual' ? 'Manual check' : gate.status}</span>
+                            </div>
+                            <div>
+                              <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="font-heading text-sm font-extrabold uppercase tracking-[0.04em] text-white">{gate.label}</h3>
+                                {gate.blocking && gate.status !== 'passed' && <span class="border border-brand-coral/30 px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.13em] text-brand-coral">Blocking</span>}
+                              </div>
+                              <p class="mt-1 text-xs leading-5 text-white/50">{gate.detail}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+
+                    <aside class="px-5 py-5 md:px-7 md:py-6" aria-labelledby="launch-locks-heading">
+                      <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Route access logic</p>
+                      <h3 id="launch-locks-heading" class="mt-1 font-heading text-lg font-extrabold uppercase tracking-tight text-white">Two independent locks</h3>
+
+                      <div class="mt-5 grid items-stretch gap-2 sm:grid-cols-[1fr_auto_1fr] xl:grid-cols-1">
+                        <div class:list={[
+                          'border-l-2 bg-black/20 p-4',
+                          launchReadiness.seasonRegistrationEnabled ? 'border-brand-teal' : 'border-brand-coral',
+                        ]}>
+                          <div class="flex items-center justify-between gap-3">
+                            <span class="text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/35">Lock 01 · Database</span>
+                            <span class:list={[
+                              'text-[9px] font-black uppercase tracking-[0.16em]',
+                              launchReadiness.seasonRegistrationEnabled ? 'text-brand-teal' : 'text-brand-coral',
+                            ]}>{launchReadiness.seasonRegistrationEnabled ? 'Open' : 'Closed'}</span>
+                          </div>
+                          <p class="mt-2 font-mono text-[11px] leading-5 text-white/70">public_registration_enabled</p>
+                        </div>
+
+                        <div class="flex items-center justify-center px-2 py-1" aria-label="and">
+                          <span class="border border-white/15 bg-[#11151d] px-2 py-1 font-heading text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/50">AND</span>
+                        </div>
+
+                        <div class:list={[
+                          'border-l-2 bg-black/20 p-4',
+                          launchReadiness.featureFlagEnabled ? 'border-brand-teal' : 'border-brand-coral',
+                        ]}>
+                          <div class="flex items-center justify-between gap-3">
+                            <span class="text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/35">Lock 02 · Netlify</span>
+                            <span class:list={[
+                              'text-[9px] font-black uppercase tracking-[0.16em]',
+                              launchReadiness.featureFlagEnabled ? 'text-brand-teal' : 'text-brand-coral',
+                            ]}>{launchReadiness.featureFlagEnabled ? 'Open' : 'Closed'}</span>
+                          </div>
+                          <p class="mt-2 break-all font-mono text-[11px] leading-5 text-white/70">CLUB_SEASON_REGISTRATION_ENABLED</p>
+                        </div>
+                      </div>
+
+                      <p class="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-white/45">Families can access the route only when <strong class="text-white/70">both</strong> locks are open. This screen is read-only and cannot change either state.</p>
+                      <dl class="mt-4 grid grid-cols-2 gap-px bg-white/10">
+                        <div class="bg-[#11151d] py-3 pr-3">
+                          <dt class="text-[8px] font-bold uppercase tracking-[0.15em] text-white/30">Active teams</dt>
+                          <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-white">{launchReadiness.activeTeamCount}</dd>
+                        </div>
+                        <div class="bg-[#11151d] py-3 pl-3">
+                          <dt class="text-[8px] font-bold uppercase tracking-[0.15em] text-white/30">Published agreements</dt>
+                          <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-white">{launchReadiness.publishedAgreementCount}</dd>
+                        </div>
+                      </dl>
+                    </aside>
+                  </div>
+                ) : (
+                  <div class="px-5 py-6 md:px-7">
+                    <p class="text-sm leading-6 text-white/50">The checklist and lock state will appear after the database preflight is available. No launch setting can be changed from this section.</p>
+                  </div>
+                )}
+
+                <footer class="flex items-start gap-3 border-t border-amber-300/20 bg-amber-300/[0.05] px-5 py-4 md:px-7">
+                  <svg class="mt-0.5 shrink-0 text-amber-300" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.3 3.7 2.2 18a2 2 0 0 0 1.8 3h16a2 2 0 0 0 1.8-3L13.7 3.7a2 2 0 0 0-3.4 0Z"></path></svg>
+                  <p class="text-xs leading-5 text-white/55"><strong class="font-extrabold uppercase tracking-[0.08em] text-amber-300">Human approval required.</strong> Agreement and refund language requires TVVC approval. This screen does not publish policy language, enable registration, or switch Stripe to live keys.</p>
+                </footer>
+              </section>
+
+              <section aria-labelledby="verification-evidence-heading" class="overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
+                <header class="flex flex-col gap-3 border-b border-white/10 px-5 py-5 md:flex-row md:items-end md:justify-between md:px-7 md:py-6">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-amber-300">Flight recorder</p>
+                    <h2 id="verification-evidence-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Verification evidence</h2>
+                    <p class="mt-2 max-w-3xl text-sm leading-6 text-white/50">Record the human verification behind each launch gate. These entries are permanent operational history, not automated proof.</p>
+                  </div>
+                  <p class="border-l-2 border-amber-300 pl-3 text-[10px] font-extrabold uppercase leading-5 tracking-[0.14em] text-amber-300">Append-only log<br /><span class="text-white/45">No edit or delete</span></p>
+                </header>
+
+                {launchEvidence.length ? (
+                  <ol class="divide-y divide-white/10">
+                    {launchEvidence.map((evidence, index) => {
+                      const config = evidenceConfig[evidence.type];
+                      const actor = evidence.completedByName || evidence.completedByEmail || 'TVVC administrator';
+                      return (
+                        <li data-evidence-row={evidence.type}>
+                          <div class="grid gap-4 px-5 py-5 md:grid-cols-[8rem_minmax(0,1fr)_auto] md:items-start md:px-7">
+                            <div class="flex items-center gap-3">
+                              <span class:list={[
+                                'flex h-8 w-8 shrink-0 items-center justify-center border font-mono text-[11px] font-black',
+                                evidence.completed ? 'border-brand-teal/50 bg-brand-teal/10 text-brand-teal' : 'border-amber-300/50 bg-amber-300/10 text-amber-300',
+                              ]} aria-hidden="true">{evidence.completed ? '✓' : String(index + 1).padStart(2, '0')}</span>
+                              <span class:list={[
+                                'text-[9px] font-extrabold uppercase tracking-[0.17em]',
+                                evidence.completed ? 'text-brand-teal' : 'text-amber-300',
+                              ]}>{evidence.completed ? 'Recorded' : 'Pending'}</span>
+                            </div>
+
+                            <div class="min-w-0">
+                              <h3 class="font-heading text-base font-extrabold uppercase tracking-[0.03em] text-white">{evidence.label}</h3>
+                              {evidence.completed ? (
+                                <div class="mt-2 border-l-2 border-brand-teal pl-3">
+                                  <p class="text-xs font-semibold text-white/75">Signed by {actor} · {evidenceDate(evidence.completedAt)}</p>
+                                  {evidence.completedByName && evidence.completedByEmail && <p class="mt-0.5 text-[11px] text-white/45">{evidence.completedByEmail}</p>}
+                                  <p class="mt-2 break-words font-mono text-[11px] leading-5 text-white/65">{evidence.evidenceReference}</p>
+                                </div>
+                              ) : (
+                                <p class="mt-1 text-xs leading-5 text-white/45">Manual verification has not been recorded. Completing automated tests does not complete this gate.</p>
+                              )}
+                            </div>
+
+                            {!evidence.completed && (
+                              <button type="button" class="evidence-open min-h-10 justify-self-start border border-amber-300/35 px-4 text-[10px] font-extrabold uppercase tracking-[0.11em] text-amber-300 transition hover:bg-amber-300/10 focus:outline-none focus:ring-2 focus:ring-amber-300 md:justify-self-end" data-evidence-type={evidence.type} aria-expanded="false" aria-controls={`evidence-form-${evidence.type}`}>Record evidence</button>
+                            )}
+                          </div>
+
+                          {!evidence.completed && (
+                            <form id={`evidence-form-${evidence.type}`} class="evidence-form hidden border-t border-amber-300/20 bg-[#0b0e14] px-5 py-5 md:px-7" data-evidence-form data-evidence-type={evidence.type} data-confirm-phrase={config.confirmation}>
+                              <div class="flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                  <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-amber-300">Manual log entry</p>
+                                  <h4 class="mt-1 font-heading text-lg font-extrabold uppercase text-white">Record {evidence.label}</h4>
+                                </div>
+                                <button type="button" class="evidence-close min-h-9 text-xs font-bold text-white/45 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Close form</button>
+                              </div>
+
+                              {evidence.type === 'controlled_pilot' && (
+                                <fieldset class="mt-5">
+                                  <legend class="text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/65">All pilot checks are required</legend>
+                                  <div class="mt-3 grid gap-px border border-white/10 bg-white/10 lg:grid-cols-2">
+                                    {pilotChecks.map(([value, label]) => (
+                                      <label class="flex min-h-14 cursor-pointer items-start gap-3 bg-[#0b0e14] p-3 text-xs font-semibold leading-5 text-white/70 transition hover:bg-white/[0.03] focus-within:bg-white/[0.04]">
+                                        <input type="checkbox" name="checks" value={value} required class="mt-0.5 h-4 w-4 shrink-0 accent-[#009695] focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#0b0e14]" />
+                                        <span>{label}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </fieldset>
+                              )}
+
+                              <div class="mt-5 grid gap-4 lg:grid-cols-2">
+                                <div>
+                                  <label for={`evidence-reference-${evidence.type}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/65">{config.referenceLabel}</label>
+                                  <textarea id={`evidence-reference-${evidence.type}`} name="evidenceReference" required minlength="10" maxlength="2000" rows="4" placeholder={config.referencePlaceholder} class="w-full rounded-lg border border-white/15 bg-black/20 px-3 py-2 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"></textarea>
+                                </div>
+                                <div>
+                                  <label for={`evidence-confirmation-${evidence.type}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/65">Type <span class="font-mono text-amber-300">{config.confirmation}</span></label>
+                                  <input id={`evidence-confirmation-${evidence.type}`} name="confirmation" required autocomplete="off" spellcheck="false" class="min-h-11 w-full rounded-lg border border-amber-300/30 bg-black/20 px-3 font-mono text-sm font-bold text-white outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20" />
+                                  <p class="mt-2 text-[11px] leading-5 text-white/45">This records evidence only. It does not change Stripe keys, Netlify settings, or either launch lock.</p>
+                                </div>
+                              </div>
+
+                              <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <p class="min-h-5 text-xs text-white/55" role="status" aria-live="polite" data-evidence-status></p>
+                                <button type="submit" disabled class="min-h-11 border border-amber-300 bg-amber-300/10 px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-amber-300 transition hover:bg-amber-300 hover:text-[#11151d] focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.03] disabled:text-white/25"><span data-evidence-button-label>Record permanently</span></button>
+                              </div>
+                            </form>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : (
+                  <div class="px-5 py-6 md:px-7" role="status">
+                    <p class="text-sm leading-6 text-white/50">Verification records could not be loaded. No evidence or launch setting has changed.</p>
+                  </div>
+                )}
+              </section>
+
+              <section aria-labelledby="registration-setup-heading" class="overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
+                <header class="border-b border-white/10 px-5 py-5 md:px-7 md:py-6">
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-brand-teal">Change control</p>
+                  <div class="mt-1 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <h2 id="registration-setup-heading" class="font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Registration setup</h2>
+                      <p class="mt-2 max-w-3xl text-sm leading-6 text-white/50">Schedule the invitation window and prepare the exact policy versions families will accept. Publishing creates permanent evidence; drafts stay editable.</p>
+                    </div>
+                    <span class="border-l-2 border-amber-300 pl-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-amber-300">Review before release</span>
+                  </div>
+                </header>
+
+                <div class="grid border-b border-white/10 xl:grid-cols-[minmax(0,0.75fr)_minmax(28rem,1.25fr)]">
+                  <div class="border-b border-white/10 px-5 py-6 md:px-7 xl:border-b-0 xl:border-r">
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Window 01</p>
+                    <h3 class="mt-1 font-heading text-lg font-extrabold uppercase tracking-tight text-white">Invitation schedule</h3>
+                    <p class="mt-2 text-xs leading-5 text-white/45">Times are entered in <strong class="text-white/70">Pacific Time</strong>. Saving this window does not open the parent route; both launch locks above remain separate.</p>
+                  </div>
+                  <form id="registration-window-form" class="grid gap-4 px-5 py-6 md:grid-cols-2 md:px-7" data-season-id={season.id}>
+                    <div>
+                      <label for="registration-opens-at" class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/50">Opens · Pacific Time</label>
+                      <input id="registration-opens-at" name="registrationOpensAt" type="datetime-local" required aria-describedby="registration-dst-guidance" value={pacificDateTimeLocal(season.registrationOpensAt)} class="min-h-11 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <div>
+                      <label for="registration-closes-at" class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/50">Closes · Pacific Time</label>
+                      <input id="registration-closes-at" name="registrationClosesAt" type="datetime-local" required aria-describedby="registration-dst-guidance" value={pacificDateTimeLocal(season.registrationClosesAt)} class="min-h-11 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <p id="registration-dst-guidance" class="-mt-2 text-[11px] leading-5 text-white/55 md:col-span-2">On daylight-saving change dates, avoid 1:00–1:59 AM and 2:00–2:59 AM; repeated or nonexistent Pacific times cannot be saved.</p>
+                    <div class="md:col-span-2">
+                      <label for="registration-window-reason" class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/50">Audit reason</label>
+                      <input id="registration-window-reason" name="reason" required minlength="5" maxlength="500" placeholder="Why is this window being set or changed?" class="min-h-11 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none transition placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <div class="flex flex-col gap-2 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p class="min-h-5 text-xs font-medium text-white/55" role="status" aria-live="polite" data-window-status></p>
+                      <button type="submit" class="min-h-11 rounded-lg bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-50"><span data-window-button-label>Save window</span></button>
+                    </div>
+                  </form>
+                </div>
+
+                <div>
+                  <div class="flex flex-col gap-2 border-b border-white/10 px-5 py-5 md:flex-row md:items-end md:justify-between md:px-7">
+                    <div>
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Desk 02</p>
+                      <h3 class="mt-1 font-heading text-lg font-extrabold uppercase tracking-tight text-white">Agreement publishing desk</h3>
+                    </div>
+                    <p class="text-xs text-white/55">Retired history → published evidence → next draft</p>
+                  </div>
+
+                  <div class="divide-y divide-white/10">
+                    {agreementFamilies.map((family, familyIndex) => {
+                      const published = family.versions.find((version) => version.status === 'published');
+                      const drafts = family.versions.filter((version) => version.status === 'draft');
+                      const retired = family.versions.filter((version) => version.status === 'retired');
+                      const nextVersion = Math.max(0, ...family.versions.map((version) => version.version)) + 1;
+                      return (
+                        <article class="group relative px-5 py-6 md:px-7" aria-labelledby={`agreement-family-${familyIndex}`}>
+                          <div class="grid gap-5 xl:grid-cols-[15rem_minmax(0,1fr)]">
+                            <header>
+                              <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Agreement {String(familyIndex + 1).padStart(2, '0')}</p>
+                              <h4 id={`agreement-family-${familyIndex}`} class="mt-1 font-heading text-lg font-extrabold uppercase leading-tight text-white">{family.label}</h4>
+                              <p class="mt-2 border-l-2 border-white/15 pl-3 text-[11px] font-bold uppercase leading-5 tracking-[0.1em] text-white/60">{family.response}</p>
+                            </header>
+
+                            <div class="min-w-0">
+                              <div class="grid items-stretch gap-0 md:grid-cols-[minmax(8rem,0.7fr)_1.5rem_minmax(13rem,1fr)_1.5rem_minmax(11rem,0.8fr)]">
+                                <div class="border-l-2 border-white/10 bg-black/15 p-4">
+                                  <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/55">Retired history</p>
+                                  {retired.length ? (
+                                    <ol class="mt-3 space-y-2">
+                                      {retired.map((version) => (
+                                        <li class="flex items-center justify-between gap-2 text-xs text-white/60">
+                                          <span class="font-heading font-bold">V{version.version}</span>
+                                          <span>{agreementDate(version.retiredAt)}</span>
+                                        </li>
+                                      ))}
+                                    </ol>
+                                  ) : <p class="mt-3 text-xs italic text-white/55">No prior versions</p>}
+                                </div>
+                                <div class="hidden items-center justify-center text-white/20 md:flex" aria-hidden="true">→</div>
+                                <div class:list={[
+                                  'border-l-2 p-4',
+                                  published ? 'border-brand-teal bg-brand-teal/[0.06]' : 'border-amber-300 bg-amber-300/[0.04]',
+                                ]}>
+                                  <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                      <p class:list={['text-[8px] font-extrabold uppercase tracking-[0.17em]', published ? 'text-brand-teal' : 'text-amber-300']}>{published ? 'Published · immutable' : 'Publication needed'}</p>
+                                      <p class="mt-1 font-heading text-xl font-extrabold text-white">{published ? `V${published.version}` : 'No version'}</p>
+                                    </div>
+                                    {published && (
+                                      <span class="flex h-8 w-8 shrink-0 items-center justify-center border border-brand-teal/40 text-brand-teal" title="Published evidence" aria-label="Published evidence">
+                                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m9 12 2 2 4-4"></path><circle cx="12" cy="12" r="9"></circle></svg>
+                                      </span>
+                                    )}
+                                  </div>
+                                  {published ? (
+                                    <>
+                                      <p class="mt-2 truncate text-xs font-semibold text-white/75">{published.title}</p>
+                                      <p class="mt-1 text-[11px] text-white/60">Published {agreementDate(published.publishedAt)}</p>
+                                    </>
+                                  ) : <p class="mt-2 text-xs leading-5 text-white/45">No language has been published for this required family.</p>}
+                                </div>
+                                <div class="hidden items-center justify-center text-white/20 md:flex" aria-hidden="true">→</div>
+                                <div class:list={['border-l-2 p-4', drafts.length ? 'border-brand-teal/60 bg-black/15' : 'border-white/10 bg-black/10']}>
+                                  <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/55">Working draft</p>
+                                  {drafts.length ? (
+                                    <div class="mt-2 space-y-3">
+                                      {drafts.map((draft) => (
+                                        <div>
+                                          <p class="font-heading text-lg font-extrabold text-white">V{draft.version}</p>
+                                          <p class="mt-1 truncate text-xs text-white/60">{draft.title}</p>
+                                          <div class="mt-3 flex flex-wrap gap-2">
+                                            <button type="button" class="agreement-edit-toggle min-h-9 border border-brand-teal/35 px-3 text-[10px] font-extrabold uppercase tracking-[0.1em] text-brand-teal transition hover:bg-brand-teal/10 focus:outline-none focus:ring-2 focus:ring-brand-teal" data-agreement-id={draft.id} data-key={family.key} data-version={draft.version} data-title={draft.title} data-summary={draft.summary || ''} data-body={draft.body}>Edit</button>
+                                            <button type="button" class="agreement-review-toggle min-h-9 border border-amber-300/35 px-3 text-[10px] font-extrabold uppercase tracking-[0.1em] text-amber-300 transition hover:bg-amber-300/10 focus:outline-none focus:ring-2 focus:ring-amber-300" data-agreement-id={draft.id} data-version={draft.version} data-title={draft.title} data-body={draft.body} data-response={family.response} data-replaces={published ? `V${published.version}` : 'No published version'}>Review</button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <button type="button" class="agreement-create-toggle mt-3 min-h-9 border border-white/20 px-3 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white/65 transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal" data-key={family.key} data-version={nextVersion} data-title={published ? published.title : family.workingDraft.title} data-summary={published ? (published.summary || '') : family.workingDraft.summary} data-body={published ? published.body : family.workingDraft.body}>Create next draft</button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div class="agreement-workspace hidden border-x border-b border-white/10 bg-[#0b0e14] p-5" data-family-workspace={family.key}>
+                                <form class="agreement-editor hidden" data-agreement-editor>
+                                  <input type="hidden" name="agreementId" />
+                                  <input type="hidden" name="key" />
+                                  <div class="mb-5 flex flex-col gap-2 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
+                                    <div>
+                                      <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-brand-teal" data-editor-mode-label>Draft editor</p>
+                                      <h5 class="font-heading text-xl font-extrabold uppercase text-white">Version <span data-editor-version></span></h5>
+                                    </div>
+                                    <button type="button" class="agreement-workspace-close text-xs font-bold text-white/45 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Close editor</button>
+                                  </div>
+                                  <div class="grid gap-4">
+                                    <aside id={`agreement-working-draft-note-${family.key}`} class="border-l-2 border-amber-300 bg-amber-300/[0.05] px-4 py-3">
+                                      <p class="text-xs font-extrabold uppercase tracking-[0.1em] text-amber-300">Working draft only</p>
+                                      <p class="mt-1 text-xs leading-5 text-white/60">Review and revise this language before publication. Publication requires a separate approval reference.</p>
+                                    </aside>
+                                    <div>
+                                      <label for={`agreement-title-${family.key}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Title</label>
+                                      <input id={`agreement-title-${family.key}`} name="title" required maxlength="160" class="min-h-11 w-full rounded-lg border border-white/15 bg-black/20 px-3 text-sm font-semibold text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                                    </div>
+                                    <div>
+                                      <label for={`agreement-summary-${family.key}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Summary</label>
+                                      <textarea id={`agreement-summary-${family.key}`} name="summary" maxlength="500" rows="2" class="w-full rounded-lg border border-white/15 bg-black/20 px-3 py-2 text-sm leading-6 text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"></textarea>
+                                    </div>
+                                    <div>
+                                      <div class="mb-1.5 flex items-center justify-between gap-3">
+                                        <label for={`agreement-body-${family.key}`} class="text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Exact agreement body</label>
+                                        <span id={`agreement-body-count-${family.key}`} class="text-[10px] font-bold tabular-nums text-white/55" data-body-count>0 words · 0 characters</span>
+                                      </div>
+                                      <textarea id={`agreement-body-${family.key}`} name="body" required minlength="20" rows="14" aria-describedby={`agreement-working-draft-note-${family.key} agreement-body-count-${family.key}`} placeholder="Enter the complete wording families will see and accept." class="w-full rounded-lg border border-white/15 bg-black/20 px-4 py-3 font-body text-sm leading-7 text-white outline-none placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"></textarea>
+                                    </div>
+                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                      <p class="min-h-5 text-xs text-white/55" role="status" aria-live="polite" data-agreement-status></p>
+                                      <button type="submit" class="min-h-11 bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:cursor-wait disabled:opacity-50"><span data-editor-button-label>Save draft</span></button>
+                                    </div>
+                                  </div>
+                                </form>
+
+                                <form class="agreement-review hidden" data-agreement-review>
+                                  <input type="hidden" name="agreementId" />
+                                  <div class="flex flex-col gap-3 border-b border-amber-300/25 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                      <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-amber-300">Publication review</p>
+                                      <h5 class="mt-1 font-heading text-xl font-extrabold uppercase text-white"><span data-review-version></span> · <span data-review-title></span></h5>
+                                      <p class="mt-1 text-xs text-white/60"><span data-review-response></span> · Replaces <span data-review-replaces></span></p>
+                                    </div>
+                                    <button type="button" class="agreement-workspace-close text-xs font-bold text-white/45 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Close review</button>
+                                  </div>
+                                  <div class="my-5 max-h-[34rem] overflow-y-auto border-y border-white/10 py-5">
+                                    <p class="whitespace-pre-wrap font-body text-[15px] leading-7 text-white/80" data-review-body></p>
+                                  </div>
+                                  <div class="border-l-2 border-brand-coral bg-brand-coral/[0.06] p-4">
+                                    <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-brand-coral">Publishing is irreversible</p>
+                                    <p class="mt-1 text-xs leading-5 text-white/55">This exact wording becomes immutable evidence. The currently published version will be retired automatically.</p>
+                                  </div>
+                                  <div class="mt-4 grid gap-4 md:grid-cols-2">
+                                    <div>
+                                      <label for={`agreement-confirmation-${family.key}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Type <span class="font-mono text-brand-coral" data-confirm-phrase></span></label>
+                                      <input id={`agreement-confirmation-${family.key}`} name="confirmation" required autocomplete="off" class="min-h-11 w-full rounded-lg border border-brand-coral/30 bg-black/20 px-3 font-mono text-sm font-bold text-white outline-none focus:border-brand-coral focus:ring-2 focus:ring-brand-coral/20" />
+                                    </div>
+                                    <div>
+                                      <label for={`agreement-approval-${family.key}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/60">Approval reference</label>
+                                      <input id={`agreement-approval-${family.key}`} name="approvalReference" required minlength="10" maxlength="500" placeholder="Who approved this wording, and when?" class="min-h-11 w-full rounded-lg border border-white/15 bg-black/20 px-3 text-sm font-semibold text-white outline-none placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                                    </div>
+                                  </div>
+                                  <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <p class="min-h-5 text-xs text-white/55" role="status" aria-live="polite" data-agreement-status></p>
+                                    <button type="submit" disabled class="min-h-11 border border-brand-coral bg-brand-coral/10 px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-brand-coral transition hover:bg-brand-coral hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-coral disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.03] disabled:text-white/25"><span data-publish-button-label>Publish permanently</span></button>
+                                  </div>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
+
+              <section aria-labelledby="pricing-heading">
+                <div class="mb-4 flex items-end justify-between gap-4">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Locked-in math</p>
+                    <h2 id="pricing-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Pricing structures</h2>
+                  </div>
+                  <p class="hidden text-xs text-white/35 sm:block">All amounts are stored and calculated in cents.</p>
+                </div>
+                <div class="grid gap-4 lg:grid-cols-2">
+                  {pricingTiers.map((tier, index) => {
+                    const linkedGroups = ageGroups.filter((group) => group.pricingTierId === tier.id);
+                    return (
+                      <article class="group relative overflow-hidden rounded-3xl border border-white/10 bg-[#11151d] p-6 transition hover:border-brand-teal/40 md:p-7">
+                        <div class="absolute inset-y-0 left-0 w-1 bg-brand-teal"></div>
+                        <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <div class="flex items-center gap-2">
+                              <span class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Plan {String(index + 1).padStart(2, '0')}</span>
+                              {!tier.active && <span class="text-[9px] font-bold uppercase tracking-wider text-brand-coral">Inactive</span>}
+                            </div>
+                            <h3 class="mt-2 font-heading text-3xl font-extrabold uppercase tracking-tight text-white">{tier.name}</h3>
+                            <p class="mt-2 text-xs text-white/40">Applies to {linkedGroups.map((group) => group.label).join(', ') || 'no age groups yet'}</p>
+                          </div>
+                          <div class="sm:text-right">
+                            <p class="font-heading text-5xl font-extrabold tabular-nums tracking-[-0.05em] text-white">{money(tier.totalAmount)}</p>
+                            <p class="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">Season total</p>
+                          </div>
+                        </div>
+                        <div class="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-white/10 pt-5">
+                          <div>
+                            <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/35">November deposit</p>
+                            <p class="mt-1 font-heading text-2xl font-extrabold tabular-nums text-white">{money(tier.depositAmount)}</p>
+                          </div>
+                          <span class="font-heading text-xl font-bold text-white/20" aria-hidden="true">+</span>
+                          <div class="text-right">
+                            <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/35">Jan–May</p>
+                            <p class="mt-1 font-heading text-2xl font-extrabold tabular-nums text-brand-teal">{season.standardInstallmentCount} × {money(tier.installmentAmount)}</p>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section aria-labelledby="schedule-heading" class="overflow-hidden rounded-3xl border border-white/10 bg-[#11151d]">
+                <div class="flex flex-col gap-2 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-end sm:justify-between md:px-7">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Standard cadence</p>
+                    <h2 id="schedule-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">The holiday-aware schedule</h2>
+                  </div>
+                  <p class="text-xs text-white/45">One deposit. One intentional pause. Five predictable payments.</p>
+                </div>
+                <div class="relative grid grid-cols-2 gap-px bg-white/10 sm:grid-cols-4 lg:grid-cols-7">
+                  <div class="pointer-events-none absolute left-[9%] right-[7%] top-[3.45rem] hidden h-px bg-white/10 lg:block" aria-hidden="true"></div>
+                  {scheduleMonths.map((item) => (
+                    <div class:list={[
+                      'relative min-h-36 bg-[#11151d] px-4 py-5 text-center',
+                      item.tone === 'pause' && 'bg-[#0d1016]',
+                    ]}>
+                      <p class="text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/35">{item.month}</p>
+                      <div class:list={[
+                        'relative z-10 mx-auto mt-4 flex h-9 w-9 items-center justify-center rounded-full border-4 border-[#11151d]',
+                        item.tone === 'payment' && 'bg-brand-teal text-white shadow-glow-teal',
+                        item.tone === 'deposit' && 'bg-white text-brand-charcoal',
+                        item.tone === 'pause' && 'border-2 border-dashed !border-white/20 bg-[#0d1016] text-white/25',
+                      ]}>
+                        {item.tone === 'pause' ? (
+                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"></path></svg>
+                        ) : (
+                          <span class="h-2 w-2 rounded-full bg-current" aria-hidden="true"></span>
+                        )}
+                      </div>
+                      <p class:list={[
+                        'mt-3 font-heading text-sm font-extrabold uppercase tracking-wide',
+                        item.tone === 'payment' && 'text-brand-teal',
+                        item.tone === 'deposit' && 'text-white',
+                        item.tone === 'pause' && 'text-white/35',
+                      ]}>{item.label}</p>
+                      {item.tone === 'pause' && <p class="mt-1 text-[9px] font-bold uppercase tracking-wider text-white/20">Holiday break</p>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section aria-labelledby="teams-heading" class="grid gap-5 xl:grid-cols-[22rem_minmax(0,1fr)]">
+                <aside class="self-start rounded-3xl border border-white/10 bg-[#11151d] p-5 md:p-6 xl:sticky xl:top-24">
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">After tryouts</p>
+                  <h2 id="teams-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Add a team</h2>
+                  <p class="mt-2 text-xs leading-5 text-white/45">Choose an age group and the correct price follows automatically.</p>
+
+                  <form id="add-team-form" class="mt-6 space-y-4" data-team-form data-mode="create">
+                    <input type="hidden" name="seasonId" value={season.id} />
+                    <div>
+                      <label for="new-team-name" class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Team name</label>
+                      <input id="new-team-name" name="name" required maxlength="80" autocomplete="off" placeholder="e.g. 14 Black" class="min-h-11 w-full rounded-xl border border-white/15 bg-black/20 px-3.5 text-sm font-semibold text-white outline-none transition placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <div>
+                      <label for="new-team-age" class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Age group</label>
+                      <select id="new-team-age" name="ageGroupId" required class="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm font-semibold text-white outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20">
+                        <option value="">Select age group</option>
+                        {activeAgeGroups.map((group) => {
+                          const tier = tierById.get(group.pricingTierId);
+                          return <option value={group.id}>{group.label} · {tier ? money(tier.totalAmount) : 'No price'}</option>;
+                        })}
+                      </select>
+                    </div>
+                    <div>
+                      <label for="new-team-day" class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Billing-day override <span class="normal-case tracking-normal text-white/30">(optional)</span></label>
+                      <input id="new-team-day" name="billingDayOverride" type="number" min="1" max="31" inputmode="numeric" placeholder={`Blank = ${season.defaultBillingDay}th`} class="min-h-11 w-full rounded-xl border border-white/15 bg-black/20 px-3.5 text-sm font-semibold text-white outline-none transition placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                    </div>
+                    <button type="submit" class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-teal px-5 py-3 text-sm font-extrabold uppercase tracking-[0.1em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-wait disabled:opacity-60">
+                      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"></path></svg>
+                      <span data-button-label>Add team</span>
+                    </button>
+                    <p class="min-h-5 text-xs font-medium text-white/55" role="status" aria-live="polite" data-form-status></p>
+                  </form>
+                </aside>
+
+                <div class="rounded-3xl border border-white/10 bg-[#11151d] p-5 md:p-7">
+                  <div class="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Team workspace</p>
+                      <h2 class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Configured teams</h2>
+                    </div>
+                    <div class="flex items-baseline gap-2 sm:text-right">
+                      <strong class="font-heading text-4xl font-extrabold tabular-nums text-white">{activeTeams.length}</strong>
+                      <span class="text-[10px] font-bold uppercase tracking-[0.17em] text-white/35">active {activeTeams.length === 1 ? 'team' : 'teams'}</span>
+                    </div>
+                  </div>
+
+                  {teams.length === 0 ? (
+                    <div class="flex min-h-72 flex-col items-center justify-center px-4 py-10 text-center">
+                      <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-brand-teal/45 bg-brand-teal/10 text-brand-teal">
+                        <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg>
+                      </div>
+                      <h3 class="font-heading text-xl font-extrabold uppercase text-white">Waiting for tryouts</h3>
+                      <p class="mt-2 max-w-md text-sm leading-6 text-white/45">No team setup is needed yet. Once rosters take shape, add each team here and its age group will inherit the correct dues automatically.</p>
+                      <p class="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-brand-teal">Pricing is ready whenever the teams are</p>
+                    </div>
+                  ) : (
+                    <div class="mt-6 space-y-7">
+                      {ageGroups.filter((group) => (teamsByAgeGroup.get(group.id)?.length || 0) > 0).map((group) => {
+                        const groupTeams = teamsByAgeGroup.get(group.id) || [];
+                        const tier = tierById.get(group.pricingTierId);
+                        return (
+                          <section aria-labelledby={`group-${group.id}`}>
+                            <div class="mb-2.5 flex items-center gap-3">
+                              <h3 id={`group-${group.id}`} class="font-heading text-sm font-extrabold uppercase tracking-[0.12em] text-white">{group.label}</h3>
+                              <span class="h-px flex-1 bg-white/10"></span>
+                              <span class="text-[10px] font-bold uppercase tracking-wider text-white/30">{groupTeams.length} {groupTeams.length === 1 ? 'team' : 'teams'}</span>
+                            </div>
+                            <div class="space-y-2.5">
+                              {groupTeams.map((team) => (
+                                <article class:list={[
+                                  'rounded-2xl border bg-black/15 transition',
+                                  team.active ? 'border-white/10' : 'border-brand-coral/20 opacity-70',
+                                ]}>
+                                  <div class="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between">
+                                    <div class="min-w-0">
+                                      <div class="flex flex-wrap items-center gap-2">
+                                        <h4 class="truncate font-heading text-lg font-extrabold uppercase text-white">{team.name}</h4>
+                                        <span class:list={[
+                                          'rounded px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider',
+                                          team.active ? 'bg-brand-teal/10 text-brand-teal' : 'bg-brand-coral/10 text-brand-coral',
+                                        ]}>{team.active ? 'Active' : 'Inactive'}</span>
+                                      </div>
+                                      <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">
+                                        <span>{tier ? `${money(tier.totalAmount)} plan` : 'Pricing unavailable'}</span>
+                                        <span aria-hidden="true">•</span>
+                                        <span class={team.billingDayOverride ? 'text-amber-300' : 'text-white/40'}>
+                                          Billing {team.billingDayOverride ? `override: ${team.billingDayOverride}` : `inherited: ${season.defaultBillingDay}`}th
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div class="flex shrink-0 flex-wrap gap-2">
+                                      <button type="button" class="team-edit-toggle min-h-10 rounded-lg border border-white/15 px-3.5 text-xs font-bold text-white/70 transition hover:border-brand-teal/50 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal" aria-expanded="false" aria-controls={`edit-${team.id}`}>
+                                        Edit details
+                                      </button>
+                                      <button type="button" class:list={[
+                                        'team-state-toggle min-h-10 rounded-lg border px-3.5 text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-brand-teal',
+                                        team.active
+                                          ? 'border-brand-coral/25 text-brand-coral hover:bg-brand-coral/10'
+                                          : 'border-brand-teal/30 text-brand-teal hover:bg-brand-teal/10',
+                                      ]} data-team-id={team.id} data-team-name={team.name} data-active={String(team.active)}>
+                                        {team.active ? 'Deactivate' : 'Reactivate'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div id={`edit-${team.id}`} class="hidden border-t border-white/10 p-4" data-edit-panel>
+                                    <form class="grid gap-3 md:grid-cols-[1.3fr_1fr_0.7fr_auto] md:items-end" data-team-form data-mode="update">
+                                      <input type="hidden" name="id" value={team.id} />
+                                      <div>
+                                        <label for={`team-name-${team.id}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.15em] text-white/45">Team name</label>
+                                        <input id={`team-name-${team.id}`} name="name" value={team.name} required maxlength="80" class="min-h-10 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                                      </div>
+                                      <div>
+                                        <label for={`team-age-${team.id}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.15em] text-white/45">Age group</label>
+                                        <select id={`team-age-${team.id}`} name="ageGroupId" class="min-h-10 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20">
+                                          {activeAgeGroups.map((option) => <option value={option.id} selected={option.id === team.ageGroupId}>{option.label}</option>)}
+                                        </select>
+                                      </div>
+                                      <div>
+                                        <label for={`team-day-${team.id}`} class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.15em] text-white/45">Billing day</label>
+                                        <input id={`team-day-${team.id}`} name="billingDayOverride" type="number" min="1" max="31" inputmode="numeric" value={team.billingDayOverride ?? ''} placeholder={`Default ${season.defaultBillingDay}`} class="min-h-10 w-full rounded-lg border border-white/15 bg-[#0b0e14] px-3 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
+                                      </div>
+                                      <button type="submit" class="min-h-10 rounded-lg bg-brand-teal px-4 text-xs font-extrabold uppercase tracking-wider text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:cursor-wait disabled:opacity-60"><span data-button-label>Save</span></button>
+                                      <p class="text-xs text-white/55 md:col-span-4" role="status" aria-live="polite" data-form-status></p>
+                                    </form>
+                                  </div>
+                                </article>
+                              ))}
+                            </div>
+                          </section>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <aside class="flex flex-col gap-4 rounded-2xl border border-brand-teal/25 bg-brand-teal/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between" aria-label="Launch readiness">
+                <div class="flex items-start gap-3">
+                  <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-teal/15 text-brand-teal">
+                    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path><path d="m9 12 2 2 4-4"></path></svg>
+                  </div>
+                  <div>
+                    <p class="text-xs font-extrabold uppercase tracking-[0.16em] text-brand-teal">Foundation ready, parent flow safely dark</p>
+                    <p class="mt-1 text-sm leading-5 text-white/55">Pricing, billing dates, and team inheritance are configured. Parent registration remains disabled until the registration and payment phases are tested.</p>
+                  </div>
+                </div>
+                <span class="shrink-0 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-white/45">No live charges</span>
+              </aside>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  </main>
+
+  <script>
+    const endpoint = '/api/admin/club-season-teams';
+    const settingsEndpoint = '/api/admin/club-season-settings';
+
+    const setStatus = (element, message, tone = 'neutral') => {
+      if (!(element instanceof HTMLElement)) return;
+      element.textContent = message;
+      element.classList.toggle('text-brand-coral', tone === 'error');
+      element.classList.toggle('text-brand-teal', tone === 'success');
+      element.classList.toggle('text-white/55', tone === 'neutral');
+    };
+
+    const notify = (type, message) => {
+      const toast = window.toast;
+      if (toast && typeof toast[type] === 'function') toast[type](message);
+    };
+
+    const pacificLocalToIso = (value) => {
+      const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+      if (!match) return '';
+      const desired = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]));
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      });
+      let instant = desired;
+      for (let pass = 0; pass < 2; pass += 1) {
+        const parts = formatter.formatToParts(new Date(instant));
+        const get = (type) => Number(parts.find((part) => part.type === type)?.value || 0);
+        const rendered = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'));
+        instant += desired - rendered;
+      }
+      return new Date(instant).toISOString();
+    };
+
+    const isoToPacificLocal = (value) => {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      }).formatToParts(new Date(value));
+      const get = (type) => parts.find((part) => part.type === type)?.value || '';
+      return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+    };
+
+    const pacificTimeValidationError = (localValue, isoValue) => {
+      if (!isoValue || isoToPacificLocal(isoValue) !== localValue) {
+        return 'That Pacific time does not exist because the clocks move forward. Choose another time.';
+      }
+      const instant = Date.parse(isoValue);
+      const repeated = [-3_600_000, 3_600_000].some((offset) => isoToPacificLocal(new Date(instant + offset).toISOString()) === localValue);
+      if (repeated) {
+        return 'That Pacific time occurs twice because the clocks move back. Choose a time outside 1:00–1:59 AM.';
+      }
+      return '';
+    };
+
+    const closeAgreementWorkspaces = () => {
+      document.querySelectorAll('[data-family-workspace]').forEach((workspace) => workspace.classList.add('hidden'));
+      document.querySelectorAll('[data-agreement-editor], [data-agreement-review]').forEach((panel) => panel.classList.add('hidden'));
+    };
+
+    const updateBodyCount = (editor) => {
+      const body = editor.querySelector('[name="body"]');
+      const count = editor.querySelector('[data-body-count]');
+      if (!(body instanceof HTMLTextAreaElement) || !(count instanceof HTMLElement)) return;
+      const words = body.value.trim() ? body.value.trim().split(/\s+/).length : 0;
+      count.textContent = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'} · ${body.value.length.toLocaleString()} characters`;
+    };
+
+    document.querySelectorAll('.agreement-workspace-close').forEach((button) => {
+      button.addEventListener('click', closeAgreementWorkspaces);
+    });
+
+    document.querySelectorAll('.agreement-create-toggle, .agreement-edit-toggle').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        closeAgreementWorkspaces();
+        const key = button.dataset.key || '';
+        const workspace = document.querySelector(`[data-family-workspace="${CSS.escape(key)}"]`);
+        const editor = workspace?.querySelector('[data-agreement-editor]');
+        if (!(workspace instanceof HTMLElement) || !(editor instanceof HTMLFormElement)) return;
+        const isCreate = button.classList.contains('agreement-create-toggle');
+        editor.dataset.mode = isCreate ? 'create' : 'update';
+        const setValue = (name, value) => {
+          const field = editor.querySelector(`[name="${name}"]`);
+          if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) field.value = value;
+        };
+        setValue('agreementId', button.dataset.agreementId || '');
+        setValue('key', key);
+        setValue('title', button.dataset.title || '');
+        setValue('summary', button.dataset.summary || '');
+        setValue('body', button.dataset.body || '');
+        const version = button.dataset.version || '';
+        const versionLabel = editor.querySelector('[data-editor-version]');
+        const modeLabel = editor.querySelector('[data-editor-mode-label]');
+        if (versionLabel) versionLabel.textContent = `V${version}`;
+        if (modeLabel) modeLabel.textContent = isCreate ? 'Create next draft' : 'Editable draft';
+        workspace.classList.remove('hidden');
+        editor.classList.remove('hidden');
+        updateBodyCount(editor);
+        editor.querySelector('[name="title"]')?.focus();
+      });
+    });
+
+    document.querySelectorAll('.agreement-review-toggle').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        closeAgreementWorkspaces();
+        const key = button.closest('article')?.querySelector('.agreement-edit-toggle')?.dataset.key || '';
+        const workspace = document.querySelector(`[data-family-workspace="${CSS.escape(key)}"]`);
+        const review = workspace?.querySelector('[data-agreement-review]');
+        if (!(workspace instanceof HTMLElement) || !(review instanceof HTMLFormElement)) return;
+        const version = button.dataset.version || '';
+        const phrase = `PUBLISH V${version}`;
+        const put = (selector, value) => { const node = review.querySelector(selector); if (node) node.textContent = value; };
+        put('[data-review-version]', `V${version}`);
+        put('[data-review-title]', button.dataset.title || 'Untitled agreement');
+        put('[data-review-response]', button.dataset.response || '');
+        put('[data-review-replaces]', button.dataset.replaces || 'No published version');
+        put('[data-review-body]', button.dataset.body || '');
+        put('[data-confirm-phrase]', phrase);
+        review.dataset.confirmPhrase = phrase;
+        const idField = review.querySelector('[name="agreementId"]');
+        const confirmation = review.querySelector('[name="confirmation"]');
+        const approval = review.querySelector('[name="approvalReference"]');
+        const submit = review.querySelector('button[type="submit"]');
+        if (idField instanceof HTMLInputElement) idField.value = button.dataset.agreementId || '';
+        if (confirmation instanceof HTMLInputElement) confirmation.value = '';
+        if (approval instanceof HTMLInputElement) approval.value = '';
+        if (submit instanceof HTMLButtonElement) submit.disabled = true;
+        workspace.classList.remove('hidden');
+        review.classList.remove('hidden');
+        review.querySelector('[data-review-body]')?.scrollTo(0, 0);
+        confirmation?.focus();
+      });
+    });
+
+    document.querySelectorAll('[data-agreement-editor] [name="body"]').forEach((body) => {
+      body.addEventListener('input', () => {
+        const editor = body.closest('[data-agreement-editor]');
+        if (editor instanceof HTMLFormElement) updateBodyCount(editor);
+      });
+    });
+
+    document.querySelectorAll('[data-agreement-review] [name="confirmation"]').forEach((field) => {
+      field.addEventListener('input', () => {
+        if (!(field instanceof HTMLInputElement)) return;
+        const review = field.closest('[data-agreement-review]');
+        const submit = review?.querySelector('button[type="submit"]');
+        if (review instanceof HTMLFormElement && submit instanceof HTMLButtonElement) {
+          submit.disabled = field.value !== review.dataset.confirmPhrase;
+        }
+      });
+    });
+
+    const closeEvidenceForms = (exceptType = '') => {
+      document.querySelectorAll('[data-evidence-form]').forEach((form) => {
+        if (!(form instanceof HTMLFormElement) || form.dataset.evidenceType === exceptType) return;
+        form.classList.add('hidden');
+        const button = document.querySelector(`.evidence-open[data-evidence-type="${CSS.escape(form.dataset.evidenceType || '')}"]`);
+        button?.setAttribute('aria-expanded', 'false');
+      });
+    };
+
+    const updateEvidenceSubmit = (form) => {
+      if (!(form instanceof HTMLFormElement)) return;
+      const confirmation = form.elements.namedItem('confirmation');
+      const submit = form.querySelector('button[type="submit"]');
+      const phraseMatches = confirmation instanceof HTMLInputElement && confirmation.value === form.dataset.confirmPhrase;
+      const checks = Array.from(form.querySelectorAll('input[name="checks"]'));
+      const checksComplete = checks.length === 0 || checks.every((check) => check instanceof HTMLInputElement && check.checked);
+      if (submit instanceof HTMLButtonElement) submit.disabled = !(phraseMatches && checksComplete);
+    };
+
+    document.querySelectorAll('.evidence-open').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        const type = button.dataset.evidenceType || '';
+        const form = document.getElementById(`evidence-form-${type}`);
+        if (!(form instanceof HTMLFormElement)) return;
+        const opening = form.classList.contains('hidden');
+        closeEvidenceForms(opening ? type : '');
+        form.classList.toggle('hidden', !opening);
+        button.setAttribute('aria-expanded', String(opening));
+        if (opening) form.querySelector('textarea, input')?.focus();
+      });
+    });
+
+    document.querySelectorAll('.evidence-close').forEach((button) => {
+      button.addEventListener('click', () => {
+        const form = button.closest('[data-evidence-form]');
+        if (!(form instanceof HTMLFormElement)) return;
+        form.classList.add('hidden');
+        const openButton = document.querySelector(`.evidence-open[data-evidence-type="${CSS.escape(form.dataset.evidenceType || '')}"]`);
+        openButton?.setAttribute('aria-expanded', 'false');
+        if (openButton instanceof HTMLButtonElement) openButton.focus();
+      });
+    });
+
+    document.querySelectorAll('[data-evidence-form]').forEach((form) => {
+      form.addEventListener('input', () => updateEvidenceSubmit(form));
+      form.addEventListener('change', () => updateEvidenceSubmit(form));
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+        const data = new FormData(form);
+        const confirmation = String(data.get('confirmation') || '');
+        if (confirmation !== form.dataset.confirmPhrase) return;
+        const type = String(form.dataset.evidenceType || '');
+        const checks = data.getAll('checks').map(String);
+        const status = form.querySelector('[data-evidence-status]');
+        const button = form.querySelector('button[type="submit"]');
+        const label = form.querySelector('[data-evidence-button-label]');
+        if (button instanceof HTMLButtonElement) button.disabled = true;
+        if (label) label.textContent = 'Recording…';
+        setStatus(status, 'Writing immutable evidence entry…');
+        try {
+          const payload = {
+            action: 'record_launch_evidence',
+            seasonId: '2026-2027-club',
+            type,
+            confirmation,
+            evidenceReference: String(data.get('evidenceReference') || '').trim(),
+            ...(type === 'controlled_pilot' ? { checks } : {}),
+          };
+          const response = await fetch(settingsEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'The verification evidence could not be recorded.');
+          setStatus(status, 'Evidence recorded.', 'success');
+          notify('success', 'Verification evidence recorded');
+          window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The verification evidence could not be recorded.';
+          setStatus(status, message, 'error');
+          notify('error', message);
+          if (label) label.textContent = 'Record permanently';
+          updateEvidenceSubmit(form);
+        }
+      });
+    });
+
+    document.getElementById('registration-window-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+      const data = new FormData(form);
+      const opensLocal = String(data.get('registrationOpensAt') || '');
+      const closesLocal = String(data.get('registrationClosesAt') || '');
+      const opensAt = pacificLocalToIso(opensLocal);
+      const closesAt = pacificLocalToIso(closesLocal);
+      const status = form.querySelector('[data-window-status]');
+      const button = form.querySelector('button[type="submit"]');
+      const label = form.querySelector('[data-window-button-label]');
+      const opensError = pacificTimeValidationError(opensLocal, opensAt);
+      const closesError = pacificTimeValidationError(closesLocal, closesAt);
+      if (opensError || closesError) {
+        const fieldLabel = opensError ? 'Opening time' : 'Closing time';
+        setStatus(status, `${fieldLabel}: ${opensError || closesError}`, 'error');
+        const field = form.elements.namedItem(opensError ? 'registrationOpensAt' : 'registrationClosesAt');
+        if (field instanceof HTMLInputElement) {
+          field.setCustomValidity(opensError || closesError);
+          field.reportValidity();
+          field.addEventListener('input', () => field.setCustomValidity(''), { once: true });
+        }
+        return;
+      }
+      if (!opensAt || !closesAt || new Date(opensAt) >= new Date(closesAt)) {
+        setStatus(status, 'Closing time must be after opening time.', 'error');
+        return;
+      }
+      if (button instanceof HTMLButtonElement) button.disabled = true;
+      if (label) label.textContent = 'Saving…';
+      setStatus(status, 'Saving registration window…');
+      try {
+        const response = await fetch(settingsEndpoint, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_registration_window', seasonId: form.dataset.seasonId, registrationOpensAt: opensAt, registrationClosesAt: closesAt, reason: String(data.get('reason') || '').trim() }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || 'The registration window could not be saved.');
+        setStatus(status, 'Registration window saved.', 'success');
+        notify('success', 'Registration window saved');
+        window.location.reload();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'The registration window could not be saved.';
+        setStatus(status, message, 'error'); notify('error', message);
+        if (button instanceof HTMLButtonElement) button.disabled = false;
+        if (label) label.textContent = 'Save window';
+      }
+    });
+
+    document.querySelectorAll('[data-agreement-editor]').forEach((form) => {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+        const data = new FormData(form);
+        const isCreate = form.dataset.mode === 'create';
+        const status = form.querySelector('[data-agreement-status]');
+        const button = form.querySelector('button[type="submit"]');
+        const label = form.querySelector('[data-editor-button-label]');
+        if (button instanceof HTMLButtonElement) button.disabled = true;
+        if (label) label.textContent = 'Saving…';
+        setStatus(status, 'Saving draft…');
+        const payload = isCreate
+          ? { action: 'create_agreement_draft', seasonId: '2026-2027-club', key: String(data.get('key') || ''), title: String(data.get('title') || '').trim(), summary: String(data.get('summary') || '').trim(), body: String(data.get('body') || '') }
+          : { action: 'update_agreement_draft', agreementId: String(data.get('agreementId') || ''), title: String(data.get('title') || '').trim(), summary: String(data.get('summary') || '').trim(), body: String(data.get('body') || '') };
+        try {
+          const response = await fetch(settingsEndpoint, { method: isCreate ? 'POST' : 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'The agreement draft could not be saved.');
+          setStatus(status, 'Draft saved.', 'success'); notify('success', 'Agreement draft saved'); window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The agreement draft could not be saved.';
+          setStatus(status, message, 'error'); notify('error', message);
+          if (button instanceof HTMLButtonElement) button.disabled = false;
+          if (label) label.textContent = 'Save draft';
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-agreement-review]').forEach((form) => {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+        const data = new FormData(form);
+        const confirmation = String(data.get('confirmation') || '');
+        if (confirmation !== form.dataset.confirmPhrase) return;
+        const status = form.querySelector('[data-agreement-status]');
+        const button = form.querySelector('button[type="submit"]');
+        const label = form.querySelector('[data-publish-button-label]');
+        if (button instanceof HTMLButtonElement) button.disabled = true;
+        if (label) label.textContent = 'Publishing…';
+        setStatus(status, 'Publishing immutable version…');
+        try {
+          const response = await fetch(settingsEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'publish_agreement', agreementId: String(data.get('agreementId') || ''), confirmation, approvalReference: String(data.get('approvalReference') || '').trim() }) });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'The agreement could not be published.');
+          setStatus(status, 'Agreement published.', 'success'); notify('success', 'Agreement published'); window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The agreement could not be published.';
+          setStatus(status, message, 'error'); notify('error', message);
+          if (button instanceof HTMLButtonElement) button.disabled = false;
+          if (label) label.textContent = 'Publish permanently';
+        }
+      });
+    });
+
+    document.querySelectorAll('.team-edit-toggle').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        const panelId = button.getAttribute('aria-controls');
+        const panel = panelId ? document.getElementById(panelId) : null;
+        if (!panel) return;
+        const opening = panel.classList.contains('hidden');
+        panel.classList.toggle('hidden', !opening);
+        button.setAttribute('aria-expanded', String(opening));
+        button.textContent = opening ? 'Close editor' : 'Edit details';
+        if (opening) panel.querySelector('input:not([type="hidden"])')?.focus();
+      });
+    });
+
+    document.querySelectorAll('[data-team-form]').forEach((formElement) => {
+      formElement.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!(formElement instanceof HTMLFormElement) || !formElement.reportValidity()) return;
+
+        const formData = new FormData(formElement);
+        const name = String(formData.get('name') || '').trim();
+        const rawDay = String(formData.get('billingDayOverride') || '').trim();
+        const billingDayOverride = rawDay === '' ? null : Number(rawDay);
+        const status = formElement.querySelector('[data-form-status]');
+        const button = formElement.querySelector('button[type="submit"]');
+        const label = button?.querySelector('[data-button-label]');
+        const mode = formElement.dataset.mode;
+
+        if (!name) {
+          setStatus(status, 'Team name is required.', 'error');
+          return;
+        }
+        if (billingDayOverride !== null && (!Number.isInteger(billingDayOverride) || billingDayOverride < 1 || billingDayOverride > 31)) {
+          setStatus(status, 'Billing day must be from 1 to 31.', 'error');
+          return;
+        }
+
+        const payload = mode === 'create'
+          ? {
+              seasonId: String(formData.get('seasonId') || ''),
+              ageGroupId: String(formData.get('ageGroupId') || ''),
+              name,
+              billingDayOverride,
+            }
+          : {
+              id: String(formData.get('id') || ''),
+              ageGroupId: String(formData.get('ageGroupId') || ''),
+              name,
+              billingDayOverride,
+            };
+
+        if (button instanceof HTMLButtonElement) button.disabled = true;
+        if (label) label.textContent = mode === 'create' ? 'Adding…' : 'Saving…';
+        setStatus(status, mode === 'create' ? 'Adding team…' : 'Saving changes…');
+
+        try {
+          const response = await fetch(endpoint, {
+            method: mode === 'create' ? 'POST' : 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'The team could not be saved.');
+          setStatus(status, mode === 'create' ? 'Team added.' : 'Team updated.', 'success');
+          notify('success', mode === 'create' ? 'Team added' : 'Team updated');
+          window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The team could not be saved.';
+          setStatus(status, message, 'error');
+          notify('error', message);
+          if (button instanceof HTMLButtonElement) button.disabled = false;
+          if (label) label.textContent = mode === 'create' ? 'Add team' : 'Save';
+        }
+      });
+    });
+
+    document.querySelectorAll('.team-state-toggle').forEach((button) => {
+      button.addEventListener('click', async () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        const active = button.dataset.active === 'true';
+        const teamName = button.dataset.teamName || 'this team';
+        if (active && !window.confirm(`Deactivate ${teamName}? It will no longer be available for new season registrations.`)) return;
+
+        const originalLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = active ? 'Deactivating…' : 'Reactivating…';
+
+        try {
+          const response = await fetch(endpoint, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: button.dataset.teamId, active: !active }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'The team status could not be changed.');
+          notify('success', `${teamName} ${active ? 'deactivated' : 'reactivated'}`);
+          window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'The team status could not be changed.';
+          notify('error', message);
+          button.disabled = false;
+          button.textContent = originalLabel;
+        }
+      });
+    });
+  </script>
+</BaseLayout>

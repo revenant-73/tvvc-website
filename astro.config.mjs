@@ -20,7 +20,10 @@ export default defineConfig({
     react(), 
     auth(),
     sitemap({
-      filter: (page) => page !== 'https://tualatinvalleyvb.com/season-feedback'
+      filter: (page) => ![
+        'https://tualatinvalleyvb.com/season-feedback',
+        'https://tualatinvalleyvb.com/season-registration',
+      ].includes(page)
     })
   ],
   vite: {

@@ -6,6 +6,10 @@ import { rejectCrossOriginRequest } from '../src/lib/request-security.ts';
 test('accepts local callback paths', () => {
   assert.equal(getSafeCallbackUrl('/portal/settings'), '/portal/settings');
   assert.equal(getSafeCallbackUrl('/admin/registrations?tab=paid'), '/admin/registrations?tab=paid');
+  assert.equal(
+    getSafeCallbackUrl('/season-registration?continue=1'),
+    '/season-registration?continue=1'
+  );
 });
 
 test('rejects external and protocol-relative callback URLs', () => {
