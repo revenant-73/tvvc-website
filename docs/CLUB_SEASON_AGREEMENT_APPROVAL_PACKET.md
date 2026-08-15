@@ -8,6 +8,8 @@
 
 **Runtime source:** `src/lib/club-season-agreement-content.ts`
 
+**Internal content review:** Loren Anderson reviewed and approved the V2 season commitment, refund/cancellation policy, and media release on August 15, 2026. This records content review only; it is not the board/legal approval reference required before publication.
+
 ## Purpose
 
 This packet is the final business, board, and legal review checkpoint before TVVC publishes parent-facing club-season agreements. Publishing is deliberately separate from enabling registration. A published version is immutable and must not be published until its wording and approval reference are final.
