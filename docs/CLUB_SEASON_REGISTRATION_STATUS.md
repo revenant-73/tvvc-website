@@ -197,17 +197,33 @@ The repository includes unit and Playwright coverage for:
 - The final production audit confirmed:
   - 19 `club_*` tables;
   - 27 club-season immutability/validation triggers;
+  - 74 committed `club_*` indexes;
   - the one-pending-revision unique guard;
   - the financial-adjustment table;
   - the launch-evidence table.
 - The seeded `2026-2027-club` season was verified as `draft` with public registration set to `0`.
 - The authenticated production parent dashboard and administrator financial workspace were retested successfully after migration.
 
-### 4.2 Important migration-tracking note
+### 4.2 Migration history reconciled
 
-The production club-season migrations were applied manually through Turso Studio because the local environment did not point at the production database. Production did not contain a Drizzle `__drizzle_migrations` tracking table during the final audit.
+The production club-season migrations were originally applied manually through Turso Studio because the local environment did not point at the production database. On August 15, 2026, migration history was reconciled before introducing any later migration:
 
-Before introducing migration `0013` or running `npm run db:migrate` against production, reconcile the migration history deliberately. Do not blindly rerun `0004`–`0012`; those objects already exist and are protected by constraints and triggers.
+- A fresh recovery branch, `tvvc-registration-backup-2026-08-15-pre-baseline`, was created from production.
+- Production was compared with a clean database built from committed migrations `0000` through `0012`.
+- Ten missing committed indexes were identified. Six are uniqueness/data-integrity guards and four are lookup indexes.
+- All uniqueness checks returned zero conflicting groups before repair.
+- The repair and migration baseline were rehearsed twice on the recovery branch.
+- Production was repaired to 19 `club_*` tables, 27 triggers, and 74 indexes.
+- `__drizzle_migrations` now contains the exact hashes and timestamps for all 13 committed migrations (`0000` through `0012`).
+- Both scripts were rerun successfully to prove idempotency, and `PRAGMA integrity_check` returned `ok`.
+
+The checked-in recovery artifacts are:
+
+- `scripts/repair-production-club-season-indexes.sql`
+- `scripts/baseline-production-migrations-0000-0012.sql`
+- `tests/production-migration-baseline.test.ts`
+
+For the next schema change, generate a new migration (`0013` or later), review it, create a fresh Turso backup branch, and run the normal Drizzle migration command against the explicitly verified production URL. Historical migrations must not be manually replayed.
 
 ### 4.3 Controlled pilot completed
 
@@ -234,13 +250,11 @@ Complete these items in order. Items marked **Launch blocker** must be finished 
 
 ### Step 1 — Reconcile the repository and production migration record
 
-**Launch blocker before any new schema change.**
+**Completed August 15, 2026.**
 
-- Decide how production will track the already-applied `0004`–`0012` migrations.
-- Document the approved future production migration procedure.
-- Do not run historical migrations against production until this is resolved.
-
-No new schema is currently required for the standard launch, so this can be handled without changing existing customer data.
+- Production now tracks migrations `0000` through `0012` with exact repository hashes and timestamps.
+- Missing committed indexes were safely restored after duplicate-data checks and a backup-branch rehearsal.
+- The approved future migration procedure is documented in Section 4.2.
 
 ### Step 2 — Approve final parent-facing documents
 
