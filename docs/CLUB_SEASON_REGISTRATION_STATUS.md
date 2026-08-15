@@ -258,18 +258,14 @@ Complete these items in order. Items marked **Launch blocker** must be finished 
 
 ### Step 2 — Approve final parent-facing documents
 
-**Launch blocker.**
+**Completed August 15, 2026.**
 
 Use `docs/CLUB_SEASON_AGREEMENT_APPROVAL_PACKET.md` as the single review checklist for this step.
 
-- Review the working season commitment.
-- Review the refund and cancellation policy with the TVVC board and appropriate Oregon legal guidance.
-- Confirm the case-by-case post-first-practice withdrawal language.
-- Review the media-release choice.
-- Confirm what dues include/exclude, CEVA membership responsibility, travel expectations, and contact details.
-- Record the approval reference and publish each final agreement version from `/admin/club-season`.
-
-Published versions are immutable. Edit and review carefully before publishing.
+- Production V1 versions of the season commitment, refund/cancellation policy, and media release are published and immutable.
+- Approval reference: `TVVC approval confirmed by Loren Anderson — 2026-08-15`.
+- Confirmed terms include the uniform package, tournament coverage, CEVA responsibility, family travel costs, Stripe fee absorption, North Plains address, case-by-case post-practice withdrawals, and optional media choice.
+- Both registration locks remained off after publication.
 
 ### Step 3 — Configure the real 2026–2027 season
 
