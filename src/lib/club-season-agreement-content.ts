@@ -15,11 +15,17 @@ I confirm that I am the player's parent or legal guardian, or otherwise have aut
   'refund-cancellation-policy': {
     title: 'Refund and cancellation policy',
     summary: 'How cancellation requests, withdrawals, medical inability, credits, and approved refunds are handled',
-    body: `Three-business-day cancellation period. A parent or legal guardian may cancel the season registration in writing before midnight of the third business day after accepting the spot. TVVC will refund all amounts paid. This right is not reduced by calling the initial payment a deposit.
+    body: `BUYER'S RIGHT TO CANCEL
+
+If you wish to cancel this contract without penalty, you may cancel it by delivering or mailing a written notice to Tualatin Valley Volleyball Club before midnight of the third business day after accepting the team spot. Mail or deliver the notice to: Tualatin Valley Volleyball Club, 27170 NW Dorland Rd, North Plains, OR 97133. TVVC also accepts written notice by email at loren@tualatinvalleyvb.com. If you cancel within this three-business-day period, TVVC will return all amounts paid within 15 days after receiving the cancellation notice. A business day is any calendar day except Sunday and legal holidays. This right is not reduced by calling the initial payment a deposit.
 
 If TVVC cannot provide the offered season. If TVVC cancels the team before its first practice, TVVC will refund all club dues paid. If TVVC ends the team after the season begins or materially reduces the promised season, TVVC will provide a reasonable prorated refund for the portion TVVC cannot provide.
 
-Season-ending medical inability. If a player becomes physically unable to participate in a substantial portion of the remaining season, the parent may submit a written request for medical cancellation. TVVC may request confirmation from a licensed healthcare provider. Once approved, future automatic charges will stop and prepaid club dues will be refunded on a prorated basis for the full weeks remaining in the season.
+Death or season-ending medical inability. If the player dies or becomes physically unable to participate in a substantial portion of the remaining season, the parent may submit a written request for cancellation. TVVC may request confirmation from a licensed healthcare provider when physical inability is the basis. Once approved, future automatic charges will stop and prepaid club dues will be refunded on a prorated basis for the full weeks remaining in the season.
+
+Closure, relocation, unfinished facilities, or material changes. If TVVC closes the primary place where the contracted services are provided, moves it more than five miles without providing a reasonably comparable alternative, does not complete a promised facility or improvement, or materially changes the services promised in the registration, the family may request cancellation and any refund required by applicable law.
+
+Prorated refunds. When a prorated refund applies, TVVC will calculate it using the adjusted season dues multiplied by the number of full weeks remaining in the scheduled season, divided by the total scheduled season weeks, less any unpaid amount already due for the period before the effective cancellation date.
 
 Voluntary withdrawal before the first practice. After the three-business-day cancellation period but before the team's first practice, TVVC will cancel future installments and refund amounts paid above the deposit. The deposit is nonrefundable because the accepted spot causes TVVC to make roster and season commitments.
 
@@ -29,7 +35,7 @@ Reasons that do not guarantee a refund. Playing time, position, team assignment,
 
 Credits and fundraising. Scholarships, fundraising proceeds, sponsorships, and other non-cash credits reduce the player's balance but do not create a cash refund unless TVVC agrees otherwise in writing or applicable law requires it.
 
-How to request cancellation or a refund. Submit the request in writing to loren@tualatinvalleyvb.com with the player's name, team, requested effective date, and reason. Telling a coach, missing activities, replacing a card, or disputing a charge does not by itself cancel the registration or automatic-payment authorization. TVVC will acknowledge the request and normally provide a decision within 10 business days.
+How to request cancellation or a refund. Mail or deliver the request to Tualatin Valley Volleyball Club, 27170 NW Dorland Rd, North Plains, OR 97133, or email it to loren@tualatinvalleyvb.com. Include the player's name, team, requested effective date, and reason. Telling a coach, missing activities, replacing a card, or disputing a charge does not by itself cancel the registration or automatic-payment authorization. Except for the three-business-day cancellation refund described above, TVVC will acknowledge the request and normally provide a decision within 10 business days.
 
 Approved refunds. Approved card refunds are returned to the original payment method. TVVC does not deduct an administrative fee from an approved refund. After TVVC issues the refund, the card issuer may take approximately 5–10 business days to display it. This policy does not limit any cancellation or refund rights required by applicable law.`,
   },

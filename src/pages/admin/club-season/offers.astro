@@ -47,7 +47,7 @@ const isAdmin = Boolean(admin);
               <h1 class="mt-2 font-heading text-4xl font-extrabold uppercase leading-none tracking-[-0.04em] text-white md:text-6xl">Build the <span class="text-brand-teal">roster.</span></h1>
               <p class="mt-3 max-w-2xl text-sm leading-6 text-white/50">Select eligible tryout players, assign one team, and create the batch. No bespoke links. No spreadsheet aerobics.</p>
             </div>
-            <dl class="mt-5 grid grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-[#11151d] lg:mt-0 lg:min-w-[29rem]">
+            <dl class="mt-5 grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-[#11151d] sm:grid-cols-4 sm:divide-x sm:divide-white/10 lg:mt-0 lg:min-w-[38rem]">
               <div class="px-4 py-3">
                 <dt class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Players</dt>
                 <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-white" data-total-count>—</dd>
@@ -59,6 +59,15 @@ const isAdmin = Boolean(admin);
               <div class="px-4 py-3">
                 <dt class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Offered</dt>
                 <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-white" data-offered-count>—</dd>
+              </div>
+              <div class="border-t border-white/10 px-4 py-3 sm:border-t-0">
+                <dt class="text-xs font-extrabold uppercase tracking-[0.14em] text-brand-coral">Media declined</dt>
+                <dd class="mt-1">
+                  <button type="button" data-media-declined-filter class="group inline-flex items-baseline gap-2 rounded-md text-brand-coral focus:outline-none focus:ring-2 focus:ring-brand-coral">
+                    <span class="font-heading text-xl font-extrabold tabular-nums" data-media-declined-count>—</span>
+                    <span class="text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/55 transition group-hover:text-white">View</span>
+                  </button>
+                </dd>
               </div>
             </dl>
           </header>
@@ -81,6 +90,9 @@ const isAdmin = Boolean(admin);
                 <option value="all">Everyone</option>
                 <option value="offered">Existing offers</option>
                 <option value="ineligible">Needs attention</option>
+                <option value="media_declined">Media release declined</option>
+                <option value="media_granted">Media release granted</option>
+                <option value="media_pending">Media choice pending</option>
               </select>
             </div>
             <button type="button" data-retry-button class="hidden min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 px-4 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:border-brand-teal/50 hover:text-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal">
@@ -174,6 +186,8 @@ const isAdmin = Boolean(admin);
         eligible: boolean;
         issue: string | null;
         offer: Offer | null;
+        registrationStatus: string | null;
+        mediaReleaseStatus: 'granted' | 'declined' | null;
       };
       type WorkspaceResponse = { season: { name: string }; teams: Team[]; candidates: Candidate[] };
 
@@ -184,6 +198,7 @@ const isAdmin = Boolean(admin);
         const teamSelect = root.querySelector<HTMLSelectElement>('[data-team-select]');
         const deadlineInput = root.querySelector<HTMLInputElement>('[data-deadline-input]');
         const statusFilter = root.querySelector<HTMLSelectElement>('[data-status-filter]');
+        const mediaDeclinedFilter = root.querySelector<HTMLButtonElement>('[data-media-declined-filter]');
         const searchInput = root.querySelector<HTMLInputElement>('[data-search]');
         const playerList = root.querySelector<HTMLElement>('[data-player-list]');
         const loadingState = root.querySelector<HTMLElement>('[data-loading-state]');
@@ -228,6 +243,9 @@ const isAdmin = Boolean(admin);
             if (filter === 'available') return candidate.eligible && !candidate.offer;
             if (filter === 'offered') return Boolean(candidate.offer);
             if (filter === 'ineligible') return !candidate.eligible;
+            if (filter === 'media_declined') return candidate.mediaReleaseStatus === 'declined';
+            if (filter === 'media_granted') return candidate.mediaReleaseStatus === 'granted';
+            if (filter === 'media_pending') return Boolean(candidate.offer) && candidate.mediaReleaseStatus === null;
             return true;
           });
         };
@@ -329,6 +347,19 @@ const isAdmin = Boolean(admin);
               makeText('p', 'text-xs font-semibold text-white/75', candidate.parentName || 'Parent name unavailable'),
               makeText('p', 'mt-0.5 truncate text-xs text-white/55', candidate.parentEmail || 'No email')
             );
+            if (candidate.offer) {
+              const mediaStatus = candidate.mediaReleaseStatus || 'pending';
+              const mediaClass = mediaStatus === 'declined'
+                ? 'border-brand-coral/30 bg-brand-coral/10 text-brand-coral'
+                : mediaStatus === 'granted'
+                  ? 'border-brand-teal/25 bg-brand-teal/10 text-brand-teal'
+                  : 'border-white/10 bg-white/[0.04] text-white/55';
+              parentCell.append(makeText(
+                'span',
+                `mt-2 inline-flex rounded-md border px-2 py-1 text-xs font-extrabold uppercase tracking-[0.08em] ${mediaClass}`,
+                `Media: ${mediaStatus}`
+              ));
+            }
 
             const statusCell = document.createElement('div');
             const statusText = candidate.offer ? offerLabel(candidate.offer.status) : candidate.eligible ? 'Ready' : 'Needs attention';
@@ -389,6 +420,7 @@ const isAdmin = Boolean(admin);
             setText('[data-total-count]', candidates.length);
             setText('[data-available-count]', candidates.filter((candidate) => candidate.eligible && !candidate.offer).length);
             setText('[data-offered-count]', candidates.filter((candidate) => candidate.offer).length);
+            setText('[data-media-declined-count]', candidates.filter((candidate) => candidate.mediaReleaseStatus === 'declined').length);
             announce(`${candidates.length} tryout players loaded.`);
             render();
           } catch (error) {
@@ -405,6 +437,12 @@ const isAdmin = Boolean(admin);
 
         searchInput?.addEventListener('input', render);
         statusFilter?.addEventListener('change', render);
+        mediaDeclinedFilter?.addEventListener('click', () => {
+          if (statusFilter) statusFilter.value = 'media_declined';
+          render();
+          playerList?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          announce('Showing families that declined the media release.');
+        });
         teamSelect?.addEventListener('change', () => {
           const team = teams.find((item) => item.id === teamSelect.value);
           if (deadlineInput) deadlineInput.value = team?.acceptanceDeadlineOverride || '';

@@ -359,6 +359,35 @@ test.describe.serial('Club season offer authorization', () => {
     }
   });
 
+  test('admin can identify and filter families that declined the media release', async ({ browser }) => {
+    const admin = await contextWithSession(browser, fixtures.admin.sessionToken);
+    try {
+      const response = await admin.request.get(
+        `/api/admin/club-season-offers?seasonId=${fixtures.clubSeason.id}`
+      );
+      expect(response.ok()).toBeTruthy();
+      await expect(response.json()).resolves.toMatchObject({
+        candidates: expect.arrayContaining([
+          expect.objectContaining({
+            athleteId: fixtures.parentA.athleteId,
+            mediaReleaseStatus: 'declined',
+          }),
+        ]),
+      });
+
+      const page = await admin.newPage();
+      await page.goto('/admin/club-season/offers');
+      await expect(page.locator('[data-media-declined-count]')).toHaveText('1');
+      await page.locator('[data-media-declined-filter]').click();
+      await expect(page.locator('[data-status-filter]')).toHaveValue('media_declined');
+      await expect(page.getByText(fixtures.parentA.athleteName, { exact: false })).toBeVisible();
+      await expect(page.getByText('Media: declined', { exact: true })).toBeVisible();
+      await expect(page.locator('[data-visible-count]')).toHaveText('1');
+    } finally {
+      await admin.close();
+    }
+  });
+
   test('an exact test-mode pilot account can enter while the season public lock stays closed', async ({ browser }) => {
     const admin = await contextWithSession(browser, fixtures.admin.sessionToken);
     const pilotParent = await contextWithSession(browser, fixtures.parentA.sessionToken);
