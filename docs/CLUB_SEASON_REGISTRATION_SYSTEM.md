@@ -1,9 +1,11 @@
 # Club Season Registration and Payment System
 
-**Status:** Product requirements and implementation reference
-**Last updated:** August 7, 2026
+**Status:** Product requirements and implementation reference; implementation is deployed dark and pilot-tested
+**Last updated:** August 15, 2026
 **Applies to:** TVVC club-season team acceptance and dues collection
 **Related systems:** Tryout registration, parent portal, Stripe, Turso, Resend, Netlify
+
+> For the authoritative current implementation status, production work already completed, and ordered launch checklist, see [CLUB_SEASON_REGISTRATION_STATUS.md](./CLUB_SEASON_REGISTRATION_STATUS.md). The milestone notes below preserve implementation history and may describe work as deferred that was completed by a later milestone.
 
 ## 1. Purpose
 
