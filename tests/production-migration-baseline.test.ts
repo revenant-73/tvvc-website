@@ -1,0 +1,83 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import test from 'node:test';
+import { createClient } from '@libsql/client';
+
+const root = process.cwd();
+
+test('production baseline records exact repository migrations and is rerunnable', async () => {
+  const databasePath = path.join(root, 'test-results', `production-migration-baseline-${process.pid}.db`);
+  await fs.mkdir(path.dirname(databasePath), { recursive: true });
+  await fs.rm(databasePath, { force: true });
+  const client = createClient({ url: `file:${databasePath.replaceAll('\\', '/')}` });
+  try {
+    const journal = JSON.parse(await fs.readFile(path.join(root, 'drizzle/meta/_journal.json'), 'utf8'));
+    for (const entry of journal.entries) {
+      const sql = (await fs.readFile(path.join(root, 'drizzle', `${entry.tag}.sql`), 'utf8'))
+        .replaceAll('--> statement-breakpoint', '');
+      await client.executeMultiple(sql);
+    }
+
+    const missingProductionIndexes = [
+      'club_age_groups_pricing_tier_id_idx',
+      'club_age_groups_season_code_unique',
+      'club_pricing_tiers_active_idx',
+      'club_pricing_tiers_season_key_unique',
+      'club_season_agreements_one_published_key_unique',
+      'club_season_agreements_status_idx',
+      'club_season_payment_transactions_event_unique',
+      'club_season_payment_transactions_intent_unique',
+      'club_season_payment_transactions_registration_id_idx',
+      'club_season_payment_transactions_session_unique',
+    ];
+    for (const indexName of missingProductionIndexes) {
+      await client.execute(`DROP INDEX ${indexName}`);
+    }
+
+    const productionShapeCounts = await client.execute(`
+      SELECT
+        sum(type = 'table' AND name LIKE 'club_%') AS tables,
+        sum(type = 'trigger' AND name LIKE 'club_%') AS triggers,
+        sum(type = 'index' AND name LIKE 'club_%') AS indexes
+      FROM sqlite_master
+    `);
+    assert.deepEqual(productionShapeCounts.rows[0], { tables: 19, triggers: 27, indexes: 64 });
+
+    const repair = await fs.readFile(
+      path.join(root, 'scripts/repair-production-club-season-indexes.sql'),
+      'utf8'
+    );
+    await client.executeMultiple(repair);
+    await client.executeMultiple(repair);
+
+    const repairedSchemaCounts = await client.execute(`
+      SELECT
+        sum(type = 'table' AND name LIKE 'club_%') AS tables,
+        sum(type = 'trigger' AND name LIKE 'club_%') AS triggers,
+        sum(type = 'index' AND name LIKE 'club_%') AS indexes
+      FROM sqlite_master
+    `);
+    assert.deepEqual(repairedSchemaCounts.rows[0], { tables: 19, triggers: 27, indexes: 74 });
+
+    const baseline = await fs.readFile(
+      path.join(root, 'scripts/baseline-production-migrations-0000-0012.sql'),
+      'utf8'
+    );
+    await client.executeMultiple(baseline);
+    await client.executeMultiple(baseline);
+
+    const result = await client.execute(
+      'SELECT hash, created_at FROM __drizzle_migrations ORDER BY created_at'
+    );
+    assert.equal(result.rows.length, journal.entries.length);
+    for (const [index, entry] of journal.entries.entries()) {
+      const source = await fs.readFile(path.join(root, 'drizzle', `${entry.tag}.sql`));
+      assert.equal(result.rows[index].created_at, entry.when);
+      assert.equal(result.rows[index].hash, crypto.createHash('sha256').update(source).digest('hex'));
+    }
+  } finally {
+    await client.close();
+  }
+});
