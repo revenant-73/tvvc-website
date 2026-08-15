@@ -6,6 +6,12 @@ export const CLUB_SEASON_AGREEMENT_WORKING_DRAFTS = {
 
 Our family will make a good-faith effort to attend scheduled practices, tournaments, and team activities; arrive prepared and on time; and communicate promptly with the coach or TVVC when an absence or conflict cannot be avoided. We will keep our contact, emergency, and relevant medical information current.
 
+Club dues include coaching, scheduled practice-facility costs, club administration, team or shared equipment, all tournaments on the published team schedule, and the player's uniform package: two jerseys, two practice T-shirts, one sweatshirt, and one bag tag. For 12U and 18U, dues also include the additional March tournament that will be added to the schedule. TVVC absorbs standard Stripe card-processing fees and does not add a separate card-processing charge to the family.
+
+Club dues do not include the player's required CEVA/USA Volleyball membership, which the family must purchase separately. Families are also responsible for player and family transportation, lodging, meals, admission, parking, spectator fees, optional apparel, and replacement uniform pieces. Any competition added beyond the published schedule and the included 12U or 18U March tournament may increase the team's cost and will be considered and approved on a team-by-team basis. TVVC will communicate the additional competition and cost before the team commits.
+
+TVVC focuses on local and regional competition and works to limit unnecessary travel and overnight stays. Tournament locations and schedules are controlled by event organizers and may change.
+
 The player and family agree to follow TVVC, facility, event, and governing-body conduct and safety requirements. We understand that team roles, positions, lineups, and playing time are coaching decisions and are not guaranteed by acceptance of a roster spot or payment of club dues.
 
 If circumstances change, our family will contact TVVC directly rather than relying on a message to a coach or simply stopping attendance. Payment changes, withdrawals, and refund requests are handled under the separately presented automatic-payment authorization and refund and cancellation policy.

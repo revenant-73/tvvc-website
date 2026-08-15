@@ -260,6 +260,8 @@ Complete these items in order. Items marked **Launch blocker** must be finished 
 
 **Launch blocker.**
 
+Use `docs/CLUB_SEASON_AGREEMENT_APPROVAL_PACKET.md` as the single review checklist for this step.
+
 - Review the working season commitment.
 - Review the refund and cancellation policy with the TVVC board and appropriate Oregon legal guidance.
 - Confirm the case-by-case post-first-practice withdrawal language.
