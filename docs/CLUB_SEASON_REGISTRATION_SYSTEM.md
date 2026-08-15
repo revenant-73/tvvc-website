@@ -1049,25 +1049,31 @@ These should not delay the initial launch:
 
 ## 24. Open Decisions
 
+Confirmed August 15, 2026:
+
+- Club dues include coaching, scheduled practice-facility costs, club administration, team/shared equipment, all published-schedule tournaments, the additional March tournament for 12U and 18U, two jerseys, two practice T-shirts, one sweatshirt, and one bag tag.
+- Families separately purchase the required CEVA/USA Volleyball membership and pay their transportation, lodging, meals, admission, parking, spectator, optional-apparel, and replacement-uniform costs.
+- Additional competitions beyond the published schedule and included 12U/18U March tournament may increase cost and require a team-by-team decision after TVVC communicates the competition and added cost.
+- TVVC absorbs standard Stripe card-processing fees.
+- The January 5 installment reminder is moved to January 2 to preserve the December communication break.
+- The club cancellation address is 27170 NW Dorland Rd, North Plains, OR 97133.
+
 The following items still require confirmation before or during implementation:
 
 1. Exact team naming format and supported age groups.
 2. Registration opening date and standard acceptance deadline.
 3. Exact additional season fields that are required versus optional.
 4. Final parent and player agreements and their authoritative wording.
-5. What club dues include and exclude.
-6. Legal and board approval of the proposed refund and cancellation policy, including confirmation of Oregon law applicability.
-7. Failed-payment retry schedule and when TVVC begins manual follow-up.
-8. Whether processing fees are absorbed or passed through.
-9. Whether card is the only supported payment method or ACH is offered.
-10. Whether the January reminder is sent December 31 or moved to January 2.
-11. Whether secondary parents receive all financial emails.
-12. How sibling adjustments, scholarships, and fundraising credits are approved and applied.
-13. Late-registration policy after January 5.
-14. Whether an incorrect team selection blocks checkout or creates an admin-review flag. The current recommendation is an admin-review flag.
-15. Whether a family can decline within the form and which decline reasons to offer.
-16. Which CEVA/USA Volleyball readiness items should be tracked locally versus linked externally.
-17. Data-retention period for medical, financial, agreement, and audit records.
+5. Legal and board approval of the proposed refund and cancellation policy, including confirmation of Oregon law applicability.
+6. Failed-payment retry schedule and when TVVC begins manual follow-up.
+7. Whether card is the only supported payment method or ACH is offered.
+8. Whether secondary parents receive all financial emails.
+9. How sibling adjustments, scholarships, and fundraising credits are approved and applied.
+10. Late-registration policy after January 5.
+11. Whether an incorrect team selection blocks checkout or creates an admin-review flag. The current recommendation is an admin-review flag.
+12. Whether a family can decline within the form and which decline reasons to offer.
+13. Which CEVA/USA Volleyball readiness items should be tracked locally versus linked externally.
+14. Data-retention period for medical, financial, agreement, and audit records.
 
 ## 25. Product Principles
 
