@@ -94,6 +94,7 @@ The protected `/admin/club-season/offers` workspace supports:
 - assigning an active team and response deadline;
 - retry-safe bulk offer creation for the expected 140+ players;
 - revoking and restoring offers;
+- showing each family's media-release choice, the total number of declines, and direct filters for declined, granted, or pending responses;
 - preventing cross-family access and duplicate player/season offers.
 
 ### 3.5 Parent registration

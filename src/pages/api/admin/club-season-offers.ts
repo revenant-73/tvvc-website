@@ -5,7 +5,9 @@ import { getDb } from '../../../db';
 import {
   athletes,
   clubAgeGroups,
+  clubSeasonAgreementAcceptances,
   clubSeasonOffers,
+  clubSeasonRegistrations,
   clubSeasons,
   clubTeams,
   events,
@@ -100,7 +102,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       .where(eq(clubSeasons.id, seasonId)).limit(1);
     if (!season) return json({ error: 'Club season not found.' }, 404);
 
-    const [teams, candidates, offers] = await Promise.all([
+    const [teams, candidates, offers, seasonRegistrations, mediaAcceptances] = await Promise.all([
       db.select({
         id: clubTeams.id,
         name: clubTeams.name,
@@ -119,9 +121,34 @@ export const GET: APIRoute = async ({ request, url }) => {
       findTryoutCandidates(db),
       db.select().from(clubSeasonOffers)
         .where(eq(clubSeasonOffers.seasonId, seasonId)),
+      db.select({
+        id: clubSeasonRegistrations.id,
+        offerId: clubSeasonRegistrations.offerId,
+        status: clubSeasonRegistrations.status,
+      }).from(clubSeasonRegistrations)
+        .where(eq(clubSeasonRegistrations.seasonId, seasonId)),
+      db.select({
+        registrationId: clubSeasonAgreementAcceptances.registrationId,
+        response: clubSeasonAgreementAcceptances.response,
+        acceptedAt: clubSeasonAgreementAcceptances.acceptedAt,
+      })
+        .from(clubSeasonAgreementAcceptances)
+        .innerJoin(
+          clubSeasonRegistrations,
+          eq(clubSeasonAgreementAcceptances.registrationId, clubSeasonRegistrations.id)
+        )
+        .where(and(
+          eq(clubSeasonRegistrations.seasonId, seasonId),
+          eq(clubSeasonAgreementAcceptances.agreementKeySnapshot, 'media-release')
+        ))
+        .orderBy(asc(clubSeasonAgreementAcceptances.acceptedAt)),
     ]);
 
     const offerByAthlete = new Map(offers.map((offer) => [offer.sourceAthleteId, offer]));
+    const registrationByOffer = new Map(seasonRegistrations.map((registration) => [registration.offerId, registration]));
+    const mediaResponseByRegistration = new Map(
+      mediaAcceptances.map((acceptance) => [acceptance.registrationId, acceptance.response])
+    );
     return json({
       season,
       teams,
@@ -136,6 +163,10 @@ export const GET: APIRoute = async ({ request, url }) => {
           )
         );
 
+        const offer = offerByAthlete.get(candidate.athleteId) || null;
+        const registration = offer ? registrationByOffer.get(offer.id) || null : null;
+        const mediaResponse = registration ? mediaResponseByRegistration.get(registration.id) : null;
+
         return {
           ...candidate,
           parentEmail,
@@ -146,7 +177,11 @@ export const GET: APIRoute = async ({ request, url }) => {
             : ownershipConflict
               ? 'Portal ownership does not match the tryout email'
               : null,
-          offer: offerByAthlete.get(candidate.athleteId) || null,
+          offer,
+          registrationStatus: registration?.status || null,
+          mediaReleaseStatus: mediaResponse === 'granted' || mediaResponse === 'declined'
+            ? mediaResponse
+            : null,
         };
       }),
     });
