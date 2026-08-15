@@ -4,11 +4,13 @@
 
 **Prepared:** August 15, 2026
 
-**Status:** Business terms confirmed; awaiting board/legal approval and publication
+**Status:** Approved and published to production
 
 **Runtime source:** `src/lib/club-season-agreement-content.ts`
 
-**Internal content review:** Loren Anderson reviewed and approved the V2 season commitment, refund/cancellation policy, and media release on August 15, 2026. This records content review only; it is not the board/legal approval reference required before publication.
+**Initial content review:** Loren Anderson reviewed the season commitment, refund/cancellation policy, and media release on August 15, 2026. Formal authorization to publish was confirmed separately afterward.
+
+**Production publication:** On August 15, 2026, production V1 versions of the season commitment, refund/cancellation policy, and media release were published with the immutable approval reference `TVVC approval confirmed by Loren Anderson — 2026-08-15`. The production readiness gate confirmed all three versions. The season database registration switch and Netlify feature flag remained off.
 
 ## Purpose
 
