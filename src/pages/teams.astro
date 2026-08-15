@@ -3,6 +3,55 @@ export const prerender = true;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
 import FundraisingButton from '../components/FundraisingButton';
+
+const tournamentSchedules = {
+  '12u': {
+    label: '11 & 12U',
+    events: [
+      { date: 'Jan 9', isoDate: '2027-01-09', name: 'Power League Qualifier' },
+      { date: 'Jan 23', isoDate: '2027-01-23', name: 'Power League' },
+      { date: 'Feb 27', isoDate: '2027-02-27', name: 'Power League' },
+      { date: 'Apr 18', isoDate: '2027-04-18', name: 'Power League' },
+      { date: 'Apr 24–25', isoDate: '2027-04-24', name: 'CEVA Regionals' },
+    ],
+    note: 'An additional tournament will be added in March as the season gets closer.',
+  },
+  '14u': {
+    label: '13 & 14U',
+    events: [
+      { date: 'Jan 10', isoDate: '2027-01-10', name: 'Power League Qualifier 1' },
+      { date: 'Jan 31', isoDate: '2027-01-31', name: 'Power League Qualifier 2' },
+      { date: 'Feb 7', isoDate: '2027-02-07', name: 'Power League' },
+      { date: 'Mar 7', isoDate: '2027-03-07', name: 'Power League' },
+      { date: 'Apr 17', isoDate: '2027-04-17', name: 'Power League' },
+      { date: 'Apr 24–25', isoDate: '2027-04-24', name: 'CEVA Regionals' },
+    ],
+    note: null,
+  },
+  '16u': {
+    label: '15 & 16U',
+    events: [
+      { date: 'Jan 3', isoDate: '2027-01-03', name: 'Power League Qualifier 1' },
+      { date: 'Jan 30', isoDate: '2027-01-30', name: 'Power League Qualifier 2' },
+      { date: 'Feb 6', isoDate: '2027-02-06', name: 'Power League' },
+      { date: 'Mar 6', isoDate: '2027-03-06', name: 'Power League' },
+      { date: 'Apr 10', isoDate: '2027-04-10', name: 'Power League' },
+      { date: 'May 1–2', isoDate: '2027-05-01', name: 'CEVA Regionals' },
+    ],
+    note: null,
+  },
+  '18u': {
+    label: '17 & 18U',
+    events: [
+      { date: 'Jan 2', isoDate: '2027-01-02', name: 'Power League Qualifier' },
+      { date: 'Jan 24', isoDate: '2027-01-24', name: 'Power League' },
+      { date: 'Feb 21', isoDate: '2027-02-21', name: 'Power League' },
+      { date: 'Apr 11', isoDate: '2027-04-11', name: 'Power League' },
+      { date: 'May 1–2', isoDate: '2027-05-01', name: 'CEVA Regionals' },
+    ],
+    note: 'An additional tournament will be added in March as the season gets closer.',
+  },
+};
 ---
 
 <BaseLayout title="Teams & Tryouts" description="TVVC's competitive age-group teams, girls volleyball club in Hillsboro, OR. 12U-18U development-first focus.">
@@ -190,41 +239,39 @@ import FundraisingButton from '../components/FundraisingButton';
         </div>
 
         <div class="p-4 md:p-8">
-          <!-- 11 & 12U Content -->
-          <div class="schedule-content active" id="schedule-12u">
-            <div class="p-12 text-center">
-              <span class="text-4xl mb-6 block">✨</span>
-              <p class="text-brand-teal font-heading italic text-2xl mb-2">Coming October 2026</p>
-              <p class="text-white/40 text-sm max-w-xs mx-auto">Registration and schedule details for our 11 & 12U programs will be announced soon.</p>
-            </div>
-          </div>
+          {Object.entries(tournamentSchedules).map(([division, schedule], index) => (
+            <div
+              class:list={['schedule-content', { active: index === 0, hidden: index !== 0 }]}
+              id={`schedule-${division}`}
+            >
+              <div class="mb-5 flex flex-col gap-1 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-[0.24em] text-brand-teal">2026–27 CEVA</p>
+                  <h3 class="mt-1 text-2xl font-heading text-white">{schedule.label} Tournament Schedule</h3>
+                </div>
+                <p class="text-xs text-white/45">Dates are subject to CEVA updates</p>
+              </div>
 
-          <!-- 13 & 14U Content -->
-          <div class="schedule-content hidden" id="schedule-14u">
-            <div class="p-12 text-center">
-              <span class="text-4xl mb-6 block">🌱</span>
-              <p class="text-brand-teal font-heading italic text-2xl mb-2">Coming October 2026</p>
-              <p class="text-white/40 text-sm max-w-xs mx-auto">Registration and schedule details for our 13 & 14U programs will be announced soon.</p>
-            </div>
-          </div>
+              <ol class="divide-y divide-white/10" aria-label={`${schedule.label} tournament dates`}>
+                {schedule.events.map((event) => (
+                  <li class="flex items-center justify-between gap-5 py-4 first:pt-0 last:pb-0">
+                    <span class:list={['text-sm font-bold', event.name === 'CEVA Regionals' ? 'text-brand-coral' : 'text-white/80']}>
+                      {event.name}
+                    </span>
+                    <time datetime={event.isoDate} class="shrink-0 text-sm font-heading text-white">
+                      {event.date}, 2027
+                    </time>
+                  </li>
+                ))}
+              </ol>
 
-          <!-- 15 & 16U Content -->
-          <div class="schedule-content hidden" id="schedule-16u">
-            <div class="p-12 text-center">
-              <span class="text-4xl mb-6 block">📈</span>
-              <p class="text-brand-coral font-heading italic text-2xl mb-2">Coming October 2026</p>
-              <p class="text-white/40 text-sm max-w-xs mx-auto">Registration and schedule details for our 15 & 16U programs will be announced soon.</p>
+              {schedule.note && (
+                <p class="mt-6 rounded-2xl border border-brand-teal/25 bg-brand-teal/10 px-5 py-4 text-sm leading-relaxed text-white/75">
+                  <span class="font-bold text-brand-teal">Schedule note:</span> {schedule.note}
+                </p>
+              )}
             </div>
-          </div>
-
-          <!-- 17 & 18U Content -->
-          <div class="schedule-content hidden" id="schedule-18u">
-            <div class="p-12 text-center">
-              <span class="text-4xl mb-6 block">🏆</span>
-              <p class="text-white font-heading italic text-2xl mb-2">Coming October 2026</p>
-              <p class="text-white/40 text-sm max-w-xs mx-auto">Registration and schedule details for our 17 & 18U programs will be announced soon.</p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

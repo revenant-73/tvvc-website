@@ -33,7 +33,10 @@ test.describe('Tournament Schedule Feature', () => {
     test('should render 11 & 12U schedule by default', async ({ page }) => {
       const content12u = page.locator('#schedule-12u');
       await expect(content12u).toHaveClass(/active/);
-      await expect(content12u).toContainText('Coming October 2026');
+      await expect(content12u).toContainText('Power League Qualifier');
+      await expect(content12u).toContainText('Jan 9, 2027');
+      await expect(content12u).toContainText('CEVA Regionals');
+      await expect(content12u).toContainText('Apr 24–25, 2027');
     });
 
     test('should update active tab class when switching tabs', async ({ page }) => {
@@ -58,9 +61,11 @@ test.describe('Tournament Schedule Feature', () => {
     });
   });
 
-  test('should display Coming Soon message for all tabs', async ({ page }) => {
+  test('should display the correct schedule for all tabs', async ({ page }) => {
     const tabs = ['11 & 12U', '13 & 14U', '15 & 16U', '17 & 18U'];
     const tabIds = ['schedule-12u', 'schedule-14u', 'schedule-16u', 'schedule-18u'];
+    const expectedDates = ['Jan 9, 2027', 'Jan 10, 2027', 'Jan 3, 2027', 'Jan 2, 2027'];
+    const regionalDates = ['Apr 24–25, 2027', 'Apr 24–25, 2027', 'May 1–2, 2027', 'May 1–2, 2027'];
     
     for (let i = 0; i < tabs.length; i++) {
       const tab = page.locator('.schedule-tab').filter({ hasText: tabs[i] });
@@ -68,8 +73,21 @@ test.describe('Tournament Schedule Feature', () => {
       
       const content = page.locator(`#${tabIds[i]}`);
       await expect(content).toBeVisible();
-      await expect(content).toContainText('Coming October 2026');
+      await expect(content).toContainText(expectedDates[i]);
+      await expect(content).toContainText(regionalDates[i]);
     }
+  });
+
+  test('should show the additional March tournament note for 12U and 18U', async ({ page }) => {
+    const note = 'An additional tournament will be added in March as the season gets closer.';
+
+    await expect(page.locator('#schedule-12u')).toContainText(note);
+
+    await page.locator('.schedule-tab').filter({ hasText: '17 & 18U' }).click();
+    await expect(page.locator('#schedule-18u')).toContainText(note);
+
+    await page.locator('.schedule-tab').filter({ hasText: '13 & 14U' }).click();
+    await expect(page.locator('#schedule-14u')).not.toContainText(note);
   });
 
   test.describe('Schedule Section Positioning', () => {
