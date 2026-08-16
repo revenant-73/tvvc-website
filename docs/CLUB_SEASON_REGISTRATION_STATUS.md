@@ -307,7 +307,7 @@ On August 16, 2026, the live Stripe account and production Netlify configuration
 - The production webhook now listens to all four required events: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.succeeded`, and `payment_intent.payment_failed`.
 - Netlify production now uses the matching live publishable and secret keys. Preview contexts retain test keys for safe testing.
 - A production configuration deploy completed successfully after the key update. The automated Stripe configuration gate passed, advancing launch readiness from 7/15 to 8/15 checks with five blockers remaining.
-- Live Checkout, receipt, refund, and off-session-payment behavior still require the approved low-risk live rehearsal before permanent Stripe evidence is recorded.
+- Checkout, receipt, refund, off-session payment, failure, and idempotency behavior were verified in the deployed Stripe test-mode pilot. Stripe's testing policy prohibits testing in live mode with real payment details, so production verification does not manufacture a charge or refund.
 - No Stripe keys or signing secrets are included in this document.
 
 ### 4.8 Production billing worker protected and verified
@@ -338,6 +338,18 @@ On August 16, 2026, the deployed Stripe test-mode pilot was reconciled, permanen
 - `CLUB_SEASON_PILOT_MODE` is now `false` in every Netlify deploy context, the temporary pilot email allowlist was deleted, and Deploy Preview #13 was rebuilt and verified to deny the former pilot offer.
 - The retired Stripe test webhook destination remains preserved for audit history but is disabled.
 - The production season remains `draft`; it has zero active teams, and both registration locks remain off.
+
+### 4.10 Production Stripe evidence recorded
+
+On August 16, 2026, the Stripe live-mode review was permanently recorded in the launch console without creating an artificial live transaction:
+
+- The live account, card enablement, pricing, Customer Portal payment-method updates, matching Netlify live keys, webhook signing, required event subscriptions, and successful delivery history were reviewed.
+- The protected production billing worker's successful zero-candidate no-op was included in the evidence.
+- The deployed test-mode pilot remains the integration proof for Checkout, saved payment methods, off-session behavior, receipts, refunds, failure recovery, and idempotency.
+- Stripe's official testing guidance requires test keys and testing environments and prohibits testing in live mode with real payment details: <https://docs.stripe.com/testing>.
+- No artificial live charge or refund was created. The first genuine family payment will be supervised and reconciled as an operational rollout check.
+- The append-only evidence entry was signed by Loren Anderson on August 16, 2026. Launch readiness advanced from 10/15 to 11/15 checks with two blockers remaining.
+- The season remains `draft`, no teams are active, and both registration locks remain closed.
 
 ## 5. Remaining Work Before Live Family Registration
 
@@ -378,19 +390,19 @@ Use `docs/CLUB_SEASON_AGREEMENT_APPROVAL_PACKET.md` as the single review checkli
 
 ### Step 4 — Finish live service verification
 
-**Launch blocker.**
+**Completed August 16, 2026.**
 
 - **Completed:** verify `mail.tualatinvalleyvb.com`, its DKIM/SPF records, `reminders@mail.tualatinvalleyvb.com`, reply-to behavior, and a delivered club-season email.
 - **Completed:** record permanent Resend-domain evidence in the launch console.
 - **Completed:** review current Stripe pricing and enabled payment methods; cards are enabled and the account shows standard domestic-card pricing of 2.9% plus 30 cents per successful charge.
 - **Completed:** Netlify production uses matching live Stripe publishable and secret keys; preview contexts retain test keys for safe testing.
 - **Completed:** the live webhook endpoint is active, its signing secret is functioning, and all four required Checkout and PaymentIntent events are configured.
-- **Partially completed:** the Billing Portal is active and permits payment-method updates. Confirm live Checkout, off-session charging, receipts, and refunds during the approved low-risk live rehearsal.
-- Record permanent Stripe live-review evidence.
+- **Completed:** the Billing Portal is active and permits payment-method updates.
+- **Completed:** record permanent Stripe live-review evidence without manufacturing a live-mode test transaction.
 - **Completed:** configure a protected 64-character `CLUB_SEASON_CRON_SECRET` and `loren@tualatinvalleyvb.com` as `CLUB_SEASON_BILLING_EMAIL` in production.
 - **Completed:** confirm the daily scheduled function is deployed and inspect a successful production no-op with zero candidates, reminders, and charges.
 
-Never use a real family’s card for the test-mode pilot.
+Use Stripe test keys and testing environments for rehearsals. Never use real payment details to test in live mode.
 
 ### Step 5 — Close out the controlled pilot
 
@@ -417,7 +429,7 @@ Never use a real family’s card for the test-mode pilot.
 - Verify mobile registration and portal layouts.
 - Take a fresh Turso backup immediately before opening registration.
 
-Use Stripe’s supported low-risk live verification approach; do not manufacture real charges or refunds without an approved test plan.
+Run payment rehearsals with Stripe test keys. Do not manufacture live charges or refunds; supervise and reconcile the first genuine family payment during the staged rollout instead.
 
 ### Step 7 — Create real offers
 
