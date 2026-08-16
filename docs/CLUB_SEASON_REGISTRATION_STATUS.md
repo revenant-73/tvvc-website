@@ -262,6 +262,24 @@ Checked-in recovery artifacts:
 - `scripts/reconcile-production-club-season-foundation.sql`
 - `tests/production-club-season-foundation.test.ts`
 
+### 4.5 Production season dates configured
+
+On August 16, 2026, the approved invitation and season dates were configured:
+
+- Invitation window: November 8, 2026 at 6:00 PM through November 30, 2026 at 11:59 PM Pacific.
+- Standard offer response period: three calendar days, applied when each offer batch is created; individual deadlines can be extended.
+- Season start: December 1, 2026.
+- Season end: May 31, 2027.
+- Recovery branch: `tvvc-reg-backup-2026-08-16-pre-dates`.
+- The invitation-window change used the audited production admin workflow.
+- The season-bound update was recorded in the append-only admin audit log and tied to the same administrator.
+- The season remained `draft`, and both registration locks remained off.
+
+Checked-in recovery artifacts:
+
+- `scripts/configure-production-club-season-dates.sql`
+- `tests/production-club-season-dates.test.ts`
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
@@ -289,15 +307,15 @@ Use `docs/CLUB_SEASON_AGREEMENT_APPROVAL_PACKET.md` as the single review checkli
 
 **Launch blocker.**
 
-**Foundation completed August 16, 2026:** the two confirmed pricing tiers and all seven age groups are now configured in production. Registration remains closed.
+**Foundation and dates completed August 16, 2026:** the two confirmed pricing tiers, all seven age groups, invitation window, three-day offer standard, and season bounds are now configured. Registration remains closed.
 
-- Confirm season opening and closing timestamps.
-- Confirm the normal offer-response deadline.
+- **Completed:** registration opens November 8, 2026 at 6:00 PM and closes November 30 at 11:59 PM Pacific.
+- **Completed:** the normal offer-response period is three calendar days, with individual extensions available.
 - Create the actual teams after tryouts determine the number at each age level.
 - Assign each team to the correct age group and pricing tier.
 - Set realistic roster capacity and activate only teams that will be offered.
 - **Completed:** verify 12U maps to $1,200 and 13U–18U maps to $1,500. Recheck each actual team after team creation.
-- Confirm season start/end dates if refund proration will be used operationally.
+- **Completed:** season dates are December 1, 2026 through May 31, 2027.
 
 ### Step 4 — Finish live service verification
 
