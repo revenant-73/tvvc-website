@@ -2,7 +2,7 @@
 
 **Status:** Implemented, deployed dark, and pilot-tested in Stripe test mode
 
-**Last updated:** August 15, 2026
+**Last updated:** August 16, 2026
 
 **Production access:** Disabled for general family use
 
@@ -280,6 +280,36 @@ Checked-in recovery artifacts:
 - `scripts/configure-production-club-season-dates.sql`
 - `tests/production-club-season-dates.test.ts`
 
+### 4.6 Production Resend verification recorded
+
+On August 16, 2026, the production Resend configuration was reviewed and permanently recorded in the launch console:
+
+- Sending domain: `mail.tualatinvalleyvb.com`.
+- Domain status: verified and enabled for sending in `us-east-1`.
+- DKIM record: verified.
+- SPF MX record: verified.
+- SPF TXT record: verified.
+- Production sender: `TVVC Volleyball <reminders@mail.tualatinvalleyvb.com>`.
+- Reply-to address: `loren@tualatinvalleyvb.com`.
+- Delivered club-season evidence: Resend email `f6721a57-b4d1-4200-a1e6-1d3003ead3e3`, with both sent and delivered events.
+- The append-only evidence entry was signed by Loren Anderson on August 16, 2026.
+- Recording the evidence did not change the season status or either registration lock.
+
+### 4.7 Production Stripe configuration reviewed and corrected
+
+On August 16, 2026, the live Stripe account and production Netlify configuration were reviewed, the two approved configuration gaps were corrected, and no charge was created:
+
+- Stripe account: Tualatin Valley Volleyball Club LLC (`acct_1Q9ZXsFzgaoVZJWY`) in live mode.
+- Card payments are enabled. The club-season Checkout integration intentionally requests cards only.
+- The account currently shows standard domestic-card pricing of 2.9% plus 30 cents per successful charge. TVVC's published policy remains that the club absorbs payment-processing fees.
+- The Stripe Customer Portal is active and allows customers to update payment methods.
+- The production webhook is active at `https://tualatinvalleyvb.com/api/webhooks/stripe`; its signing secret is functioning, with eight successful deliveries and zero failures shown for the review period.
+- The production webhook now listens to all four required events: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.succeeded`, and `payment_intent.payment_failed`.
+- Netlify production now uses the matching live publishable and secret keys. Preview contexts retain test keys for safe testing.
+- A production configuration deploy completed successfully after the key update. The automated Stripe configuration gate passed, advancing launch readiness from 7/15 to 8/15 checks with five blockers remaining.
+- Live Checkout, receipt, refund, and off-session-payment behavior still require the approved low-risk live rehearsal before permanent Stripe evidence is recorded.
+- No Stripe keys or signing secrets are included in this document.
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
@@ -321,12 +351,12 @@ Use `docs/CLUB_SEASON_AGREEMENT_APPROVAL_PACKET.md` as the single review checkli
 
 **Launch blocker.**
 
-- Confirm the production Resend sending domain, sender addresses, and reply/contact behavior.
-- Record permanent Resend-domain evidence in the launch console.
-- Review current Stripe pricing and enabled payment methods.
-- Replace test Stripe credentials with the correct live credentials only when ready for the final live rehearsal.
-- Create/verify the live Stripe webhook endpoint and required events.
-- Confirm Checkout, off-session charging, receipts, refunds, and Billing Portal behavior in the live account.
+- **Completed:** verify `mail.tualatinvalleyvb.com`, its DKIM/SPF records, `reminders@mail.tualatinvalleyvb.com`, reply-to behavior, and a delivered club-season email.
+- **Completed:** record permanent Resend-domain evidence in the launch console.
+- **Completed:** review current Stripe pricing and enabled payment methods; cards are enabled and the account shows standard domestic-card pricing of 2.9% plus 30 cents per successful charge.
+- **Completed:** Netlify production uses matching live Stripe publishable and secret keys; preview contexts retain test keys for safe testing.
+- **Completed:** the live webhook endpoint is active, its signing secret is functioning, and all four required Checkout and PaymentIntent events are configured.
+- **Partially completed:** the Billing Portal is active and permits payment-method updates. Confirm live Checkout, off-session charging, receipts, and refunds during the approved low-risk live rehearsal.
 - Record permanent Stripe live-review evidence.
 - Confirm `CLUB_SEASON_CRON_SECRET` and `CLUB_SEASON_BILLING_EMAIL` in the production Netlify environment.
 - Confirm the scheduled billing function is enabled and inspect one successful no-op production run before any installment is due.
