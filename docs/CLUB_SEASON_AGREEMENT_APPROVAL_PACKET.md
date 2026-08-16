@@ -84,7 +84,7 @@ These terms were confirmed by TVVC on August 15, 2026, and are included in the p
 
 ### Club dues include
 
-The $1,200 12U dues and $1,500 13U–18U dues include:
+The $1,200 10U–12U dues and $1,500 13U–18U dues include:
 
 - coaching;
 - scheduled practice-facility costs;

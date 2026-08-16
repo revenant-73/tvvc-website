@@ -30,7 +30,7 @@ Current safety position:
 | Entry point | One shared `/season-registration` link is sent only to families receiving an offer. No unique link is required for each player. |
 | Eligibility | Players must already have a paid tryout registration and an administrator-created team offer. |
 | Team selection | TVVC assigns the offered team. Parents review that assignment rather than selecting any team themselves. |
-| 12U dues | $1,200 total: $300 due at registration, then five $180 automatic payments. |
+| 10U–12U dues | $1,200 total: $300 due at registration, then five $180 automatic payments. |
 | 13U–18U dues | $1,500 total: $400 due at registration, then five $220 automatic payments. |
 | Standard dates | Deposit in November; no December charge; installments on January 5, February 5, March 5, April 5, and May 5. |
 | Payment choices | Pay in full or authorize the standard plan. A parent may also select an exact custom arrangement prepared by TVVC. |
@@ -250,11 +250,11 @@ On August 16, 2026, the confirmed pricing and age-group foundation was restored 
 
 - A fresh recovery branch, `tvvc-reg-backup-2026-08-16-pre-foundation`, was created immediately before the production write.
 - The guarded reconciliation was tested for exact values, rerun safety, and refusal of conflicting existing pricing.
-- The 12U tier is $1,200 total: $300 deposit plus five $180 installments.
+- The 10U–12U tier is $1,200 total: $300 deposit plus five $180 installments.
 - The 13U-18U tier is $1,500 total: $400 deposit plus five $220 installments.
-- Active age groups 12U through 18U were created and linked to the correct tier.
+- Active age groups 10U through 18U were created and linked to the correct tier.
 - Production readiness now passes the standard billing schedule and pricing reconciliation checks.
-- No teams, registration dates, offer deadlines, or season dates were invented.
+- At this stage, no teams, registration dates, offer deadlines, or season dates were invented.
 - The season remained `draft`, `public_registration_enabled` remained `0`, and the Netlify registration flag remained off.
 
 Checked-in recovery artifacts:
@@ -351,6 +351,24 @@ On August 16, 2026, the Stripe live-mode review was permanently recorded in the 
 - The append-only evidence entry was signed by Loren Anderson on August 16, 2026. Launch readiness advanced from 10/15 to 11/15 checks with two blockers remaining.
 - The season remains `draft`, no teams are active, and both registration locks remain closed.
 
+### 4.11 Possible team catalog staged in production
+
+On August 16, 2026, the approved possible-team catalog was added to the production season:
+
+- A recovery branch, `tvvc-reg-backup-2026-08-16-pre-team-catalog`, was created immediately before the production write.
+- Age groups 10U and 11U were added, bringing the configured range to every age from 10U through 18U.
+- The lower pricing tier was relabeled `10U-12U` and retains the approved $1,200 total, $300 deposit, and five $180 installments.
+- The 13U-18U tier remains $1,500 total, with a $400 deposit and five $220 installments.
+- Four possible teams were staged at every age: Teal, Coral, Black, and White, for 36 teams total.
+- Every staged team is inactive. Inactive teams cannot be selected for new offers, but can be activated from the Club Season admin workspace after tryouts.
+- Production verification returned nine active age groups, 36 inactive teams, zero active teams, season status `draft`, and `public_registration_enabled = 0`.
+- The reconciliation is guarded, transactional, rerunnable, and covered by the production foundation test.
+
+Checked-in recovery artifacts:
+
+- `scripts/reconcile-production-club-season-foundation.sql`
+- `tests/production-club-season-foundation.test.ts`
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
@@ -378,14 +396,13 @@ Use `docs/CLUB_SEASON_AGREEMENT_APPROVAL_PACKET.md` as the single review checkli
 
 **Launch blocker.**
 
-**Foundation and dates completed August 16, 2026:** the two confirmed pricing tiers, all seven age groups, invitation window, three-day offer standard, and season bounds are now configured. Registration remains closed.
+**Foundation, possible-team catalog, and dates completed August 16, 2026:** the two confirmed pricing tiers, all nine age groups, 36 inactive possible teams, invitation window, three-day offer standard, and season bounds are now configured. Registration remains closed.
 
 - **Completed:** registration opens November 8, 2026 at 6:00 PM and closes November 30 at 11:59 PM Pacific.
 - **Completed:** the normal offer-response period is three calendar days, with individual extensions available.
-- Create the actual teams after tryouts determine the number at each age level.
-- Assign each team to the correct age group and pricing tier.
-- Set realistic roster capacity and activate only teams that will be offered.
-- **Completed:** verify 12U maps to $1,200 and 13U–18U maps to $1,500. Recheck each actual team after team creation.
+- **Completed:** stage Teal, Coral, Black, and White teams for every age from 10U through 18U and link each to the correct age group and pricing tier.
+- After tryouts determine the teams TVVC will field, activate only those teams from the admin workspace. Leave every unused possibility inactive.
+- **Completed:** verify 10U–12U maps to $1,200 and 13U–18U maps to $1,500. Recheck each actual team after team activation.
 - **Completed:** season dates are December 1, 2026 through May 31, 2027.
 
 ### Step 4 — Finish live service verification
@@ -514,7 +531,7 @@ The season database field `public_registration_enabled` is a separate lock. Gene
 
 | Division | Due at registration | Jan 5 | Feb 5 | Mar 5 | Apr 5 | May 5 | Total |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 12U | $300 | $180 | $180 | $180 | $180 | $180 | $1,200 |
+| 10U–12U | $300 | $180 | $180 | $180 | $180 | $180 | $1,200 |
 | 13U–18U | $400 | $220 | $220 | $220 | $220 | $220 | $1,500 |
 
 There is no standard December charge.
