@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 
 export function createStripeClient(secretKey: string): Stripe {
-  const apiBase = import.meta.env.STRIPE_API_BASE || process.env.STRIPE_API_BASE;
+  const apiBase = import.meta.env?.STRIPE_API_BASE || process.env.STRIPE_API_BASE;
   const options: Stripe.StripeConfig = {
     apiVersion: '2025-01-27.acacia' as any,
   };
