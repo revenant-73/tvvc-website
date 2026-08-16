@@ -244,6 +244,24 @@ Using the allowlisted pilot parent and Stripe test mode, the deployed flow succe
 
 The pilot used test data and test payments. It does not by itself authorize live registration.
 
+### 4.4 Production season foundation reconciled
+
+On August 16, 2026, the confirmed pricing and age-group foundation was restored to the production `2026-2027-club` season:
+
+- A fresh recovery branch, `tvvc-reg-backup-2026-08-16-pre-foundation`, was created immediately before the production write.
+- The guarded reconciliation was tested for exact values, rerun safety, and refusal of conflicting existing pricing.
+- The 12U tier is $1,200 total: $300 deposit plus five $180 installments.
+- The 13U-18U tier is $1,500 total: $400 deposit plus five $220 installments.
+- Active age groups 12U through 18U were created and linked to the correct tier.
+- Production readiness now passes the standard billing schedule and pricing reconciliation checks.
+- No teams, registration dates, offer deadlines, or season dates were invented.
+- The season remained `draft`, `public_registration_enabled` remained `0`, and the Netlify registration flag remained off.
+
+Checked-in recovery artifacts:
+
+- `scripts/reconcile-production-club-season-foundation.sql`
+- `tests/production-club-season-foundation.test.ts`
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
@@ -271,12 +289,14 @@ Use `docs/CLUB_SEASON_AGREEMENT_APPROVAL_PACKET.md` as the single review checkli
 
 **Launch blocker.**
 
+**Foundation completed August 16, 2026:** the two confirmed pricing tiers and all seven age groups are now configured in production. Registration remains closed.
+
 - Confirm season opening and closing timestamps.
 - Confirm the normal offer-response deadline.
 - Create the actual teams after tryouts determine the number at each age level.
 - Assign each team to the correct age group and pricing tier.
 - Set realistic roster capacity and activate only teams that will be offered.
-- Verify 12U maps to $1,200 and every 13U–18U team maps to $1,500.
+- **Completed:** verify 12U maps to $1,200 and 13U–18U maps to $1,500. Recheck each actual team after team creation.
 - Confirm season start/end dates if refund proration will be used operationally.
 
 ### Step 4 — Finish live service verification
