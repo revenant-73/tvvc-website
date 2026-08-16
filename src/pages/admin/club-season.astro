@@ -826,9 +826,9 @@ const pilotChecks = [
 
               <section aria-labelledby="teams-heading" class="grid gap-5 xl:grid-cols-[22rem_minmax(0,1fr)]">
                 <aside class="self-start rounded-3xl border border-white/10 bg-[#11151d] p-5 md:p-6 xl:sticky xl:top-24">
-                  <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">After tryouts</p>
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Plan before tryouts</p>
                   <h2 id="teams-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Add a team</h2>
-                  <p class="mt-2 text-xs leading-5 text-white/45">Choose an age group and the correct price follows automatically.</p>
+                  <p class="mt-2 text-xs leading-5 text-white/45">Stage every possible team now, then activate only the teams you field after tryouts. The correct price follows its age group automatically.</p>
 
                   <form id="add-team-form" class="mt-6 space-y-4" data-team-form data-mode="create">
                     <input type="hidden" name="seasonId" value={season.id} />
@@ -846,6 +846,22 @@ const pilotChecks = [
                         })}
                       </select>
                     </div>
+                    <fieldset>
+                      <legend class="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Initial status</legend>
+                      <div class="grid grid-cols-2 gap-2" data-team-status-control>
+                        <label class="cursor-pointer rounded-xl border border-brand-coral/25 bg-brand-coral/[0.06] p-3 transition hover:border-brand-coral/45 has-[:checked]:border-brand-coral/60 has-[:checked]:bg-brand-coral/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-teal">
+                          <input class="sr-only" type="radio" name="active" value="false" checked />
+                          <span class="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-brand-coral">Inactive</span>
+                          <span class="mt-1 block text-[11px] leading-4 text-white/45">Stage now</span>
+                        </label>
+                        <label class="cursor-pointer rounded-xl border border-white/15 bg-black/15 p-3 transition hover:border-brand-teal/45 has-[:checked]:border-brand-teal/60 has-[:checked]:bg-brand-teal/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-teal">
+                          <input class="sr-only" type="radio" name="active" value="true" />
+                          <span class="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-brand-teal">Active</span>
+                          <span class="mt-1 block text-[11px] leading-4 text-white/45">Offer-ready</span>
+                        </label>
+                      </div>
+                      <p class="mt-2 text-[11px] leading-4 text-white/40">Inactive teams are saved but cannot be selected for new offers until you reactivate them.</p>
+                    </fieldset>
                     <div>
                       <label for="new-team-day" class="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/55">Billing-day override <span class="normal-case tracking-normal text-white/30">(optional)</span></label>
                       <input id="new-team-day" name="billingDayOverride" type="number" min="1" max="31" inputmode="numeric" placeholder={`Blank = ${season.defaultBillingDay}th`} class="min-h-11 w-full rounded-xl border border-white/15 bg-black/20 px-3.5 text-sm font-semibold text-white outline-none transition placeholder:text-white/20 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" />
@@ -875,9 +891,9 @@ const pilotChecks = [
                       <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-brand-teal/45 bg-brand-teal/10 text-brand-teal">
                         <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg>
                       </div>
-                      <h3 class="font-heading text-xl font-extrabold uppercase text-white">Waiting for tryouts</h3>
-                      <p class="mt-2 max-w-md text-sm leading-6 text-white/45">No team setup is needed yet. Once rosters take shape, add each team here and its age group will inherit the correct dues automatically.</p>
-                      <p class="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-brand-teal">Pricing is ready whenever the teams are</p>
+                      <h3 class="font-heading text-xl font-extrabold uppercase text-white">Stage the possibilities</h3>
+                      <p class="mt-2 max-w-md text-sm leading-6 text-white/45">Add every team you might field as inactive before tryouts. When the lineup is decided, reactivate the teams you need; their age groups already carry the correct dues.</p>
+                      <p class="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-brand-teal">Stage now · activate after tryouts</p>
                     </div>
                   ) : (
                     <div class="mt-6 space-y-7">
@@ -1372,6 +1388,7 @@ const pilotChecks = [
               seasonId: String(formData.get('seasonId') || ''),
               ageGroupId: String(formData.get('ageGroupId') || ''),
               name,
+              active: formData.get('active') === 'true',
               billingDayOverride,
             }
           : {

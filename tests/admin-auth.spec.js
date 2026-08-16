@@ -78,7 +78,7 @@ test('admin page no longer exposes account self-promotion or a passcode', async 
   }
 });
 
-test('season team management requires admin access and supports create and update', async ({ browser, request }) => {
+test('season team management requires admin access and supports staging and activation', async ({ browser, request }) => {
   const anonymous = await request.post('/api/admin/club-season-teams', {
     data: {
       seasonId: '2026-2027-club',
@@ -104,12 +104,19 @@ test('season team management requires admin access and supports create and updat
 
   const adminContext = await contextWithSession(browser, fixtures.admin.sessionToken);
   try {
+    const adminPage = await adminContext.newPage();
+    await adminPage.goto('/admin/club-season');
+    await expect(adminPage.getByRole('radio', { name: /Inactive Stage now/i })).toBeChecked();
+    await expect(adminPage.getByRole('radio', { name: /Active Offer-ready/i })).not.toBeChecked();
+    await expect(adminPage.getByText(/Inactive teams are saved but cannot be selected for new offers/i)).toBeVisible();
+
     const uniqueName = `12 Black ${Date.now()}`;
     const created = await adminContext.request.post('/api/admin/club-season-teams', {
       data: {
         seasonId: '2026-2027-club',
         ageGroupId: 'age-2026-2027-12u',
         name: uniqueName,
+        active: false,
       },
     });
     expect(created.status()).toBe(201);
@@ -118,15 +125,35 @@ test('season team management requires admin access and supports create and updat
       seasonId: '2026-2027-club',
       ageGroupId: 'age-2026-2027-12u',
       name: uniqueName,
-      active: true,
+      active: false,
       billingDayOverride: null,
+    });
+
+    const stagedOfferChoices = await adminContext.request.get(
+      '/api/admin/club-season-offers?seasonId=2026-2027-club'
+    );
+    expect(stagedOfferChoices.status()).toBe(200);
+    expect((await stagedOfferChoices.json()).teams).not.toContainEqual(
+      expect.objectContaining({ id: createdBody.team.id })
+    );
+
+    const inactiveOffer = await adminContext.request.post('/api/admin/club-season-offers', {
+      data: {
+        seasonId: '2026-2027-club',
+        teamId: createdBody.team.id,
+        athleteIds: [999999],
+      },
+    });
+    expect(inactiveOffer.status()).toBe(400);
+    await expect(inactiveOffer.json()).resolves.toMatchObject({
+      error: 'Active team not found for this season.',
     });
 
     const updated = await adminContext.request.patch('/api/admin/club-season-teams', {
       data: {
         id: createdBody.team.id,
         billingDayOverride: 15,
-        active: false,
+        active: true,
       },
     });
     expect(updated.status()).toBe(200);
@@ -134,9 +161,17 @@ test('season team management requires admin access and supports create and updat
       team: {
         id: createdBody.team.id,
         billingDayOverride: 15,
-        active: false,
+        active: true,
       },
     });
+
+    const activeOfferChoices = await adminContext.request.get(
+      '/api/admin/club-season-offers?seasonId=2026-2027-club'
+    );
+    expect(activeOfferChoices.status()).toBe(200);
+    expect((await activeOfferChoices.json()).teams).toContainEqual(
+      expect.objectContaining({ id: createdBody.team.id, name: uniqueName })
+    );
   } finally {
     await adminContext.close();
   }

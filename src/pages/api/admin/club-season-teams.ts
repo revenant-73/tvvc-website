@@ -23,6 +23,7 @@ const createTeamSchema = z.object({
   seasonId: z.string().trim().min(1),
   ageGroupId: z.string().trim().min(1),
   name: teamName,
+  active: z.boolean().default(false),
   billingDayOverride,
 }).strict();
 
@@ -75,7 +76,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (!parsed.success) return validationError(parsed.error);
 
     const { db } = authorization;
-    const { seasonId, ageGroupId, name, billingDayOverride: dayOverride } = parsed.data;
+    const { seasonId, ageGroupId, name, active, billingDayOverride: dayOverride } = parsed.data;
     const [season] = await db.select({ id: clubSeasons.id })
       .from(clubSeasons)
       .where(eq(clubSeasons.id, seasonId))
@@ -99,7 +100,7 @@ export const POST: APIRoute = async ({ request }) => {
       ageGroupId,
       name,
       billingDayOverride: dayOverride ?? null,
-      active: true,
+      active,
       createdAt: now,
       updatedAt: now,
     }).returning();
