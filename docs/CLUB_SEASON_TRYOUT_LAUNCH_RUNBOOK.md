@@ -1,0 +1,164 @@
+# TVVC 2026-2027 Club-Season Tryout Launch Runbook
+
+**Runbook owner:** TVVC administrator  
+**14-and-under tryouts:** November 8, 2026  
+**14-and-under invitation date:** November 9, 2026  
+**15U-18U tryouts:** November 15, 2026  
+**15U-18U invitation date:** November 16, 2026  
+**Registration route:** `/season-registration` (private, unlisted, and limited to verified offered families)
+
+## 1. Goal
+
+The November 8-9 and November 15-16 launch waves must be administrator workflows, not coding or deployment exercises. Before the first tryout weekend, the system should be configured so the administrator can:
+
+1. activate only the teams TVVC will field;
+2. assign offered players to those teams;
+3. review player, team, price, and deadline information before release;
+4. open or close family registration with an audited admin control;
+5. send and, when needed, resend invitation emails;
+6. monitor offer responses, email results, registrations, and payments.
+
+No code changes, commits, manual production SQL, or launch-day Netlify editing should be required during either tryout and invitation wave.
+
+## 2. Launch Waves
+
+The launch will occur in two separate waves:
+
+| Divisions | Tryouts | Invitation release |
+| --- | --- | --- |
+| 10U-14U | November 8, 2026 | November 9, 2026 |
+| 15U-18U | November 15, 2026 | November 16, 2026 |
+
+The first wave covers 10U through 14U. The 15U through 18U teams remain inactive and receive no offers until their November 15 tryouts are complete. The second wave follows the same activation, assignment, review, release, and monitoring process on November 15-16.
+
+The staged possible-team catalog contains Teal, Coral, Black, and White at every age from 10U through 18U. Only teams TVVC is actually fielding should be activated. Unused teams remain inactive and unavailable for new offers.
+
+## 3. Configuration to Complete Before Tryout Weekend
+
+Complete and rehearse the following before November 8:
+
+- Set the season to active internally while keeping family registration closed.
+- Enable the Netlify club-season feature flag in advance. The separate season database lock must remain closed, so enabling this flag alone does not give families access.
+- Add a guarded **Open Registration / Close Registration** control to the admin dashboard. The control must require confirmation, an audit reason, and a clear readiness check.
+- Retain a prominent emergency **Close Registration** action for pausing new activity without disturbing completed registrations.
+- Prepare and approve the 14-and-under offer-email template.
+- Add an administrator email preview and test-send workflow.
+- Add team-by-team invitation sending through Resend, including sent/failed results and a safe resend control.
+- Add a 10U-14U player filter and a launch summary showing team counts, missing assignments, ineligible records, and other items needing attention.
+- Add a draft/review state for offer batches so team assignments can be prepared on November 8 without releasing invitations.
+- Configure the normal three-calendar-day response period. For invitations sent November 9, the default deadline is November 12, 2026 at 11:59 PM Pacific. For invitations sent November 16, the default deadline is November 19, 2026 at 11:59 PM Pacific. Individual deadlines may still be extended.
+- Run the final prelaunch rehearsal with Stripe test keys and take the required Turso backup.
+- Verify the private registration route remains absent from public navigation and search indexing.
+
+### Current implementation boundary
+
+The admin dashboard already supports:
+
+- activating and deactivating teams;
+- selecting eligible tryout players;
+- assigning players to an active team;
+- setting offer deadlines;
+- creating offers in batches;
+- viewing registration and financial activity.
+
+The November offer-preparation milestone has been implemented locally on `codex/november-tryout-launch-admin` and is awaiting migration review, preview testing, and production publication. It adds:
+
+- separate November 8 and November 15 operational-wave views;
+- private draft offers that do not set an offered timestamp;
+- editable team and deadline assignments while offers remain draft or ready;
+- a readiness rail with eligible, draft, ready, released, unassigned, and blocking counts;
+- blocker categories for missing email, ownership mismatch, and inactive-team references;
+- team-by-team prepared counts and explicit assignment conflicts;
+- an audited **Mark ready** review action;
+- server-side isolation that makes draft and ready offers invisible and unusable to parents, including guessed offer identifiers.
+
+The following items are planned work and must be completed before this runbook can be performed entirely from the dashboard:
+
+- guarded season registration open/close controls;
+- integrated Resend invitation sending, preview, result tracking, and resend controls;
+- the later release action that converts reviewed offers into family-visible invitations without changing teams, prices, or registration locks.
+
+## 4. Tryout-Day Team Selection and Offer Preparation
+
+Do not send invitations for the current wave during this stage. Keep family registration closed before the first wave; during the second wave, previously offered younger families may continue using the already-open registration system.
+
+Use this procedure on November 8 for 10U-14U and again on November 15 for 15U-18U.
+
+1. Sign in to `/admin/club-season`.
+2. Activate only the 10U-14U teams TVVC will field.
+3. Confirm each activated team inherited the correct pricing:
+   - 10U-12U: $1,200 total, $300 deposit, and five $180 installments.
+   - 13U-14U: $1,500 total, $400 deposit, and five $220 installments.
+4. Open `/admin/club-season/offers` and filter to the applicable age group.
+5. Assign each offered player to the correct active team.
+6. Save the assignments as draft offer batches.
+7. Review every team summary for roster count, player names, parent email ownership, price, and response deadline.
+8. Resolve all missing assignments, duplicates, ownership mismatches, and ineligible records.
+9. Leave unused possible teams inactive.
+10. End tryout day with that wave's invitation emails still unsent. On November 8, keep family registration closed until the controlled November 9 opening. On November 15, registration may already be open for the younger wave, but no 15U-18U invitations should be released until their review is complete.
+
+A ready summary should make exceptions obvious, for example:
+
+```text
+12 Teal       10 offers ready
+12 Coral       9 offers ready
+13 Teal       11 offers ready
+Unassigned     2 players
+Needs review   1 player
+```
+
+## 5. Invitation-Day Controlled Release
+
+Use this procedure on November 9 for 10U-14U and again on November 16 for 15U-18U. The registration-open action is required for the first wave; for the second wave, confirm that registration remains open rather than toggling it unnecessarily.
+
+1. Review the launch-readiness console and confirm all blocking checks pass.
+2. Confirm Stripe production keys and webhooks are active and pilot access is disabled.
+3. Confirm the approved agreement versions, active teams, prices, registration dates, and offer deadlines.
+4. For the first wave, use the guarded admin control to open the season database registration lock. For the second wave, confirm the lock remains open; do not close and reopen it unnecessarily.
+5. Test the shared registration link with an internal offered-family account.
+6. Test the same link with an unrelated account and confirm that no offer is exposed.
+7. Preview the final invitation email and send a test copy to the administrator.
+8. Send a small initial invitation batch.
+9. Confirm successful Resend processing and verify that the invitations contain the correct player, team, deadline, price, and link.
+10. Send the remaining invitations in manageable team-by-team batches.
+11. Monitor sent, failed, registration-started, accepted, declined, and expired counts.
+
+The invitation email must include:
+
+- player name and offered team;
+- the applicable response deadline: November 12 for the first wave or November 19 for the second wave, unless individually extended;
+- the private shared registration link;
+- the correct total dues and deposit;
+- the January-May automatic-payment schedule on the fifth of each month;
+- the December payment break;
+- pay-in-full and standard-plan choices;
+- instructions to contact TVVC for a custom payment arrangement.
+
+## 6. First-Family Payment Monitoring
+
+Closely supervise the first 5-10 registrations before releasing every remaining invitation.
+
+For each early registration:
+
+- reconcile the Stripe payment with the TVVC ledger;
+- verify the registration status and remaining balance;
+- confirm the registration email and Stripe receipt link;
+- inspect Stripe webhook delivery, Resend results, and Netlify function logs;
+- verify that no duplicate webhook or scheduled-job run creates a duplicate payment or email.
+
+If a money, ownership, email, or reconciliation mismatch appears, close registration to new activity and pause the remaining invitation release. Do not alter or delete correctly completed registrations.
+
+After the first cohort reconciles cleanly, send the remaining prepared invitation batches.
+
+## 7. Administrator Safety Rules
+
+- Opening registration must never activate teams or send invitations automatically.
+- Sending invitations must never change pricing or team assignments.
+- Closing registration must prevent new starts without cancelling completed registrations or accepted offers.
+- Inactive teams must remain unavailable for new offers while preserving any existing offer and registration history.
+- Rehearsal payments must use Stripe test keys. Never use real payment details to manufacture a live-mode test.
+- Every registration-state change and invitation batch must record the administrator, timestamp, reason, and result.
+
+## 8. Completion Standard
+
+This runbook is ready for operational use when the administrator can complete both launch waves entirely through the authenticated admin experience, except for read-only verification in Stripe, Resend, and Netlify. No repository edit, commit, production SQL command, or environment-variable change should be necessary during either tryout weekend.

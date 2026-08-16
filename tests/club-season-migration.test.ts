@@ -140,6 +140,12 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
     assert.equal(installmentColumns.rows.some((column) => column.name === 'next_attempt_date'), true);
     const planColumns = await client.execute(`PRAGMA table_info('club_season_payment_plans')`);
     assert.equal(planColumns.rows.some((column) => column.name === 'financial_status' && column.dflt_value === "'not_started'"), true);
+    const offerColumns = await client.execute(`PRAGMA table_info('club_season_offers')`);
+    assert.equal(
+      offerColumns.rows.some((column) => column.name === 'offered_at' && Number(column.notnull) === 0),
+      true,
+      'offer preparation requires offered_at to remain null until release'
+    );
 
     const immutabilityTriggers = await client.execute(
       `SELECT name FROM sqlite_master
@@ -199,5 +205,64 @@ test('creates and seeds the 2026-2027 club season foundation', async () => {
     client.close();
     // Windows can hold the native SQLite handle briefly after close.
     await removeDatabase().catch(() => {});
+  }
+});
+
+test('offer preparation migration preserves released data and every existing index and trigger', async () => {
+  const preservationPath = path.join(process.cwd(), 'test-results', 'club-season-offer-preparation-migration.db');
+  const preservationUrl = `file:${preservationPath.replaceAll('\\', '/')}`;
+  await fs.rm(preservationPath, { force: true });
+  const client = createClient({ url: preservationUrl });
+  try {
+    const migrationFiles = (await fs.readdir(path.join(process.cwd(), 'drizzle')))
+      .filter((file) => /^00(0\d|1[0-2]).*\.sql$/.test(file))
+      .sort();
+    for (const filename of migrationFiles) {
+      const migration = (await fs.readFile(path.join(process.cwd(), 'drizzle', filename), 'utf8'))
+        .replaceAll('--> statement-breakpoint', '');
+      await client.executeMultiple(migration);
+    }
+
+    await client.batch([
+      { sql: `INSERT INTO user (id, email, role) VALUES ('migration-parent', 'migration@example.com', 'user')`, args: [] },
+      { sql: `INSERT INTO registrations (id, user_id, parent_name, parent_email, parent_phone, status, total_amount) VALUES ('migration-registration', 'migration-parent', 'Migration Parent', 'migration@example.com', '503-555-0101', 'paid', 5000)`, args: [] },
+      { sql: `INSERT INTO athletes (id, registration_id, parent_id, first_name, last_name, grade) VALUES (910001, 'migration-registration', 'migration-parent', 'Existing', 'Offer', '8')`, args: [] },
+      { sql: `INSERT INTO athletes (id, registration_id, parent_id, first_name, last_name, grade) VALUES (910002, 'migration-registration', 'migration-parent', 'Future', 'Draft', '8')`, args: [] },
+      { sql: `INSERT INTO club_teams (id, season_id, age_group_id, name, active) VALUES ('migration-team', '2026-2027-club', 'age-2026-2027-12u', 'Migration Team', 1)`, args: [] },
+      { sql: `INSERT INTO club_season_offers (id, season_id, team_id, source_registration_id, source_athlete_id, recipient_email, recipient_user_id, status, offered_at) VALUES ('existing-offer', '2026-2027-club', 'migration-team', 'migration-registration', 910001, 'migration@example.com', 'migration-parent', 'offered', '2026-11-09T18:00:00.000Z')`, args: [] },
+    ]);
+
+    const schemaObjectsBefore = await client.execute(`
+      SELECT type, name, sql FROM sqlite_master
+      WHERE type IN ('index', 'trigger') AND name NOT LIKE 'sqlite_%'
+      ORDER BY type, name
+    `);
+    const migration = (await fs.readFile(path.join(process.cwd(), 'drizzle', '0013_robust_ezekiel.sql'), 'utf8'))
+      .replaceAll('--> statement-breakpoint', '');
+    await client.executeMultiple(migration);
+
+    const offered = await client.execute(`SELECT status, offered_at FROM club_season_offers WHERE id = 'existing-offer'`);
+    assert.deepEqual(offered.rows[0], { status: 'offered', offered_at: '2026-11-09T18:00:00.000Z' });
+    const offerColumns = await client.execute(`PRAGMA table_info('club_season_offers')`);
+    assert.equal(offerColumns.rows.some((column) => column.name === 'offered_at' && Number(column.notnull) === 0), true);
+
+    const schemaObjectsAfter = await client.execute(`
+      SELECT type, name, sql FROM sqlite_master
+      WHERE type IN ('index', 'trigger') AND name NOT LIKE 'sqlite_%'
+      ORDER BY type, name
+    `);
+    assert.deepEqual(schemaObjectsAfter.rows, schemaObjectsBefore.rows);
+    await client.execute(`
+      INSERT INTO club_season_offers
+        (id, season_id, team_id, source_registration_id, source_athlete_id,
+         recipient_email, recipient_user_id, status, offered_at)
+      VALUES ('future-draft', '2026-2027-club', 'migration-team', 'migration-registration',
+              910002, 'migration@example.com', 'migration-parent', 'draft', NULL)
+    `);
+    const draft = await client.execute(`SELECT status, offered_at FROM club_season_offers WHERE id = 'future-draft'`);
+    assert.deepEqual(draft.rows[0], { status: 'draft', offered_at: null });
+  } finally {
+    client.close();
+    await fs.rm(preservationPath, { force: true }).catch(() => {});
   }
 });

@@ -459,6 +459,12 @@ Run payment rehearsals with Stripe test keys. Do not manufacture live charges or
 - Spot-check ownership, player name, team, price, and deadline before emailing families.
 - Prepare the offer email containing the shared registration link, deadline, pricing summary, December pause, payment choices, and custom-plan contact instructions.
 
+The operational release is scheduled in two waves: 14-and-under tryouts on November 8, 2026 with invitation emails on November 9, followed by 15U-18U tryouts on November 15 with invitation emails on November 16. The complete preparation, assignment, controlled release, and first-payment procedure is documented in `docs/CLUB_SEASON_TRYOUT_LAUNCH_RUNBOOK.md`.
+
+Before that weekend, finish the runbook's remaining self-service admin work: guarded registration open/close controls plus integrated offer release, Resend invitation preview, sending, result tracking, and resend controls. The goal is to require no code, commit, production SQL, or Netlify editing during either tryout launch wave.
+
+**Implemented locally, pending migration and publication:** the November offer-preparation workspace now supports separate November 8 and November 15 waves, private draft offers, draft/ready corrections, readiness and blocker summaries, audited review-to-ready actions, assignment conflict details, and parent isolation for both draft and ready states. The remaining self-service work is the guarded open/close control plus invitation release, preview, sending, result tracking, and resend behavior.
+
 ### Step 8 — Enable live registration deliberately
 
 **Final launch action.**
@@ -490,8 +496,7 @@ Keep the route unlisted; “live” means available to verified offered families
 
 - Stripe dispute-webhook handling and dispute workflow.
 - Manual pause/resume controls for automatic charges.
-- Administrator manual email resend controls.
-- Resend delivered/bounced webhook tracking.
+- Expanded Resend delivered/bounced webhook tracking beyond the invitation results required by the tryout launch runbook.
 - Household-level consolidation of sibling reminders.
 - A formal parent cancellation/refund-request form and automated proration worksheet.
 - A coach-facing readiness view with financial and medical details excluded.
@@ -514,6 +519,10 @@ Keep the route unlisted; “live” means available to verified offered families
 | `/admin/club-season` | Season, teams, agreements, launch readiness, and evidence |
 | `/admin/club-season/offers` | Tryout-roster offer creation and management |
 | `/admin/club-season/finances` | Ledger, plans, revisions, adjustments, refunds, and pilot simulator |
+
+### Tryout launch runbook
+
+Use `docs/CLUB_SEASON_TRYOUT_LAUNCH_RUNBOOK.md` for the November 8-9 14-and-under launch, the November 15-16 15U-18U launch, required admin enhancements, invitation release sequence, and first-family payment monitoring.
 
 ### Production feature controls
 

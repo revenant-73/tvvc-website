@@ -14,6 +14,7 @@ test('production baseline records exact repository migrations and is rerunnable'
   const client = createClient({ url: `file:${databasePath.replaceAll('\\', '/')}` });
   try {
     const journal = JSON.parse(await fs.readFile(path.join(root, 'drizzle/meta/_journal.json'), 'utf8'));
+    const historicalBaselineEntries = journal.entries.filter((entry: { idx: number }) => entry.idx <= 12);
     for (const entry of journal.entries) {
       const sql = (await fs.readFile(path.join(root, 'drizzle', `${entry.tag}.sql`), 'utf8'))
         .replaceAll('--> statement-breakpoint', '');
@@ -71,8 +72,8 @@ test('production baseline records exact repository migrations and is rerunnable'
     const result = await client.execute(
       'SELECT hash, created_at FROM __drizzle_migrations ORDER BY created_at'
     );
-    assert.equal(result.rows.length, journal.entries.length);
-    for (const [index, entry] of journal.entries.entries()) {
+    assert.equal(result.rows.length, historicalBaselineEntries.length);
+    for (const [index, entry] of historicalBaselineEntries.entries()) {
       const source = await fs.readFile(path.join(root, 'drizzle', `${entry.tag}.sql`));
       assert.equal(result.rows[index].created_at, entry.when);
       assert.equal(result.rows[index].hash, crypto.createHash('sha256').update(source).digest('hex'));

@@ -601,8 +601,8 @@ export default async function globalSetup() {
     {
       sql: `INSERT INTO events
         (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active)
-        VALUES (?, 'tryout', ?, 'November 1, 2099', '9:00 AM',
-                '2099-11-01', '2099-11-01', 5000, 300, true)`,
+        VALUES (?, 'tryout', ?, 'November 8, 2026', '9:00 AM',
+                '2026-11-08', '2026-11-08', 5000, 300, true)`,
       args: [fixtures.clubSeason.tryoutEventId, fixtures.clubSeason.tryoutEventName],
     },
     {

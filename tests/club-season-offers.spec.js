@@ -84,8 +84,47 @@ test.describe.serial('Club season offer authorization', () => {
     }
   });
 
-  test('bulk creation is idempotent and rejects a conflicting registration email', async ({ browser }) => {
+  test('tryout waves retain every athlete session and calculate separate readiness counts', async ({ browser }) => {
+    const admin = await contextWithSession(browser, fixtures.admin.sessionToken);
+    const client = createClient({ url: fixtures.databaseUrl });
+    const eventIds = ['test-wave-nov8-a', 'test-wave-nov8-b', 'test-wave-nov15'];
+    try {
+      await client.batch([
+        { sql: `INSERT INTO events (id, type, name, date_info, start_date, end_date, price, capacity, active) VALUES (?, 'tryout', '10U-14U Tryout A', 'November 8, 2026', '2026-11-08', '2026-11-08', 0, 100, 1)`, args: [eventIds[0]] },
+        { sql: `INSERT INTO events (id, type, name, date_info, start_date, end_date, price, capacity, active) VALUES (?, 'tryout', '10U-14U Tryout B', 'November 8, 2026', '2026-11-08', '2026-11-08', 0, 100, 1)`, args: [eventIds[1]] },
+        { sql: `INSERT INTO events (id, type, name, date_info, start_date, end_date, price, capacity, active) VALUES (?, 'tryout', '15U-18U Tryout', 'November 15, 2026', '2026-11-15', '2026-11-15', 0, 100, 1)`, args: [eventIds[2]] },
+        { sql: 'INSERT INTO registration_items (registration_id, athlete_id, event_id) VALUES (?, ?, ?)', args: [fixtures.parentA.registrationId, fixtures.parentA.athleteId, eventIds[0]] },
+        { sql: 'INSERT INTO registration_items (registration_id, athlete_id, event_id) VALUES (?, ?, ?)', args: [fixtures.parentA.registrationId, fixtures.parentA.athleteId, eventIds[1]] },
+        { sql: 'INSERT INTO registration_items (registration_id, athlete_id, event_id) VALUES (?, ?, ?)', args: [fixtures.parentB.registrationId, fixtures.parentB.athleteId, eventIds[2]] },
+      ]);
+      const younger = await admin.request.get(`/api/admin/club-season-offers?seasonId=${fixtures.clubSeason.id}&wave=nov8`);
+      const older = await admin.request.get(`/api/admin/club-season-offers?seasonId=${fixtures.clubSeason.id}&wave=nov15`);
+      expect(younger.ok()).toBeTruthy();
+      expect(older.ok()).toBeTruthy();
+      const youngerBody = await younger.json();
+      const olderBody = await older.json();
+      const parentA = youngerBody.candidates.find((candidate) => candidate.athleteId === fixtures.parentA.athleteId);
+      expect(parentA.tryoutSessions).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: eventIds[0] }),
+        expect.objectContaining({ id: eventIds[1] }),
+      ]));
+      expect(youngerBody.summary).toMatchObject({ draft: 0, ready: 0 });
+      expect(youngerBody.summary.released).toBeGreaterThanOrEqual(3);
+      expect(youngerBody.summary.eligible).toBeGreaterThanOrEqual(2);
+      expect(youngerBody.summary.unassigned).toBeGreaterThanOrEqual(2);
+      expect(olderBody.candidates.map((candidate) => candidate.athleteId)).toEqual([fixtures.parentB.athleteId]);
+      expect(olderBody.summary).toMatchObject({ eligible: 1, unassigned: 1 });
+    } finally {
+      await client.execute({ sql: `DELETE FROM registration_items WHERE event_id IN (?, ?, ?)`, args: eventIds }).catch(() => {});
+      await client.execute({ sql: `DELETE FROM events WHERE id IN (?, ?, ?)`, args: eventIds }).catch(() => {});
+      client.close();
+      await admin.close();
+    }
+  });
+
+  test('bulk creation makes private drafts, is idempotent, and writes immutable audit evidence', async ({ browser }) => {
     const adminContext = await contextWithSession(browser, fixtures.admin.sessionToken);
+    const client = createClient({ url: fixtures.databaseUrl });
     try {
       const payload = {
         seasonId: fixtures.clubSeason.id,
@@ -106,10 +145,57 @@ test.describe.serial('Club season offer authorization', () => {
         data: payload,
       });
       await expect(retried.json()).resolves.toMatchObject({ results: [
-        { athleteId: fixtures.parentA.athleteId, status: 'already_offered' },
+        { athleteId: fixtures.parentA.athleteId, status: 'already_assigned', existingTeamName: fixtures.clubSeason.teamName },
         { athleteId: fixtures.emailCollision.athleteId, status: 'invalid' },
       ] });
+
+      const draft = await client.execute({
+        sql: 'SELECT id, status, offered_at FROM club_season_offers WHERE season_id = ? AND source_athlete_id = ?',
+        args: [fixtures.clubSeason.id, fixtures.parentA.athleteId],
+      });
+      expect(draft.rows[0]).toMatchObject({ status: 'draft', offered_at: null });
+      const audit = await client.execute({
+        sql: `SELECT action, before_snapshot, after_snapshot FROM club_season_admin_audit_log
+              WHERE entity_id = ? AND action = 'offer_draft_created'`,
+        args: [draft.rows[0].id],
+      });
+      expect(audit.rows).toHaveLength(1);
+      expect(audit.rows[0].before_snapshot).toBeNull();
+      expect(JSON.parse(audit.rows[0].after_snapshot).status).toBe('draft');
+      await expect(client.execute({
+        sql: 'UPDATE club_season_admin_audit_log SET reason = ? WHERE entity_id = ?',
+        args: ['rewrite', draft.rows[0].id],
+      })).rejects.toThrow(/immutable/i);
+
+      const parent = await contextWithSession(browser, fixtures.parentA.sessionToken);
+      const parentPage = await parent.newPage();
+      await parentPage.goto('/season-registration');
+      await expect(parentPage.locator(`[data-offer-id="${draft.rows[0].id}"]`)).toHaveCount(0);
+      const guessed = await parent.request.post('/api/club-season/respond', { data: { offerId: draft.rows[0].id, action: 'start' } });
+      expect(guessed.status()).toBe(404);
+
+      const ready = await adminContext.request.patch('/api/admin/club-season-offers', {
+        data: { action: 'ready', confirmation: 'MARK READY', offerIds: [draft.rows[0].id] },
+      });
+      expect(ready.status()).toBe(207);
+      await expect(ready.json()).resolves.toMatchObject({ results: [{ offerId: draft.rows[0].id, status: 'ready' }] });
+      const guessedReady = await parent.request.post('/api/club-season/respond', { data: { offerId: draft.rows[0].id, action: 'start' } });
+      expect(guessedReady.status()).toBe(404);
+      await parent.close();
+      const readyAgain = await adminContext.request.patch('/api/admin/club-season-offers', {
+        data: { action: 'ready', confirmation: 'MARK READY', offerIds: [draft.rows[0].id] },
+      });
+      await expect(readyAgain.json()).resolves.toMatchObject({ results: [{ status: 'already_ready' }] });
+
+      // The release/email milestone is intentionally not implemented yet.
+      // Promote this fixture directly so the existing parent-flow tests still
+      // exercise the already-released lifecycle.
+      await client.execute({
+        sql: `UPDATE club_season_offers SET status = 'offered', offered_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        args: [draft.rows[0].id],
+      });
     } finally {
+      client.close();
       await adminContext.close();
     }
   });
@@ -129,6 +215,11 @@ test.describe.serial('Club season offer authorization', () => {
       });
       const createdBody = await created.json();
       const offerId = createdBody.results[0].offerId;
+
+      await client.execute({
+        sql: `UPDATE club_season_offers SET status = 'offered', offered_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        args: [offerId],
+      });
 
       const [start, decline] = await Promise.all([
         parentB.request.post('/api/club-season/respond', { data: { offerId, action: 'start' } }),

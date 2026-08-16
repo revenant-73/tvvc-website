@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../../db/db';
 import {
@@ -70,7 +70,16 @@ export const POST: APIRoute = async ({ request }) => {
         eq(clubSeasonOffers.id, parsed.data.offerId),
         eq(clubSeasonOffers.recipientEmail, user.email.trim().toLowerCase()),
         eq(registrations.userId, user.id),
-        eq(athletes.parentId, user.id)
+        eq(athletes.parentId, user.id),
+        // Preparation records are intentionally indistinguishable from an
+        // unknown UUID to parents, even when they own the future offer.
+        inArray(clubSeasonOffers.status, [
+          'offered',
+          'registration_started',
+          'accepted',
+          'declined',
+          'revoked',
+        ])
       ))
       .limit(1);
 
