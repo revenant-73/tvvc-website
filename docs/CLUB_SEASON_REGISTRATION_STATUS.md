@@ -310,6 +310,19 @@ On August 16, 2026, the live Stripe account and production Netlify configuration
 - Live Checkout, receipt, refund, and off-session-payment behavior still require the approved low-risk live rehearsal before permanent Stripe evidence is recorded.
 - No Stripe keys or signing secrets are included in this document.
 
+### 4.8 Production billing worker protected and verified
+
+On August 16, 2026, the scheduled production billing path was configured and exercised while no installments were due:
+
+- Netlify production now has a dedicated 64-character `CLUB_SEASON_CRON_SECRET`; the value is stored only as a protected environment variable and is not included in the repository or this document.
+- `CLUB_SEASON_BILLING_EMAIL` is configured as `loren@tualatinvalleyvb.com` for escalation messages.
+- The scheduled `club-season-billing-cron` function is deployed with the daily `0 16 * * *` schedule, which Netlify displays as 9:00 AM Pacific for the current daylight-saving period.
+- The first manual no-op exposed a standalone-function compatibility bug before candidate processing: the shared Stripe client assumed Astro's `import.meta.env` object always existed.
+- PR #24 fixed the Stripe client to support both Astro routes and standalone Netlify functions and added regression coverage. Unit tests passed 54/54, and both the Netlify preview and production builds passed.
+- The repaired production worker completed on August 16 at 10:30 AM Pacific with `candidates: 0`, `reminders: 0`, and `charges: 0`.
+- The verification created no charge, email, or ledger mutation and did not change either registration lock.
+- The automated billing-worker protection gate passed, advancing launch readiness from 8/15 to 9/15 checks with four blockers remaining.
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
@@ -358,8 +371,8 @@ Use `docs/CLUB_SEASON_AGREEMENT_APPROVAL_PACKET.md` as the single review checkli
 - **Completed:** the live webhook endpoint is active, its signing secret is functioning, and all four required Checkout and PaymentIntent events are configured.
 - **Partially completed:** the Billing Portal is active and permits payment-method updates. Confirm live Checkout, off-session charging, receipts, and refunds during the approved low-risk live rehearsal.
 - Record permanent Stripe live-review evidence.
-- Confirm `CLUB_SEASON_CRON_SECRET` and `CLUB_SEASON_BILLING_EMAIL` in the production Netlify environment.
-- Confirm the scheduled billing function is enabled and inspect one successful no-op production run before any installment is due.
+- **Completed:** configure a protected 64-character `CLUB_SEASON_CRON_SECRET` and `loren@tualatinvalleyvb.com` as `CLUB_SEASON_BILLING_EMAIL` in production.
+- **Completed:** confirm the daily scheduled function is deployed and inspect a successful production no-op with zero candidates, reminders, and charges.
 
 Never use a real family’s card for the test-mode pilot.
 
