@@ -15,9 +15,6 @@ test('production club-season foundation is exact and rerunnable without opening 
     const migration = (await fs.readFile(path.join(root, 'drizzle/0004_overrated_groot.sql'), 'utf8'))
       .replaceAll('--> statement-breakpoint', '');
     await client.executeMultiple(migration);
-    await client.execute(`DELETE FROM club_age_groups WHERE season_id = '2026-2027-club'`);
-    await client.execute(`DELETE FROM club_pricing_tiers WHERE season_id = '2026-2027-club'`);
-
     const reconciliation = await fs.readFile(
       path.join(root, 'scripts/reconcile-production-club-season-foundation.sql'),
       'utf8'
@@ -39,23 +36,42 @@ test('production club-season foundation is exact and rerunnable without opening 
     });
 
     const pricing = await client.execute(`
-      SELECT key, total_amount, deposit_amount, installment_amount, active, sort_order
+      SELECT key, name, total_amount, deposit_amount, installment_amount, active, sort_order
       FROM club_pricing_tiers WHERE season_id = '2026-2027-club' ORDER BY sort_order
     `);
     assert.deepEqual(pricing.rows, [
-      { key: '12u', total_amount: 120000, deposit_amount: 30000, installment_amount: 18000, active: 1, sort_order: 10 },
-      { key: '13u-18u', total_amount: 150000, deposit_amount: 40000, installment_amount: 22000, active: 1, sort_order: 20 },
+      { key: '12u', name: '10U-12U', total_amount: 120000, deposit_amount: 30000, installment_amount: 18000, active: 1, sort_order: 10 },
+      { key: '13u-18u', name: '13U-18U', total_amount: 150000, deposit_amount: 40000, installment_amount: 22000, active: 1, sort_order: 20 },
     ]);
 
     const ages = await client.execute(`
       SELECT code, pricing_tier_id, active, sort_order
       FROM club_age_groups WHERE season_id = '2026-2027-club' ORDER BY sort_order
     `);
-    assert.equal(ages.rows.length, 7);
-    assert.deepEqual(ages.rows.map((row) => row.code), ['12U', '13U', '14U', '15U', '16U', '17U', '18U']);
-    assert.equal(ages.rows[0].pricing_tier_id, 'tier-2026-2027-12u');
-    assert.ok(ages.rows.slice(1).every((row) => row.pricing_tier_id === 'tier-2026-2027-13u-18u'));
+    assert.equal(ages.rows.length, 9);
+    assert.deepEqual(ages.rows.map((row) => row.code), ['10U', '11U', '12U', '13U', '14U', '15U', '16U', '17U', '18U']);
+    assert.ok(ages.rows.slice(0, 3).every((row) => row.pricing_tier_id === 'tier-2026-2027-12u'));
+    assert.ok(ages.rows.slice(3).every((row) => row.pricing_tier_id === 'tier-2026-2027-13u-18u'));
     assert.ok(ages.rows.every((row) => row.active === 1));
+
+    const teams = await client.execute(`
+      SELECT name, age_group_id, active, billing_day_override, acceptance_deadline_override
+      FROM club_teams
+      WHERE season_id = '2026-2027-club'
+      ORDER BY age_group_id, name
+    `);
+    assert.equal(teams.rows.length, 36);
+    assert.deepEqual(
+      [...new Set(teams.rows.map((row) => String(row.name).split(' ')[1]))].sort(),
+      ['Black', 'Coral', 'Teal', 'White']
+    );
+    assert.ok(teams.rows.every((row) => row.active === 0));
+    assert.ok(teams.rows.every((row) => row.billing_day_override === null));
+    assert.ok(teams.rows.every((row) => row.acceptance_deadline_override === null));
+    assert.ok(teams.rows.every((row) => {
+      const age = String(row.name).split(' ')[0];
+      return row.age_group_id === `age-2026-2027-${age}u`;
+    }));
   } finally {
     await client.close();
   }

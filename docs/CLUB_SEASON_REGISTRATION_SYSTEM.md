@@ -35,7 +35,7 @@ The following decisions are confirmed unless this document is deliberately revis
 | Player source | Every offered player will already have completed the TVVC tryout-registration process. |
 | Team assignment | An administrator assigns the offered team when creating the offer; the parent reviews and confirms that assignment. This avoids accidental selection of the wrong team. |
 | Team availability | Actual teams will be created by an administrator after tryouts, when the number of teams at each age group is known. |
-| Pricing tiers | There are two standard pricing structures: 12U and 13U-18U. |
+| Pricing tiers | There are two standard pricing structures: 10U–12U and 13U–18U. |
 | Payment choices | Pay in full or pay a deposit and authorize the standard automatic payment plan. |
 | Alternative plans | Families needing another arrangement will contact TVVC. An administrator can create a customized plan in the system. |
 | Default billing day | The fifth day of the month. |
@@ -63,7 +63,7 @@ The following decisions are confirmed unless this document is deliberately revis
 
 The pay-in-full option charges $1,500 when registration is completed.
 
-### 3.2 12U standard plan
+### 3.2 10U–12U standard plan
 
 | Charge | Due date | Amount |
 | --- | --- | ---: |
@@ -89,11 +89,11 @@ Pricing must be assigned through explicit configuration, not inferred from a tea
 
 Examples:
 
-- `12 Teal` -> age group `12U` -> 12U pricing
+- `10 Teal`, `11 Teal`, or `12 Teal` -> matching age group -> 10U–12U pricing
 - `13 Black` -> age group `13U` -> 13U-18U pricing
 - `16 Teal` -> age group `16U` -> 13U-18U pricing
 
-Teams can be added, renamed, activated, or deactivated after tryouts without a code change. Only active teams appear to parents.
+For 2026–2027, Teal, Coral, Black, and White possibilities are staged as inactive at every age from 10U through 18U. Teams can be added, renamed, activated, or deactivated from the admin workspace without a code change. Only active teams are available for new offers.
 
 ## 4. Shared-Link Access and Player Lookup
 
@@ -1005,7 +1005,7 @@ At minimum, automated tests should cover:
 - Verified email can access only its associated tryout players
 - Unverified lookup does not disclose player existence
 - Active teams appear and inactive teams do not
-- 12U receives the $1,200/$300/$180 plan
+- 10U–12U receives the $1,200/$300/$180 plan
 - 13U-18U receives the $1,500/$400/$220 plan
 - December contains no standard installment
 - Standard dates are January-May on the fifth
