@@ -323,6 +323,22 @@ On August 16, 2026, the scheduled production billing path was configured and exe
 - The verification created no charge, email, or ledger mutation and did not change either registration lock.
 - The automated billing-worker protection gate passed, advancing launch readiness from 8/15 to 9/15 checks with four blockers remaining.
 
+### 4.9 Controlled pilot reconciled and closed
+
+On August 16, 2026, the deployed Stripe test-mode pilot was reconciled, permanently recorded, and closed:
+
+- The pilot family completed registration, all three agreement decisions, standard-plan automatic-payment authorization, and Stripe test Checkout.
+- The $1,500 plan reconciled to a $400 deposit and one $220 recovered installment, for $620 collected and an $880 remaining test balance. Four $220 installments remain scheduled from February through May in the isolated pilot records.
+- Confirmation, failure/action-required, and successful-recovery emails were received.
+- Declined-card and authentication-required handling were exercised, followed by a successful recovery that returned the account to current status without removing the player from the roster.
+- Idempotency was verified by manually resending the original `checkout.session.completed` event. The pilot endpoint returned HTTP 200 with `processed: false`, and the ledger retained one $400 deposit transaction.
+- All six required launch-console checks were confirmed: registration, payment, email, ledger reconciliation, failure recovery, and idempotency.
+- The append-only controlled-pilot evidence entry was signed by Loren Anderson on August 16, 2026. Launch readiness advanced from 9/15 to 10/15 checks with three blockers remaining.
+- Pilot records were retained in the isolated pilot database as labeled audit evidence; no test transactions were copied into the production financial ledger.
+- `CLUB_SEASON_PILOT_MODE` is now `false` in every Netlify deploy context, the temporary pilot email allowlist was deleted, and Deploy Preview #13 was rebuilt and verified to deny the former pilot offer.
+- The retired Stripe test webhook destination remains preserved for audit history but is disabled.
+- The production season remains `draft`; it has zero active teams, and both registration locks remain off.
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
@@ -378,14 +394,13 @@ Never use a real family’s card for the test-mode pilot.
 
 ### Step 5 — Close out the controlled pilot
 
-**Launch blocker.**
+**Completed August 16, 2026.**
 
-- Reconcile the pilot payment plan, installments, transactions, attempts, emails, and remaining balance.
-- Confirm all six launch-console pilot checks: registration, payment, email, ledger reconciliation, failure recovery, and idempotency.
-- Record the controlled-pilot evidence with a clear reference.
-- Decide whether pilot records should be retained as labeled test evidence or removed before live offers are created.
-- Remove the temporary pilot email allowlist.
-- Set `CLUB_SEASON_PILOT_MODE=false` before public activation.
+- The test plan, transactions, attempts, notifications, schedule, and $880 remaining test balance were reconciled.
+- All six pilot checks were confirmed and recorded in the permanent launch console.
+- Pilot records were retained only in the isolated pilot database as labeled audit evidence.
+- The temporary pilot email allowlist was deleted, pilot mode was disabled in every deploy context, and the retired test webhook destination was disabled.
+- Deploy Preview #13 was rebuilt with the closed settings and verified to show no active offer for the former pilot account.
 
 ### Step 6 — Run a final prelaunch rehearsal
 
