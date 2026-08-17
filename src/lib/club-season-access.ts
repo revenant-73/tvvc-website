@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
 import { db } from '../db/db';
 import {
@@ -62,7 +62,17 @@ export async function getOwnedClubSeasonOffers(request: Request) {
       eq(registrations.userId, user.id),
       eq(athletes.parentId, user.id),
       eq(athletes.registrationId, registrations.id),
-      eq(clubSeasonOffers.recipientEmail, user.email.trim().toLowerCase())
+      eq(clubSeasonOffers.recipientEmail, user.email.trim().toLowerCase()),
+      // Preparation states are an administrator-only workspace. Keeping this
+      // at the shared ownership boundary protects every parent page/API that
+      // resolves offers through this helper.
+      inArray(clubSeasonOffers.status, [
+        'offered',
+        'registration_started',
+        'accepted',
+        'declined',
+        'revoked',
+      ])
     ));
   return Promise.all(offers.map(async (item) => {
     const custom = item.draft?.status === 'awaiting_payment'

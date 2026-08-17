@@ -45,7 +45,7 @@ const isAdmin = Boolean(admin);
             <div>
               <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-brand-teal">2026–2027 club season</p>
               <h1 class="mt-2 font-heading text-4xl font-extrabold uppercase leading-none tracking-[-0.04em] text-white md:text-6xl">Build the <span class="text-brand-teal">roster.</span></h1>
-              <p class="mt-3 max-w-2xl text-sm leading-6 text-white/50">Select eligible tryout players, assign one team, and create the batch. No bespoke links. No spreadsheet aerobics.</p>
+              <p class="mt-3 max-w-2xl text-sm leading-6 text-white/60">Prepare assignments, correct exceptions, and mark reviewed drafts ready. Nothing on this page sends email or opens family registration.</p>
             </div>
             <dl class="mt-5 grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-[#11151d] sm:grid-cols-4 sm:divide-x sm:divide-white/10 lg:mt-0 lg:min-w-[38rem]">
               <div class="px-4 py-3">
@@ -57,7 +57,7 @@ const isAdmin = Boolean(admin);
                 <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-brand-teal" data-available-count>—</dd>
               </div>
               <div class="px-4 py-3">
-                <dt class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Offered</dt>
+                <dt class="text-xs font-extrabold uppercase tracking-[0.14em] text-white/55">Prepared</dt>
                 <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-white" data-offered-count>—</dd>
               </div>
               <div class="border-t border-white/10 px-4 py-3 sm:border-t-0">
@@ -71,6 +71,39 @@ const isAdmin = Boolean(admin);
               </div>
             </dl>
           </header>
+
+          <section class="overflow-hidden border border-white/10 bg-[#0b0f15] shadow-2xl" aria-labelledby="wave-readiness-heading">
+            <div class="grid lg:grid-cols-[18rem_1fr]">
+              <div class="border-b border-white/10 bg-[#111720] p-4 lg:border-b-0 lg:border-r">
+                <p id="wave-readiness-heading" class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Wave readiness</p>
+                <div class="mt-3 grid gap-2" role="group" aria-label="Select tryout wave">
+                  <button type="button" data-wave="nov8" class="wave-button border-l-4 border-brand-teal bg-brand-teal/10 px-3 py-3 text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-teal" aria-pressed="true">
+                    <span class="block text-xs font-extrabold uppercase tracking-[0.12em] text-white">November 8</span>
+                    <span class="mt-1 block text-xs text-white/60">10U–14U · invites Nov 9</span>
+                  </button>
+                  <button type="button" data-wave="nov15" class="wave-button border-l-4 border-white/10 px-3 py-3 text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-teal" aria-pressed="false">
+                    <span class="block text-xs font-extrabold uppercase tracking-[0.12em] text-white">November 15</span>
+                    <span class="mt-1 block text-xs text-white/60">15U–18U · invites Nov 16</span>
+                  </button>
+                </div>
+              </div>
+              <div class="p-4">
+                <div class="grid grid-cols-2 gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-5">
+                  <div class="bg-[#0d121a] p-3"><span class="block text-xs font-bold uppercase tracking-[.1em] text-white/60">Eligible</span><strong data-summary-eligible class="mt-1 block font-heading text-2xl tabular-nums text-white">—</strong></div>
+                  <div class="bg-[#0d121a] p-3"><span class="block text-xs font-bold uppercase tracking-[.1em] text-amber-300">Draft</span><strong data-summary-draft class="mt-1 block font-heading text-2xl tabular-nums text-amber-300">—</strong></div>
+                  <div class="bg-[#0d121a] p-3"><span class="block text-xs font-bold uppercase tracking-[.1em] text-brand-teal">Ready</span><strong data-summary-ready class="mt-1 block font-heading text-2xl tabular-nums text-brand-teal">—</strong></div>
+                  <div class="bg-[#0d121a] p-3"><span class="block text-xs font-bold uppercase tracking-[.1em] text-white/60">Released</span><strong data-summary-released class="mt-1 block font-heading text-2xl tabular-nums text-white">—</strong></div>
+                  <div class="col-span-2 bg-[#0d121a] p-3 sm:col-span-1"><span class="block text-xs font-bold uppercase tracking-[.1em] text-brand-coral">Blocking</span><strong data-summary-blocking class="mt-1 block font-heading text-2xl tabular-nums text-brand-coral">—</strong></div>
+                </div>
+                <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <p data-wave-note class="text-sm font-semibold text-white/70">Loading wave details…</p>
+                  <p class="border-l-2 border-amber-300 pl-3 text-xs font-bold uppercase tracking-[.1em] text-amber-200">Preparation only · nothing sent</p>
+                </div>
+                <div data-blocker-chips class="mt-3 flex flex-wrap gap-2" aria-label="Blocking exceptions"></div>
+                <div data-team-counts class="mt-3 flex flex-wrap gap-2" aria-label="Offer counts by team"></div>
+              </div>
+            </div>
+          </section>
 
           <section class="grid gap-3 rounded-2xl border border-white/10 bg-[#11151d] p-4 xl:grid-cols-[minmax(15rem,1.15fr)_minmax(13rem,.9fr)_minmax(12rem,.7fr)_auto] xl:items-end" aria-label="Offer controls">
             <div>
@@ -88,7 +121,9 @@ const isAdmin = Boolean(admin);
               <select id="status-filter" data-status-filter class="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b0e14] px-3.5 text-sm font-semibold text-white outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20">
                 <option value="available">Available players</option>
                 <option value="all">Everyone</option>
-                <option value="offered">Existing offers</option>
+                <option value="draft">Draft offers</option>
+                <option value="ready">Ready for future release</option>
+                <option value="offered">Released offers</option>
                 <option value="ineligible">Needs attention</option>
                 <option value="media_declined">Media release declined</option>
                 <option value="media_granted">Media release granted</option>
@@ -154,7 +189,7 @@ const isAdmin = Boolean(admin);
               <div class="flex items-center gap-2">
                 <button type="button" data-clear-selection class="min-h-10 rounded-lg px-3 text-xs font-extrabold uppercase tracking-[0.12em] text-white/60 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Clear</button>
                 <button type="button" data-create-offers disabled class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-teal px-5 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#0a0e14] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none">
-                  <span data-create-label>Create offers</span>
+                  <span data-create-label>Create drafts</span>
                   <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
                 </button>
               </div>
@@ -175,21 +210,26 @@ const isAdmin = Boolean(admin);
         acceptanceDeadlineOverride: string | null;
       };
       type Offer = { id: string; status: string; teamId: string; acceptanceDeadline: string | null };
+      type TryoutSession = { id: string; name: string; date: string | null };
       type Candidate = {
         athleteId: number;
         firstName: string;
         lastName: string;
         grade: string | null;
-        tryoutName: string;
+        tryoutSessions: TryoutSession[];
+        waveIds: string[];
         parentName: string;
         parentEmail: string;
         eligible: boolean;
         issue: string | null;
+        issues: string[];
         offer: Offer | null;
+        existingTeam: { id: string; name: string; ageGroupLabel: string; active: boolean } | null;
         registrationStatus: string | null;
         mediaReleaseStatus: 'granted' | 'declined' | null;
       };
-      type WorkspaceResponse = { season: { name: string }; teams: Team[]; candidates: Candidate[] };
+      type Summary = { eligible: number; draft: number; ready: number; released: number; unassigned: number; blocking: number; blockerCounts: Record<string, number>; countsByTeam: Array<{ teamId: string; teamName: string; count: number }> };
+      type WorkspaceResponse = { season: { name: string }; teams: Team[]; candidates: Candidate[]; summary: Summary };
 
       const root = document.querySelector<HTMLElement>('[data-offer-workspace]');
       if (root) {
@@ -210,9 +250,12 @@ const isAdmin = Boolean(admin);
         const createButton = root.querySelector<HTMLButtonElement>('[data-create-offers]');
         const clearButton = root.querySelector<HTMLButtonElement>('[data-clear-selection]');
         const liveStatus = root.querySelector<HTMLElement>('[data-live-status]');
+        const waveButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-wave]'));
 
         let teams: Team[] = [];
         let candidates: Candidate[] = [];
+        let activeWave = 'nov8';
+        let issueFilter = '';
         const selected = new Set<number>();
 
         const setText = (selector: string, value: string | number) => {
@@ -227,7 +270,9 @@ const isAdmin = Boolean(admin);
           toast?.[type]?.(message);
         };
         const offerLabel = (status: string) => ({
-          offered: 'Offer sent',
+          draft: 'Draft · not visible',
+          ready: 'Ready · not sent',
+          offered: 'Released',
           registration_started: 'Registration started',
           declined: 'Declined',
           revoked: 'Revoked',
@@ -238,11 +283,13 @@ const isAdmin = Boolean(admin);
           const query = (searchInput?.value || '').trim().toLowerCase();
           const filter = statusFilter?.value || 'available';
           return candidates.filter((candidate) => {
-            const searchable = `${candidate.firstName} ${candidate.lastName} ${candidate.parentName} ${candidate.parentEmail} ${candidate.tryoutName}`.toLowerCase();
+            const searchable = `${candidate.firstName} ${candidate.lastName} ${candidate.parentName} ${candidate.parentEmail} ${candidate.tryoutSessions.map((session) => session.name).join(' ')}`.toLowerCase();
             if (query && !searchable.includes(query)) return false;
-            if (filter === 'available') return candidate.eligible && !candidate.offer;
-            if (filter === 'offered') return Boolean(candidate.offer);
-            if (filter === 'ineligible') return !candidate.eligible;
+            if (issueFilter && !candidate.issues.some((issue) => issue.toLowerCase().includes(issueFilter))) return false;
+            if (filter === 'available') return candidate.eligible && (!candidate.offer || candidate.offer.status === 'draft');
+            if (filter === 'draft' || filter === 'ready') return candidate.offer?.status === filter;
+            if (filter === 'offered') return Boolean(candidate.offer && !['draft', 'ready'].includes(candidate.offer.status));
+            if (filter === 'ineligible') return issueFilter ? true : !candidate.eligible;
             if (filter === 'media_declined') return candidate.mediaReleaseStatus === 'declined';
             if (filter === 'media_granted') return candidate.mediaReleaseStatus === 'granted';
             if (filter === 'media_pending') return Boolean(candidate.offer) && candidate.mediaReleaseStatus === null;
@@ -259,8 +306,17 @@ const isAdmin = Boolean(admin);
           batchTray?.classList.toggle('translate-y-0', count > 0);
           batchTray?.classList.toggle('opacity-100', count > 0);
           const team = teams.find((item) => item.id === teamSelect?.value);
-          setText('[data-batch-summary]', team ? `${team.name} · ${deadlineInput?.value ? `reply by ${deadlineInput.value}` : 'team default deadline'}` : 'Choose a team to prepare the batch.');
-          if (createButton) createButton.disabled = count === 0 || !team;
+          const chosen = candidates.filter((candidate) => selected.has(candidate.athleteId));
+          const preparingReady = chosen.length > 0 && chosen.every((candidate) => candidate.offer?.status === 'draft');
+          const creatingDrafts = chosen.length > 0 && chosen.every((candidate) => !candidate.offer);
+          const mixed = count > 0 && !preparingReady && !creatingDrafts;
+          setText('[data-create-label]', preparingReady ? 'Mark ready' : 'Create drafts');
+          setText('[data-batch-summary]', preparingReady
+            ? `${count} reviewed draft${count === 1 ? '' : 's'} · no email will be sent`
+            : mixed
+              ? 'Select only unassigned players or only draft offers.'
+              : team ? `${team.name} · ${deadlineInput?.value ? `reply by ${deadlineInput.value}` : 'team default deadline'}` : 'Choose a team to prepare the batch.');
+          if (createButton) createButton.disabled = count === 0 || mixed || (creatingDrafts && !team);
         };
 
         const makeText = (tag: string, classes: string, text: string) => {
@@ -302,7 +358,7 @@ const isAdmin = Boolean(admin);
           emptyState?.classList.toggle('hidden', visible.length > 0);
           playerList.classList.toggle('hidden', visible.length === 0);
 
-          const selectableVisible = visible.filter((candidate) => candidate.eligible && !candidate.offer);
+          const selectableVisible = visible.filter((candidate) => candidate.eligible && (!candidate.offer || candidate.offer.status === 'draft'));
           if (selectVisible) {
             const selectedVisible = selectableVisible.filter((candidate) => selected.has(candidate.athleteId)).length;
             selectVisible.checked = selectableVisible.length > 0 && selectedVisible === selectableVisible.length;
@@ -312,17 +368,17 @@ const isAdmin = Boolean(admin);
 
           visible.forEach((candidate) => {
             const row = document.createElement('article');
-            row.className = 'grid gap-2 px-4 py-3 transition hover:bg-white/[0.025] md:grid-cols-[2.5rem_minmax(13rem,1.2fr)_minmax(12rem,1fr)_minmax(9rem,.8fr)_auto] md:items-center md:gap-3 md:py-3.5';
+            row.className = 'grid min-w-0 gap-2 px-4 py-3 transition hover:bg-white/[0.025] lg:grid-cols-[2.5rem_minmax(13rem,1.2fr)_minmax(12rem,1fr)_minmax(9rem,.8fr)_auto] lg:items-center lg:gap-3 lg:py-3.5';
             row.dataset.athleteId = String(candidate.athleteId);
 
             const identityCell = document.createElement('div');
-            identityCell.className = 'grid grid-cols-[2.5rem_minmax(0,1fr)] items-center md:contents';
+            identityCell.className = 'grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-center lg:contents';
             const checkCell = document.createElement('div');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'h-4 w-4 rounded border-white/30 bg-transparent text-brand-teal focus:ring-brand-teal focus:ring-offset-[#0e1219] disabled:cursor-not-allowed disabled:opacity-20';
             checkbox.checked = selected.has(candidate.athleteId);
-            checkbox.disabled = !candidate.eligible || Boolean(candidate.offer);
+            checkbox.disabled = !candidate.eligible || Boolean(candidate.offer && candidate.offer.status !== 'draft');
             checkbox.setAttribute('aria-label', `Select ${candidate.firstName} ${candidate.lastName}`);
             checkbox.addEventListener('change', () => {
               if (checkbox.checked) selected.add(candidate.athleteId);
@@ -334,13 +390,16 @@ const isAdmin = Boolean(admin);
             checkCell.append(checkbox);
 
             const playerCell = document.createElement('div');
+            const sessions = candidate.tryoutSessions
+              .map((session) => `${session.name}${session.date ? ` · ${session.date}` : ''}`)
+              .join(' / ');
             playerCell.append(
               makeText('h3', 'font-heading text-base font-extrabold uppercase tracking-tight text-white', `${candidate.lastName}, ${candidate.firstName}`),
-              makeText('p', 'mt-0.5 text-xs font-bold uppercase tracking-[0.11em] text-white/55', `${candidate.grade ? `Grade ${candidate.grade} · ` : ''}${candidate.tryoutName}`)
+              makeText('p', 'mt-0.5 text-xs font-bold uppercase tracking-[0.08em] text-white/60', `${candidate.grade ? `Grade ${candidate.grade} · ` : ''}${sessions}`)
             );
 
             const detailCell = document.createElement('div');
-            detailCell.className = 'grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border-t border-white/[0.06] pt-2 md:contents';
+            detailCell.className = 'grid min-w-0 gap-3 border-t border-white/[0.06] pt-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:contents';
 
             const parentCell = document.createElement('div');
             parentCell.append(
@@ -362,18 +421,46 @@ const isAdmin = Boolean(admin);
             }
 
             const statusCell = document.createElement('div');
-            const statusText = candidate.offer ? offerLabel(candidate.offer.status) : candidate.eligible ? 'Ready' : 'Needs attention';
+            const statusText = candidate.offer ? offerLabel(candidate.offer.status) : candidate.eligible ? 'Unassigned' : 'Needs attention';
             const statusClass = candidate.offer?.status === 'revoked' || !candidate.eligible
               ? 'text-brand-coral border-brand-coral/25 bg-brand-coral/10'
-              : candidate.offer
-                ? 'text-white/65 border-white/10 bg-white/[0.04]'
-                : 'text-brand-teal border-brand-teal/25 bg-brand-teal/10';
+              : candidate.offer?.status === 'ready'
+                ? 'text-brand-teal border-brand-teal/25 bg-brand-teal/10'
+                : candidate.offer?.status === 'draft'
+                  ? 'text-amber-200 border-amber-300/25 bg-amber-300/10'
+                  : candidate.offer
+                    ? 'text-white/70 border-white/10 bg-white/[0.04]'
+                    : 'text-white/60 border-white/10 bg-white/[0.04]';
             statusCell.append(makeText('span', `inline-flex rounded-md border px-2 py-1 text-xs font-extrabold uppercase tracking-[0.1em] ${statusClass}`, statusText));
-            if (candidate.issue) statusCell.append(makeText('p', 'mt-1.5 max-w-[15rem] text-xs leading-4 text-brand-coral', candidate.issue));
+            if (candidate.existingTeam) statusCell.append(makeText('p', 'mt-1.5 text-xs font-semibold text-white/65', `${candidate.existingTeam.ageGroupLabel} · ${candidate.existingTeam.name}`));
+            candidate.issues.forEach((issue) => statusCell.append(makeText('p', 'mt-1.5 max-w-[17rem] text-xs leading-4 text-brand-coral', issue)));
 
             const actionCell = document.createElement('div');
-            actionCell.className = 'md:text-right';
-            if (candidate.offer && ['offered', 'declined', 'revoked'].includes(candidate.offer.status)) {
+            actionCell.className = 'min-w-0 sm:col-span-2 lg:col-span-1 lg:text-right';
+            if (candidate.offer && ['draft', 'ready'].includes(candidate.offer.status)) {
+              const editWrap = document.createElement('div');
+              editWrap.className = 'grid min-w-[12rem] gap-2';
+              const editTeam = document.createElement('select');
+              editTeam.className = 'min-h-9 w-full rounded-lg border border-white/15 bg-[#090d13] px-2 text-xs font-bold text-white focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/20';
+              teams.forEach((team) => editTeam.add(new Option(`${team.ageGroupLabel} · ${team.name}`, team.id)));
+              editTeam.value = candidate.offer.teamId;
+              const editDeadline = document.createElement('input');
+              editDeadline.type = 'date';
+              editDeadline.value = candidate.offer.acceptanceDeadline || '';
+              editDeadline.className = 'min-h-9 w-full rounded-lg border border-white/15 bg-[#090d13] px-2 text-xs text-white [color-scheme:dark] focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/20';
+              const save = makeText('button', 'min-h-9 border border-brand-teal/30 px-3 text-xs font-extrabold uppercase tracking-[.08em] text-brand-teal hover:bg-brand-teal/10 focus:outline-none focus:ring-2 focus:ring-brand-teal', 'Save correction') as HTMLButtonElement;
+              save.type = 'button';
+              save.addEventListener('click', async () => {
+                save.disabled = true; save.textContent = 'Saving…';
+                try {
+                  const response = await fetch(endpoint, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: candidate.offer!.id, action: 'edit', teamId: editTeam.value, acceptanceDeadline: editDeadline.value || null }) });
+                  const data = await response.json().catch(() => ({}));
+                  if (!response.ok) throw new Error(data.error || 'Correction failed.');
+                  notify('success', 'Draft corrected'); await loadWorkspace(false);
+                } catch (error) { notify('error', error instanceof Error ? error.message : 'Correction failed.'); save.disabled = false; save.textContent = 'Save correction'; }
+              });
+              editWrap.append(editTeam, editDeadline, save); actionCell.append(editWrap);
+            } else if (candidate.offer && ['offered', 'declined', 'revoked'].includes(candidate.offer.status)) {
               const action = candidate.offer.status === 'revoked' ? 'restore' : 'revoke';
               const button = makeText('button', 'min-h-9 rounded-lg border border-white/10 px-3 text-xs font-extrabold uppercase tracking-[0.1em] text-white/60 transition hover:border-brand-teal/40 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:opacity-50', action === 'restore' ? 'Restore' : 'Revoke') as HTMLButtonElement;
               button.type = 'button';
@@ -401,7 +488,7 @@ const isAdmin = Boolean(admin);
           playerList?.classList.add('hidden');
           retryButton?.classList.add('hidden');
           try {
-            const response = await fetch(`${endpoint}?seasonId=${encodeURIComponent(seasonId)}`);
+            const response = await fetch(`${endpoint}?seasonId=${encodeURIComponent(seasonId)}&wave=${encodeURIComponent(activeWave)}`);
             const data = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(data.error || 'The offer workspace could not be loaded.');
             const payload = data as WorkspaceResponse;
@@ -421,7 +508,35 @@ const isAdmin = Boolean(admin);
             setText('[data-available-count]', candidates.filter((candidate) => candidate.eligible && !candidate.offer).length);
             setText('[data-offered-count]', candidates.filter((candidate) => candidate.offer).length);
             setText('[data-media-declined-count]', candidates.filter((candidate) => candidate.mediaReleaseStatus === 'declined').length);
-            announce(`${candidates.length} tryout players loaded.`);
+            setText('[data-summary-eligible]', payload.summary?.eligible || 0);
+            setText('[data-summary-draft]', payload.summary?.draft || 0);
+            setText('[data-summary-ready]', payload.summary?.ready || 0);
+            setText('[data-summary-released]', payload.summary?.released || 0);
+            setText('[data-summary-blocking]', payload.summary?.blocking || 0);
+            setText('[data-wave-note]', `${payload.summary?.unassigned || 0} unassigned player${payload.summary?.unassigned === 1 ? '' : 's'} in this wave.`);
+            const blockerChips = root.querySelector<HTMLElement>('[data-blocker-chips]');
+            const blockerDefinitions = [
+              { key: 'missingEmail', label: 'Missing email', match: 'missing parent email' },
+              { key: 'ownershipMismatch', label: 'Ownership mismatch', match: 'portal ownership' },
+              { key: 'inactiveTeam', label: 'Inactive team', match: 'inactive team' },
+            ];
+            const nonzeroBlockers = blockerDefinitions.filter((item) => (payload.summary?.blockerCounts?.[item.key] || 0) > 0);
+            blockerChips?.replaceChildren(...(nonzeroBlockers.length ? nonzeroBlockers.map((item) => {
+              const count = payload.summary.blockerCounts[item.key];
+              const button = makeText('button', 'min-h-9 border border-brand-coral/30 bg-brand-coral/10 px-2.5 py-1.5 text-xs font-extrabold uppercase tracking-[.07em] text-brand-coral transition hover:bg-brand-coral/20 focus:outline-none focus:ring-2 focus:ring-brand-coral', `${item.label} · ${count}`) as HTMLButtonElement;
+              button.type = 'button';
+              button.addEventListener('click', () => {
+                issueFilter = item.match;
+                if (statusFilter) statusFilter.value = 'ineligible';
+                render();
+                playerList?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                announce(`Showing ${item.label.toLowerCase()} exceptions.`);
+              });
+              return button;
+            }) : [makeText('span', 'border-l-2 border-brand-teal pl-2.5 text-xs font-bold uppercase tracking-[.08em] text-brand-teal', 'No blocking exceptions')]));
+            const teamCounts = root.querySelector<HTMLElement>('[data-team-counts]');
+            teamCounts?.replaceChildren(...(payload.summary?.countsByTeam || []).map((item) => makeText('span', 'border border-white/10 bg-white/[.03] px-2.5 py-1.5 text-xs font-bold text-white/70', `${item.teamName} · ${item.count}`)));
+            announce(`${candidates.length} tryout players loaded for the selected wave.`);
             render();
           } catch (error) {
             const message = error instanceof Error ? error.message : 'The offer workspace could not be loaded.';
@@ -436,7 +551,22 @@ const isAdmin = Boolean(admin);
         };
 
         searchInput?.addEventListener('input', render);
-        statusFilter?.addEventListener('change', render);
+        statusFilter?.addEventListener('change', () => {
+          if (statusFilter.value !== 'ineligible') issueFilter = '';
+          render();
+        });
+        waveButtons.forEach((button) => button.addEventListener('click', () => {
+          activeWave = button.dataset.wave || 'nov8';
+          selected.clear();
+          waveButtons.forEach((item) => {
+            const active = item === button;
+            item.setAttribute('aria-pressed', String(active));
+            item.classList.toggle('border-brand-teal', active);
+            item.classList.toggle('bg-brand-teal/10', active);
+            item.classList.toggle('border-white/10', !active);
+          });
+          loadWorkspace();
+        }));
         mediaDeclinedFilter?.addEventListener('click', () => {
           if (statusFilter) statusFilter.value = 'media_declined';
           render();
@@ -457,7 +587,7 @@ const isAdmin = Boolean(admin);
         });
         selectVisible?.addEventListener('change', () => {
           filteredCandidates().forEach((candidate) => {
-            if (!candidate.eligible || candidate.offer) return;
+            if (!candidate.eligible || (candidate.offer && candidate.offer.status !== 'draft')) return;
             if (selectVisible.checked) selected.add(candidate.athleteId);
             else selected.delete(candidate.athleteId);
           });
@@ -465,32 +595,42 @@ const isAdmin = Boolean(admin);
           announce(`${selected.size} players selected.`);
         });
         createButton?.addEventListener('click', async () => {
-          if (!teamSelect?.value || selected.size === 0 || !createButton) return;
+          if (selected.size === 0 || !createButton) return;
+          const chosen = candidates.filter((candidate) => selected.has(candidate.athleteId));
+          const preparingReady = chosen.length > 0 && chosen.every((candidate) => candidate.offer?.status === 'draft');
+          if (!preparingReady && !teamSelect?.value) return;
           const team = teams.find((item) => item.id === teamSelect.value);
           const count = selected.size;
-          if (!window.confirm(`Create ${count} offer${count === 1 ? '' : 's'} for ${team?.name || 'this team'}?`)) return;
+          if (preparingReady) {
+            const confirmation = window.prompt(`Type MARK READY to confirm ${count} reviewed draft${count === 1 ? '' : 's'}. This does not send email.`);
+            if (confirmation !== 'MARK READY') return;
+          } else if (!window.confirm(`Create ${count} private draft${count === 1 ? '' : 's'} for ${team?.name || 'this team'}? Nothing will be sent.`)) return;
           createButton.disabled = true;
-          setText('[data-create-label]', 'Creating…');
-          announce(`Creating ${count} offers.`);
+          setText('[data-create-label]', preparingReady ? 'Reviewing…' : 'Creating…');
+          announce(preparingReady ? `Marking ${count} drafts ready.` : `Creating ${count} private drafts.`);
           try {
             const response = await fetch(endpoint, {
-              method: 'POST',
+              method: preparingReady ? 'PATCH' : 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                seasonId,
-                teamId: teamSelect.value,
-                athleteIds: Array.from(selected),
-                acceptanceDeadline: deadlineInput?.value || null,
+              body: JSON.stringify(preparingReady ? {
+                action: 'ready', confirmation: 'MARK READY',
+                offerIds: chosen.map((candidate) => candidate.offer!.id),
+              } : {
+                seasonId, teamId: teamSelect.value, athleteIds: Array.from(selected),
+                acceptanceDeadline: deadlineInput?.value || null, wave: activeWave,
               }),
             });
             const data = await response.json().catch(() => ({}));
             if (!response.ok && response.status !== 207) throw new Error(data.error || 'The offers could not be created.');
             const results = Array.isArray(data.results) ? data.results : [];
             const created = results.filter((item: { status?: string }) => item.status === 'created').length;
-            const existing = results.filter((item: { status?: string }) => item.status === 'already_offered').length;
-            const invalid = results.filter((item: { status?: string }) => item.status === 'invalid').length;
+            const readied = results.filter((item: { status?: string }) => ['ready', 'already_ready'].includes(item.status || '')).length;
+            const existing = results.filter((item: { status?: string }) => item.status === 'already_assigned').length;
+            const invalid = results.filter((item: { status?: string }) => ['invalid', 'locked', 'not_found'].includes(item.status || '')).length;
             selected.clear();
-            const summary = `${created} created${existing ? `, ${existing} already offered` : ''}${invalid ? `, ${invalid} need attention` : ''}.`;
+            const summary = preparingReady
+              ? `${readied} marked ready${invalid ? `, ${invalid} could not be changed` : ''}. Nothing sent.`
+              : `${created} draft${created === 1 ? '' : 's'} created${existing ? `, ${existing} already assigned` : ''}${invalid ? `, ${invalid} need attention` : ''}.`;
             notify(invalid ? 'error' : 'success', summary);
             announce(summary);
             await loadWorkspace(false);
@@ -499,7 +639,7 @@ const isAdmin = Boolean(admin);
             notify('error', message);
             announce(message);
           } finally {
-            setText('[data-create-label]', 'Create offers');
+            setText('[data-create-label]', 'Create drafts');
             updateBatch();
           }
         });

@@ -412,7 +412,9 @@ export const clubSeasonOffers = sqliteTable('club_season_offers', {
   acceptanceDeadline: text('acceptance_deadline'), // YYYY-MM-DD, inclusive in club time
   declineReason: text('decline_reason'),
   declineDetails: text('decline_details'),
-  offeredAt: text('offered_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  // Remains null while an administrator prepares/reviews a draft. It is set
+  // only by the later release workflow when the family can actually see it.
+  offeredAt: text('offered_at'),
   viewedAt: text('viewed_at'),
   respondedAt: text('responded_at'),
   createdByUserId: text('created_by_user_id').references(() => users.id),
