@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { requireAdminApiSession } from '../../../lib/admin-auth';
+import { rejectCrossOriginRequest } from '../../../lib/request-security';
 import {
   createAgreementDraftSchema,
   createClubSeasonAgreementDraft,
@@ -8,6 +9,9 @@ import {
   publishClubSeasonAgreement,
   recordClubSeasonLaunchEvidence,
   recordLaunchEvidenceSchema,
+  RegistrationOpenBlockedError,
+  setClubSeasonRegistrationAccess,
+  setRegistrationAccessSchema,
   updateAgreementDraftSchema,
   updateClubSeasonAgreementDraft,
   updateClubSeasonRegistrationWindow,
@@ -33,6 +37,12 @@ function validationError(error: z.ZodError) {
 function serviceError(error: unknown) {
   if (error instanceof SyntaxError) return json({ error: 'Request body must be valid JSON.' }, 400);
   const code = error instanceof Error ? error.message : '';
+  if (error instanceof RegistrationOpenBlockedError) {
+    return json({
+      error: 'Registration cannot be opened until every launch requirement passes.',
+      blockers: error.blockers.map(({ key, label, detail }) => ({ key, label, detail })),
+    }, 409);
+  }
   const errors: Record<string, [string, number]> = {
     SEASON_NOT_FOUND: ['Club season not found.', 404],
     INVALID_REGISTRATION_WINDOW: ['Registration must close after it opens.', 400],
@@ -46,6 +56,9 @@ function serviceError(error: unknown) {
     LAUNCH_EVIDENCE_REFERENCE_REQUIRED: ['Provide a meaningful evidence reference.', 400],
     PILOT_CHECKLIST_INCOMPLETE: ['Complete all six pilot checks before recording evidence.', 400],
     PILOT_CHECKLIST_NOT_ALLOWED: ['Checklist evidence is only valid for the controlled pilot.', 400],
+    REGISTRATION_ACCESS_CONFIRMATION_MISMATCH: ['Type the exact registration-access confirmation phrase shown.', 400],
+    REGISTRATION_ACCESS_INVALID_TRANSITION: ['The requested registration state is already current.', 409],
+    REGISTRATION_ACCESS_STATE_CHANGED: ['Registration access changed in another request. Reload and try again.', 409],
   };
   const mapped = errors[code];
   if (mapped) return json({ error: mapped[0] }, mapped[1]);
@@ -71,6 +84,8 @@ function serviceError(error: unknown) {
 }
 
 export const POST: APIRoute = async ({ request }) => {
+  const originRejection = rejectCrossOriginRequest(request);
+  if (originRejection) return originRejection;
   const authorization = await requireAdminApiSession(request);
   if (!authorization.authorized) return authorization.response;
   try {
@@ -109,6 +124,8 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 export const PATCH: APIRoute = async ({ request }) => {
+  const originRejection = rejectCrossOriginRequest(request);
+  if (originRejection) return originRejection;
   const authorization = await requireAdminApiSession(request);
   if (!authorization.authorized) return authorization.response;
   try {
@@ -121,6 +138,28 @@ export const PATCH: APIRoute = async ({ request }) => {
         adminUserId: authorization.user.id,
       });
       return json({ ok: true, season });
+    }
+    if (payload?.action === 'set_registration_access') {
+      const parsed = setRegistrationAccessSchema.safeParse(payload);
+      if (!parsed.success) return validationError(parsed.error);
+      const result = await setClubSeasonRegistrationAccess(authorization.db, {
+        ...parsed.data,
+        adminUserId: authorization.user.id,
+        environment: {
+          featureFlagEnabled: String(
+            import.meta.env.CLUB_SEASON_REGISTRATION_ENABLED ||
+            process.env.CLUB_SEASON_REGISTRATION_ENABLED ||
+            'false'
+          ).toLowerCase() === 'true',
+          stripeSecretKey: import.meta.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || '',
+          stripePublishableKey: import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
+          stripeWebhookSecret: import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET || '',
+          resendApiKey: import.meta.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '',
+          cronSecret: import.meta.env.CLUB_SEASON_CRON_SECRET || process.env.CLUB_SEASON_CRON_SECRET || '',
+          billingEmail: import.meta.env.CLUB_SEASON_BILLING_EMAIL || process.env.CLUB_SEASON_BILLING_EMAIL || '',
+        },
+      });
+      return json({ ok: true, season: result.season });
     }
     if (payload?.action === 'update_agreement_draft') {
       const parsed = updateAgreementDraftSchema.safeParse(payload);

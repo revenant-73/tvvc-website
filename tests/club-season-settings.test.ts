@@ -20,6 +20,8 @@ import {
   publishClubSeasonAgreement,
   recordClubSeasonLaunchEvidence,
   recordLaunchEvidenceSchema,
+  setClubSeasonRegistrationAccess,
+  setRegistrationAccessSchema,
   updateClubSeasonAgreementDraft,
   updateClubSeasonRegistrationWindow,
 } from '../src/lib/club-season-settings.ts';
@@ -62,6 +64,21 @@ test('launch evidence validation requires the exact phrase and complete pilot ch
   }).success, false);
 });
 
+test('registration access validation requires an actual transition and exact phrase', () => {
+  assert.equal(setRegistrationAccessSchema.safeParse({
+    action: 'set_registration_access', seasonId: 'season', enabled: true, expectedEnabled: false,
+    confirmation: 'OPEN REGISTRATION', reason: 'Opening the first invitation wave.',
+  }).success, true);
+  assert.equal(setRegistrationAccessSchema.safeParse({
+    action: 'set_registration_access', seasonId: 'season', enabled: true, expectedEnabled: false,
+    confirmation: 'open registration', reason: 'Opening the first invitation wave.',
+  }).success, false);
+  assert.equal(setRegistrationAccessSchema.safeParse({
+    action: 'set_registration_access', seasonId: 'season', enabled: false, expectedEnabled: false,
+    confirmation: 'CLOSE REGISTRATION', reason: 'Emergency close after a payment mismatch.',
+  }).success, false);
+});
+
 test('registration windows and agreement publication preserve an audited immutable version history', async () => {
   await fs.mkdir(path.dirname(databasePath), { recursive: true });
   await removeDatabase();
@@ -89,6 +106,21 @@ test('registration windows and agreement publication preserve an audited immutab
     });
     assert.equal(season.registrationOpensAt, '2026-11-02T17:00:00.000Z');
     assert.equal(season.registrationClosesAt, '2026-11-30T07:59:59.000Z');
+
+    await assert.rejects(setClubSeasonRegistrationAccess(db, {
+      seasonId: '2026-2027-club', enabled: true, expectedEnabled: false,
+      confirmation: 'OPEN REGISTRATION', reason: 'This incomplete launch must remain blocked.',
+      adminUserId: 'settings-admin',
+      environment: {
+        featureFlagEnabled: false,
+        stripeSecretKey: 'sk_test_settings',
+        stripePublishableKey: 'pk_test_settings',
+        stripeWebhookSecret: 'whsec_settings',
+        resendApiKey: 're_settings',
+        cronSecret: 's'.repeat(32),
+        billingEmail: 'billing@tualatinvalleyvb.com',
+      },
+    }), /REGISTRATION_OPEN_BLOCKED/);
 
     const resendEvidence = await recordClubSeasonLaunchEvidence(db, {
       seasonId: '2026-2027-club',
@@ -221,9 +253,69 @@ test('registration windows and agreement publication preserve an audited immutab
       args: [secondDraft.id],
     }), /immutable/i);
 
+    const commitmentDraft = await createClubSeasonAgreementDraft(db, {
+      seasonId: '2026-2027-club',
+      key: 'season-commitment',
+      title: 'Club season participation commitment',
+      summary: 'Attendance, communication, and team participation',
+      body: 'Families acknowledge the complete club season participation and communication expectations.',
+      adminUserId: 'settings-admin',
+    });
+    await publishClubSeasonAgreement(db, {
+      agreementId: commitmentDraft.id,
+      confirmation: 'PUBLISH V1',
+      approvalReference: 'Season commitment approved for guarded registration access testing.',
+      adminUserId: 'settings-admin',
+    });
+    await recordClubSeasonLaunchEvidence(db, {
+      seasonId: '2026-2027-club',
+      type: 'stripe_live_review',
+      confirmation: 'RECORD STRIPE',
+      evidenceReference: 'Stripe live keys, pricing, webhooks, receipts, and payment methods reviewed.',
+      adminUserId: 'settings-admin',
+    });
+    await client.batch([
+      { sql: `UPDATE club_seasons SET status='active' WHERE id='2026-2027-club'`, args: [] },
+      { sql: `INSERT INTO club_teams (id, season_id, age_group_id, name, active) VALUES ('settings-team', '2026-2027-club', 'age-2026-2027-12u', '12U Settings', 1)`, args: [] },
+    ]);
+
+    const liveEnvironment = {
+      featureFlagEnabled: true,
+      stripeSecretKey: 'sk_live_settings',
+      stripePublishableKey: 'pk_live_settings',
+      stripeWebhookSecret: 'whsec_settings',
+      resendApiKey: 're_settings',
+      cronSecret: 's'.repeat(32),
+      billingEmail: 'billing@tualatinvalleyvb.com',
+    };
+    const opened = await setClubSeasonRegistrationAccess(db, {
+      seasonId: '2026-2027-club', enabled: true, expectedEnabled: false,
+      confirmation: 'OPEN REGISTRATION', reason: 'Opening the reviewed invitation wave.',
+      adminUserId: 'settings-admin', environment: liveEnvironment,
+    });
+    assert.equal(opened.season.publicRegistrationEnabled, true);
+    assert.equal(opened.readiness?.readyToOpenRegistration, true);
+
+    await client.execute(`UPDATE club_seasons SET public_registration_enabled=0 WHERE id='2026-2027-club'`);
+    await assert.rejects(setClubSeasonRegistrationAccess(db, {
+      seasonId: '2026-2027-club', enabled: false, expectedEnabled: true,
+      confirmation: 'CLOSE REGISTRATION', reason: 'Testing stale concurrent state protection.',
+      adminUserId: 'settings-admin', environment: liveEnvironment,
+    }), /REGISTRATION_ACCESS_STATE_CHANGED/);
+    await client.execute(`UPDATE club_seasons SET public_registration_enabled=1 WHERE id='2026-2027-club'`);
+
+    const closed = await setClubSeasonRegistrationAccess(db, {
+      seasonId: '2026-2027-club', enabled: false, expectedEnabled: true,
+      confirmation: 'CLOSE REGISTRATION', reason: 'Emergency close preserves all existing records.',
+      adminUserId: 'settings-admin', environment: liveEnvironment,
+    });
+    assert.equal(closed.season.publicRegistrationEnabled, false);
+
     const audits = await db.select().from(clubSeasonAdminAuditLog);
     assert.equal(audits.filter((item) => item.action === 'registration_window_updated').length, 1);
-    assert.equal(audits.filter((item) => item.action === 'agreement_published').length, 2);
+    assert.equal(audits.filter((item) => item.action === 'agreement_published').length, 3);
+    assert.equal(audits.filter((item) => item.action === 'registration_access_opened').length, 1);
+    assert.equal(audits.filter((item) => item.action === 'registration_access_closed').length, 1);
     assert.match(
       audits.find((item) => item.entityId === secondDraft.id && item.action === 'agreement_published')?.reason || '',
       /board vote/i

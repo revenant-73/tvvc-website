@@ -39,8 +39,7 @@ Complete and rehearse the following before November 8:
 
 - Set the season to active internally while keeping family registration closed.
 - Enable the Netlify club-season feature flag in advance. The separate season database lock must remain closed, so enabling this flag alone does not give families access.
-- Add a guarded **Open Registration / Close Registration** control to the admin dashboard. The control must require confirmation, an audit reason, and a clear readiness check.
-- Retain a prominent emergency **Close Registration** action for pausing new activity without disturbing completed registrations.
+- Rehearse the guarded **Open Registration / Close Registration** control. Opening requires every launch check, an audit reason, and the exact confirmation phrase; emergency close remains available at any time.
 - Prepare and approve the 14-and-under offer-email template.
 - Add an administrator email preview and test-send workflow.
 - Add team-by-team invitation sending through Resend, including sent/failed results and a safe resend control.
@@ -59,9 +58,11 @@ The admin dashboard already supports:
 - assigning players to an active team;
 - setting offer deadlines;
 - creating offers in batches;
+- opening registration only after a fresh readiness check and exact typed confirmation;
+- emergency-closing registration without changing offers, completed registrations, payments, or ledger history;
 - viewing registration and financial activity.
 
-The November offer-preparation milestone has been implemented locally on `codex/november-tryout-launch-admin` and is awaiting migration review, preview testing, and production publication. It adds:
+The November offer-preparation milestone is published in production. It adds:
 
 - separate November 8 and November 15 operational-wave views;
 - private draft offers that do not set an offered timestamp;
@@ -72,9 +73,10 @@ The November offer-preparation milestone has been implemented locally on `codex/
 - an audited **Mark ready** review action;
 - server-side isolation that makes draft and ready offers invisible and unusable to parents, including guessed offer identifiers.
 
-The following items are planned work and must be completed before this runbook can be performed entirely from the dashboard:
+The guarded open/close control is implemented locally on `codex/guarded-registration-control` and awaits preview verification and production publication. Opening is blocked unless the feature flag, live Stripe review, agreements, active teams, schedule, email configuration, billing protection, and controlled-pilot evidence all pass. Closing remains available as an emergency brake and pauses new or unfinished registration activity without altering completed records.
 
-- guarded season registration open/close controls;
+The following items remain planned work before this runbook can be performed entirely from the dashboard:
+
 - integrated Resend invitation sending, preview, result tracking, and resend controls;
 - the later release action that converts reviewed offers into family-visible invitations without changing teams, prices, or registration locks.
 

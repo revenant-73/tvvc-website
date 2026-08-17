@@ -39,6 +39,7 @@ let loadError = '';
 
 type LaunchReadiness = {
   readyForPilot: boolean;
+  readyToOpenRegistration: boolean;
   readyForLive: boolean;
   summary: { passed: number; total: number; blocking: number };
   gates: Array<{
@@ -130,6 +131,13 @@ const statusLabel = season?.status
 const parentRegistrationEnabled = Boolean(
   clubSeasonFeatureEnabled && season?.publicRegistrationEnabled
 );
+const registrationAccessEnabled = Boolean(season?.publicRegistrationEnabled);
+const registrationOpenBlockers = launchReadiness?.gates.filter((gate) => (
+  gate.key !== 'database_lock' && gate.status !== 'passed'
+)) || [];
+const registrationAccessConfirmation = registrationAccessEnabled
+  ? 'CLOSE REGISTRATION'
+  : 'OPEN REGISTRATION';
 
 const scheduleMonths = [
   { month: 'November', label: 'Deposit', tone: 'deposit' },
@@ -312,18 +320,18 @@ const pilotChecks = [
                     {launchReadiness ? (
                       <div class:list={[
                         'min-w-60 border-l-2 pl-4',
-                        launchReadiness.readyForPilot ? 'border-brand-teal' : 'border-brand-coral',
+                        registrationAccessEnabled || launchReadiness.readyToOpenRegistration ? 'border-brand-teal' : 'border-brand-coral',
                       ]} role="status">
                         <p class:list={[
                           'text-[10px] font-extrabold uppercase tracking-[0.2em]',
-                          launchReadiness.readyForPilot ? 'text-brand-teal' : 'text-brand-coral',
-                        ]}>{launchReadiness.readyForPilot ? 'Ready for pilot' : 'Launch blocked'}</p>
+                          registrationAccessEnabled || launchReadiness.readyToOpenRegistration ? 'text-brand-teal' : 'text-brand-coral',
+                        ]}>{parentRegistrationEnabled ? 'Registration open' : registrationAccessEnabled ? 'Database lock open' : launchReadiness.readyToOpenRegistration ? 'Ready to open' : 'Opening blocked'}</p>
                         <div class="mt-1 flex items-baseline gap-2">
                           <strong class="font-heading text-3xl font-extrabold tabular-nums text-white">{launchReadiness.summary.passed}/{launchReadiness.summary.total}</strong>
                           <span class="text-xs font-semibold text-white/45">checks passed</span>
                         </div>
-                        {!launchReadiness.readyForPilot && (
-                          <p class="mt-1 text-xs font-semibold text-brand-coral">{launchReadiness.summary.blocking} blocking {launchReadiness.summary.blocking === 1 ? 'item' : 'items'} remain</p>
+                        {!registrationAccessEnabled && !launchReadiness.readyToOpenRegistration && (
+                          <p class="mt-1 text-xs font-semibold text-brand-coral">{registrationOpenBlockers.length} opening {registrationOpenBlockers.length === 1 ? 'requirement' : 'requirements'} remain</p>
                         )}
                       </div>
                     ) : (
@@ -411,7 +419,7 @@ const pilotChecks = [
                         </div>
                       </div>
 
-                      <p class="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-white/45">Families can access the route only when <strong class="text-white/70">both</strong> locks are open. This screen is read-only and cannot change either state.</p>
+                      <p class="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-white/45">Families can access the route only when <strong class="text-white/70">both</strong> locks are open. The guarded control below changes only the database lock; it never sends an invitation.</p>
                       <dl class="mt-4 grid grid-cols-2 gap-px bg-white/10">
                         <div class="bg-[#11151d] py-3 pr-3">
                           <dt class="text-[8px] font-bold uppercase tracking-[0.15em] text-white/30">Active teams</dt>
@@ -422,6 +430,101 @@ const pilotChecks = [
                           <dd class="mt-1 font-heading text-xl font-extrabold tabular-nums text-white">{launchReadiness.publishedAgreementCount}</dd>
                         </div>
                       </dl>
+
+                      <div
+                        class:list={[
+                          'mt-5 border p-4',
+                          registrationAccessEnabled
+                            ? 'border-brand-coral/35 bg-brand-coral/[0.06]'
+                            : launchReadiness.readyToOpenRegistration
+                              ? 'border-brand-teal/35 bg-brand-teal/[0.06]'
+                              : 'border-white/10 bg-black/20',
+                        ]}
+                        data-registration-access-control
+                        data-enabled={String(registrationAccessEnabled)}
+                        data-confirm-phrase={registrationAccessConfirmation}
+                      >
+                        <div class="flex items-start justify-between gap-4">
+                          <div>
+                            <p class:list={[
+                              'text-[9px] font-extrabold uppercase tracking-[0.18em]',
+                              registrationAccessEnabled ? 'text-brand-coral' : launchReadiness.readyToOpenRegistration ? 'text-brand-teal' : 'text-white/45',
+                            ]}>Master access switch</p>
+                            <h4 class="mt-1 font-heading text-lg font-extrabold uppercase text-white">
+                              {registrationAccessEnabled ? 'Emergency close available' : launchReadiness.readyToOpenRegistration ? 'Cleared for opening' : 'Closed by guardrails'}
+                            </h4>
+                          </div>
+                          <span class:list={[
+                            'shrink-0 border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]',
+                            registrationAccessEnabled ? 'border-brand-teal/40 text-brand-teal' : 'border-brand-coral/40 text-brand-coral',
+                          ]}>{registrationAccessEnabled ? 'Open' : 'Closed'}</span>
+                        </div>
+
+                        <p class="mt-2 text-xs leading-5 text-white/55">
+                          {registrationAccessEnabled
+                            ? 'Closing pauses new starts and unfinished registrations. Existing offers, completed registrations, agreements, payment plans, and ledger records remain intact.'
+                            : launchReadiness.readyToOpenRegistration
+                              ? 'Opening permits released, authenticated families to register during the configured window. Draft and ready offers remain private.'
+                              : 'Opening stays disabled until every automated and recorded launch requirement below passes.'}
+                        </p>
+
+                        {!registrationAccessEnabled && registrationOpenBlockers.length > 0 && (
+                          <div class="mt-4 border-l-2 border-brand-coral pl-3">
+                            <p class="text-[9px] font-extrabold uppercase tracking-[0.15em] text-brand-coral">Resolve before opening</p>
+                            <ul class="mt-2 space-y-1.5">
+                              {registrationOpenBlockers.map((blocker) => (
+                                <li class="text-[11px] leading-4 text-white/60"><strong class="text-white/80">{blocker.label}:</strong> {blocker.detail}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          class:list={[
+                            'mt-4 min-h-11 w-full px-4 text-[10px] font-extrabold uppercase tracking-[0.12em] text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#11151d] disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.04] disabled:text-white/25',
+                            registrationAccessEnabled
+                              ? 'bg-brand-coral hover:bg-[#cb4d41] focus:ring-brand-coral'
+                              : 'bg-brand-teal hover:bg-brand-teal-dark focus:ring-brand-teal',
+                          ]}
+                          disabled={!registrationAccessEnabled && !launchReadiness.readyToOpenRegistration}
+                          aria-expanded="false"
+                          aria-controls="registration-access-form"
+                          data-registration-access-open
+                        >
+                          {registrationAccessEnabled ? 'Review emergency close' : 'Review and open registration'}
+                        </button>
+
+                        <form
+                          id="registration-access-form"
+                          class="mt-4 hidden border-t border-white/10 pt-4"
+                          data-registration-access-form
+                          data-season-id={season.id}
+                          data-enabled={String(!registrationAccessEnabled)}
+                          data-expected-enabled={String(registrationAccessEnabled)}
+                          data-confirm-phrase={registrationAccessConfirmation}
+                        >
+                          <div>
+                            <label for="registration-access-reason" class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/65">Required audit reason</label>
+                            <textarea id="registration-access-reason" name="reason" required minlength="10" maxlength="500" rows="3" placeholder={registrationAccessEnabled ? 'Why is registration being closed?' : 'Why is registration being opened?'} class="w-full rounded-lg border border-white/15 bg-black/25 px-3 py-2 text-sm leading-5 text-white outline-none placeholder:text-white/25 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"></textarea>
+                          </div>
+                          <div class="mt-3">
+                            <label for="registration-access-confirmation" class="mb-1.5 block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/65">Type <span class:list={['font-mono', registrationAccessEnabled ? 'text-brand-coral' : 'text-brand-teal']}>{registrationAccessConfirmation}</span></label>
+                            <input id="registration-access-confirmation" name="confirmation" required autocomplete="off" spellcheck="false" class:list={[
+                              'min-h-11 w-full rounded-lg border bg-black/25 px-3 font-mono text-sm font-bold text-white outline-none focus:ring-2',
+                              registrationAccessEnabled ? 'border-brand-coral/35 focus:border-brand-coral focus:ring-brand-coral/20' : 'border-brand-teal/35 focus:border-brand-teal focus:ring-brand-teal/20',
+                            ]} />
+                          </div>
+                          <p class="mt-3 min-h-5 text-[11px] font-semibold leading-5 text-white/55" role="status" aria-live="polite" data-registration-access-status></p>
+                          <div class="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <button type="button" class="min-h-10 border border-white/15 px-4 text-[10px] font-extrabold uppercase tracking-[0.11em] text-white/60 hover:border-white/30 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal" data-registration-access-cancel>Cancel</button>
+                            <button type="submit" disabled class:list={[
+                              'min-h-10 px-4 text-[10px] font-extrabold uppercase tracking-[0.11em] text-white transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-35',
+                              registrationAccessEnabled ? 'bg-brand-coral hover:bg-[#cb4d41] focus:ring-brand-coral' : 'bg-brand-teal hover:bg-brand-teal-dark focus:ring-brand-teal',
+                            ]}><span data-registration-access-label>{registrationAccessEnabled ? 'Confirm close' : 'Confirm open'}</span></button>
+                          </div>
+                        </form>
+                      </div>
                     </aside>
                   </div>
                 ) : (
@@ -432,7 +535,7 @@ const pilotChecks = [
 
                 <footer class="flex items-start gap-3 border-t border-amber-300/20 bg-amber-300/[0.05] px-5 py-4 md:px-7">
                   <svg class="mt-0.5 shrink-0 text-amber-300" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.3 3.7 2.2 18a2 2 0 0 0 1.8 3h16a2 2 0 0 0 1.8-3L13.7 3.7a2 2 0 0 0-3.4 0Z"></path></svg>
-                  <p class="text-xs leading-5 text-white/55"><strong class="font-extrabold uppercase tracking-[0.08em] text-amber-300">Human approval required.</strong> Agreement and refund language requires TVVC approval. This screen does not publish policy language, enable registration, or switch Stripe to live keys.</p>
+                  <p class="text-xs leading-5 text-white/55"><strong class="font-extrabold uppercase tracking-[0.08em] text-amber-300">Human approval required.</strong> The access control requires an audit reason and exact typed confirmation. Opening registration never publishes policy language, changes Stripe keys, activates teams, or sends invitations.</p>
                 </footer>
               </section>
 
@@ -1239,6 +1342,78 @@ const pilotChecks = [
         }
       });
     });
+
+    const registrationAccessControl = document.querySelector('[data-registration-access-control]');
+    const registrationAccessOpen = registrationAccessControl?.querySelector('[data-registration-access-open]');
+    const registrationAccessForm = registrationAccessControl?.querySelector('[data-registration-access-form]');
+
+    const updateRegistrationAccessSubmit = () => {
+      if (!(registrationAccessForm instanceof HTMLFormElement)) return;
+      const confirmation = registrationAccessForm.elements.namedItem('confirmation');
+      const reason = registrationAccessForm.elements.namedItem('reason');
+      const submit = registrationAccessForm.querySelector('button[type="submit"]');
+      const phraseMatches = confirmation instanceof HTMLInputElement &&
+        confirmation.value === registrationAccessForm.dataset.confirmPhrase;
+      const reasonIsValid = reason instanceof HTMLTextAreaElement && reason.value.trim().length >= 10;
+      if (submit instanceof HTMLButtonElement) submit.disabled = !(phraseMatches && reasonIsValid);
+    };
+
+    if (registrationAccessOpen instanceof HTMLButtonElement && registrationAccessForm instanceof HTMLFormElement) {
+      registrationAccessOpen.addEventListener('click', () => {
+        const opening = registrationAccessForm.classList.contains('hidden');
+        registrationAccessForm.classList.toggle('hidden', !opening);
+        registrationAccessOpen.setAttribute('aria-expanded', String(opening));
+        if (opening) registrationAccessForm.querySelector('textarea')?.focus();
+      });
+
+      registrationAccessForm.querySelector('[data-registration-access-cancel]')?.addEventListener('click', () => {
+        registrationAccessForm.classList.add('hidden');
+        registrationAccessOpen.setAttribute('aria-expanded', 'false');
+        registrationAccessOpen.focus();
+      });
+
+      registrationAccessForm.addEventListener('input', updateRegistrationAccessSubmit);
+      registrationAccessForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!registrationAccessForm.reportValidity()) return;
+        const data = new FormData(registrationAccessForm);
+        const confirmation = String(data.get('confirmation') || '');
+        if (confirmation !== registrationAccessForm.dataset.confirmPhrase) return;
+        const enabled = registrationAccessForm.dataset.enabled === 'true';
+        const expectedEnabled = registrationAccessForm.dataset.expectedEnabled === 'true';
+        const status = registrationAccessForm.querySelector('[data-registration-access-status]');
+        const button = registrationAccessForm.querySelector('button[type="submit"]');
+        const label = registrationAccessForm.querySelector('[data-registration-access-label]');
+        if (button instanceof HTMLButtonElement) button.disabled = true;
+        if (label) label.textContent = enabled ? 'Opening…' : 'Closing…';
+        setStatus(status, enabled ? 'Rechecking every launch requirement…' : 'Closing new registration starts…');
+        try {
+          const response = await fetch(settingsEndpoint, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'set_registration_access',
+              seasonId: registrationAccessForm.dataset.seasonId,
+              enabled,
+              expectedEnabled,
+              confirmation,
+              reason: String(data.get('reason') || '').trim(),
+            }),
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'Registration access could not be changed.');
+          setStatus(status, enabled ? 'Registration is open.' : 'Registration is closed.', 'success');
+          notify('success', enabled ? 'Registration opened' : 'Registration closed');
+          window.location.reload();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Registration access could not be changed.';
+          setStatus(status, message, 'error');
+          notify('error', message);
+          if (label) label.textContent = enabled ? 'Confirm open' : 'Confirm close';
+          updateRegistrationAccessSubmit();
+        }
+      });
+    }
 
     document.getElementById('registration-window-form')?.addEventListener('submit', async (event) => {
       event.preventDefault();

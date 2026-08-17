@@ -109,6 +109,45 @@ test('season team management requires admin access and supports staging and acti
     await expect(adminPage.getByRole('radio', { name: /Inactive Stage now/i })).toBeChecked();
     await expect(adminPage.getByRole('radio', { name: /Active Offer-ready/i })).not.toBeChecked();
     await expect(adminPage.getByText(/Inactive teams are saved but cannot be selected for new offers/i)).toBeVisible();
+    const accessControl = adminPage.locator('[data-registration-access-control]');
+    await expect(accessControl.getByText('Master access switch')).toBeVisible();
+    await expect(accessControl.getByText('Closed by guardrails')).toBeVisible();
+    await expect(accessControl.getByRole('button', { name: 'Review and open registration' })).toBeDisabled();
+    await expect(accessControl.getByText('Resolve before opening')).toBeVisible();
+    await adminPage.setViewportSize({ width: 375, height: 812 });
+    const accessBounds = await accessControl.boundingBox();
+    expect(accessBounds).not.toBeNull();
+    expect(accessBounds.x).toBeGreaterThanOrEqual(0);
+    expect(accessBounds.x + accessBounds.width).toBeLessThanOrEqual(375);
+
+    const blockedOpen = await adminContext.request.patch('/api/admin/club-season-settings', {
+      data: {
+        action: 'set_registration_access',
+        seasonId: '2026-2027-club',
+        enabled: true,
+        expectedEnabled: false,
+        confirmation: 'OPEN REGISTRATION',
+        reason: 'Attempting to open before every production requirement passes.',
+      },
+    });
+    expect(blockedOpen.status()).toBe(409);
+    await expect(blockedOpen.json()).resolves.toMatchObject({
+      error: 'Registration cannot be opened until every launch requirement passes.',
+      blockers: expect.any(Array),
+    });
+
+    const crossOriginOpen = await adminContext.request.patch('/api/admin/club-season-settings', {
+      headers: { Origin: 'https://attacker.example' },
+      data: {
+        action: 'set_registration_access',
+        seasonId: '2026-2027-club',
+        enabled: true,
+        expectedEnabled: false,
+        confirmation: 'OPEN REGISTRATION',
+        reason: 'A cross-origin request must never change registration access.',
+      },
+    });
+    expect(crossOriginOpen.status()).toBe(403);
 
     const uniqueName = `12 Black ${Date.now()}`;
     const created = await adminContext.request.post('/api/admin/club-season-teams', {
