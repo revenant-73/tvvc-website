@@ -112,8 +112,11 @@ test('season team management requires admin access and supports staging and acti
     const accessControl = adminPage.locator('[data-registration-access-control]');
     await expect(accessControl.getByText('Master access switch')).toBeVisible();
     await expect(accessControl.getByText('Closed by guardrails')).toBeVisible();
-    await expect(accessControl.getByRole('button', { name: 'Review and open registration' })).toBeDisabled();
-    await expect(accessControl.getByText('Resolve before opening')).toBeVisible();
+    const openRegistrationButton = accessControl.getByRole('button', { name: 'Review and open registration' });
+    await expect(openRegistrationButton).toBeDisabled();
+    await expect(openRegistrationButton).toHaveAttribute('aria-describedby', 'registration-access-disabled-help');
+    await expect(accessControl.getByText('Resolve before opening', { exact: true }).first()).toBeVisible();
+    await expect(accessControl.getByText(/This button unlocks when all \d+ items? in Resolve before opening are cleared\./i)).toBeVisible();
     await adminPage.setViewportSize({ width: 375, height: 812 });
     const accessBounds = await accessControl.boundingBox();
     expect(accessBounds).not.toBeNull();
