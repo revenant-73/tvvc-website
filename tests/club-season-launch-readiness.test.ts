@@ -51,6 +51,7 @@ test('a complete dark test-mode setup is ready for a controlled pilot, not live 
   const readiness = evaluateClubSeasonLaunchReadiness(baseData, testEnvironment);
 
   assert.equal(readiness.readyForPilot, true);
+  assert.equal(readiness.readyToOpenRegistration, false);
   assert.equal(readiness.readyForLive, false);
   assert.equal(readiness.activeTeamCount, 2);
   assert.equal(readiness.publishedAgreementCount, 2);
@@ -91,6 +92,24 @@ test('live readiness requires both launch locks and all manual confirmations', (
   });
 
   assert.equal(readiness.readyForPilot, true);
+  assert.equal(readiness.readyToOpenRegistration, true);
   assert.equal(readiness.readyForLive, true);
   assert.equal(readiness.summary.blocking, 0);
+});
+
+test('a closed database lock can be cleared for opening without pretending registration is already live', () => {
+  const readiness = evaluateClubSeasonLaunchReadiness({
+    ...baseData,
+    approvedAgreementVersionIds: ['agreement-commitment', 'agreement-refund'],
+    launchEvidenceTypes: ['resend_domain', 'stripe_live_review', 'controlled_pilot'],
+  }, {
+    ...testEnvironment,
+    featureFlagEnabled: true,
+    stripeSecretKey: 'sk_live_example',
+    stripePublishableKey: 'pk_live_example',
+  });
+
+  assert.equal(readiness.seasonRegistrationEnabled, false);
+  assert.equal(readiness.readyToOpenRegistration, true);
+  assert.equal(readiness.readyForLive, false);
 });

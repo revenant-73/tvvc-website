@@ -8,6 +8,11 @@ import {
   clubSeasons,
   users,
 } from '../db/schema.ts';
+import {
+  getClubSeasonLaunchReadiness,
+  type ClubSeasonLaunchEnvironment,
+  type ClubSeasonLaunchGate,
+} from './club-season-launch-readiness.ts';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -95,6 +100,41 @@ export const updateRegistrationWindowSchema = z.object({
   (value) => Date.parse(value.registrationOpensAt) < Date.parse(value.registrationClosesAt),
   { message: 'Registration must close after it opens.', path: ['registrationClosesAt'] }
 );
+
+export const setRegistrationAccessSchema = z.object({
+  action: z.literal('set_registration_access'),
+  seasonId: z.string().trim().min(1).max(100),
+  enabled: z.boolean(),
+  expectedEnabled: z.boolean(),
+  confirmation: z.string().trim().min(1).max(40),
+  reason: z.string().trim().min(10).max(500),
+}).strict().superRefine((value, context) => {
+  const expected = value.enabled ? 'OPEN REGISTRATION' : 'CLOSE REGISTRATION';
+  if (value.confirmation !== expected) {
+    context.addIssue({
+      code: 'custom',
+      path: ['confirmation'],
+      message: `Type ${expected} exactly.`,
+    });
+  }
+  if (value.enabled === value.expectedEnabled) {
+    context.addIssue({
+      code: 'custom',
+      path: ['expectedEnabled'],
+      message: 'The requested state must differ from the current state.',
+    });
+  }
+});
+
+export class RegistrationOpenBlockedError extends Error {
+  blockers: ClubSeasonLaunchGate[];
+
+  constructor(blockers: ClubSeasonLaunchGate[]) {
+    super('REGISTRATION_OPEN_BLOCKED');
+    this.name = 'RegistrationOpenBlockedError';
+    this.blockers = blockers;
+  }
+}
 
 export const createAgreementDraftSchema = z.object({
   action: z.literal('create_agreement_draft'),
@@ -207,6 +247,77 @@ export async function updateClubSeasonRegistrationWindow(db: Db, input: {
     return rows;
   });
   return updated;
+}
+
+export async function setClubSeasonRegistrationAccess(db: Db, input: {
+  seasonId: string;
+  enabled: boolean;
+  expectedEnabled: boolean;
+  confirmation: string;
+  reason: string;
+  adminUserId: string;
+  environment: ClubSeasonLaunchEnvironment;
+}) {
+  const expectedConfirmation = input.enabled ? 'OPEN REGISTRATION' : 'CLOSE REGISTRATION';
+  if (input.confirmation !== expectedConfirmation) {
+    throw new Error('REGISTRATION_ACCESS_CONFIRMATION_MISMATCH');
+  }
+  if (input.enabled === input.expectedEnabled) {
+    throw new Error('REGISTRATION_ACCESS_INVALID_TRANSITION');
+  }
+
+  const [season] = await db.select().from(clubSeasons)
+    .where(eq(clubSeasons.id, input.seasonId)).limit(1);
+  if (!season) throw new Error('SEASON_NOT_FOUND');
+  if (season.publicRegistrationEnabled !== input.expectedEnabled) {
+    throw new Error('REGISTRATION_ACCESS_STATE_CHANGED');
+  }
+
+  let readiness = null;
+  if (input.enabled) {
+    readiness = await getClubSeasonLaunchReadiness(db, input.seasonId, input.environment);
+    const blockers = readiness.gates.filter((gate) => (
+      gate.key !== 'database_lock' && gate.status !== 'passed'
+    ));
+    if (!readiness.readyToOpenRegistration || blockers.length) {
+      throw new RegistrationOpenBlockedError(blockers);
+    }
+  }
+
+  const now = new Date().toISOString();
+  const reason = input.reason.trim();
+  const updated = await db.transaction(async (tx) => {
+    const [changed] = await tx.update(clubSeasons).set({
+      publicRegistrationEnabled: input.enabled,
+      updatedAt: now,
+    }).where(and(
+      eq(clubSeasons.id, input.seasonId),
+      eq(clubSeasons.publicRegistrationEnabled, input.expectedEnabled)
+    )).returning();
+    if (!changed) throw new Error('REGISTRATION_ACCESS_STATE_CHANGED');
+
+    await tx.insert(clubSeasonAdminAuditLog).values({
+      id: crypto.randomUUID(),
+      adminUserId: input.adminUserId,
+      action: input.enabled ? 'registration_access_opened' : 'registration_access_closed',
+      entityType: 'club_season',
+      entityId: input.seasonId,
+      reason,
+      beforeSnapshot: JSON.stringify({ publicRegistrationEnabled: input.expectedEnabled }),
+      afterSnapshot: JSON.stringify({
+        publicRegistrationEnabled: input.enabled,
+        verifiedReadinessGates: input.enabled
+          ? readiness?.gates
+            .filter((gate) => gate.key !== 'database_lock' && gate.status === 'passed')
+            .map((gate) => gate.key)
+          : null,
+      }),
+      createdAt: now,
+    });
+    return changed;
+  });
+
+  return { season: updated, readiness };
 }
 
 export async function createClubSeasonAgreementDraft(db: Db, input: {

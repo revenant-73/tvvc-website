@@ -24,6 +24,7 @@ export type ClubSeasonLaunchGate = {
 
 export type ClubSeasonLaunchReadiness = {
   readyForPilot: boolean;
+  readyToOpenRegistration: boolean;
   readyForLive: boolean;
   summary: { passed: number; total: number; blocking: number };
   gates: ClubSeasonLaunchGate[];
@@ -257,14 +258,15 @@ export function evaluateClubSeasonLaunchReadiness(
   const gates = [...automatedGates, ...manualGates, ...launchLocks];
   const manualBlocking = manualGates.some((item) => item.blocking);
   const readyForPilot = !pilotBlocking;
-  const readyForLive = readyForPilot &&
+  const readyToOpenRegistration = readyForPilot &&
     !manualBlocking &&
     stripeMode === 'live' &&
-    data.season.publicRegistrationEnabled &&
     environment.featureFlagEnabled;
+  const readyForLive = readyToOpenRegistration && data.season.publicRegistrationEnabled;
 
   return {
     readyForPilot,
+    readyToOpenRegistration,
     readyForLive,
     summary: {
       passed: gates.filter((item) => item.status === 'passed').length,
