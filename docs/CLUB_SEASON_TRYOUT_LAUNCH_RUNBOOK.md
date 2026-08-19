@@ -42,7 +42,7 @@ Complete and rehearse the following before November 8:
 - Rehearse the guarded **Open Registration / Close Registration** control. Opening requires every launch check, an audit reason, and the exact confirmation phrase; emergency close remains available at any time.
 - Prepare and approve the 14-and-under offer-email template.
 - Add an administrator email preview and test-send workflow.
-- Add team-by-team invitation sending through Resend, including sent/failed results and a safe resend control.
+- The offer workspace now provides team-scoped preview, administrator-only test sending, atomic release, initial sending, failed-message retry, deliberate resend, and per-recipient history. Release and send remain separate actions.
 - Add a 10U-14U player filter and a launch summary showing team counts, missing assignments, ineligible records, and other items needing attention.
 - Add a draft/review state for offer batches so team assignments can be prepared on November 8 without releasing invitations.
 - Configure the normal three-calendar-day response period. For invitations sent November 9, the default deadline is November 12, 2026 at 11:59 PM Pacific. For invitations sent November 16, the default deadline is November 19, 2026 at 11:59 PM Pacific. Individual deadlines may still be extended.
@@ -77,8 +77,7 @@ The guarded open/close control is implemented locally on `codex/guarded-registra
 
 The following items remain planned work before this runbook can be performed entirely from the dashboard:
 
-- integrated Resend invitation sending, preview, result tracking, and resend controls;
-- the later release action that converts reviewed offers into family-visible invitations without changing teams, prices, or registration locks.
+- Resend delivery/bounce/complaint webhook ingestion remains a later enhancement. For launch, `sent` means Resend accepted the API request; the administrator should still monitor the Resend dashboard for downstream delivery events.
 
 ## 4. Tryout-Day Team Selection and Offer Preparation
 
@@ -119,10 +118,13 @@ Use this procedure on November 9 for 10U-14U and again on November 16 for 15U-18
 4. For the first wave, use the guarded admin control to open the season database registration lock. For the second wave, confirm the lock remains open; do not close and reopen it unnecessarily.
 5. Test the shared registration link with an internal offered-family account.
 6. Test the same link with an unrelated account and confirm that no offer is exposed.
-7. Preview the final invitation email and send a test copy to the administrator.
-8. Send a small initial invitation batch.
-9. Confirm successful Resend processing and verify that the invitations contain the correct player, team, deadline, price, and link.
-10. Send the remaining invitations in manageable team-by-team batches.
+7. In **Invitation release**, select one team, preview the authoritative email, and send a test copy to the signed-in administrator.
+8. With both registration locks open, type `RELEASE INVITATIONS` and record the reason. Confirm the offers become family-visible and that no email was sent by the release action.
+9. Select the released batch, type `SEND INVITATIONS`, and send a small initial team-sized batch.
+10. Confirm successful Resend processing and verify that the invitations contain the correct player, team, deadline, price, and link.
+11. Send the remaining invitations in manageable team-by-team batches. Use **Retry failed** only for failed attempts; use the coral deliberate-resend panel only when a previously accepted message truly must be sent again.
+
+The workspace derives delivery status from each recipient's latest immutable attempt. A successful retry clears that recipient's current failed state while preserving the failed attempt in history. Closing either registration-access lock pauses initial sends, retries, and deliberate resends immediately.
 11. Monitor sent, failed, registration-started, accepted, declined, and expired counts.
 
 The invitation email must include:

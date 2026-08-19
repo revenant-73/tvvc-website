@@ -432,6 +432,77 @@ export const clubSeasonOffers = sqliteTable('club_season_offers', {
   statusIdx: index('club_season_offers_status_idx').on(table.status),
 }));
 
+// Invitation releases and delivery attempts are append-only operational
+// evidence. A release batch freezes the exact family-facing terms; delivery
+// attempts record notification outcomes without rewriting the offer itself.
+export const clubSeasonInvitationBatches = sqliteTable('club_season_invitation_batches', {
+  id: text('id').primaryKey(),
+  seasonId: text('season_id').notNull().references(() => clubSeasons.id),
+  teamId: text('team_id').references(() => clubTeams.id),
+  wave: text('wave').notNull(),
+  kind: text('kind').notNull(), // release, test
+  status: text('status').notNull().default('prepared'),
+  subject: text('subject').notNull(),
+  templateFingerprint: text('template_fingerprint').notNull(),
+  requestIdempotencyKey: text('request_idempotency_key').notNull(),
+  requestFingerprint: text('request_fingerprint').notNull(),
+  adminUserId: text('admin_user_id').notNull().references(() => users.id),
+  auditReason: text('audit_reason').notNull(),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  releasedAt: text('released_at'),
+  completedAt: text('completed_at'),
+}, (table) => ({
+  requestKeyUnique: uniqueIndex('club_season_invitation_batches_request_key_unique').on(table.requestIdempotencyKey),
+  seasonWaveIdx: index('club_season_invitation_batches_season_wave_idx').on(table.seasonId, table.wave),
+  teamIdIdx: index('club_season_invitation_batches_team_id_idx').on(table.teamId),
+  statusIdx: index('club_season_invitation_batches_status_idx').on(table.status),
+  createdAtIdx: index('club_season_invitation_batches_created_at_idx').on(table.createdAt),
+}));
+
+export const clubSeasonInvitationBatchItems = sqliteTable('club_season_invitation_batch_items', {
+  id: text('id').primaryKey(),
+  batchId: text('batch_id').notNull().references(() => clubSeasonInvitationBatches.id),
+  offerId: text('offer_id').notNull().references(() => clubSeasonOffers.id),
+  recipientEmail: text('recipient_email').notNull(),
+  parentName: text('parent_name').notNull(),
+  playerName: text('player_name').notNull(),
+  teamName: text('team_name').notNull(),
+  acceptanceDeadline: text('acceptance_deadline').notNull(),
+  totalAmount: integer('total_amount').notNull(),
+  depositAmount: integer('deposit_amount').notNull(),
+  installmentAmount: integer('installment_amount').notNull(),
+  installmentCount: integer('installment_count').notNull(),
+  scheduleSnapshot: text('schedule_snapshot').notNull(),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  batchOfferUnique: uniqueIndex('club_season_invitation_items_batch_offer_unique').on(table.batchId, table.offerId),
+  batchIdIdx: index('club_season_invitation_items_batch_id_idx').on(table.batchId),
+  offerIdIdx: index('club_season_invitation_items_offer_id_idx').on(table.offerId),
+  recipientIdx: index('club_season_invitation_items_recipient_idx').on(table.recipientEmail),
+}));
+
+export const clubSeasonInvitationDeliveryAttempts = sqliteTable('club_season_invitation_delivery_attempts', {
+  id: text('id').primaryKey(),
+  batchId: text('batch_id').notNull().references(() => clubSeasonInvitationBatches.id),
+  batchItemId: text('batch_item_id').references(() => clubSeasonInvitationBatchItems.id),
+  attemptNumber: integer('attempt_number').notNull(),
+  recipientEmail: text('recipient_email').notNull(),
+  idempotencyKey: text('idempotency_key').notNull(),
+  status: text('status').notNull().default('pending'),
+  providerMessageId: text('provider_message_id'),
+  errorMessage: text('error_message'),
+  adminUserId: text('admin_user_id').notNull().references(() => users.id),
+  attemptedAt: text('attempted_at').notNull(),
+  resolvedAt: text('resolved_at'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  itemAttemptUnique: uniqueIndex('club_season_invitation_attempts_item_number_unique').on(table.batchItemId, table.attemptNumber),
+  idempotencyKeyUnique: uniqueIndex('club_season_invitation_attempts_idempotency_unique').on(table.idempotencyKey),
+  batchStatusIdx: index('club_season_invitation_attempts_batch_status_idx').on(table.batchId, table.status),
+  itemIdIdx: index('club_season_invitation_attempts_item_id_idx').on(table.batchItemId),
+  attemptedAtIdx: index('club_season_invitation_attempts_attempted_at_idx').on(table.attemptedAt),
+}));
+
 // Family-entered information is saved separately from offer eligibility so
 // later agreement and payment records can remain immutable and auditable.
 export const clubSeasonRegistrations = sqliteTable('club_season_registrations', {
