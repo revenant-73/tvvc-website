@@ -21,8 +21,11 @@ export default defineConfig({
     auth(),
     sitemap({
       filter: (page) => ![
+        'https://tualatinvalleyvb.com/outdoor-events',
         'https://tualatinvalleyvb.com/season-feedback',
         'https://tualatinvalleyvb.com/season-registration',
+        'https://tualatinvalleyvb.com/training',
+        'https://tualatinvalleyvb.com/training/book',
       ].includes(page)
     })
   ],
