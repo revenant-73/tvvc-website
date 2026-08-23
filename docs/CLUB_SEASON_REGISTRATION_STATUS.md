@@ -2,7 +2,7 @@
 
 **Status:** Implemented, deployed dark, and pilot-tested in Stripe test mode
 
-**Last updated:** August 16, 2026
+**Last updated:** August 22, 2026
 
 **Production access:** Disabled for general family use
 
@@ -12,7 +12,7 @@
 
 The club-season registration and payment system is substantially built and deployed. The production database has the complete club-season schema, the shared registration route is private and protected, the administrator workspaces are available, and the end-to-end standard-plan pilot has been completed with Stripe test payments and Resend email delivery.
 
-The system is **not ready to open to all families yet**. The remaining launch work is mostly production configuration, final policy approval, real team setup, live Stripe verification, and final controlled rehearsal—not another large application build.
+The system is **not ready to open to all families yet**. The remaining launch work is the final controlled rehearsal, activating the teams TVVC actually fields, preparing and reviewing real offers, deliberately opening registration, sending invitations in two supervised waves, and reconciling the first genuine payments—not another large application build.
 
 Current safety position:
 
@@ -383,7 +383,7 @@ On August 22, 2026, the append-only invitation-release ledger in migration `0014
 - Existing production and pilot offers were unchanged; no offers were released and no invitation emails were sent.
 - Deploy Preview #32 was retested after the pilot migration. Batch History loaded normally and showed the correct no-batches empty state instead of the prior missing-table error.
 
-The database groundwork is complete. PR #32 remains the publication boundary for the invitation-release application code and must be merged before the workflow is available in production.
+The database groundwork is complete. PR #32 was merged as production commit `820b01f` on August 22, 2026. Netlify published the production deployment, and the authenticated production offer workspace loaded the invitation controls and empty Batch History successfully with both registration locks closed.
 
 ## 5. Remaining Work Before Live Family Registration
 
@@ -483,7 +483,9 @@ Release batches are server-enforced to one active team and at most 50 unique off
 
 **Published in production:** the November offer-preparation workspace supports separate November 8 and November 15 waves, private draft offers, draft/ready corrections, readiness and blocker summaries, audited review-to-ready actions, assignment conflict details, and parent isolation for both draft and ready states.
 
-**Implemented locally, pending preview and publication:** the guarded registration-access control rechecks every launch requirement before opening, requires an audit reason plus the exact `OPEN REGISTRATION` phrase, uses compare-and-swap protection against stale admin pages, and writes an immutable audit entry. Emergency close requires `CLOSE REGISTRATION`, remains available without passing readiness gates, and preserves offers, completed registrations, agreements, payments, and ledger history while pausing new or unfinished registration activity.
+**Published in production:** the guarded registration-access control rechecks every launch requirement before opening, requires an audit reason plus the exact `OPEN REGISTRATION` phrase, uses compare-and-swap protection against stale admin pages, and writes an immutable audit entry. Emergency close requires `CLOSE REGISTRATION`, remains available without passing readiness gates, and preserves offers, completed registrations, agreements, payments, and ledger history while pausing new or unfinished registration activity.
+
+**Published in production:** the controlled invitation workflow provides administrator-only preview and test mail, atomic offer release, duplicate-safe initial sending, failed-message retry, deliberate resend, and append-only batch/per-recipient history. Production and pilot databases both contain migration `0014`; production currently has no invitation batches, released offers, or invitation sends.
 
 ### Step 8 — Enable live registration deliberately
 

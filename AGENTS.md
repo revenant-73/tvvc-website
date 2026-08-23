@@ -14,6 +14,10 @@ Don’t do this: Avoid moralizing, giving lectures, or telling me what I "should
 
 # TVVC Website Information
 
+## Club-season payment project handoff
+
+Before changing the club-season registration, invitation, payment-plan, billing, or finance workflows, read [docs/CODEX_TVVC_PAYMENT_PROJECT_HANDOFF.md](./docs/CODEX_TVVC_PAYMENT_PROJECT_HANDOFF.md). It contains the current production state, confirmed business rules, safety boundaries, November launch sequence, and resumption checklist for a new Codex task or computer.
+
 ## Summary
 The **TVVC Website** is the official online presence for the Tualatin Valley Volleyball Club, a non-profit organization in Hillsboro, OR (2820 SE 58th Court). It is a **modern static website** built using **Astro**, **React**, and **Tailwind CSS**. It uses **Playwright** for E2E testing and is deployed via **Netlify**.
 
