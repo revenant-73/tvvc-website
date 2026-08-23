@@ -81,7 +81,53 @@ The following items remain planned work before this runbook can be performed ent
 
 - Resend delivery/bounce/complaint webhook ingestion remains a later enhancement. For launch, `sent` means Resend accepted the API request; the administrator should still monitor the Resend dashboard for downstream delivery events.
 
-## 4. Tryout-Day Team Selection and Offer Preparation
+## 4. Manual Launch Readiness Checklist
+
+Complete this checklist before the first November tryout weekend. These are operational confirmations, not code changes.
+
+### Website and registration entry points
+
+- Open `/tryouts` and confirm the tryout-prep clinic and tryout calls to action point to the correct registration pages.
+- Confirm tryout-prep clinics remain open in normal event registration and that waitlists are enabled for full tryout-prep clinics.
+- Confirm `/season-registration` remains absent from public navigation and search indexing.
+- Open `/season-registration` signed out and confirm it shows the generic sign-in invitation screen without player, team, or pricing details.
+
+### Admin access and launch locks
+
+- Sign in as the production administrator and open `/admin/club-season`.
+- Confirm the season database lock is closed before offer release work begins.
+- Confirm the Netlify `CLUB_SEASON_REGISTRATION_ENABLED` production flag is intentionally closed until the final invitation-day step.
+- Confirm pilot mode and pilot email allowlist are disabled in production.
+- Confirm the guarded **Open Registration** button remains blocked until the readiness console is clear.
+- Confirm **Close Registration** remains available as the emergency brake and requires the exact `CLOSE REGISTRATION` phrase.
+
+### External-service dashboard checks
+
+- In Stripe, confirm live mode is selected, webhook endpoints are healthy, and the saved-payment-method/Billing Portal settings still match the season plan.
+- In Resend, confirm the sending domain is verified and the administrator can monitor accepted, bounced, and complained messages.
+- In Netlify, confirm the production deploy is current, scheduled functions are present, and recent function logs show no registration or billing errors.
+- In Turso, take or schedule a fresh production backup immediately before opening registration or sending invitations.
+
+### Season configuration
+
+- Confirm the 2026-2027 season dates are December 1, 2026 through May 31, 2027.
+- Confirm the registration window is November 8, 2026 at 6:00 PM through November 30, 2026 at 11:59 PM Pacific.
+- Confirm 10U-12U pricing is $1,200 total, $300 deposit, and five $180 installments.
+- Confirm 13U-18U pricing is $1,500 total, $400 deposit, and five $220 installments.
+- Confirm the standard payment schedule has no December charge and uses January 5 through May 5.
+- Confirm the published agreement versions are still the approved versions of `season-commitment`, `refund-cancellation-policy`, and `media-release`.
+
+### Rehearsal standard
+
+- Run the final rehearsal in a test or Deploy Preview environment with Stripe test keys.
+- Rehearse both pricing tiers, pay in full, standard plan, one custom initial plan, and one later plan revision.
+- Rehearse one administrator invitation preview and test-send using a test/preview sender path, not live family recipients.
+- Confirm parent portal balance, receipt access, payment-method controls, guardian restrictions, admin ledger, and email records.
+- Confirm a duplicate webhook or scheduled-job run does not create duplicate payments or duplicate emails.
+- Confirm a failed-payment scenario changes financial status and communication state without removing the player from the team.
+- Verify mobile layouts for the parent registration flow, portal dashboard, admin offer workspace, and finance workspace.
+
+## 5. Tryout-Day Team Selection and Offer Preparation
 
 Do not send invitations for the current wave during this stage. Keep family registration closed before the first wave; during the second wave, previously offered younger families may continue using the already-open registration system.
 
@@ -110,7 +156,7 @@ Unassigned     2 players
 Needs review   1 player
 ```
 
-## 5. Invitation-Day Controlled Release
+## 6. Invitation-Day Controlled Release
 
 Use this procedure on November 9 for 10U-14U and again on November 16 for 15U-18U. The registration-open action is required for the first wave; for the second wave, confirm that registration remains open rather than toggling it unnecessarily.
 
@@ -140,7 +186,7 @@ The invitation email must include:
 - pay-in-full and standard-plan choices;
 - instructions to contact TVVC for a custom payment arrangement.
 
-## 6. First-Family Payment Monitoring
+## 7. First-Family Payment Monitoring
 
 Closely supervise the first 5-10 registrations before releasing every remaining invitation.
 
@@ -156,7 +202,7 @@ If a money, ownership, email, or reconciliation mismatch appears, close registra
 
 After the first cohort reconciles cleanly, send the remaining prepared invitation batches.
 
-## 7. Administrator Safety Rules
+## 8. Administrator Safety Rules
 
 - Opening registration must never activate teams or send invitations automatically.
 - Sending invitations must never change pricing or team assignments.
@@ -165,6 +211,6 @@ After the first cohort reconciles cleanly, send the remaining prepared invitatio
 - Rehearsal payments must use Stripe test keys. Never use real payment details to manufacture a live-mode test.
 - Every registration-state change and invitation batch must record the administrator, timestamp, reason, and result.
 
-## 8. Completion Standard
+## 9. Completion Standard
 
 This runbook is ready for operational use when the administrator can complete both launch waves entirely through the authenticated admin experience, except for read-only verification in Stripe, Resend, and Netlify. No repository edit, commit, production SQL command, or environment-variable change should be necessary during either tryout weekend.
