@@ -2,10 +2,10 @@
 
 **Purpose:** Give a new Codex task or a different computer enough verified context to continue the TVVC club-season registration and payment project safely.
 
-**Snapshot date:** August 22, 2026  
+**Snapshot date:** August 23, 2026  
 **Repository:** `revenant-73/tvvc-website`  
 **Production branch:** `main`  
-**Current production commit:** `820b01f` (`Add controlled invitation release workflow (#32)`)  
+**Current production commit:** `30e538c` (`Reduce Netlify dependency audit alerts (#37)`)  
 **Current operating state:** Deployed, registration closed, no real offers released, and no invitation emails sent.
 
 ## 1. Instructions for Codex
@@ -99,6 +99,11 @@ Recent production milestones:
 - PR #30: November offer preparation workflow.
 - PR #31: guarded registration access control.
 - PR #32: controlled invitation release workflow.
+- PR #33: this Codex handoff was added as the restart reference.
+- PR #34: local verification and header navigation fixes.
+- PR #35: unused Outdoor Events and Private Training public pages hidden.
+- PR #36: summer camp and non-tryout-prep clinic registration closed; only upcoming tryout-prep clinics remain open in the normal event registration system.
+- PR #37: Netlify/Astro dependency audit cleanup and Node runtime pin.
 
 ## 7. Current Safety State
 
@@ -113,6 +118,13 @@ As of this snapshot:
 - No real offers have been released through the invitation workflow.
 - No invitation emails have been sent through the workflow.
 - No artificial live Stripe transaction was created for testing.
+- Production `tvvc-registration` has zero club-season offers, zero season registrations, and zero invitation batches.
+- Production contains two pricing tiers, nine active age groups, and 36 possible teams; all 36 teams are currently inactive.
+- Production has one published version each for `season-commitment`, `refund-cancellation-policy`, and `media-release`.
+- Production launch evidence contains one record each for `resend_domain`, `stripe_live_review`, and `controlled_pilot`.
+- Production migration `0014_club-season-invitations.sql` is recorded with hash `f629bc2559413abfee5d0f6765c1bd111b0c802409741f7f6f758e3ad78286c1`.
+- The local and production source currently require Node `>=22.12.0`.
+- `npm audit` is reduced as far as currently reasonable without downgrading Astro/Netlify tooling: five high entries remain, all tracing to `extract-zip@2.0.1` through Netlify's latest `@netlify/functions-dev@2.0.1`. There is no patched upstream `extract-zip` or newer `@netlify/functions-dev` release at this snapshot.
 
 The invitation UI may be visible to an authenticated administrator while the locks remain closed. That is expected; release and sending remain blocked.
 
@@ -151,6 +163,8 @@ Secrets are not stored in GitHub. A fresh home-computer clone can still be devel
 
 ## 10. Remaining Work Before November Launch
 
+Immediate next step after this snapshot: run or prepare the final prelaunch rehearsal in an isolated/test environment. Do not open registration, activate real teams, release offers, send invitations, or create live Stripe activity as part of that rehearsal unless Loren explicitly approves that specific production action.
+
 ### Before November 8
 
 1. Run the final end-to-end rehearsal in the isolated/test environment.
@@ -187,6 +201,7 @@ Repeat the assignment, review, release, send, and monitoring process for 15U-18U
 ```powershell
 git clone https://github.com/revenant-73/tvvc-website.git
 cd tvvc-website
+node --version   # must satisfy package.json: >=22.12.0
 npm ci
 git status --short --branch
 npm run build

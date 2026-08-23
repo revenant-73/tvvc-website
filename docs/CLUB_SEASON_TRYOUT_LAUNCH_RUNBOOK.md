@@ -75,7 +75,7 @@ The November offer-preparation milestone is published in production. It adds:
 
 The guarded open/close control has completed preview review. Opening is blocked unless the feature flag, live Stripe review, agreements, active teams, schedule, email configuration, billing protection, and controlled-pilot evidence all pass. Closing remains available as an emergency brake and pauses new or unfinished registration activity without altering completed records.
 
-The invitation-release workflow is implemented and verified in Deploy Preview #32. Its append-only migration `0014` was applied to both `tvvc-registration` and the isolated `tvvc-season-pilot` preview database on August 22, 2026. Recovery branches `tvvc-reg-backup-2026-08-22-pre-invitations` and `tvvc-season-pilot-backup-2026-08-22-pre-invitations` were retained. Preview verification confirmed an empty invitation history with no released offers and no email sends. PR #32 must be merged before these invitation controls are available in production.
+The invitation-release workflow is implemented and published in production. Its append-only migration `0014` was applied to both `tvvc-registration` and the isolated `tvvc-season-pilot` preview database on August 22, 2026. Recovery branches `tvvc-reg-backup-2026-08-22-pre-invitations` and `tvvc-season-pilot-backup-2026-08-22-pre-invitations` were retained. Production verification confirmed the authenticated offer workspace loads the invitation controls and empty Batch History with both registration locks closed. The August 23 production snapshot still shows no released offers and no invitation sends.
 
 The following items remain planned work before this runbook can be performed entirely from the dashboard:
 
