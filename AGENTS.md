@@ -33,17 +33,17 @@ The **TVVC Website** is the official online presence for the Tualatin Valley Vol
 
 ## Language & Runtime
 **Language**: JavaScript, Astro, JSX, TypeScript  
-**Runtime**: Node.js 20+  
-**Framework**: Astro 6.0+  
+**Runtime**: Node.js 22.12+  
+**Framework**: Astro 7.0+  
 **Database**: Drizzle ORM + LibSQL (Turso)  
 **Payments**: Stripe SDK  
 **Styling**: Tailwind CSS  
 **Package Manager**: npm  
-**Registration Status**: Summer 2026 Registration is now **OPEN**.
+**Registration Status**: Summer camp and non-tryout-prep clinic registration is **closed**. Only upcoming Tryout Prep clinic registration is currently open. Club-season registration remains deployed dark and closed.
 
 ## Dependencies
 **Main Dependencies**:
-- **astro**: ^6.3.3
+- **astro**: ^7.1.3
 - **drizzle-orm**: ^0.45.2
 - **@libsql/client**: ^0.17.3
 - **stripe**: ^22.1.1
@@ -97,7 +97,7 @@ npm run test:ui
 - [**./src/pages/teams.astro**](./src/pages/teams.astro): Displays current rosters and tournament schedules (Club Teams).
 - [**./src/pages/programs.astro**](./src/pages/programs.astro): Information on club programs (In-House Programs).
 - [**./src/pages/summer-camps-clinics.astro**](./src/pages/summer-camps-clinics.astro): Summer training schedules.
-- [**./src/pages/outdoor-events.astro**](./src/pages/outdoor-events.astro): Information on outdoor volleyball.
+- [**./src/pages/outdoor-events.astro**](./src/pages/outdoor-events.astro): Information on outdoor volleyball; intentionally hidden from public navigation while unused.
 - [**./src/pages/events.astro**](./src/pages/events.astro): Seasonal events (May Shindig).
 - [**./src/pages/faq.astro**](./src/pages/faq.astro): Frequently Asked Questions.
 

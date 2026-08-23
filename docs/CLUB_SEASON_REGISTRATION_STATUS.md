@@ -2,7 +2,7 @@
 
 **Status:** Implemented, deployed dark, and pilot-tested in Stripe test mode
 
-**Last updated:** August 22, 2026
+**Last updated:** August 23, 2026
 
 **Production access:** Disabled for general family use
 
@@ -20,8 +20,24 @@ Current safety position:
 - Season-level public registration remains disabled.
 - `CLUB_SEASON_REGISTRATION_ENABLED` remains off for general access.
 - The page is absent from public navigation and the sitemap and is marked `noindex`.
-- Controlled pilot access is restricted to exact allowlisted email addresses and requires Stripe test mode.
+- Controlled pilot access is currently disabled. If it is deliberately re-enabled for a rehearsal, it is restricted to exact allowlisted email addresses and requires Stripe test mode.
 - Real families cannot discover or use the system through normal website browsing.
+
+Verified production snapshot from August 23, 2026:
+
+- Current production source is `30e538c` on `main`.
+- Production database verified: `tvvc-registration`.
+- Season `2026-2027-club` is `draft`, timezone `America/Los_Angeles`, default billing day `5`, first installment date `2027-01-05`, and standard installment count `5`.
+- Registration window is configured as November 8, 2026 at 6:00 PM Pacific through November 30, 2026 at 11:59 PM Pacific.
+- Season dates are December 1, 2026 through May 31, 2027.
+- `public_registration_enabled = 0`.
+- Two pricing tiers exist, nine active age groups exist, and 36 possible teams exist; all 36 teams are inactive.
+- There are zero club-season offers, zero club-season registrations, and zero invitation batches.
+- Published agreements exist for `season-commitment`, `refund-cancellation-policy`, and `media-release`.
+- Launch evidence exists for `resend_domain`, `stripe_live_review`, and `controlled_pilot`.
+- Migration `0014_club-season-invitations.sql` is recorded with hash `f629bc2559413abfee5d0f6765c1bd111b0c802409741f7f6f758e3ad78286c1`.
+- Normal summer camp and non-tryout-prep clinic registration has been closed separately; that does not open or alter club-season registration.
+- The project now pins Node `>=22.12.0`. Netlify dependency audit findings were reduced from 10 high entries to 5; the remaining highs all trace to the upstream `extract-zip@2.0.1` advisory through Netlify's current `@netlify/functions-dev@2.0.1`.
 
 ## 2. Confirmed Operating Rules
 
@@ -385,9 +401,25 @@ On August 22, 2026, the append-only invitation-release ledger in migration `0014
 
 The database groundwork is complete. PR #32 was merged as production commit `820b01f` on August 22, 2026. Netlify published the production deployment, and the authenticated production offer workspace loaded the invitation controls and empty Batch History successfully with both registration locks closed.
 
+### 4.13 Source, site-visibility, and dependency maintenance after invitation launch
+
+On August 23, 2026, production source was advanced from the invitation-release milestone to commit `30e538c` through PRs #33-#37:
+
+- PR #33 added `docs/CODEX_TVVC_PAYMENT_PROJECT_HANDOFF.md` as the short restart reference for future Codex tasks and other computers.
+- PR #34 fixed local verification/header-navigation issues without changing club-season business rules.
+- PR #35 hid the unused Outdoor Events and Private Training public pages. These pages are not part of the club-season registration system.
+- PR #36 closed normal summer camp and non-tryout-prep clinic registration. Production event data now leaves only the upcoming tryout-prep clinics active. This does not open the private club-season route.
+- PR #37 updated `@astrojs/netlify`, added targeted Netlify dependency overrides, and pinned Node `>=22.12.0`. Local verification passed, and the Netlify Deploy Preview passed before merge.
+
+`npm audit` now reports five remaining high entries, all caused by `extract-zip@2.0.1` through Netlify's current `@netlify/functions-dev@2.0.1`. No patched upstream release was available at the time of the update, and npm's proposed fix would downgrade `@astrojs/netlify` to an older major version, so it was not applied.
+
+No club-season database writes were made during these source-maintenance PRs. The August 23 production read-only verification still shows the season closed, no offers, no registrations, no invitation batches, and all possible teams inactive.
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
+
+The next work item from the August 23, 2026 state is Step 6, the final prelaunch rehearsal in an isolated/test environment. Production should remain closed while that rehearsal is prepared and run unless Loren explicitly approves a specific production action.
 
 ### Step 1 — Reconcile the repository and production migration record
 
