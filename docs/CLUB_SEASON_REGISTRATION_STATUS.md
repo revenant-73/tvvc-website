@@ -25,7 +25,7 @@ Current safety position:
 
 Verified production snapshot from August 23, 2026:
 
-- Current production source is `30e538c` on `main`.
+- Current production source is `8826a5d` on `main` (`Add event waitlist support`).
 - Production database verified: `tvvc-registration`.
 - Season `2026-2027-club` is `draft`, timezone `America/Los_Angeles`, default billing day `5`, first installment date `2027-01-05`, and standard installment count `5`.
 - Registration window is configured as November 8, 2026 at 6:00 PM Pacific through November 30, 2026 at 11:59 PM Pacific.
@@ -33,11 +33,21 @@ Verified production snapshot from August 23, 2026:
 - `public_registration_enabled = 0`.
 - Two pricing tiers exist, nine active age groups exist, and 36 possible teams exist; all 36 teams are inactive.
 - There are zero club-season offers, zero club-season registrations, and zero invitation batches.
+- There are zero club-season payment plans and zero invitation delivery attempts.
 - Published agreements exist for `season-commitment`, `refund-cancellation-policy`, and `media-release`.
 - Launch evidence exists for `resend_domain`, `stripe_live_review`, and `controlled_pilot`.
 - Migration `0014_club-season-invitations.sql` is recorded with hash `f629bc2559413abfee5d0f6765c1bd111b0c802409741f7f6f758e3ad78286c1`.
+- Non-season event waitlist migration `0015_event-waitlists.sql` is also applied in production. It does not open or alter club-season registration.
 - Normal summer camp and non-tryout-prep clinic registration has been closed separately; that does not open or alter club-season registration.
 - The project now pins Node `>=22.12.0`. Netlify dependency audit findings were reduced from 10 high entries to 5; the remaining highs all trace to the upstream `extract-zip@2.0.1` advisory through Netlify's current `@netlify/functions-dev@2.0.1`.
+
+August 23, 2026 verification checkpoint:
+
+- Production club-season state was verified read-only after the non-season waitlist rollout: season draft, registration closed, all teams inactive, and zero offers, registrations, payment plans, invitation batches, or invitation attempts.
+- Production pricing, age groups, published agreement versions, launch evidence, recent audit entries, and database integrity were verified; `PRAGMA integrity_check` returned `ok`.
+- Local/test-only club-season automated rehearsal passed: `node --experimental-strip-types --test tests/club-season-*.test.ts` returned 50/50 passing tests.
+- Local/test-only Playwright offer/payment rehearsal passed: `npx playwright test tests/club-season-offers.spec.js tests/club-season-payments.spec.js --reporter=list --timeout=90000` returned 15/15 passing tests.
+- No production offers were created, no registration lock was opened, no invitation email was sent, and no live Stripe checkout was created during this checkpoint.
 
 ## 2. Confirmed Operating Rules
 

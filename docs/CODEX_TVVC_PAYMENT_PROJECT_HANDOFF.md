@@ -5,7 +5,7 @@
 **Snapshot date:** August 23, 2026  
 **Repository:** `revenant-73/tvvc-website`  
 **Production branch:** `main`  
-**Current production commit:** `30e538c` (`Reduce Netlify dependency audit alerts (#37)`)  
+**Current production commit:** `8826a5d` (`Add event waitlist support`)  
 **Current operating state:** Deployed, registration closed, no real offers released, and no invitation emails sent.
 
 ## 1. Instructions for Codex
@@ -104,6 +104,7 @@ Recent production milestones:
 - PR #35: unused Outdoor Events and Private Training public pages hidden.
 - PR #36: summer camp and non-tryout-prep clinic registration closed; only upcoming tryout-prep clinics remain open in the normal event registration system.
 - PR #37: Netlify/Astro dependency audit cleanup and Node runtime pin.
+- Commit `8826a5d`: non-season event waitlist support for camps, clinics, and tryout-prep clinics; production DB migration `0015_event-waitlists.sql` applied. This does not open or alter club-season registration.
 
 ## 7. Current Safety State
 
@@ -123,6 +124,9 @@ As of this snapshot:
 - Production has one published version each for `season-commitment`, `refund-cancellation-policy`, and `media-release`.
 - Production launch evidence contains one record each for `resend_domain`, `stripe_live_review`, and `controlled_pilot`.
 - Production migration `0014_club-season-invitations.sql` is recorded with hash `f629bc2559413abfee5d0f6765c1bd111b0c802409741f7f6f758e3ad78286c1`.
+- Non-season event waitlist migration `0015_event-waitlists.sql` is applied in production. It added `events.waitlist_enabled` and `event_waitlist_entries`; it is outside the club-season locks.
+- August 23, 2026 read-only verification confirmed zero club-season offers, zero club-season registrations, zero payment plans, zero invitation batches, zero invitation attempts, all 36 teams inactive, and `PRAGMA integrity_check = ok`.
+- August 23, 2026 local/test-only rehearsal passed the club-season unit suite (50/50) and Playwright offer/payment suite (15/15) without production writes, live Stripe, or invitation sends.
 - The local and production source currently require Node `>=22.12.0`.
 - `npm audit` is reduced as far as currently reasonable without downgrading Astro/Netlify tooling: five high entries remain, all tracing to `extract-zip@2.0.1` through Netlify's latest `@netlify/functions-dev@2.0.1`. There is no patched upstream `extract-zip` or newer `@netlify/functions-dev` release at this snapshot.
 
