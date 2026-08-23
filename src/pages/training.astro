@@ -1,5 +1,7 @@
 ---
-export const prerender = true;
+export const prerender = false;
+
+return Astro.redirect('/', 302);
 
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';

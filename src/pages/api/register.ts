@@ -368,7 +368,7 @@ export const POST: APIRoute = async ({ request }) => {
         line_items: lineItems,
         mode: 'payment',
         success_url: `${new URL(request.url).origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${new URL(request.url).origin}/outdoor-events`,
+        cancel_url: `${new URL(request.url).origin}/`,
         metadata: {
           registrationId: registrationId,
         },
