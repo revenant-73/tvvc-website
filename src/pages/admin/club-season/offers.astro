@@ -466,7 +466,7 @@ const isAdmin = Boolean(admin);
 
         const loadHistory = async () => {
           root.querySelector('[data-history-loading]')?.classList.remove('hidden');
-          try { const response = await fetch(`${invitationEndpoint}?seasonId=${encodeURIComponent(seasonId)}&wave=${encodeURIComponent(activeWave)}`); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'History could not be loaded.'); invitationHistory = data.batches || []; renderHistory(); }
+          try { const response = await fetch(`${invitationEndpoint}?seasonId=${encodeURIComponent(seasonId)}&wave=${encodeURIComponent(activeWave)}`); const body = await response.text(); let data: any = {}; try { data = body ? JSON.parse(body) : {}; } catch { /* Preserve the stable fallback below for proxy/platform errors. */ } if (!response.ok) throw new Error(data.error || 'Invitation history could not be loaded.'); if (!body) throw new Error('Invitation history could not be loaded.'); invitationHistory = data.batches || []; renderHistory(); }
           catch (error) { historyList?.replaceChildren(makeText('p', 'text-sm text-brand-coral', error instanceof Error ? error.message : 'History could not be loaded.')); }
           finally { root.querySelector('[data-history-loading]')?.classList.add('hidden'); }
         };

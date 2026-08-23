@@ -23,7 +23,12 @@ export const GET: APIRoute = async ({ request, url }) => {
   if (auth.authorized === false) return auth.response;
   const parsed = invitationActionSchema.safeParse({ action: 'history', seasonId: url.searchParams.get('seasonId'), wave: url.searchParams.get('wave') });
   if (!parsed.success || parsed.data.action !== 'history') return json({ error: parsed.success ? 'Invalid history request.' : parsed.error.issues[0]?.message }, 400);
-  return json(await invitationHistory(auth.db, parsed.data.seasonId, parsed.data.wave));
+  try {
+    return json(await invitationHistory(auth.db, parsed.data.seasonId, parsed.data.wave));
+  } catch (error) {
+    console.error('Club season invitation history failed:', error);
+    return json({ error: 'Invitation history could not be loaded.' }, 500);
+  }
 };
 
 export const POST: APIRoute = async ({ request, url }) => {
