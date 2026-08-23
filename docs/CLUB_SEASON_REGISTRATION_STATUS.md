@@ -25,7 +25,7 @@ Current safety position:
 
 Verified production snapshot from August 23, 2026:
 
-- Current production source is `8826a5d` on `main` (`Add event waitlist support`).
+- Current production source is `5814845` on `main` (`Track Resend invitation delivery events`).
 - Production database verified: `tvvc-registration`.
 - Season `2026-2027-club` is `draft`, timezone `America/Los_Angeles`, default billing day `5`, first installment date `2027-01-05`, and standard installment count `5`.
 - Registration window is configured as November 8, 2026 at 6:00 PM Pacific through November 30, 2026 at 11:59 PM Pacific.
@@ -38,6 +38,7 @@ Verified production snapshot from August 23, 2026:
 - Launch evidence exists for `resend_domain`, `stripe_live_review`, and `controlled_pilot`.
 - Migration `0014_club-season-invitations.sql` is recorded with hash `f629bc2559413abfee5d0f6765c1bd111b0c802409741f7f6f758e3ad78286c1`.
 - Non-season event waitlist migration `0015_event-waitlists.sql` is also applied in production. It does not open or alter club-season registration.
+- Resend invitation provider-event migration `0016_resend-invitation-events.sql` is also applied in production. It does not open registration, release offers, send invitations, or create Stripe activity.
 - Normal summer camp and non-tryout-prep clinic registration has been closed separately; that does not open or alter club-season registration.
 - The project now pins Node `>=22.12.0`. Netlify dependency audit findings were reduced from 10 high entries to 5; the remaining highs all trace to the upstream `extract-zip@2.0.1` advisory through Netlify's current `@netlify/functions-dev@2.0.1`.
 
@@ -523,7 +524,7 @@ The self-service offer workspace now includes the controlled invitation sequence
 
 Release batches are server-enforced to one active team and at most 50 unique offers. The dashboard shows both registration locks, retains a release request key across ambiguous retries, and computes ready, released-unsent, sent, and failed totals from each recipient's latest attempt. Initial sends, retries, and deliberate resends are blocked whenever either registration lock is closed.
 
-The source now includes Resend invitation-delivery webhook ingestion at `/api/webhooks/resend`. Migration `0016_resend-invitation-events.sql` stores provider delivery events append-only and links them to the accepted invitation send attempt by Resend message ID. The admin invitation history displays downstream provider events such as delivered, delayed, failed, bounced, complained, and suppressed. Production still requires the migration, Netlify `RESEND_WEBHOOK_SECRET`, and a Resend dashboard webhook subscription before real provider events appear.
+The source now includes Resend invitation-delivery webhook ingestion at `/api/webhooks/resend`. Migration `0016_resend-invitation-events.sql` stores provider delivery events append-only and links them to the accepted invitation send attempt by Resend message ID. The admin invitation history displays downstream provider events such as delivered, delayed, failed, bounced, complained, and suppressed. Production migration `0016` was applied after creating recovery branch `tvvc-reg-backup-2026-08-23-pre-resend-events`; production still requires Netlify `RESEND_WEBHOOK_SECRET` and a Resend dashboard webhook subscription before real provider events appear.
 
 **Published in production:** the November offer-preparation workspace supports separate November 8 and November 15 waves, private draft offers, draft/ready corrections, readiness and blocker summaries, audited review-to-ready actions, assignment conflict details, and parent isolation for both draft and ready states.
 
@@ -562,7 +563,7 @@ Keep the route unlisted; “live” means available to verified offered families
 
 - Stripe dispute-webhook handling and dispute workflow.
 - Manual pause/resume controls for automatic charges.
-- Resend provider-event tracking is implemented in source, but production still needs the `0016` migration, Netlify `RESEND_WEBHOOK_SECRET`, and the Resend webhook registration before this can replace manual Resend dashboard monitoring.
+- Resend provider-event tracking is implemented and migration `0016` is applied in production, but production still needs Netlify `RESEND_WEBHOOK_SECRET` and the Resend webhook registration before this can replace manual Resend dashboard monitoring.
 - Household-level consolidation of sibling reminders.
 - A formal parent cancellation/refund-request form and automated proration worksheet.
 - A coach-facing readiness view with financial and medical details excluded.

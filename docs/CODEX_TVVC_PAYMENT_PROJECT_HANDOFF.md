@@ -5,7 +5,7 @@
 **Snapshot date:** August 23, 2026  
 **Repository:** `revenant-73/tvvc-website`  
 **Production branch:** `main`  
-**Current production commit:** `8826a5d` (`Add event waitlist support`)  
+**Current production commit:** `5814845` (`Track Resend invitation delivery events`)  
 **Current operating state:** Deployed, registration closed, no real offers released, and no invitation emails sent.
 
 ## 1. Instructions for Codex
@@ -105,6 +105,7 @@ Recent production milestones:
 - PR #36: summer camp and non-tryout-prep clinic registration closed; only upcoming tryout-prep clinics remain open in the normal event registration system.
 - PR #37: Netlify/Astro dependency audit cleanup and Node runtime pin.
 - Commit `8826a5d`: non-season event waitlist support for camps, clinics, and tryout-prep clinics; production DB migration `0015_event-waitlists.sql` applied. This does not open or alter club-season registration.
+- Commit `5814845`: Resend invitation provider-event ingestion for club-season invitation delivery tracking; production DB migration `0016_resend-invitation-events.sql` applied after creating recovery branch `tvvc-reg-backup-2026-08-23-pre-resend-events`. This does not open registration, release offers, send invitations, or create Stripe activity.
 
 ## 7. Current Safety State
 
@@ -125,6 +126,7 @@ As of this snapshot:
 - Production launch evidence contains one record each for `resend_domain`, `stripe_live_review`, and `controlled_pilot`.
 - Production migration `0014_club-season-invitations.sql` is recorded with hash `f629bc2559413abfee5d0f6765c1bd111b0c802409741f7f6f758e3ad78286c1`.
 - Non-season event waitlist migration `0015_event-waitlists.sql` is applied in production. It added `events.waitlist_enabled` and `event_waitlist_entries`; it is outside the club-season locks.
+- Resend provider-event migration `0016_resend-invitation-events.sql` is applied in production. It added append-only invitation delivery events linked to existing send attempts. The production endpoint still needs `RESEND_WEBHOOK_SECRET` and the Resend dashboard webhook subscription before real provider events appear.
 - August 23, 2026 read-only verification confirmed zero club-season offers, zero club-season registrations, zero payment plans, zero invitation batches, zero invitation attempts, all 36 teams inactive, and `PRAGMA integrity_check = ok`.
 - August 23, 2026 local/test-only rehearsal passed the club-season unit suite (50/50) and Playwright offer/payment suite (15/15) without production writes, live Stripe, or invitation sends.
 - The local and production source currently require Node `>=22.12.0`.
