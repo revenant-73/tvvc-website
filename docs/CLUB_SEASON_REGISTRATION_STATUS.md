@@ -48,6 +48,8 @@ August 23, 2026 verification checkpoint:
 - Production pricing, age groups, published agreement versions, launch evidence, recent audit entries, and database integrity were verified; `PRAGMA integrity_check` returned `ok`.
 - Local/test-only club-season automated rehearsal passed: `node --experimental-strip-types --test tests/club-season-*.test.ts` returned 50/50 passing tests.
 - Local/test-only Playwright offer/payment rehearsal passed: `npx playwright test tests/club-season-offers.spec.js tests/club-season-payments.spec.js --reporter=list --timeout=90000` returned 15/15 passing tests.
+- Deploy Preview #39 completed a live deployed rehearsal against the isolated `tvvc-season-pilot` database and Stripe test mode for the 13U-18U standard-plan happy path: parent magic-link sign-in, offer visibility, registration draft, agreement acceptance, $400 test Checkout, verified `checkout.session.completed` webhook replay to the preview endpoint, confirmation email delivery, parent dashboard, and Stripe receipt access.
+- After the rehearsal, the temporary Stripe test webhook `TVVC season registration preview 39` was disabled for audit retention, `CLUB_SEASON_PILOT_EMAILS` was deleted from Netlify, and `CLUB_SEASON_PILOT_MODE` was set to `false` in every Netlify deploy context. Deploy Preview #39 should be rebuilt after this documentation commit so those closed settings take effect on the preview deployment.
 - No production offers were created, no registration lock was opened, no invitation email was sent, and no live Stripe checkout was created during this checkpoint.
 
 ## 2. Confirmed Operating Rules
@@ -426,11 +428,35 @@ On August 23, 2026, production source was advanced from the invitation-release m
 
 No club-season database writes were made during these source-maintenance PRs. The August 23 production read-only verification still shows the season closed, no offers, no registrations, no invitation batches, and all possible teams inactive.
 
+### 4.14 Deployed final-rehearsal checkpoint on Deploy Preview #39
+
+On August 23, 2026, Deploy Preview #39 was used for the first final prelaunch rehearsal checkpoint in the isolated pilot environment:
+
+- Pilot database: `tvvc-season-pilot`.
+- Stripe mode: test mode only.
+- Parent account: `loren+tvvc-parent-pilot@tualatinvalleyvb.com`.
+- Offer: 14U Pilot using the 13U-18U pricing tier.
+- Payment option tested: standard plan, with a $400 test deposit and five scheduled $220 automatic payments from January through May 2027.
+- Stripe Checkout session: `cs_test_a1FwMmh0a6RHav5mUtB9OdAMsPD434oSocEATEfs4jdFwwpKPcsMv92TuR`.
+- Stripe event replay: `checkout.session.completed` event `evt_1U7ewnFzgaoVZJWYOVz6u3Xp` was manually resent to the temporary Deploy Preview #39 webhook destination and returned `200 OK` at 11:17:16 AM Pacific.
+- Parent result: `/season-registration` showed `YOUR SPOT IS CONFIRMED` for Parent Pilot on 14U Pilot.
+- Email result: Resend delivered `TVVC registration confirmed: Parent Pilot - 14U Pilot` with the $400 deposit, $1,100 remaining balance, January-May payment schedule, no-December-charge language, Stripe receipt link, and parent portal link.
+- Follow-up verification: Loren confirmed the parent portal/dashboard looked good and the receipt link worked as intended.
+
+Cleanup after the checkpoint:
+
+- The temporary Stripe test webhook destination `TVVC season registration preview 39` was disabled, not deleted, so delivery history remains available.
+- `CLUB_SEASON_PILOT_EMAILS` was deleted from Netlify.
+- `CLUB_SEASON_PILOT_MODE` was set to `false` in all Netlify deploy contexts.
+- `STRIPE_WEBHOOK_SECRET` was intentionally left unchanged because production depends on that variable family and the temporary Stripe destination is disabled.
+
+This checkpoint does not complete the full final rehearsal. The remaining final-rehearsal cases are the 10U-12U tier, pay-in-full checkout, custom initial arrangement, later plan revision, duplicate-event idempotency, failure/recovery behavior, administrator ledger review, guardian restrictions, and mobile layouts.
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
 
-The next work item from the August 23, 2026 state is Step 6, the final prelaunch rehearsal in an isolated/test environment. Production should remain closed while that rehearsal is prepared and run unless Loren explicitly approves a specific production action.
+The next work item from the August 23, 2026 state is to continue Step 6, the final prelaunch rehearsal in an isolated/test environment. The 13U-18U standard-plan happy path has passed on Deploy Preview #39; the remaining Step 6 cases are still launch blockers. Production should remain closed while that rehearsal continues unless Loren explicitly approves a specific production action.
 
 ### Step 1 — Reconcile the repository and production migration record
 
@@ -494,12 +520,13 @@ Use Stripe test keys and testing environments for rehearsals. Never use real pay
 
 **Launch blocker.**
 
+- **Checkpoint completed August 23, 2026:** Deploy Preview #39 passed the 13U-18U standard-plan happy path in Stripe test mode, including parent sign-in, registration, agreement acceptance, Checkout, verified webhook activation, confirmation email, parent dashboard, and receipt access.
 - Create one final internal offer using the exact production agreement versions and real season configuration.
 - Verify the shared link remains absent from navigation and search indexing.
-- Test both standard price tiers.
-- Test pay in full and the standard plan.
+- Test the remaining 10U-12U standard price tier.
+- Test pay in full.
 - Test one custom initial arrangement and one later revision.
-- Confirm all emails, receipt access, parent balance, administrator ledger, and guardian restrictions.
+- Confirm administrator ledger and guardian restrictions.
 - Confirm a duplicate webhook/job run causes no duplicate payment or email.
 - Confirm failure does not remove the player from the roster.
 - Verify mobile registration and portal layouts.
