@@ -35,7 +35,7 @@ export default function RegistrationForm({
   initialEvents, 
   userAthletes = [], 
   currentUser,
-  initialTab = 'camps'
+  initialTab = 'tryout-prep'
 }: { 
   initialEvents: Event[],
   userAthletes?: SavedAthlete[],
@@ -63,7 +63,7 @@ export default function RegistrationForm({
   ]);
 
   const [athleteTabStates, setAthleteTabStates] = useState<string[]>(
-    ['camps'].map(() => ['camps', 'clinics', 'tryout-prep'].includes(initialTab) ? initialTab : 'camps')
+    ['tryout-prep'].map(() => ['camps', 'clinics', 'tryout-prep'].includes(initialTab) ? initialTab : 'tryout-prep')
   );
   const [expandedWaivers, setExpandedWaivers] = useState<boolean[]>([false]);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -76,7 +76,7 @@ export default function RegistrationForm({
 
   // Sync tab states and expanded waivers when athletes count changes
   useEffect(() => {
-    const tabToUse = ['camps', 'clinics', 'tryout-prep'].includes(initialTab) ? initialTab : 'camps';
+    const tabToUse = ['camps', 'clinics', 'tryout-prep'].includes(initialTab) ? initialTab : 'tryout-prep';
     
     setAthleteTabStates(prev => {
       if (prev.length === athletes.length) return prev;
@@ -306,7 +306,7 @@ export default function RegistrationForm({
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-heading font-bold text-white uppercase tracking-tight">Select Events</h2>
-            <p className="text-white/40 text-sm font-medium">Choose camps and clinics for each athlete.</p>
+            <p className="text-white/40 text-sm font-medium">Choose an available tryout prep clinic for each athlete.</p>
           </div>
           {athletes.map((athlete, index) => (
             <EventSelectionSection 

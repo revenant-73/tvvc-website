@@ -105,6 +105,7 @@ test.describe('Registration Flow', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
 
     await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible();
+    await page.getByRole('button', { name: 'Summer Camps' }).click();
     await expect(page.getByText(portalFixtures.parentB.eventName, { exact: true })).toBeVisible();
     await expect(page.getByText(
       portalFixtures.scheduleHistory.historicalCurrentEventName,
@@ -164,6 +165,7 @@ test.describe('Registration Flow', () => {
 
     // Step 2: Events
     await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible({ timeout: 10000 });
+    await page.getByRole('button', { name: 'Summer Camps' }).click();
 
     // Select an event
     const firstEvent = page.locator('label').filter({ hasText: /Clinic|Camp/ }).first();

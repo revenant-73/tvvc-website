@@ -32,11 +32,17 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
   toggleEvent,
   getSelectedCount
 }) => {
+  const categoryHasEvents = {
+    camps: initialEvents.some(e => e.type === 'camp'),
+    clinics: initialEvents.some(e => e.type === 'clinic' && !e.id.includes('clinic-tryout-prep')),
+    'tryout-prep': initialEvents.some(e => e.type === 'clinic' && e.id.includes('clinic-tryout-prep'))
+  };
+
   const tabs = [
     { id: 'camps', label: 'Summer Camps', count: getSelectedCount(index, 'camps') },
     { id: 'clinics', label: 'Skills Clinics', count: getSelectedCount(index, 'clinics') },
     { id: 'tryout-prep', label: 'Tryout Prep', count: getSelectedCount(index, 'tryout-prep') }
-  ];
+  ].filter(tab => categoryHasEvents[tab.id as keyof typeof categoryHasEvents]);
 
   const clinicGroups = [
     { title: 'Hitting Clinics', pattern: 'clinic-hitting' },
@@ -93,6 +99,12 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
         </div>
         
         <div className="min-h-[300px]">
+          {tabs.length === 0 && (
+            <div className="glass rounded-xl border border-white/10 p-8 text-center">
+              <p className="text-sm font-bold uppercase tracking-widest text-white/50">No registrations are open right now.</p>
+            </div>
+          )}
+
           {athleteTabState === 'clinics' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {clinicGroups.map(group => {
