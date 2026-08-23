@@ -369,6 +369,22 @@ Checked-in recovery artifacts:
 - `scripts/reconcile-production-club-season-foundation.sql`
 - `tests/production-club-season-foundation.test.ts`
 
+### 4.12 Invitation ledger schema prepared and rehearsed
+
+On August 22, 2026, the append-only invitation-release ledger in migration `0014_club-season-invitations.sql` was applied and verified in both the production and isolated pilot databases:
+
+- Production database: `tvvc-registration`.
+- Production recovery branch: `tvvc-reg-backup-2026-08-22-pre-invitations`.
+- Pilot database used by Deploy Previews: `tvvc-season-pilot`.
+- Pilot recovery branch: `tvvc-season-pilot-backup-2026-08-22-pre-invitations`.
+- Drizzle migration hash: `f629bc2559413abfee5d0f6765c1bd111b0c802409741f7f6f758e3ad78286c1`.
+- Both databases now contain the three invitation tables, 14 invitation indexes, six immutability triggers, and exactly one `0014` migration record.
+- Pilot verification confirmed the expected foreign-key counts (`3/2/3`), zero foreign-key violations, zero duplicate `0014` records, and `PRAGMA integrity_check = ok`.
+- Existing production and pilot offers were unchanged; no offers were released and no invitation emails were sent.
+- Deploy Preview #32 was retested after the pilot migration. Batch History loaded normally and showed the correct no-batches empty state instead of the prior missing-table error.
+
+The database groundwork is complete. PR #32 remains the publication boundary for the invitation-release application code and must be merged before the workflow is available in production.
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
@@ -461,7 +477,9 @@ Run payment rehearsals with Stripe test keys. Do not manufacture live charges or
 
 The operational release is scheduled in two waves: 14-and-under tryouts on November 8, 2026 with invitation emails on November 9, followed by 15U-18U tryouts on November 15 with invitation emails on November 16. The complete preparation, assignment, controlled release, and first-payment procedure is documented in `docs/CLUB_SEASON_TRYOUT_LAUNCH_RUNBOOK.md`.
 
-Before that weekend, finish the runbook's remaining self-service admin work: integrated offer release, Resend invitation preview, sending, result tracking, and resend controls. The goal is to require no code, commit, production SQL, or Netlify editing during either tryout launch wave.
+The self-service offer workspace now includes the controlled invitation sequence: authoritative preview, restricted administrator test mail, atomic offer release, duplicate-safe initial sending, failed-message retry, deliberate resend, and batch/per-recipient result history. Release changes `ready` offers to family-visible `offered`; it never sends. Send actions notify already-released families and never change assignments, pricing, deadlines, or registration locks.
+
+Release batches are server-enforced to one active team and at most 50 unique offers. The dashboard shows both registration locks, retains a release request key across ambiguous retries, and computes ready, released-unsent, sent, and failed totals from each recipient's latest attempt. Initial sends, retries, and deliberate resends are blocked whenever either registration lock is closed.
 
 **Published in production:** the November offer-preparation workspace supports separate November 8 and November 15 waves, private draft offers, draft/ready corrections, readiness and blocker summaries, audited review-to-ready actions, assignment conflict details, and parent isolation for both draft and ready states.
 
@@ -498,7 +516,7 @@ Keep the route unlisted; “live” means available to verified offered families
 
 - Stripe dispute-webhook handling and dispute workflow.
 - Manual pause/resume controls for automatic charges.
-- Expanded Resend delivered/bounced webhook tracking beyond the invitation results required by the tryout launch runbook.
+- Resend delivered/bounced/complained webhook tracking remains a later enhancement. The current invitation ledger records provider acceptance (`sent`) or API failure, immutable attempt numbering, and safe retry/resend history.
 - Household-level consolidation of sibling reminders.
 - A formal parent cancellation/refund-request form and automated proration worksheet.
 - A coach-facing readiness view with financial and medical details excluded.

@@ -15,7 +15,7 @@ test('production baseline records exact repository migrations and is rerunnable'
   try {
     const journal = JSON.parse(await fs.readFile(path.join(root, 'drizzle/meta/_journal.json'), 'utf8'));
     const historicalBaselineEntries = journal.entries.filter((entry: { idx: number }) => entry.idx <= 12);
-    for (const entry of journal.entries) {
+    for (const entry of historicalBaselineEntries) {
       const sql = (await fs.readFile(path.join(root, 'drizzle', `${entry.tag}.sql`), 'utf8'))
         .replaceAll('--> statement-breakpoint', '');
       await client.executeMultiple(sql);
@@ -78,6 +78,20 @@ test('production baseline records exact repository migrations and is rerunnable'
       assert.equal(result.rows[index].created_at, entry.when);
       assert.equal(result.rows[index].hash, crypto.createHash('sha256').update(source).digest('hex'));
     }
+
+    for (const entry of journal.entries.filter((item: { idx: number }) => item.idx > 12)) {
+      const sql = (await fs.readFile(path.join(root, 'drizzle', `${entry.tag}.sql`), 'utf8'))
+        .replaceAll('--> statement-breakpoint', '');
+      await client.executeMultiple(sql);
+    }
+    const currentShape = await client.execute(`
+      SELECT
+        sum(type = 'table' AND name LIKE 'club_%') AS tables,
+        sum(type = 'trigger' AND name LIKE 'club_%') AS triggers,
+        sum(type = 'index' AND name LIKE 'club_%') AS indexes
+      FROM sqlite_master
+    `);
+    assert.deepEqual(currentShape.rows[0], { tables: 22, triggers: 33, indexes: 88 });
   } finally {
     await client.close();
   }

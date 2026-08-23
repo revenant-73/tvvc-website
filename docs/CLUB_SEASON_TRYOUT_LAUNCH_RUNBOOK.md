@@ -41,10 +41,10 @@ Complete and rehearse the following before November 8:
 - Enable the Netlify club-season feature flag in advance. The separate season database lock must remain closed, so enabling this flag alone does not give families access.
 - Rehearse the guarded **Open Registration / Close Registration** control. Opening requires every launch check, an audit reason, and the exact confirmation phrase; emergency close remains available at any time.
 - Prepare and approve the 14-and-under offer-email template.
-- Add an administrator email preview and test-send workflow.
-- Add team-by-team invitation sending through Resend, including sent/failed results and a safe resend control.
-- Add a 10U-14U player filter and a launch summary showing team counts, missing assignments, ineligible records, and other items needing attention.
-- Add a draft/review state for offer batches so team assignments can be prepared on November 8 without releasing invitations.
+- Use the administrator email preview and test-send workflow to approve the final template without contacting a family.
+- The offer workspace now provides team-scoped preview, administrator-only test sending, atomic release, initial sending, failed-message retry, deliberate resend, and per-recipient history. Release and send remain separate actions.
+- Use the 10U-14U wave filter and launch summary to review team counts, missing assignments, ineligible records, and other items needing attention.
+- Keep assignments in the private draft/review states while preparing teams on November 8; draft and ready offers remain unavailable to families.
 - Configure the normal three-calendar-day response period. For invitations sent November 9, the default deadline is November 12, 2026 at 11:59 PM Pacific. For invitations sent November 16, the default deadline is November 19, 2026 at 11:59 PM Pacific. Individual deadlines may still be extended.
 - Run the final prelaunch rehearsal with Stripe test keys and take the required Turso backup.
 - Verify the private registration route remains absent from public navigation and search indexing.
@@ -73,12 +73,13 @@ The November offer-preparation milestone is published in production. It adds:
 - an audited **Mark ready** review action;
 - server-side isolation that makes draft and ready offers invisible and unusable to parents, including guessed offer identifiers.
 
-The guarded open/close control is implemented locally on `codex/guarded-registration-control` and awaits preview verification and production publication. Opening is blocked unless the feature flag, live Stripe review, agreements, active teams, schedule, email configuration, billing protection, and controlled-pilot evidence all pass. Closing remains available as an emergency brake and pauses new or unfinished registration activity without altering completed records.
+The guarded open/close control has completed preview review. Opening is blocked unless the feature flag, live Stripe review, agreements, active teams, schedule, email configuration, billing protection, and controlled-pilot evidence all pass. Closing remains available as an emergency brake and pauses new or unfinished registration activity without altering completed records.
+
+The invitation-release workflow is implemented and verified in Deploy Preview #32. Its append-only migration `0014` was applied to both `tvvc-registration` and the isolated `tvvc-season-pilot` preview database on August 22, 2026. Recovery branches `tvvc-reg-backup-2026-08-22-pre-invitations` and `tvvc-season-pilot-backup-2026-08-22-pre-invitations` were retained. Preview verification confirmed an empty invitation history with no released offers and no email sends. PR #32 must be merged before these invitation controls are available in production.
 
 The following items remain planned work before this runbook can be performed entirely from the dashboard:
 
-- integrated Resend invitation sending, preview, result tracking, and resend controls;
-- the later release action that converts reviewed offers into family-visible invitations without changing teams, prices, or registration locks.
+- Resend delivery/bounce/complaint webhook ingestion remains a later enhancement. For launch, `sent` means Resend accepted the API request; the administrator should still monitor the Resend dashboard for downstream delivery events.
 
 ## 4. Tryout-Day Team Selection and Offer Preparation
 
@@ -119,10 +120,13 @@ Use this procedure on November 9 for 10U-14U and again on November 16 for 15U-18
 4. For the first wave, use the guarded admin control to open the season database registration lock. For the second wave, confirm the lock remains open; do not close and reopen it unnecessarily.
 5. Test the shared registration link with an internal offered-family account.
 6. Test the same link with an unrelated account and confirm that no offer is exposed.
-7. Preview the final invitation email and send a test copy to the administrator.
-8. Send a small initial invitation batch.
-9. Confirm successful Resend processing and verify that the invitations contain the correct player, team, deadline, price, and link.
-10. Send the remaining invitations in manageable team-by-team batches.
+7. In **Invitation release**, select one team, preview the authoritative email, and send a test copy to the signed-in administrator.
+8. With both registration locks open, type `RELEASE INVITATIONS` and record the reason. Confirm the offers become family-visible and that no email was sent by the release action.
+9. Select the released batch, type `SEND INVITATIONS`, and send a small initial team-sized batch.
+10. Confirm successful Resend processing and verify that the invitations contain the correct player, team, deadline, price, and link.
+11. Send the remaining invitations in manageable team-by-team batches. Use **Retry failed** only for failed attempts; use the coral deliberate-resend panel only when a previously accepted message truly must be sent again.
+
+The workspace derives delivery status from each recipient's latest immutable attempt. A successful retry clears that recipient's current failed state while preserving the failed attempt in history. Closing either registration-access lock pauses initial sends, retries, and deliberate resends immediately.
 11. Monitor sent, failed, registration-started, accepted, declined, and expired counts.
 
 The invitation email must include:

@@ -17,6 +17,7 @@ import {
   users,
 } from '../../../db/schema';
 import { requireAdminApiSession } from '../../../lib/admin-auth';
+import { isClubSeasonRegistrationEnabled } from '../../../lib/club-season-feature';
 
 export const prerender = false;
 
@@ -198,6 +199,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     for (const item of countsByTeam) item.count = waveOffers.filter((offer) => offer.teamId === item.teamId).length;
     return json({
       season,
+      accessLocks: { database: Boolean(season.publicRegistrationEnabled), featureFlag: isClubSeasonRegistrationEnabled() },
       wave: wave || 'all',
       waves: [
         { id: 'nov8', date: WAVE_DATES.nov8, label: 'November 8', ages: '10U–14U', deadline: '2026-11-12' },
