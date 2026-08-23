@@ -136,6 +136,19 @@ As of this snapshot:
 
 The invitation UI may be visible to an authenticated administrator while the locks remain closed. That is expected; release and sending remain blocked.
 
+### August 23, 2026 deploy-preview rehearsal notes
+
+These notes preserve the current thread's operational context for the next Codex session:
+
+- Working branch: `codex/deployed-rehearsal-2026-08-23`.
+- Relevant branch commits before this note: `088c107` triggered the rehearsal preview, `d7703b6` rebuilt with the parent pilot alias, `72f926f` rebuilt after auth trust env, `c9a43ed` rebuilt after Stripe webhook secret setup, `d9dadce` documented the first deployed rehearsal cleanup, `456a75c` rebuilt for the 12U pay-in-full pilot, and `b9b3927` documented the 12U pay-in-full rehearsal.
+- Deploy Preview #39 completed and then closed again. The post-cleanup preview build from `b9b3927` finished successfully, and `/season-registration` returned `NO ACTIVE OFFER FOUND`.
+- Temporary Stripe test webhook destination `we_1U7fqaFzgaoVZJWYIVzh1akm` was disabled after the rehearsals. It was not deleted, so Stripe test delivery history should still be available.
+- `CLUB_SEASON_PILOT_EMAILS` was deleted from Netlify.
+- `CLUB_SEASON_PILOT_MODE` was verified as `false` for Production, Deploy Previews, Branch deploys, Preview Server & Agent Runners, and Local development (Netlify CLI).
+- The pilot database `tvvc-season-pilot` intentionally retains rehearsal evidence for the 13U standard-plan and 12U pay-in-full test families.
+- No production database writes, live Stripe charges, registration opening, offer release, or invitation sends happened during the deployed rehearsals.
+
 ## 8. Databases, Migrations, and Recovery
 
 | Environment | Turso database | Purpose |
