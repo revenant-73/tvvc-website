@@ -82,7 +82,7 @@ The following external setup was completed on August 23, 2026 before downstream 
 - `RESEND_WEBHOOK_SECRET` is configured in Netlify as a protected environment variable.
 - Resend has a production webhook registered for `https://tualatinvalleyvb.com/api/webhooks/resend`.
 - The webhook is subscribed to `email.sent`, `email.delivered`, `email.delivery_delayed`, `email.failed`, `email.bounced`, `email.complained`, and `email.suppressed`.
-- Until the production function is redeployed and smoke-tested with signature verification active, `sent` means Resend accepted the API request and the administrator should still monitor the Resend dashboard for downstream delivery events.
+- Production deploy `049d3f6` was smoke-tested with signature verification active. During the first real invitation wave, the administrator should still monitor the Resend dashboard alongside the admin invitation history until real downstream delivery events are observed.
 
 ## 4. Manual Launch Readiness Checklist
 
