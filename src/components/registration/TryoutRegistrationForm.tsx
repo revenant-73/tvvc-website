@@ -11,6 +11,7 @@ interface Event {
   price: number;
   capacity: number;
   spotsFilled: number;
+  pendingSpots?: number;
 }
 
 interface Athlete {
@@ -532,23 +533,28 @@ export default function TryoutRegistrationForm({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {initialEvents.map(event => (
-                  <button
-                    key={event.id}
-                    type="button"
-                    disabled={event.spotsFilled >= event.capacity}
-                    onClick={() => toggleEvent(index, event.id)}
-                    className={`text-left p-6 rounded-2xl border transition-all ${athlete.selectedEvents.includes(event.id) ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal/20' : 'bg-white/5 border-white/10 hover:border-white/20'} ${event.spotsFilled >= event.capacity ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-brand-teal">{event.name}</span>
-                      <span className="text-xs font-bold text-white">${(event.price / 100).toFixed(0)}</span>
-                    </div>
-                    <div className="text-lg font-heading font-bold text-white mb-1">{event.dateInfo}</div>
-                    <div className="text-xs text-white/40 mb-4">{event.timeInfo}</div>
-                    {event.spotsFilled >= event.capacity && <div className="text-[10px] font-bold text-brand-coral uppercase tracking-widest">Session Full</div>}
-                  </button>
-                ))}
+                {initialEvents.map(event => {
+                  const reserved = (event.spotsFilled || 0) + (event.pendingSpots || 0);
+                  const isFull = reserved >= event.capacity;
+
+                  return (
+                    <button
+                      key={event.id}
+                      type="button"
+                      disabled={isFull}
+                      onClick={() => toggleEvent(index, event.id)}
+                      className={`text-left p-6 rounded-2xl border transition-all ${athlete.selectedEvents.includes(event.id) ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal/20' : 'bg-white/5 border-white/10 hover:border-white/20'} ${isFull ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-brand-teal">{event.name}</span>
+                        <span className="text-xs font-bold text-white">${(event.price / 100).toFixed(0)}</span>
+                      </div>
+                      <div className="text-lg font-heading font-bold text-white mb-1">{event.dateInfo}</div>
+                      <div className="text-xs text-white/40 mb-4">{event.timeInfo}</div>
+                      {isFull && <div className="text-[10px] font-bold text-brand-coral uppercase tracking-widest">Session Full</div>}
+                    </button>
+                  );
+                })}
               </div>
             </section>
           ))}

@@ -3,7 +3,7 @@ export const prerender = false;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getDb } from '../../db';
-import { events, registrationItems, registrations, athletes } from '../../db/schema';
+import { events, eventWaitlistEntries, registrationItems, registrations, athletes } from '../../db/schema';
 import { desc, asc, eq, inArray, and } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
 
@@ -25,16 +25,27 @@ if (isAdmin) {
     
     // Fetch emails for each event
     const eventIds = eventsData.map(e => e.id);
-    const emailResults = eventIds.length > 0 ? await db.select({
-      eventId: registrationItems.eventId,
-      parentEmail: registrations.parentEmail
-    })
-    .from(registrationItems)
-    .innerJoin(registrations, eq(registrationItems.registrationId, registrations.id))
-    .where(and(
-      inArray(registrationItems.eventId, eventIds),
-      eq(registrations.status, 'paid')
-    )) : [];
+    const [emailResults, waitlistResults] = eventIds.length > 0 ? await Promise.all([
+      db.select({
+        eventId: registrationItems.eventId,
+        parentEmail: registrations.parentEmail
+      })
+      .from(registrationItems)
+      .innerJoin(registrations, eq(registrationItems.registrationId, registrations.id))
+      .where(and(
+        inArray(registrationItems.eventId, eventIds),
+        eq(registrations.status, 'paid')
+      )),
+      db.select({
+        eventId: eventWaitlistEntries.eventId,
+        status: eventWaitlistEntries.status,
+      })
+      .from(eventWaitlistEntries)
+      .where(and(
+        inArray(eventWaitlistEntries.eventId, eventIds),
+        inArray(eventWaitlistEntries.status, ['waitlisted', 'invited'])
+      ))
+    ]) : [[], []];
 
     const emailMap: Record<string, string[]> = {};
     emailResults.forEach(r => {
@@ -46,9 +57,15 @@ if (isAdmin) {
       }
     });
 
+    const waitlistCountMap: Record<string, number> = {};
+    waitlistResults.forEach((r) => {
+      waitlistCountMap[r.eventId] = (waitlistCountMap[r.eventId] || 0) + 1;
+    });
+
     allEvents = eventsData.map(e => ({
       ...e,
-      emails: emailMap[e.id] || []
+      emails: emailMap[e.id] || [],
+      waitlistCount: waitlistCountMap[e.id] || 0,
     }));
   } catch (e) {
     console.error("Dashboard Database Error:", e);
@@ -206,6 +223,9 @@ const getGroupedEvents = (events: any[]) => {
                             <div>
                               <p class="text-[8px] font-bold uppercase text-white/30 tracking-widest mb-1">Enrolled</p>
                               <p class={`text-2xl font-heading font-bold ${isOverEnrolled ? 'text-brand-coral' : 'text-white'}`}>{event.spotsFilled} / <span class="text-white/40 text-lg">{event.capacity}</span></p>
+                              {event.waitlistEnabled && (
+                                <p class="mt-1 text-[9px] font-bold uppercase tracking-widest text-amber-300">Waitlist {event.waitlistCount}</p>
+                              )}
                             </div>
                             <div class="h-1.5 w-24 bg-white/5 rounded-full overflow-hidden">
                               <div class={`h-full ${event.spotsFilled >= event.capacity ? 'bg-brand-coral' : 'bg-brand-teal'} rounded-full`} style={`width: ${Math.min((event.spotsFilled / event.capacity) * 100, 100)}%`}></div>
@@ -256,7 +276,12 @@ const getGroupedEvents = (events: any[]) => {
                                 </div>
                                 
                                 <div class="flex items-center justify-between py-2 border-y border-white/5">
-                                  <p class="text-sm font-heading font-bold text-white">{event.spotsFilled} / <span class="text-white/40 text-xs">{event.capacity}</span></p>
+                                  <div>
+                                    <p class="text-sm font-heading font-bold text-white">{event.spotsFilled} / <span class="text-white/40 text-xs">{event.capacity}</span></p>
+                                    {event.waitlistEnabled && (
+                                      <p class="mt-1 text-[8px] font-bold uppercase tracking-widest text-amber-300">Waitlist {event.waitlistCount}</p>
+                                    )}
+                                  </div>
                                   <div class="h-1 w-20 bg-white/10 rounded-full overflow-hidden">
                                     <div class={`h-full ${event.spotsFilled >= event.capacity ? 'bg-brand-coral' : 'bg-brand-teal'} rounded-full`} style={`width: ${Math.min((event.spotsFilled / event.capacity) * 100, 100)}%`}></div>
                                   </div>

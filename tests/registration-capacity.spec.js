@@ -105,3 +105,69 @@ test('rejects a single checkout that requests more spots than remain', async ({ 
     client.close();
   }
 });
+
+test('saves a waitlist entry when a full event has waitlist enabled', async ({ request }) => {
+  const client = createClient({ url: fixtures.databaseUrl });
+
+  try {
+    await client.execute({
+      sql: `UPDATE events
+            SET spots_filled = capacity,
+                pending_spots = 0,
+                waitlist_enabled = 1
+            WHERE id = ?`,
+      args: [fixtures.capacity.eventId],
+    });
+
+    const payload = registrationPayload('waitlist-enabled');
+    const response = await request.post('/api/event-waitlist', { data: payload });
+    const responseBody = await response.json();
+
+    expect(response.status()).toBe(200);
+    expect(responseBody.success).toBe(true);
+    expect(responseBody.entries).toEqual([
+      expect.objectContaining({
+        eventId: fixtures.capacity.eventId,
+        status: 'waitlisted',
+      }),
+    ]);
+
+    const waitlist = await client.execute({
+      sql: `SELECT COUNT(*) AS count
+            FROM event_waitlist_entries
+            WHERE event_id = ?
+              AND parent_email = ?
+              AND status = 'waitlisted'`,
+      args: [fixtures.capacity.eventId, 'capacity-waitlist-enabled@tvvc.test'],
+    });
+
+    expect(Number(waitlist.rows[0].count)).toBe(1);
+  } finally {
+    client.close();
+  }
+});
+
+test('rejects a waitlist entry when waitlist is disabled', async ({ request }) => {
+  const client = createClient({ url: fixtures.databaseUrl });
+
+  try {
+    await client.execute({
+      sql: `UPDATE events
+            SET spots_filled = capacity,
+                pending_spots = 0,
+                waitlist_enabled = 0
+            WHERE id = ?`,
+      args: [fixtures.capacity.eventId],
+    });
+
+    const response = await request.post('/api/event-waitlist', {
+      data: registrationPayload('waitlist-disabled'),
+    });
+    const responseBody = await response.json();
+
+    expect(response.status()).toBe(409);
+    expect(responseBody.error).toContain('not currently accepting waitlist entries');
+  } finally {
+    client.close();
+  }
+});

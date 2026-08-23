@@ -28,12 +28,14 @@ if (isAdmin && Astro.request.method === 'POST') {
     const newCapacity = parseInt(data.get('capacity') as string);
     const newSpotsFilled = parseInt(data.get('spotsFilled') as string);
     const emailDetails = data.get('emailDetails') as string;
+    const waitlistEnabled = data.get('waitlistEnabled') === 'on';
     
     if (!isNaN(newCapacity) && !isNaN(newSpotsFilled)) {
       await db.update(events)
         .set({ 
           capacity: newCapacity,
           spotsFilled: newSpotsFilled,
+          waitlistEnabled,
           emailDetails: emailDetails
         })
         .where(eq(events.id, id as string));
@@ -113,6 +115,23 @@ if (eventData && !isAdmin) {
                 required 
               />
             </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+            <label class="flex cursor-pointer items-start gap-4">
+              <input
+                type="checkbox"
+                name="waitlistEnabled"
+                checked={eventData.waitlistEnabled}
+                class="mt-1 h-5 w-5 rounded border-white/20 bg-brand-charcoal text-brand-teal focus:ring-brand-teal"
+              />
+              <span>
+                <span class="block text-[10px] font-bold uppercase tracking-widest text-brand-teal">Enable waitlist</span>
+                <span class="mt-1 block text-sm leading-6 text-white/55">
+                  When this event is full, families can join the waitlist instead of being blocked completely. They are not charged when joining.
+                </span>
+              </span>
+            </label>
           </div>
 
           <div class="space-y-3">

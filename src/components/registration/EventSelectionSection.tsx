@@ -11,6 +11,7 @@ interface Event {
   capacity: number;
   spotsFilled: number;
   pendingSpots: number;
+  waitlistEnabled?: boolean;
 }
 
 interface EventSelectionSectionProps {
@@ -20,6 +21,8 @@ interface EventSelectionSectionProps {
   athleteTabState: string;
   setAthleteTab: (index: number, tab: string) => void;
   toggleEvent: (athleteIndex: number, eventId: string) => void;
+  waitlistedEventIds: string[];
+  toggleWaitlistEvent: (athleteIndex: number, eventId: string) => void;
   getSelectedCount: (athleteIndex: number, tabId: string) => number;
 }
 
@@ -30,6 +33,8 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
   athleteTabState,
   setAthleteTab,
   toggleEvent,
+  waitlistedEventIds,
+  toggleWaitlistEvent,
   getSelectedCount
 }) => {
   const categoryHasEvents = {
@@ -121,13 +126,16 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
                       {groupEvents.map(event => {
                         const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
                         const isSelected = athlete.selectedEvents.includes(event.id);
+                        const waitlistAvailable = isFull && Boolean(event.waitlistEnabled);
+                        const isWaitlisted = waitlistedEventIds.includes(event.id);
                         
                         return (
                           <label 
                             key={event.id}
                             className={`
                               flex items-center justify-between p-4 rounded-xl border transition-all
-                              ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                              ${isFull && !waitlistAvailable ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                              ${isWaitlisted ? 'bg-amber-300/10 border-amber-300/50 shadow-[0_0_20px_rgba(252,211,77,0.08)]' : ''}
                               ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
                             `}
                           >
@@ -148,8 +156,19 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
                             </div>
                             <div className="text-right">
                               <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
-                              {isFull ? (
-                                <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist Only</span>
+                              {waitlistAvailable ? (
+                                <button
+                                  type="button"
+                                  onClick={(clickEvent) => {
+                                    clickEvent.preventDefault();
+                                    toggleWaitlistEvent(index, event.id);
+                                  }}
+                                  className={`mt-1 rounded-md border px-2 py-1 text-[8px] font-bold uppercase tracking-widest ${isWaitlisted ? 'border-amber-300 bg-amber-300 text-brand-charcoal' : 'border-amber-300/40 text-amber-300 hover:bg-amber-300/10'}`}
+                                >
+                                  {isWaitlisted ? 'Waitlisted' : 'Join Waitlist'}
+                                </button>
+                              ) : isFull ? (
+                                <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Full</span>
                               ) : (
                                 event.capacity - ((event.spotsFilled || 0) + (event.pendingSpots || 0)) <= 5 && (
                                   <span className="block text-[8px] font-bold text-brand-teal uppercase tracking-widest animate-pulse">
@@ -174,12 +193,15 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
                   {initialEvents.filter(e => e.type === 'camp').sort(sortByDate).map(event => {
                     const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
                     const isSelected = athlete.selectedEvents.includes(event.id);
+                    const waitlistAvailable = isFull && Boolean(event.waitlistEnabled);
+                    const isWaitlisted = waitlistedEventIds.includes(event.id);
                     return (
                       <label 
                         key={event.id}
                         className={`
                           flex items-center justify-between p-4 rounded-xl border transition-all
-                          ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                          ${isFull && !waitlistAvailable ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                          ${isWaitlisted ? 'bg-amber-300/10 border-amber-300/50 shadow-[0_0_20px_rgba(252,211,77,0.08)]' : ''}
                           ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
                         `}
                       >
@@ -200,7 +222,18 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
                         </div>
                         <div className="text-right">
                           <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
-                          {isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist</span>}
+                          {waitlistAvailable ? (
+                            <button
+                              type="button"
+                              onClick={(clickEvent) => {
+                                clickEvent.preventDefault();
+                                toggleWaitlistEvent(index, event.id);
+                              }}
+                              className={`mt-1 rounded-md border px-2 py-1 text-[8px] font-bold uppercase tracking-widest ${isWaitlisted ? 'border-amber-300 bg-amber-300 text-brand-charcoal' : 'border-amber-300/40 text-amber-300 hover:bg-amber-300/10'}`}
+                            >
+                              {isWaitlisted ? 'Waitlisted' : 'Join Waitlist'}
+                            </button>
+                          ) : isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Full</span>}
                         </div>
                       </label>
                     );
@@ -215,12 +248,15 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
                   {initialEvents.filter(e => e.type === 'clinic' && e.id.includes('clinic-tryout-prep')).sort(sortByDate).map(event => {
                     const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
                     const isSelected = athlete.selectedEvents.includes(event.id);
+                    const waitlistAvailable = isFull && Boolean(event.waitlistEnabled);
+                    const isWaitlisted = waitlistedEventIds.includes(event.id);
                     return (
                       <label 
                         key={event.id}
                         className={`
                           flex items-center justify-between p-4 rounded-xl border transition-all
-                          ${isFull ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                          ${isFull && !waitlistAvailable ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                          ${isWaitlisted ? 'bg-amber-300/10 border-amber-300/50 shadow-[0_0_20px_rgba(252,211,77,0.08)]' : ''}
                           ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
                         `}
                       >
@@ -241,7 +277,18 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
                         </div>
                         <div className="text-right">
                           <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
-                          {isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Waitlist</span>}
+                          {waitlistAvailable ? (
+                            <button
+                              type="button"
+                              onClick={(clickEvent) => {
+                                clickEvent.preventDefault();
+                                toggleWaitlistEvent(index, event.id);
+                              }}
+                              className={`mt-1 rounded-md border px-2 py-1 text-[8px] font-bold uppercase tracking-widest ${isWaitlisted ? 'border-amber-300 bg-amber-300 text-brand-charcoal' : 'border-amber-300/40 text-amber-300 hover:bg-amber-300/10'}`}
+                            >
+                              {isWaitlisted ? 'Waitlisted' : 'Join Waitlist'}
+                            </button>
+                          ) : isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Full</span>}
                         </div>
                       </label>
                     );

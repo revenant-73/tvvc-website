@@ -15,13 +15,15 @@ interface ReviewSectionProps {
   athletes: Athlete[];
   initialEvents: Event[];
   total: number;
+  waitlistSelections?: string[][];
 }
 
 export const ReviewSection: React.FC<ReviewSectionProps> = ({
   parentInfo,
   athletes,
   initialEvents,
-  total
+  total,
+  waitlistSelections = []
 }) => {
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -79,6 +81,18 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({
                         </div>
                       ) : null;
                     })}
+                    {(waitlistSelections[idx] || []).map(eventId => {
+                      const event = initialEvents.find(e => e.id === eventId);
+                      return event ? (
+                        <div key={`waitlist-${eventId}`} className="flex justify-between items-center p-4 bg-amber-300/10 rounded-xl border border-amber-300/25">
+                          <div>
+                            <p className="text-sm font-bold text-white">{event.name}</p>
+                            <p className="text-[10px] text-white/40 uppercase tracking-widest font-medium">{event.dateInfo} • {event.timeInfo}</p>
+                          </div>
+                          <p className="font-bold text-amber-300 uppercase tracking-widest text-[10px]">Waitlist</p>
+                        </div>
+                      ) : null;
+                    })}
                   </div>
                 </div>
               </section>
@@ -107,7 +121,9 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({
             
             <div className="p-4 bg-white/5 rounded-xl border border-white/5 mb-8">
               <p className="text-[9px] text-white/40 uppercase font-bold tracking-widest leading-relaxed">
-                Clicking "Complete Registration" will redirect you to Stripe for secure payment processing.
+                {total > 0
+                  ? 'Clicking "Complete Registration" will redirect you to Stripe for secure payment processing. Waitlist requests are saved without a charge.'
+                  : 'Clicking "Join Waitlist" will save your waitlist request. You will not be charged unless TVVC opens a spot and you complete registration.'}
               </p>
             </div>
           </section>

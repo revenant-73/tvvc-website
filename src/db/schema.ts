@@ -164,6 +164,7 @@ export const events = sqliteTable('events', {
   capacity: integer('capacity').notNull(),
   spotsFilled: integer('spots_filled').default(0),
   pendingSpots: integer('pending_spots').default(0),
+  waitlistEnabled: integer('waitlist_enabled', { mode: 'boolean' }).notNull().default(false),
   active: integer('active', { mode: 'boolean' }).default(true),
   emailDetails: text('email_details'), // Custom details for registration emails
   metadata: text('metadata'), // For any event-specific config
@@ -174,6 +175,41 @@ export const events = sqliteTable('events', {
     startDateIdx: index('events_start_date_idx').on(table.startDate),
   };
 });
+
+export const eventWaitlistEntries = sqliteTable('event_waitlist_entries', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id').notNull().references(() => events.id),
+  userId: text('user_id').references(() => users.id),
+  profileId: integer('profile_id').references(() => playerProfiles.id),
+  parentName: text('parent_name').notNull(),
+  parentEmail: text('parent_email').notNull(),
+  parentPhone: text('parent_phone').notNull(),
+  secondaryParentName: text('secondary_parent_name'),
+  secondaryParentEmail: text('secondary_parent_email'),
+  secondaryParentPhone: text('secondary_parent_phone'),
+  emergencyPhone: text('emergency_phone'),
+  athleteFirstName: text('athlete_first_name').notNull(),
+  athleteLastName: text('athlete_last_name').notNull(),
+  athletePreferredName: text('athlete_preferred_name'),
+  athleteGrade: text('athlete_grade').notNull(),
+  athleteMedicalInfo: text('athlete_medical_info'),
+  status: text('status').notNull().default('waitlisted'),
+  source: text('source').notNull().default('public'),
+  note: text('note'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  invitedAt: text('invited_at'),
+  registeredAt: text('registered_at'),
+  removedAt: text('removed_at'),
+}, (table) => ({
+  eventIdIdx: index('event_waitlist_entries_event_id_idx').on(table.eventId),
+  statusIdx: index('event_waitlist_entries_status_idx').on(table.status),
+  parentEmailIdx: index('event_waitlist_entries_parent_email_idx').on(table.parentEmail),
+  createdAtIdx: index('event_waitlist_entries_created_at_idx').on(table.createdAt),
+  activeEntryUnique: uniqueIndex('event_waitlist_entries_active_unique')
+    .on(table.eventId, table.parentEmail, table.athleteFirstName, table.athleteLastName)
+    .where(sql`${table.status} IN ('waitlisted', 'invited')`),
+}));
 
 // --- Club Season Registration Foundation ---
 

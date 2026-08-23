@@ -66,6 +66,8 @@ export default function RegistrationForm({
     ['tryout-prep'].map(() => ['camps', 'clinics', 'tryout-prep'].includes(initialTab) ? initialTab : 'tryout-prep')
   );
   const [expandedWaivers, setExpandedWaivers] = useState<boolean[]>([false]);
+  const [waitlistSelections, setWaitlistSelections] = useState<string[][]>([[]]);
+  const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [total, setTotal] = useState(0);
@@ -90,6 +92,14 @@ export default function RegistrationForm({
       if (prev.length === athletes.length) return prev;
       if (athletes.length > prev.length) {
         return [...prev, ...Array(athletes.length - prev.length).fill(false)];
+      }
+      return prev.slice(0, athletes.length);
+    });
+
+    setWaitlistSelections(prev => {
+      if (prev.length === athletes.length) return prev;
+      if (athletes.length > prev.length) {
+        return [...prev, ...Array.from({ length: athletes.length - prev.length }, () => [])];
       }
       return prev.slice(0, athletes.length);
     });
@@ -140,6 +150,12 @@ export default function RegistrationForm({
       next.splice(index, 1);
       return next;
     });
+    setWaitlistSelections(prev => {
+      if (prev.length <= 1) return prev;
+      const next = [...prev];
+      next.splice(index, 1);
+      return next;
+    });
   };
 
   const updateAthlete = (index: number, field: keyof Athlete, value: any) => {
@@ -159,6 +175,17 @@ export default function RegistrationForm({
       } else {
         next[athleteIndex].selectedEvents = [...eventList, eventId];
       }
+      return next;
+    });
+  };
+
+  const toggleWaitlistEvent = (athleteIndex: number, eventId: string) => {
+    setWaitlistSelections(prev => {
+      const next = [...prev];
+      const eventList = next[athleteIndex] || [];
+      next[athleteIndex] = eventList.includes(eventId)
+        ? eventList.filter(id => id !== eventId)
+        : [...eventList, eventId];
       return next;
     });
   };
@@ -209,8 +236,8 @@ export default function RegistrationForm({
         return;
       }
     } else if (currentStep === 2) {
-      if (athletes.some(a => a.selectedEvents.length === 0)) {
-        toast.error("Please select at least one event for each athlete.");
+      if (athletes.some((a, index) => a.selectedEvents.length === 0 && (waitlistSelections[index] || []).length === 0)) {
+        toast.error("Please select at least one event or waitlist for each athlete.");
         return;
       }
     } else if (currentStep === 3) {
@@ -236,18 +263,58 @@ export default function RegistrationForm({
       return;
     }
 
-    const validation = registrationSchema.safeParse({ parentInfo, athletes });
-    if (!validation.success) {
+    const paidAthletes = athletes.filter((athlete) => athlete.selectedEvents.length > 0);
+    const waitlistAthletes = athletes
+      .map((athlete, index) => ({
+        ...athlete,
+        selectedEvents: waitlistSelections[index] || [],
+      }))
+      .filter((athlete) => athlete.selectedEvents.length > 0);
+    const paidValidation = paidAthletes.length
+      ? registrationSchema.safeParse({ parentInfo, athletes: paidAthletes })
+      : null;
+    const waitlistValidation = waitlistAthletes.length
+      ? registrationSchema.safeParse({ parentInfo, athletes: waitlistAthletes })
+      : null;
+
+    if (paidValidation && !paidValidation.success) {
       toast.error("Registration data is invalid. Please review your entries.");
+      return;
+    }
+    if (waitlistValidation && !waitlistValidation.success) {
+      toast.error("Waitlist data is invalid. Please review your entries.");
+      return;
+    }
+    if (!paidValidation && !waitlistValidation) {
+      toast.error("Please select at least one event or waitlist.");
       return;
     }
 
     setIsSubmitting(true);
     try {
+      if (waitlistValidation?.success) {
+        const waitlistResponse = await fetch('/api/event-waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(waitlistValidation.data),
+        });
+
+        const waitlistData = await waitlistResponse.json();
+        if (!waitlistResponse.ok) {
+          throw new Error(waitlistData.error || 'Unable to save waitlist request');
+        }
+      }
+
+      if (!paidValidation?.success) {
+        setWaitlistSubmitted(true);
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validation.data),
+        body: JSON.stringify(paidValidation.data),
       });
 
       const data = await response.json();
@@ -261,6 +328,19 @@ export default function RegistrationForm({
       setIsSubmitting(false);
     }
   };
+
+  if (waitlistSubmitted) {
+    return (
+      <section className="glass-card border-amber-300/30 bg-amber-300/5 p-8 text-center md:p-12" role="status">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">Waitlist request saved</p>
+        <h2 className="mt-3 text-3xl font-heading font-bold text-white uppercase tracking-tight">You are on the waitlist</h2>
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-white/60">
+          TVVC has your waitlist request. You have not been charged, and your spot is not confirmed unless TVVC opens a place and you complete registration.
+        </p>
+        <a href="/tryouts" className="btn btn-primary mt-8 inline-flex">Back to Tryouts</a>
+      </section>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-12" noValidate data-hydrated={isHydrated}>
@@ -317,6 +397,8 @@ export default function RegistrationForm({
               athleteTabState={athleteTabStates[index]}
               setAthleteTab={setAthleteTab}
               toggleEvent={toggleEvent}
+              waitlistedEventIds={waitlistSelections[index] || []}
+              toggleWaitlistEvent={toggleWaitlistEvent}
               getSelectedCount={getSelectedCount}
             />
           ))}
@@ -348,6 +430,7 @@ export default function RegistrationForm({
           athletes={athletes}
           initialEvents={initialEvents}
           total={total}
+          waitlistSelections={waitlistSelections}
         />
       )}
 
@@ -377,7 +460,7 @@ export default function RegistrationForm({
               Processing...
             </span>
           ) : (
-            currentStep === 4 ? 'Complete Registration' : 'Continue'
+            currentStep === 4 ? (total > 0 ? 'Complete Registration' : 'Join Waitlist') : 'Continue'
           )}
         </button>
       </div>
