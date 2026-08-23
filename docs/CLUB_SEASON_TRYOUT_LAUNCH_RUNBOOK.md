@@ -77,11 +77,12 @@ The guarded open/close control has completed preview review. Opening is blocked 
 
 The invitation-release workflow is implemented and published in production. Its append-only migration `0014` was applied to both `tvvc-registration` and the isolated `tvvc-season-pilot` preview database on August 22, 2026. Recovery branches `tvvc-reg-backup-2026-08-22-pre-invitations` and `tvvc-season-pilot-backup-2026-08-22-pre-invitations` were retained. Production verification confirmed the authenticated offer workspace loads the invitation controls and empty Batch History with both registration locks closed. The August 23 production snapshot still shows no released offers and no invitation sends.
 
-The following external setup remains required before downstream Resend delivery events can appear in the dashboard:
+The following external setup was completed on August 23, 2026 before downstream Resend delivery events appear in the dashboard:
 
-- Configure `RESEND_WEBHOOK_SECRET` in Netlify production after creating the Resend webhook.
-- In Resend, register `https://tualatinvalleyvb.com/api/webhooks/resend` for at least `email.delivered`, `email.delivery_delayed`, `email.failed`, `email.bounced`, `email.complained`, and `email.suppressed`.
-- Until the webhook is registered and verified in production, `sent` means Resend accepted the API request and the administrator should still monitor the Resend dashboard for downstream delivery events.
+- `RESEND_WEBHOOK_SECRET` is configured in Netlify as a protected environment variable.
+- Resend has a production webhook registered for `https://tualatinvalleyvb.com/api/webhooks/resend`.
+- The webhook is subscribed to `email.sent`, `email.delivered`, `email.delivery_delayed`, `email.failed`, `email.bounced`, `email.complained`, and `email.suppressed`.
+- Until the production function is redeployed and smoke-tested with signature verification active, `sent` means Resend accepted the API request and the administrator should still monitor the Resend dashboard for downstream delivery events.
 
 ## 4. Manual Launch Readiness Checklist
 

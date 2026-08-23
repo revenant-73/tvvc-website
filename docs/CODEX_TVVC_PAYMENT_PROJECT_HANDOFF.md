@@ -5,7 +5,7 @@
 **Snapshot date:** August 23, 2026  
 **Repository:** `revenant-73/tvvc-website`  
 **Production branch:** `main`  
-**Current production commit:** `5814845` (`Track Resend invitation delivery events`)  
+**Production commit before the Resend webhook env-refresh update:** `00037c9` (`Document production Resend event migration`)
 **Current operating state:** Deployed, registration closed, no real offers released, and no invitation emails sent.
 
 ## 1. Instructions for Codex
@@ -126,7 +126,7 @@ As of this snapshot:
 - Production launch evidence contains one record each for `resend_domain`, `stripe_live_review`, and `controlled_pilot`.
 - Production migration `0014_club-season-invitations.sql` is recorded with hash `f629bc2559413abfee5d0f6765c1bd111b0c802409741f7f6f758e3ad78286c1`.
 - Non-season event waitlist migration `0015_event-waitlists.sql` is applied in production. It added `events.waitlist_enabled` and `event_waitlist_entries`; it is outside the club-season locks.
-- Resend provider-event migration `0016_resend-invitation-events.sql` is applied in production. It added append-only invitation delivery events linked to existing send attempts. The production endpoint still needs `RESEND_WEBHOOK_SECRET` and the Resend dashboard webhook subscription before real provider events appear.
+- Resend provider-event migration `0016_resend-invitation-events.sql` is applied in production. It added append-only invitation delivery events linked to existing send attempts. The Resend dashboard webhook is registered for `https://tualatinvalleyvb.com/api/webhooks/resend`, and Netlify has `RESEND_WEBHOOK_SECRET` configured as a protected environment variable. The running production function still needs a deploy refresh and smoke test before relying on automatic provider-event ingestion.
 - August 23, 2026 read-only verification confirmed zero club-season offers, zero club-season registrations, zero payment plans, zero invitation batches, zero invitation attempts, all 36 teams inactive, and `PRAGMA integrity_check = ok`.
 - August 23, 2026 local/test-only rehearsal passed the club-season unit suite (50/50) and Playwright offer/payment suite (15/15) without production writes, live Stripe, or invitation sends.
 - The local and production source currently require Node `>=22.12.0`.
