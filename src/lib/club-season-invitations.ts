@@ -9,6 +9,7 @@ import {
   clubSeasonInvitationBatchItems,
   clubSeasonInvitationBatches,
   clubSeasonInvitationDeliveryAttempts,
+  clubSeasonInvitationDeliveryEvents,
   clubSeasonOffers,
   clubSeasons,
   clubTeams,
@@ -296,8 +297,20 @@ export async function invitationHistory(db: Database, seasonId: string, wave: st
     db.select().from(clubSeasonInvitationBatchItems).where(inArray(clubSeasonInvitationBatchItems.batchId, ids)),
     db.select().from(clubSeasonInvitationDeliveryAttempts).where(inArray(clubSeasonInvitationDeliveryAttempts.batchId, ids)).orderBy(desc(clubSeasonInvitationDeliveryAttempts.attemptedAt)),
   ]);
+  const providerMessageIds = attempts.map((attempt: any) => attempt.providerMessageId).filter(Boolean);
+  const providerEvents = providerMessageIds.length
+    ? await db.select().from(clubSeasonInvitationDeliveryEvents)
+      .where(inArray(clubSeasonInvitationDeliveryEvents.providerMessageId, providerMessageIds))
+      .orderBy(desc(clubSeasonInvitationDeliveryEvents.eventCreatedAt))
+    : [];
   return { batches: batches.map((batch: any) => {
-    const batchItems = items.filter((item: any) => item.batchId === batch.id).map((item: any) => ({ ...item, attempts: attempts.filter((attempt: any) => attempt.batchItemId === item.id) }));
-    return { ...batch, current: summarizeInvitationItems(batchItems), items: batchItems, testAttempts: attempts.filter((attempt: any) => attempt.batchId === batch.id && !attempt.batchItemId) };
+    const attemptsForItem = (item: any) => attempts
+      .filter((attempt: any) => attempt.batchItemId === item.id)
+      .map((attempt: any) => ({ ...attempt, providerEvents: providerEvents.filter((event: any) => event.attemptId === attempt.id) }));
+    const batchItems = items.filter((item: any) => item.batchId === batch.id).map((item: any) => ({ ...item, attempts: attemptsForItem(item) }));
+    const testAttempts = attempts
+      .filter((attempt: any) => attempt.batchId === batch.id && !attempt.batchItemId)
+      .map((attempt: any) => ({ ...attempt, providerEvents: providerEvents.filter((event: any) => event.attemptId === attempt.id) }));
+    return { ...batch, current: summarizeInvitationItems(batchItems), items: batchItems, testAttempts };
   }) };
 }

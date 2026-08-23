@@ -539,6 +539,29 @@ export const clubSeasonInvitationDeliveryAttempts = sqliteTable('club_season_inv
   attemptedAtIdx: index('club_season_invitation_attempts_attempted_at_idx').on(table.attemptedAt),
 }));
 
+export const clubSeasonInvitationDeliveryEvents = sqliteTable('club_season_invitation_delivery_events', {
+  id: text('id').primaryKey(),
+  attemptId: text('attempt_id').notNull().references(() => clubSeasonInvitationDeliveryAttempts.id),
+  batchId: text('batch_id').notNull().references(() => clubSeasonInvitationBatches.id),
+  batchItemId: text('batch_item_id').references(() => clubSeasonInvitationBatchItems.id),
+  providerMessageId: text('provider_message_id').notNull(),
+  webhookMessageId: text('webhook_message_id').notNull(),
+  eventType: text('event_type').notNull(),
+  eventCreatedAt: text('event_created_at').notNull(),
+  recipientEmail: text('recipient_email'),
+  severity: text('severity').notNull().default('info'),
+  reason: text('reason'),
+  payload: text('payload').notNull(),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  webhookMessageUnique: uniqueIndex('club_season_invitation_delivery_events_webhook_unique').on(table.webhookMessageId),
+  attemptIdIdx: index('club_season_invitation_delivery_events_attempt_idx').on(table.attemptId),
+  providerMessageIdIdx: index('club_season_invitation_delivery_events_provider_idx').on(table.providerMessageId),
+  batchIdIdx: index('club_season_invitation_delivery_events_batch_idx').on(table.batchId),
+  eventTypeIdx: index('club_season_invitation_delivery_events_type_idx').on(table.eventType),
+  eventCreatedAtIdx: index('club_season_invitation_delivery_events_created_idx').on(table.eventCreatedAt),
+}));
+
 // Family-entered information is saved separately from offer eligibility so
 // later agreement and payment records can remain immutable and auditable.
 export const clubSeasonRegistrations = sqliteTable('club_season_registrations', {

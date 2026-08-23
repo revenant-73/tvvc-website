@@ -5,9 +5,10 @@ import test from 'node:test';
 import { createClient } from '@libsql/client';
 import { eq } from 'drizzle-orm';
 import { getDb } from '../src/db/index.ts';
-import { clubSeasonInvitationBatchItems, clubSeasonInvitationDeliveryAttempts, clubSeasonOffers } from '../src/db/schema.ts';
+import { clubSeasonInvitationBatchItems, clubSeasonInvitationDeliveryAttempts, clubSeasonInvitationDeliveryEvents, clubSeasonOffers } from '../src/db/schema.ts';
 import { renderClubSeasonInvitationEmail } from '../src/lib/club-season-invitation-email.ts';
 import { invitationActionSchema, invitationHistory, isApprovedInvitationTestRecipient, latestInvitationAttempt, releaseInvitations, resendSentInvitations, retryFailedInvitations, sendInvitationBatch, summarizeInvitationItems } from '../src/lib/club-season-invitations.ts';
+import { recordResendInvitationWebhookEvent } from '../src/lib/club-season-resend-webhooks.ts';
 import { rejectCrossOriginRequest } from '../src/lib/request-security.ts';
 
 const baseModel = {
@@ -129,6 +130,26 @@ test('send suppression, lock rechecks, retry/resend numbering, latest state, and
   } finally { process.env.CLUB_SEASON_REGISTRATION_ENABLED = priorFlag; process.env.PLAYWRIGHT_TEST = priorPlaywright; fixture.client.close(); await fs.rm(fixture.databasePath, { force: true }).catch(() => {}); }
 });
 
+test('resend invitation webhooks are idempotent and attach provider events to history', async () => {
+  const fixture = await createServiceDatabase('invitation-resend-webhook-service'); const priorFlag = process.env.CLUB_SEASON_REGISTRATION_ENABLED; const priorPlaywright = process.env.PLAYWRIGHT_TEST; process.env.CLUB_SEASON_REGISTRATION_ENABLED = 'true'; delete process.env.PLAYWRIGHT_TEST;
+  try {
+    const released = await releaseInvitations(fixture.db, fixture.admin, { action: 'release', seasonId: '2026-2027-club', teamId: 'team-a', wave: 'nov8', offerIds: ['11111111-1111-4111-8111-111111111111'], confirmation: 'RELEASE INVITATIONS', reason: 'Reviewed webhook delivery tracking.', requestIdempotencyKey: crypto.randomUUID() });
+    await sendInvitationBatch(fixture.db, fixture.admin, released.batchId, (async () => ({ id: 'resend-message-1' })) as any);
+    const event = { type: 'email.delivered', created_at: '2026-11-09T20:00:00.000Z', data: { email_id: 'resend-message-1', to: ['parent-a@test.invalid'], subject: 'TVVC offer' } };
+    const first = await recordResendInvitationWebhookEvent(fixture.db, event, 'svix-message-1');
+    const duplicate = await recordResendInvitationWebhookEvent(fixture.db, event, 'svix-message-1');
+    assert.equal(first.processed, true);
+    assert.equal(duplicate.duplicate, true);
+    const ignored = await recordResendInvitationWebhookEvent(fixture.db, { ...event, data: { ...event.data, email_id: 'unknown-message' } }, 'svix-message-2');
+    assert.equal(ignored.reason, 'unmatched_provider_message');
+    const events = await fixture.db.select().from(clubSeasonInvitationDeliveryEvents);
+    assert.equal(events.length, 1);
+    assert.equal(events[0].eventType, 'email.delivered');
+    const history = await invitationHistory(fixture.db, '2026-2027-club', 'nov8');
+    assert.equal(history.batches[0].items[0].attempts[0].providerEvents[0].eventType, 'email.delivered');
+  } finally { process.env.CLUB_SEASON_REGISTRATION_ENABLED = priorFlag; process.env.PLAYWRIGHT_TEST = priorPlaywright; fixture.client.close(); await fs.rm(fixture.databasePath, { force: true }).catch(() => {}); }
+});
+
 test('invitation migration creates immutable history tables and preserves existing schema', async () => {
   const databasePath = path.join(process.cwd(), 'test-results', 'club-season-invitations.db');
   await fs.mkdir(path.dirname(databasePath), { recursive: true });
@@ -138,14 +159,18 @@ test('invitation migration creates immutable history tables and preserves existi
     const files = (await fs.readdir(path.join(process.cwd(), 'drizzle'))).filter((file) => /^\d+.*\.sql$/.test(file)).sort();
     for (const file of files) await client.executeMultiple((await fs.readFile(path.join(process.cwd(), 'drizzle', file), 'utf8')).replaceAll('--> statement-breakpoint', ''));
     const tables = await client.execute(`SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'club_season_invitation_%' ORDER BY name`);
-    assert.deepEqual(tables.rows, [{ name: 'club_season_invitation_batch_items' }, { name: 'club_season_invitation_batches' }, { name: 'club_season_invitation_delivery_attempts' }]);
+    assert.deepEqual(tables.rows, [{ name: 'club_season_invitation_batch_items' }, { name: 'club_season_invitation_batches' }, { name: 'club_season_invitation_delivery_attempts' }, { name: 'club_season_invitation_delivery_events' }]);
     const oldIndex = await client.execute(`SELECT name FROM sqlite_master WHERE type='index' AND name='club_season_offers_season_athlete_unique'`);
     assert.equal(oldIndex.rows.length, 1);
     await client.batch([
       { sql: `INSERT INTO user (id,email,role) VALUES ('invite-admin','admin@example.test','admin')`, args: [] },
       { sql: `INSERT INTO club_season_invitation_batches (id,season_id,wave,kind,status,subject,template_fingerprint,request_idempotency_key,request_fingerprint,admin_user_id,audit_reason) VALUES ('batch','2026-2027-club','nov8','test','prepared','Subject','hash','request-key','request-hash','invite-admin','Migration test reason')`, args: [] },
+      { sql: `INSERT INTO club_season_invitation_delivery_attempts (id,batch_id,attempt_number,recipient_email,idempotency_key,status,admin_user_id,attempted_at,provider_message_id) VALUES ('attempt','batch',1,'admin@example.test','attempt-key','sent','invite-admin','2026-11-09T20:00:00.000Z','provider-message')`, args: [] },
+      { sql: `INSERT INTO club_season_invitation_delivery_events (id,attempt_id,batch_id,provider_message_id,webhook_message_id,event_type,event_created_at,payload) VALUES ('event','attempt','batch','provider-message','svix-message','email.delivered','2026-11-09T20:01:00.000Z','{}')`, args: [] },
     ]);
     await assert.rejects(client.execute(`UPDATE club_season_invitation_batches SET subject='Changed' WHERE id='batch'`), /immutable/i);
     await assert.rejects(client.execute(`DELETE FROM club_season_invitation_batches WHERE id='batch'`), /immutable/i);
+    await assert.rejects(client.execute(`UPDATE club_season_invitation_delivery_events SET event_type='email.bounced' WHERE id='event'`), /immutable/i);
+    await assert.rejects(client.execute(`DELETE FROM club_season_invitation_delivery_events WHERE id='event'`), /immutable/i);
   } finally { client.close(); await fs.rm(databasePath, { force: true }).catch(() => {}); }
 });

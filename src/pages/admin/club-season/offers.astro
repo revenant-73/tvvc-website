@@ -354,6 +354,8 @@ const isAdmin = Boolean(admin);
         };
         const invitationCandidates = () => candidates.filter((candidate) => candidate.offer && candidate.offer.teamId === releaseTeam?.value);
         const latestAttempt = (item: any) => [...(item.attempts || [])].sort((a: any, b: any) => b.attemptNumber - a.attemptNumber)[0] || null;
+        const latestProviderEvent = (attempt: any) => [...(attempt?.providerEvents || [])].sort((a: any, b: any) => String(b.eventCreatedAt || '').localeCompare(String(a.eventCreatedAt || '')))[0] || null;
+        const providerEventLabel = (event: any) => event ? `${event.eventType.replace('email.', '')}${event.reason ? ` · ${event.reason}` : ''}` : '';
         const currentBatchCounts = (batch: any) => batch.current || (batch.items || []).reduce((counts: any, item: any) => { const latest = latestAttempt(item); if (!latest) counts.unsent += 1; else counts[latest.status] = (counts[latest.status] || 0) + 1; counts.total += 1; return counts; }, { total: 0, unsent: 0, pending: 0, sent: 0, failed: 0 });
         const updateLaunchRail = () => {
           const teamId = releaseTeam?.value || '';
@@ -439,7 +441,7 @@ const isAdmin = Boolean(admin);
               const details = document.createElement('details'); details.className = 'mt-3';
               const summary = makeText('summary', 'cursor-pointer text-xs font-bold uppercase tracking-[.1em] text-white/60', 'Recipient results'); details.append(summary);
               const list = document.createElement('div'); list.className = 'mt-2 divide-y divide-white/[.06]';
-              items.forEach((item: any) => { const last = latestAttempt(item); const row = document.createElement('div'); row.className = 'py-2 text-xs'; row.append(makeText('p', 'font-bold text-white/75', `${item.playerName} · ${item.recipientEmail}`), makeText('p', last?.status === 'failed' ? 'mt-1 text-brand-coral' : 'mt-1 text-white/45', last ? `${last.status}${last.errorMessage ? ` · ${last.errorMessage}` : ''} · attempt ${last.attemptNumber}` : 'Released · not sent')); list.append(row); });
+              items.forEach((item: any) => { const last = latestAttempt(item); const providerEvent = latestProviderEvent(last); const row = document.createElement('div'); row.className = 'py-2 text-xs'; const providerClass = providerEvent?.severity === 'error' ? 'text-brand-coral' : providerEvent?.severity === 'warning' ? 'text-amber-200' : 'text-brand-teal'; const providerText = providerEvent ? ` · provider ${providerEventLabel(providerEvent)}` : ''; row.append(makeText('p', 'font-bold text-white/75', `${item.playerName} · ${item.recipientEmail}`), makeText('p', last?.status === 'failed' || providerEvent?.severity === 'error' ? `mt-1 ${providerClass}` : 'mt-1 text-white/45', last ? `${last.status}${last.errorMessage ? ` · ${last.errorMessage}` : ''} · attempt ${last.attemptNumber}${providerText}` : 'Released · not sent')); list.append(row); });
               details.append(list); card.append(details);
               const sentItems = items.filter((item: any) => latestAttempt(item)?.status === 'sent');
               if (sentItems.length) {

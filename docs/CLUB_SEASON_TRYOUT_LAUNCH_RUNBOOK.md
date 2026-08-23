@@ -77,9 +77,11 @@ The guarded open/close control has completed preview review. Opening is blocked 
 
 The invitation-release workflow is implemented and published in production. Its append-only migration `0014` was applied to both `tvvc-registration` and the isolated `tvvc-season-pilot` preview database on August 22, 2026. Recovery branches `tvvc-reg-backup-2026-08-22-pre-invitations` and `tvvc-season-pilot-backup-2026-08-22-pre-invitations` were retained. Production verification confirmed the authenticated offer workspace loads the invitation controls and empty Batch History with both registration locks closed. The August 23 production snapshot still shows no released offers and no invitation sends.
 
-The following items remain planned work before this runbook can be performed entirely from the dashboard:
+The following external setup remains required before downstream Resend delivery events can appear in the dashboard:
 
-- Resend delivery/bounce/complaint webhook ingestion remains a later enhancement. For launch, `sent` means Resend accepted the API request; the administrator should still monitor the Resend dashboard for downstream delivery events.
+- Configure `RESEND_WEBHOOK_SECRET` in Netlify production after creating the Resend webhook.
+- In Resend, register `https://tualatinvalleyvb.com/api/webhooks/resend` for at least `email.delivered`, `email.delivery_delayed`, `email.failed`, `email.bounced`, `email.complained`, and `email.suppressed`.
+- Until the webhook is registered and verified in production, `sent` means Resend accepted the API request and the administrator should still monitor the Resend dashboard for downstream delivery events.
 
 ## 4. Manual Launch Readiness Checklist
 
@@ -104,7 +106,7 @@ Complete this checklist before the first November tryout weekend. These are oper
 ### External-service dashboard checks
 
 - In Stripe, confirm live mode is selected, webhook endpoints are healthy, and the saved-payment-method/Billing Portal settings still match the season plan.
-- In Resend, confirm the sending domain is verified and the administrator can monitor accepted, bounced, and complained messages.
+- In Resend, confirm the sending domain is verified, the production webhook is registered, and the administrator can monitor accepted, delivered, delayed, bounced, suppressed, and complained messages.
 - In Netlify, confirm the production deploy is current, scheduled functions are present, and recent function logs show no registration or billing errors.
 - In Turso, take or schedule a fresh production backup immediately before opening registration or sending invitations.
 
@@ -195,7 +197,7 @@ For each early registration:
 - reconcile the Stripe payment with the TVVC ledger;
 - verify the registration status and remaining balance;
 - confirm the registration email and Stripe receipt link;
-- inspect Stripe webhook delivery, Resend results, and Netlify function logs;
+- inspect Stripe webhook delivery, Resend provider events in the invitation history, Resend dashboard results, and Netlify function logs;
 - verify that no duplicate webhook or scheduled-job run creates a duplicate payment or email.
 
 If a money, ownership, email, or reconciliation mismatch appears, close registration to new activity and pause the remaining invitation release. Do not alter or delete correctly completed registrations.

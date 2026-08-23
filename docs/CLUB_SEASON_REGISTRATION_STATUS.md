@@ -523,6 +523,8 @@ The self-service offer workspace now includes the controlled invitation sequence
 
 Release batches are server-enforced to one active team and at most 50 unique offers. The dashboard shows both registration locks, retains a release request key across ambiguous retries, and computes ready, released-unsent, sent, and failed totals from each recipient's latest attempt. Initial sends, retries, and deliberate resends are blocked whenever either registration lock is closed.
 
+The source now includes Resend invitation-delivery webhook ingestion at `/api/webhooks/resend`. Migration `0016_resend-invitation-events.sql` stores provider delivery events append-only and links them to the accepted invitation send attempt by Resend message ID. The admin invitation history displays downstream provider events such as delivered, delayed, failed, bounced, complained, and suppressed. Production still requires the migration, Netlify `RESEND_WEBHOOK_SECRET`, and a Resend dashboard webhook subscription before real provider events appear.
+
 **Published in production:** the November offer-preparation workspace supports separate November 8 and November 15 waves, private draft offers, draft/ready corrections, readiness and blocker summaries, audited review-to-ready actions, assignment conflict details, and parent isolation for both draft and ready states.
 
 **Published in production:** the guarded registration-access control rechecks every launch requirement before opening, requires an audit reason plus the exact `OPEN REGISTRATION` phrase, uses compare-and-swap protection against stale admin pages, and writes an immutable audit entry. Emergency close requires `CLOSE REGISTRATION`, remains available without passing readiness gates, and preserves offers, completed registrations, agreements, payments, and ledger history while pausing new or unfinished registration activity.
@@ -560,7 +562,7 @@ Keep the route unlisted; “live” means available to verified offered families
 
 - Stripe dispute-webhook handling and dispute workflow.
 - Manual pause/resume controls for automatic charges.
-- Resend delivered/bounced/complained webhook tracking remains a later enhancement. The current invitation ledger records provider acceptance (`sent`) or API failure, immutable attempt numbering, and safe retry/resend history.
+- Resend provider-event tracking is implemented in source, but production still needs the `0016` migration, Netlify `RESEND_WEBHOOK_SECRET`, and the Resend webhook registration before this can replace manual Resend dashboard monitoring.
 - Household-level consolidation of sibling reminders.
 - A formal parent cancellation/refund-request form and automated proration worksheet.
 - A coach-facing readiness view with financial and medical details excluded.
