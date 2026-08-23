@@ -96,7 +96,7 @@ const clinicGroups = [
   og={{
     title: "Summer 2026 Camps & Clinics",
     description: "Game-based training for athletes entering 4th–12th grade.",
-    badge: "Registration Open"
+    badge: "Tryout Prep Registration Open"
   }}
 >
   <main class="pt-32">
@@ -108,10 +108,10 @@ const clinicGroups = [
           Summer Volleyball <span class="text-brand-teal">Camps & Clinics</span> in Hillsboro
         </h1>
         <p class="text-lg text-white/60 max-w-2xl leading-relaxed mb-10">
-          Game-based volleyball training for athletes entering 4th–12th grade. Camps, clinics, hitting, serving, defense, and tryout prep.
+          Game-based volleyball training for athletes entering 4th–12th grade. Summer camps and skills clinics are closed; upcoming tryout prep clinics remain open.
         </p>
         <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-10">
-          <a href="/register" class="btn btn-primary !px-12 !py-3">Register Now</a>
+          <a href="/register?tab=tryout-prep" class="btn btn-primary !px-12 !py-3">Register for Tryout Prep</a>
           <a href="#camps" class="btn btn-secondary !px-8 !py-3">View Camps</a>
           <a href="#clinics" class="btn btn-secondary !px-8 !py-3">View Clinics</a>
         </div>
@@ -187,11 +187,11 @@ const clinicGroups = [
             </div>
           </div>
           <div class="glass-card bg-brand-teal/5 border-brand-teal/20 p-8 md:p-10 flex flex-col justify-center">
-            <h3 class="text-xl font-heading font-bold mb-4 text-white">Registration Now Open</h3>
+            <h3 class="text-xl font-heading font-bold mb-4 text-white">Summer Camp Registration Closed</h3>
             <p class="text-white/60 mb-8 leading-relaxed">
-              Our native registration system is now live. Secure your spot in our Summer 2026 camps and clinics today.
+              Summer camp registration is currently closed. Upcoming tryout prep clinics are still available for athletes preparing for club tryouts.
             </p>
-            <a href="/register" class="btn btn-primary !w-full md:!w-max">Go to Registration</a>
+            <a href="/register?tab=tryout-prep" class="btn btn-primary !w-full md:!w-max">Register for Tryout Prep</a>
           </div>
         </div>
       </div>
@@ -227,16 +227,9 @@ const clinicGroups = [
                   </div>
                 </div>
                 
-                {availability?.isFull ? (
-                  <div class="bg-brand-coral/10 border border-brand-coral/20 rounded-xl p-3 text-center">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-brand-coral">Registration Closed</span>
-                  </div>
-                ) : (
-                  <a href="/register" class="text-brand-teal font-bold text-[10px] uppercase tracking-widest hover:underline flex items-center gap-2">
-                    Select in Registration Form
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
-                  </a>
-                )}
+                <div class="bg-brand-coral/10 border border-brand-coral/20 rounded-xl p-3 text-center">
+                  <span class="text-[10px] font-bold uppercase tracking-widest text-brand-coral">Registration Closed</span>
+                </div>
               </div>
             </ScrollReveal>
           );
@@ -281,10 +274,10 @@ const clinicGroups = [
                                 {clinic.id?.includes('oct-25') ? ' (Oct 25)' : clinic.id?.includes('nov-01') ? ' (Nov 1)' : ''}
                               </span>
                             </div>
-                            {isFull ? (
+                            {isFull || !availability ? (
                               <span class="text-[8px] font-black text-brand-coral uppercase tracking-widest italic">Full</span>
                             ) : (
-                              <a href="/register" class={`text-[10px] font-bold uppercase tracking-widest hover:underline ${group.accent === 'brand-teal' ? 'text-brand-teal' : 'text-brand-coral'}`}>Select</a>
+                              <a href="/register?tab=tryout-prep" class={`text-[10px] font-bold uppercase tracking-widest hover:underline ${group.accent === 'brand-teal' ? 'text-brand-teal' : 'text-brand-coral'}`}>Select</a>
                             )}
                          </div>
                        );
@@ -301,9 +294,9 @@ const clinicGroups = [
 
         <!-- Final CTA -->
         <div class="max-w-3xl mx-auto text-center glass-card border-brand-teal/20 p-12">
-           <h2 class="text-3xl font-heading font-bold mb-6 text-white">Ready to train this summer?</h2>
-           <p class="text-white/60 mb-10 text-lg">Secure your spot in our high-quality summer training programs today.</p>
-           <a href="/register" class="btn btn-primary !px-12 !py-4 mb-8">Secure Your Spot</a>
+           <h2 class="text-3xl font-heading font-bold mb-6 text-white">Getting ready for tryouts?</h2>
+           <p class="text-white/60 mb-10 text-lg">Summer camps and skills clinics are closed. Tryout prep clinic registration remains open.</p>
+           <a href="/register?tab=tryout-prep" class="btn btn-primary !px-12 !py-4 mb-8">Register for Tryout Prep</a>
            <p class="text-sm text-white/40">
               Questions about which camp or clinic fits your athlete? <br class="md:hidden" />
               Text or call Loren at <a href="tel:503-389-0760" class="text-brand-teal hover:underline">503-389-0760</a>

@@ -15,6 +15,7 @@ const camps = [
     startDate: '2026-06-15',
     price: 18500,
     capacity: 12,
+    active: false,
   },
   {
     id: 'camp-hitting-foundations-june-22',
@@ -26,6 +27,7 @@ const camps = [
     startDate: '2026-06-22',
     price: 18500,
     capacity: 12,
+    active: false,
   },
   {
     id: 'camp-performance-july-06',
@@ -37,6 +39,7 @@ const camps = [
     startDate: '2026-07-06',
     price: 18500,
     capacity: 12,
+    active: false,
   },
   {
     id: 'camp-ignition-july-13',
@@ -48,6 +51,7 @@ const camps = [
     startDate: '2026-07-13',
     price: 18500,
     capacity: 12,
+    active: false,
   },
   {
     id: 'camp-hitting-performance-july-20',
@@ -60,6 +64,7 @@ const camps = [
     startDate: '2026-07-20',
     price: 18500,
     capacity: 12,
+    active: false,
   },
   {
     id: 'camp-foundations-july-27',
@@ -71,6 +76,7 @@ const camps = [
     startDate: '2026-07-27',
     price: 18500,
     capacity: 12,
+    active: false,
   },
   {
     id: 'camp-hs-prep-1-aug-03',
@@ -82,6 +88,7 @@ const camps = [
     startDate: '2026-08-03',
     price: 18500,
     capacity: 12,
+    active: false,
   },
   {
     id: 'camp-hs-prep-2-aug-10',
@@ -93,6 +100,7 @@ const camps = [
     startDate: '2026-08-10',
     price: 18500,
     capacity: 12,
+    active: false,
   },
 ];
 
@@ -141,6 +149,7 @@ async function seed() {
           startDate,
           price: 3000,
           capacity: 12,
+          active: false,
         };
         await db.insert(events).values(clinic).onConflictDoUpdate({
           target: events.id,
