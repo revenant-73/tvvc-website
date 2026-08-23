@@ -369,6 +369,22 @@ Checked-in recovery artifacts:
 - `scripts/reconcile-production-club-season-foundation.sql`
 - `tests/production-club-season-foundation.test.ts`
 
+### 4.12 Invitation ledger schema prepared and rehearsed
+
+On August 22, 2026, the append-only invitation-release ledger in migration `0014_club-season-invitations.sql` was applied and verified in both the production and isolated pilot databases:
+
+- Production database: `tvvc-registration`.
+- Production recovery branch: `tvvc-reg-backup-2026-08-22-pre-invitations`.
+- Pilot database used by Deploy Previews: `tvvc-season-pilot`.
+- Pilot recovery branch: `tvvc-season-pilot-backup-2026-08-22-pre-invitations`.
+- Drizzle migration hash: `f629bc2559413abfee5d0f6765c1bd111b0c802409741f7f6f758e3ad78286c1`.
+- Both databases now contain the three invitation tables, 14 invitation indexes, six immutability triggers, and exactly one `0014` migration record.
+- Pilot verification confirmed the expected foreign-key counts (`3/2/3`), zero foreign-key violations, zero duplicate `0014` records, and `PRAGMA integrity_check = ok`.
+- Existing production and pilot offers were unchanged; no offers were released and no invitation emails were sent.
+- Deploy Preview #32 was retested after the pilot migration. Batch History loaded normally and showed the correct no-batches empty state instead of the prior missing-table error.
+
+The database groundwork is complete. PR #32 remains the publication boundary for the invitation-release application code and must be merged before the workflow is available in production.
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.

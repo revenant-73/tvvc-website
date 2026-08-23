@@ -41,10 +41,10 @@ Complete and rehearse the following before November 8:
 - Enable the Netlify club-season feature flag in advance. The separate season database lock must remain closed, so enabling this flag alone does not give families access.
 - Rehearse the guarded **Open Registration / Close Registration** control. Opening requires every launch check, an audit reason, and the exact confirmation phrase; emergency close remains available at any time.
 - Prepare and approve the 14-and-under offer-email template.
-- Add an administrator email preview and test-send workflow.
+- Use the administrator email preview and test-send workflow to approve the final template without contacting a family.
 - The offer workspace now provides team-scoped preview, administrator-only test sending, atomic release, initial sending, failed-message retry, deliberate resend, and per-recipient history. Release and send remain separate actions.
-- Add a 10U-14U player filter and a launch summary showing team counts, missing assignments, ineligible records, and other items needing attention.
-- Add a draft/review state for offer batches so team assignments can be prepared on November 8 without releasing invitations.
+- Use the 10U-14U wave filter and launch summary to review team counts, missing assignments, ineligible records, and other items needing attention.
+- Keep assignments in the private draft/review states while preparing teams on November 8; draft and ready offers remain unavailable to families.
 - Configure the normal three-calendar-day response period. For invitations sent November 9, the default deadline is November 12, 2026 at 11:59 PM Pacific. For invitations sent November 16, the default deadline is November 19, 2026 at 11:59 PM Pacific. Individual deadlines may still be extended.
 - Run the final prelaunch rehearsal with Stripe test keys and take the required Turso backup.
 - Verify the private registration route remains absent from public navigation and search indexing.
@@ -73,7 +73,9 @@ The November offer-preparation milestone is published in production. It adds:
 - an audited **Mark ready** review action;
 - server-side isolation that makes draft and ready offers invisible and unusable to parents, including guessed offer identifiers.
 
-The guarded open/close control is implemented locally on `codex/guarded-registration-control` and awaits preview verification and production publication. Opening is blocked unless the feature flag, live Stripe review, agreements, active teams, schedule, email configuration, billing protection, and controlled-pilot evidence all pass. Closing remains available as an emergency brake and pauses new or unfinished registration activity without altering completed records.
+The guarded open/close control has completed preview review. Opening is blocked unless the feature flag, live Stripe review, agreements, active teams, schedule, email configuration, billing protection, and controlled-pilot evidence all pass. Closing remains available as an emergency brake and pauses new or unfinished registration activity without altering completed records.
+
+The invitation-release workflow is implemented and verified in Deploy Preview #32. Its append-only migration `0014` was applied to both `tvvc-registration` and the isolated `tvvc-season-pilot` preview database on August 22, 2026. Recovery branches `tvvc-reg-backup-2026-08-22-pre-invitations` and `tvvc-season-pilot-backup-2026-08-22-pre-invitations` were retained. Preview verification confirmed an empty invitation history with no released offers and no email sends. PR #32 must be merged before these invitation controls are available in production.
 
 The following items remain planned work before this runbook can be performed entirely from the dashboard:
 
