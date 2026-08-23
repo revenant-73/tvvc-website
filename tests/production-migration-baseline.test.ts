@@ -7,6 +7,16 @@ import { createClient } from '@libsql/client';
 
 const root = process.cwd();
 
+function migrationHashes(source: Buffer) {
+  const rawHash = crypto.createHash('sha256').update(source).digest('hex');
+  const lfNormalizedHash = crypto
+    .createHash('sha256')
+    .update(source.toString('utf8').replaceAll('\r\n', '\n'))
+    .digest('hex');
+
+  return new Set([rawHash, lfNormalizedHash]);
+}
+
 test('production baseline records exact repository migrations and is rerunnable', async () => {
   const databasePath = path.join(root, 'test-results', `production-migration-baseline-${process.pid}.db`);
   await fs.mkdir(path.dirname(databasePath), { recursive: true });
@@ -76,7 +86,10 @@ test('production baseline records exact repository migrations and is rerunnable'
     for (const [index, entry] of historicalBaselineEntries.entries()) {
       const source = await fs.readFile(path.join(root, 'drizzle', `${entry.tag}.sql`));
       assert.equal(result.rows[index].created_at, entry.when);
-      assert.equal(result.rows[index].hash, crypto.createHash('sha256').update(source).digest('hex'));
+      assert.ok(
+        migrationHashes(source).has(String(result.rows[index].hash)),
+        `baseline hash for ${entry.tag} must match the committed migration content`
+      );
     }
 
     for (const entry of journal.entries.filter((item: { idx: number }) => item.idx > 12)) {

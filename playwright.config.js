@@ -14,11 +14,12 @@ const localBaseUrl = `http://127.0.0.1:${localPort}`;
 
 module.exports = defineConfig({
   testDir: './tests',
+  testMatch: '**/*.spec.js',
   globalSetup: './tests/portal-global-setup.mjs',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 4,
+  workers: 1,
   reporter: 'html',
   use: {
     baseURL: process.env.BASE_URL || localBaseUrl,

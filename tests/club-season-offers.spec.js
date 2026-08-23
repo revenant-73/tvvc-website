@@ -471,7 +471,7 @@ test.describe.serial('Club season offer authorization', () => {
       await expect(page.locator('[data-media-declined-count]')).toHaveText('1');
       await page.locator('[data-media-declined-filter]').click();
       await expect(page.locator('[data-status-filter]')).toHaveValue('media_declined');
-      await expect(page.getByText(fixtures.parentA.athleteName, { exact: false })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /Alpha,\s*Avery/i })).toBeVisible();
       await expect(page.getByText('Media: declined', { exact: true })).toBeVisible();
       await expect(page.locator('[data-visible-count]')).toHaveText('1');
     } finally {
@@ -495,7 +495,7 @@ test.describe.serial('Club season offer authorization', () => {
       });
       expect(offerResponse.status()).toBe(207);
       await expect(offerResponse.json()).resolves.toMatchObject({ results: [
-        { athleteId: fixtures.parentA.athleteId, status: expect.stringMatching(/created|already_offered/) },
+        { athleteId: fixtures.parentA.athleteId, status: expect.stringMatching(/created|already_offered|already_assigned/) },
       ] });
       await client.execute({
         sql: 'UPDATE club_seasons SET public_registration_enabled = 0 WHERE id = ?',

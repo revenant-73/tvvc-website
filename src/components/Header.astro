@@ -8,6 +8,7 @@ const navLinks = [
   { href: '/training', label: 'Small Group Training' },
   { href: '/programs', label: 'In-House Programs' },
   { href: '/summer-camps-clinics', label: 'Summer Camps & Clinics' },
+  { href: '/outdoor-events', label: 'Outdoor Events' },
   { href: '/faq', label: 'FAQ' },
 ];
 
@@ -25,8 +26,32 @@ const isHome = normalizedPath === '/';
       <span class="text-[10px] uppercase tracking-widest text-white/50 font-bold -mt-1">Hillsboro, OR</span>
     </a>
 
+    <div class="hidden lg:flex items-center gap-5">
+      {navLinks.map(link => (
+        <a
+          href={link.href}
+          class:list={[
+            "text-sm font-heading font-bold hover:text-brand-teal transition-colors",
+            normalizedPath === link.href ? "text-brand-teal" : "text-white"
+          ]}
+        >
+          {link.label}
+        </a>
+      ))}
+      <a
+        href={portalLink.href}
+        class:list={[
+          "text-sm font-heading font-bold transition-all hover:text-brand-teal",
+          portalLink.class,
+          normalizedPath.startsWith('/portal') ? "text-brand-teal" : "text-white"
+        ]}
+      >
+        {portalLink.label}
+      </a>
+    </div>
+
     <!-- Navigation Toggle -->
-    <button class="text-white p-2 focus-visible:ring-2 focus-visible:ring-brand-teal rounded-lg outline-none" id="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+    <button class="lg:hidden text-white p-2 focus-visible:ring-2 focus-visible:ring-brand-teal rounded-lg outline-none" id="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
     </button>
   </nav>
@@ -78,12 +103,17 @@ const isHome = normalizedPath === '/';
       } else {
         menu.classList.add('opacity-0', '-translate-y-4');
         toggle.setAttribute('aria-expanded', 'false');
-        
-        const onTransitionEnd = () => {
+
+        let closed = false;
+        const finishClose = () => {
+          if (closed) return;
+          closed = true;
           menu.classList.add('hidden');
           menu.removeEventListener('transitionend', onTransitionEnd);
         };
+        const onTransitionEnd = () => finishClose();
         menu.addEventListener('transitionend', onTransitionEnd);
+        window.setTimeout(finishClose, 350);
       }
     });
 
