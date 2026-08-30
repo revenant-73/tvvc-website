@@ -3,13 +3,11 @@ export const prerender = true;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';
-import { Image, getImage } from 'astro:assets';
+import { Image } from 'astro:assets';
 import heroImage from '../assets/images/hero-volleyball-action.jpg';
 import teamTealImage from '../assets/images/14 Teal.jpg';
 import teamWhiteImage from '../assets/images/14 White.jpeg';
 import playersActionImage from '../assets/images/16 teeal 2.jpeg';
-
-const optimizedHero = await getImage({ src: heroImage, format: 'avif', width: 1920, height: 1080 });
 
 const valueGroups = [
   {
@@ -47,7 +45,6 @@ const valueGroups = [
 ---
 
 <BaseLayout title="Home">
-  <link rel="preload" as="image" href={optimizedHero.src} fetchpriority="high" slot="head" />
   <main class="relative overflow-hidden pt-32">
     <!-- Hero Section -->
     <section class="min-h-[90vh] flex items-center justify-center px-6 py-20 relative overflow-hidden">
@@ -62,6 +59,8 @@ const valueGroups = [
           width={1920}
           height={1080}
           format="avif"
+          widths={[640, 960, 1280, 1920]}
+          sizes="100vw"
         />
         <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal/90 via-brand-charcoal/40 to-brand-charcoal"></div>
         <div class="absolute inset-0 bg-brand-teal/20 mix-blend-overlay"></div>
