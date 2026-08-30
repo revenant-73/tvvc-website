@@ -2,7 +2,7 @@
 
 **Status:** Implemented, deployed dark, and pilot-tested in Stripe test mode
 
-**Last updated:** August 23, 2026
+**Last updated:** August 30, 2026
 
 **Production access:** Disabled for general family use
 
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-The club-season registration and payment system is substantially built and deployed. The production database has the complete club-season schema, the shared registration route is private and protected, the administrator workspaces are available, and the end-to-end standard-plan pilot has been completed with Stripe test payments and Resend email delivery.
+The club-season registration and payment system is substantially built and deployed. The production database has the complete club-season schema, the shared registration route is private and protected, the administrator workspaces are available, and deployed rehearsals have passed the 13U-18U standard-plan path and the 10U-12U pay-in-full path with Stripe test payments and Resend email delivery.
 
 The system is **not ready to open to all families yet**. The remaining launch work is the final controlled rehearsal, activating the teams TVVC actually fields, preparing and reviewing real offers, deliberately opening registration, sending invitations in two supervised waves, and reconciling the first genuine payments—not another large application build.
 
@@ -25,7 +25,7 @@ Current safety position:
 
 Verified production snapshot from August 23, 2026:
 
-- Current production source is `5814845` on `main` (`Track Resend invitation delivery events`).
+- Current production source is `59da019` on `main` (`feat: add admin password login`).
 - Production database verified: `tvvc-registration`.
 - Season `2026-2027-club` is `draft`, timezone `America/Los_Angeles`, default billing day `5`, first installment date `2027-01-05`, and standard installment count `5`.
 - Registration window is configured as November 8, 2026 at 6:00 PM Pacific through November 30, 2026 at 11:59 PM Pacific.
@@ -48,6 +48,9 @@ August 23, 2026 verification checkpoint:
 - Production pricing, age groups, published agreement versions, launch evidence, recent audit entries, and database integrity were verified; `PRAGMA integrity_check` returned `ok`.
 - Local/test-only club-season automated rehearsal passed: `node --experimental-strip-types --test tests/club-season-*.test.ts` returned 50/50 passing tests.
 - Local/test-only Playwright offer/payment rehearsal passed: `npx playwright test tests/club-season-offers.spec.js tests/club-season-payments.spec.js --reporter=list --timeout=90000` returned 15/15 passing tests.
+- Deploy Preview #39 completed a live deployed rehearsal against the isolated `tvvc-season-pilot` database and Stripe test mode for the 13U-18U standard-plan happy path: parent magic-link sign-in, offer visibility, registration draft, agreement acceptance, $400 test Checkout, verified `checkout.session.completed` webhook replay to the preview endpoint, confirmation email delivery, parent dashboard, and Stripe receipt access.
+- Deploy Preview #39 then completed the 10U-12U pay-in-full happy path using the `Payin Full Pilot` offer on `12U Pilot` for `loren+tvvc-12u-pif-pilot@tualatinvalleyvb.com`. Stripe test Checkout session `cs_test_a1jPETcXH2Gflp7xwUxjGP1036XXa32UNeo0rz3UuqHSwN0u7yqXBHB0E2` charged $1,200. The confirmation page, pilot database, confirmation email, parent portal/dashboard, and Stripe receipt all showed paid in full, $0 remaining, and no future automatic club-season charges.
+- After the second rehearsal, the temporary Stripe test webhook `TVVC season registration preview 39` was disabled for audit retention, `CLUB_SEASON_PILOT_EMAILS` was deleted from Netlify, and `CLUB_SEASON_PILOT_MODE` was set to `false` in every Netlify deploy context. Deploy Preview #39 rebuilt from `b9b3927` and `/season-registration` showed `NO ACTIVE OFFER FOUND`, confirming the pilot gate was closed again.
 - No production offers were created, no registration lock was opened, no invitation email was sent, and no live Stripe checkout was created during this checkpoint.
 
 ## 2. Confirmed Operating Rules
@@ -428,11 +431,51 @@ On August 23, 2026, production source was advanced from the invitation-release m
 
 No club-season database writes were made during these source-maintenance PRs. The August 23 production read-only verification still shows the season closed, no offers, no registrations, no invitation batches, and all possible teams inactive.
 
+### 4.14 Deployed final-rehearsal checkpoints on Deploy Preview #39
+
+On August 23, 2026, Deploy Preview #39 was used for final prelaunch rehearsal checkpoints in the isolated pilot environment.
+
+First checkpoint:
+
+- Pilot database: `tvvc-season-pilot`.
+- Stripe mode: test mode only.
+- Parent account: `loren+tvvc-parent-pilot@tualatinvalleyvb.com`.
+- Offer: 14U Pilot using the 13U-18U pricing tier.
+- Payment option tested: standard plan, with a $400 test deposit and five scheduled $220 automatic payments from January through May 2027.
+- Stripe Checkout session: `cs_test_a1FwMmh0a6RHav5mUtB9OdAMsPD434oSocEATEfs4jdFwwpKPcsMv92TuR`.
+- Stripe event replay: `checkout.session.completed` event `evt_1U7ewnFzgaoVZJWYOVz6u3Xp` was manually resent to the temporary Deploy Preview #39 webhook destination and returned `200 OK` at 11:17:16 AM Pacific.
+- Parent result: `/season-registration` showed `YOUR SPOT IS CONFIRMED` for Parent Pilot on 14U Pilot.
+- Email result: Resend delivered `TVVC registration confirmed: Parent Pilot - 14U Pilot` with the $400 deposit, $1,100 remaining balance, January-May payment schedule, no-December-charge language, Stripe receipt link, and parent portal link.
+- Follow-up verification: Loren confirmed the parent portal/dashboard looked good and the receipt link worked as intended.
+
+Second checkpoint:
+
+- Pilot database: `tvvc-season-pilot`.
+- Stripe mode: test mode only.
+- Parent account: `loren+tvvc-12u-pif-pilot@tualatinvalleyvb.com`.
+- Offer: `Payin Full Pilot` using `12U Pilot` and the 10U-12U pricing tier.
+- Payment option tested: pay in full.
+- Stripe Checkout session: `cs_test_a1jPETcXH2Gflp7xwUxjGP1036XXa32UNeo0rz3UuqHSwN0u7yqXBHB0E2`.
+- Payment result: one $1,200 sandbox payment, no future automatic charges, $0 remaining season balance.
+- Database result: offer status `accepted`, payment plan status `completed`, registration status `paid_in_full`, paid installment and succeeded ledger transaction recorded against Stripe payment intent `pi_3U7hELFzgaoVZJWY175CUN4l`.
+- Email result: Resend delivered `TVVC registration confirmed: Payin Full Pilot - 12U Pilot` with the $1,200 payment, $0 remaining balance, no future automatic club-season charge language, Stripe receipt link, and parent portal link.
+- Parent portal result: dashboard showed `REGISTRATION COMPLETE`, `PAID IN FULL`, paid/credited `$1,200.00`, remaining `$0.00`, and no future automatic payments scheduled.
+
+Cleanup after the checkpoints:
+
+- The temporary Stripe test webhook destination `TVVC season registration preview 39` was disabled, not deleted, so delivery history remains available.
+- `CLUB_SEASON_PILOT_EMAILS` was deleted from Netlify.
+- `CLUB_SEASON_PILOT_MODE` was set to `false` in all Netlify deploy contexts.
+- `STRIPE_WEBHOOK_SECRET` was intentionally left unchanged because production depends on that variable family and the temporary Stripe destination is disabled.
+- Branch `codex/deployed-rehearsal-2026-08-23` was pushed through `b9b3927` and Deploy Preview #39 rebuilt successfully with the closed settings. A smoke check of `/season-registration` showed `NO ACTIVE OFFER FOUND`.
+
+These checkpoints do not complete the full final rehearsal. The remaining final-rehearsal cases are custom initial arrangement, later plan revision, duplicate-event idempotency, failure/recovery behavior, administrator ledger review, guardian restrictions, and mobile layouts.
+
 ## 5. Remaining Work Before Live Family Registration
 
 Complete these items in order. Items marked **Launch blocker** must be finished before sending the shared link to real families.
 
-The next work item from the August 23, 2026 state is Step 6, the final prelaunch rehearsal in an isolated/test environment. Production should remain closed while that rehearsal is prepared and run unless Loren explicitly approves a specific production action.
+The next work item from the August 23, 2026 state is to continue Step 6, the final prelaunch rehearsal in an isolated/test environment. The 13U-18U standard-plan and 10U-12U pay-in-full happy paths have passed on Deploy Preview #39; the remaining Step 6 cases are still launch blockers. Production should remain closed while that rehearsal continues unless Loren explicitly approves a specific production action.
 
 ### Step 1 — Reconcile the repository and production migration record
 
@@ -496,12 +539,12 @@ Use Stripe test keys and testing environments for rehearsals. Never use real pay
 
 **Launch blocker.**
 
+- **Checkpoint completed August 23, 2026:** Deploy Preview #39 passed the 13U-18U standard-plan happy path in Stripe test mode, including parent sign-in, registration, agreement acceptance, Checkout, verified webhook activation, confirmation email, parent dashboard, and receipt access.
+- **Checkpoint completed August 23, 2026:** Deploy Preview #39 passed the 10U-12U pay-in-full happy path in Stripe test mode, including parent sign-in, registration, agreement acceptance, $1,200 Checkout, webhook processing, confirmation email, parent dashboard, and receipt access.
 - Create one final internal offer using the exact production agreement versions and real season configuration.
 - Verify the shared link remains absent from navigation and search indexing.
-- Test both standard price tiers.
-- Test pay in full and the standard plan.
 - Test one custom initial arrangement and one later revision.
-- Confirm all emails, receipt access, parent balance, administrator ledger, and guardian restrictions.
+- Confirm administrator ledger and guardian restrictions.
 - Confirm a duplicate webhook/job run causes no duplicate payment or email.
 - Confirm failure does not remove the player from the roster.
 - Verify mobile registration and portal layouts.

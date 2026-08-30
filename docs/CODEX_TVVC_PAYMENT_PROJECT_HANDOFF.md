@@ -2,7 +2,7 @@
 
 **Purpose:** Give a new Codex task or a different computer enough verified context to continue the TVVC club-season registration and payment project safely.
 
-**Snapshot date:** August 23, 2026  
+**Snapshot date:** August 30, 2026
 **Repository:** `revenant-73/tvvc-website`  
 **Production branch:** `main`  
 **Production commit before the Resend webhook env-refresh update:** `00037c9` (`Document production Resend event migration`)
@@ -129,10 +129,25 @@ As of this snapshot:
 - Resend provider-event migration `0016_resend-invitation-events.sql` is applied in production. It added append-only invitation delivery events linked to existing send attempts. The Resend dashboard webhook is registered for `https://tualatinvalleyvb.com/api/webhooks/resend`, Netlify has `RESEND_WEBHOOK_SECRET` configured as a protected environment variable, and production deploy `049d3f6` smoke-tested the endpoint with signature verification active.
 - August 23, 2026 read-only verification confirmed zero club-season offers, zero club-season registrations, zero payment plans, zero invitation batches, zero invitation attempts, all 36 teams inactive, and `PRAGMA integrity_check = ok`.
 - August 23, 2026 local/test-only rehearsal passed the club-season unit suite (50/50) and Playwright offer/payment suite (15/15) without production writes, live Stripe, or invitation sends.
+- August 23, 2026 Deploy Preview #39 completed the 13U-18U standard-plan happy-path rehearsal in the isolated `tvvc-season-pilot` database and Stripe test mode. The parent flow, $400 test Checkout, manually replayed `checkout.session.completed` webhook, confirmation email, parent dashboard, and receipt link all worked. The temporary preview Stripe webhook was disabled afterward, `CLUB_SEASON_PILOT_EMAILS` was deleted from Netlify, and `CLUB_SEASON_PILOT_MODE` was reset to `false` in every Netlify deploy context.
+- August 23, 2026 Deploy Preview #39 completed the 10U-12U pay-in-full happy-path rehearsal in the isolated `tvvc-season-pilot` database and Stripe test mode. The seeded test offer was `Payin Full Pilot` on `12U Pilot` for `loren+tvvc-12u-pif-pilot@tualatinvalleyvb.com`. Checkout session `cs_test_a1jPETcXH2Gflp7xwUxjGP1036XXa32UNeo0rz3UuqHSwN0u7yqXBHB0E2` charged a $1,200 sandbox pay-in-full payment. The parent confirmation page, database records, confirmation email, and parent dashboard all showed paid in full, $0 remaining balance, and no future automatic club-season charges. After the rehearsal, the temporary preview Stripe webhook was disabled, `CLUB_SEASON_PILOT_EMAILS` was deleted from Netlify, and `CLUB_SEASON_PILOT_MODE` was reset to `false` in every Netlify deploy context.
 - The local and production source currently require Node `>=22.12.0`.
 - `npm audit` is reduced as far as currently reasonable without downgrading Astro/Netlify tooling: five high entries remain, all tracing to `extract-zip@2.0.1` through Netlify's latest `@netlify/functions-dev@2.0.1`. There is no patched upstream `extract-zip` or newer `@netlify/functions-dev` release at this snapshot.
 
 The invitation UI may be visible to an authenticated administrator while the locks remain closed. That is expected; release and sending remain blocked.
+
+### August 23, 2026 deploy-preview rehearsal notes
+
+These notes preserve the current thread's operational context for the next Codex session:
+
+- Working branch: `codex/deployed-rehearsal-2026-08-23`.
+- Relevant branch commits before this note: `088c107` triggered the rehearsal preview, `d7703b6` rebuilt with the parent pilot alias, `72f926f` rebuilt after auth trust env, `c9a43ed` rebuilt after Stripe webhook secret setup, `d9dadce` documented the first deployed rehearsal cleanup, `456a75c` rebuilt for the 12U pay-in-full pilot, and `b9b3927` documented the 12U pay-in-full rehearsal.
+- Deploy Preview #39 completed and then closed again. The post-cleanup preview build from `b9b3927` finished successfully, and `/season-registration` returned `NO ACTIVE OFFER FOUND`.
+- Temporary Stripe test webhook destination `we_1U7fqaFzgaoVZJWYIVzh1akm` was disabled after the rehearsals. It was not deleted, so Stripe test delivery history should still be available.
+- `CLUB_SEASON_PILOT_EMAILS` was deleted from Netlify.
+- `CLUB_SEASON_PILOT_MODE` was verified as `false` for Production, Deploy Previews, Branch deploys, Preview Server & Agent Runners, and Local development (Netlify CLI).
+- The pilot database `tvvc-season-pilot` intentionally retains rehearsal evidence for the 13U standard-plan and 12U pay-in-full test families.
+- No production database writes, live Stripe charges, registration opening, offer release, or invitation sends happened during the deployed rehearsals.
 
 ## 8. Databases, Migrations, and Recovery
 
@@ -169,13 +184,13 @@ Secrets are not stored in GitHub. A fresh home-computer clone can still be devel
 
 ## 10. Remaining Work Before November Launch
 
-Immediate next step after this snapshot: run or prepare the final prelaunch rehearsal in an isolated/test environment. Do not open registration, activate real teams, release offers, send invitations, or create live Stripe activity as part of that rehearsal unless Loren explicitly approves that specific production action.
+Immediate next step after this snapshot: continue the final prelaunch rehearsal in an isolated/test environment. The 13U-18U standard-plan and 10U-12U pay-in-full happy paths passed on Deploy Preview #39; the remaining cases are custom initial plan, later plan revision, duplicate-event idempotency, failure recovery, administrator ledger review, guardian restrictions, and mobile layouts. Do not open registration, activate real teams, release offers, send invitations, or create live Stripe activity as part of that rehearsal unless Loren explicitly approves that specific production action.
 
 ### Before November 8
 
-1. Run the final end-to-end rehearsal in the isolated/test environment.
-2. Test both price tiers, pay in full, standard plan, custom initial plan, and a later plan revision.
-3. Confirm emails, receipts, parent balances, administrator ledger, guardian restrictions, duplicate-event protection, failure recovery, and mobile layouts.
+1. Continue the final end-to-end rehearsal in the isolated/test environment.
+2. Test the remaining custom initial plan and later plan revision cases.
+3. Confirm administrator ledger, guardian restrictions, duplicate-event protection, failure recovery, and mobile layouts.
 4. Approve the final 10U-14U invitation email preview.
 5. Take a fresh Turso backup immediately before live opening.
 
