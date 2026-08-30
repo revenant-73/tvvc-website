@@ -7,6 +7,7 @@ const session = await getSession(Astro.request);
 const url = new URL(Astro.request.url);
 const requestedCallbackUrl = url.searchParams.get('callbackUrl');
 const callbackUrl = getSafeCallbackUrl(requestedCallbackUrl);
+const isAdminCallback = callbackUrl.startsWith('/admin');
 
 if (session) {
   return Astro.redirect(callbackUrl);
@@ -67,6 +68,52 @@ if (session) {
             </div>
             <button id="reset-btn" class="text-xs uppercase tracking-widest font-bold text-brand-teal hover:text-white transition-colors border-b border-brand-teal/30 pb-1">Use a different email</button>
           </div>
+
+          {isAdminCallback && (
+            <div id="admin-login" class="mt-8 border-t border-white/10 pt-6">
+              <div class="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <h3 class="text-sm font-heading font-extrabold uppercase tracking-widest text-white">Admin password</h3>
+                  <p class="mt-1 text-xs leading-5 text-white/40">For TVVC admins only. Families still use the login link.</p>
+                </div>
+                <span class="rounded-full border border-brand-coral/30 bg-brand-coral/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-brand-coral">Staff</span>
+              </div>
+
+              <div class="space-y-3">
+                <label for="admin-email" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1">
+                  Admin Email
+                </label>
+                <input
+                  type="email"
+                  name="admin-email"
+                  id="admin-email"
+                  autocomplete="username"
+                  placeholder="loren@tualatinvalleyvb.com"
+                  class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-coral transition-colors placeholder:text-white/20"
+                />
+
+                <label for="admin-password" class="block text-xs uppercase tracking-widest font-bold text-white/40 ml-1 pt-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="admin-password"
+                  id="admin-password"
+                  autocomplete="current-password"
+                  class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-brand-coral transition-colors"
+                />
+
+                <button
+                  id="admin-login-btn"
+                  data-callback-url={callbackUrl}
+                  class="w-full border border-brand-coral/40 bg-brand-coral/10 hover:bg-brand-coral hover:text-white text-brand-coral font-bold py-4 rounded-2xl transition-all mt-5 flex items-center justify-center gap-2 disabled:cursor-wait disabled:opacity-60"
+                >
+                  <span id="admin-btn-text">Sign In as Admin</span>
+                  <div id="admin-btn-loader" class="hidden w-5 h-5 border-2 border-current/30 border-t-current rounded-full animate-spin"></div>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div class="mt-8 pt-6 border-t border-white/10 text-center relative z-10">
@@ -96,6 +143,11 @@ if (session) {
   const emailForm = document.getElementById('email-form');
   const successMsg = document.getElementById('success-msg');
   const resetBtn = document.getElementById('reset-btn');
+  const adminEmailInput = document.getElementById('admin-email') as HTMLInputElement | null;
+  const adminPasswordInput = document.getElementById('admin-password') as HTMLInputElement | null;
+  const adminLoginBtn = document.getElementById('admin-login-btn') as HTMLButtonElement | null;
+  const adminBtnText = document.getElementById('admin-btn-text');
+  const adminBtnLoader = document.getElementById('admin-btn-loader');
 
   // Check if we just sent an email or if we're coming back from a redirect
   const urlParams = new URLSearchParams(window.location.search);
@@ -106,6 +158,7 @@ if (session) {
                    
   if (isVerify) {
     emailForm?.classList.add('hidden');
+    document.getElementById('admin-login')?.classList.add('hidden');
     successMsg?.classList.remove('hidden');
   }
 
@@ -145,6 +198,45 @@ if (session) {
       emailForm?.classList.add('hidden');
       successMsg?.classList.remove('hidden');
       console.error('Sign in error:', e);
+    }
+  });
+
+  adminLoginBtn?.addEventListener('click', async () => {
+    const email = adminEmailInput?.value?.trim() || '';
+    const password = adminPasswordInput?.value || '';
+    const callbackUrl = adminLoginBtn.dataset.callbackUrl || '/admin';
+
+    if (!email || !email.includes('@') || !password) {
+      window.toast.error('Enter your admin email and password.');
+      return;
+    }
+
+    adminLoginBtn.disabled = true;
+    adminBtnText?.classList.add('hidden');
+    adminBtnLoader?.classList.remove('hidden');
+
+    try {
+      const response = await fetch('/api/admin/password-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, callbackUrl }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok && result.callbackUrl) {
+        sessionStorage.removeItem('tvvc_login_pending');
+        window.location.href = result.callbackUrl;
+        return;
+      }
+
+      window.toast.error(result.error || 'Invalid administrator credentials.');
+    } catch (error) {
+      console.error('Admin login error:', error);
+      window.toast.error('Admin login failed. Please try again.');
+    } finally {
+      adminLoginBtn.disabled = false;
+      adminBtnText?.classList.remove('hidden');
+      adminBtnLoader?.classList.add('hidden');
     }
   });
 

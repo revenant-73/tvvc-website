@@ -66,8 +66,17 @@ const currentYear = new Date().getFullYear();
     </div>
   </div>
   
-  <div class="max-w-6xl mx-auto px-6 mt-16 pt-8 border-t border-white/5 text-[10px] text-white/50 flex justify-between uppercase tracking-widest">
+  <div class="max-w-6xl mx-auto px-6 mt-16 pt-8 border-t border-white/5 text-[10px] text-white/50 flex flex-col gap-4 uppercase tracking-widest sm:flex-row sm:items-center sm:justify-between">
     <p>© {currentYear} Tualatin Valley Volleyball Club</p>
-    <p>Hillsboro, Oregon</p>
+    <div class="flex items-center gap-4">
+      <p>Hillsboro, Oregon</p>
+      <a
+        href="/portal/login?callbackUrl=/admin"
+        class="text-white/30 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-black"
+        aria-label="Administrator login"
+      >
+        Admin
+      </a>
+    </div>
   </div>
 </footer>

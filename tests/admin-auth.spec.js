@@ -78,6 +78,69 @@ test('admin page no longer exposes account self-promotion or a passcode', async 
   }
 });
 
+test('admin password login creates a current admin session only for configured admins', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    await page.goto('/portal/login?callbackUrl=/admin');
+    await expect(page.getByRole('heading', { name: 'Admin password' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign In as Admin' })).toBeVisible();
+
+    const rejectedParent = await context.request.post('/api/admin/password-login', {
+      data: {
+        email: fixtures.parentA.email,
+        password: 'correct horse battery staple',
+        callbackUrl: '/admin',
+      },
+    });
+    expect(rejectedParent.status()).toBe(401);
+    expect(rejectedParent.headers()['set-cookie']).toBeFalsy();
+
+    const rejectedPassword = await context.request.post('/api/admin/password-login', {
+      data: {
+        email: fixtures.admin.email,
+        password: 'wrong password',
+        callbackUrl: '/admin',
+      },
+    });
+    expect(rejectedPassword.status()).toBe(401);
+    expect(rejectedPassword.headers()['set-cookie']).toBeFalsy();
+
+    const accepted = await context.request.post('/api/admin/password-login', {
+      data: {
+        email: fixtures.admin.email,
+        password: 'correct horse battery staple',
+        callbackUrl: '/admin',
+      },
+    });
+    expect(accepted.status()).toBe(200);
+    await expect(accepted.json()).resolves.toMatchObject({ ok: true, callbackUrl: '/admin' });
+    expect(accepted.headers()['set-cookie']).toContain('authjs.session-token=');
+    expect(accepted.headers()['set-cookie']).toContain('HttpOnly');
+
+    await page.goto('/admin');
+    await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test('normal portal login keeps customers on magic links', async ({ page }) => {
+  await page.goto('/portal/login');
+  await expect(page.getByRole('button', { name: 'Send Login Link' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Admin password' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Sign In as Admin' })).toHaveCount(0);
+});
+
+test('footer provides a quiet admin login entry point', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: 'Administrator login' })).toHaveAttribute(
+    'href',
+    '/portal/login?callbackUrl=/admin'
+  );
+});
+
 test('season team management requires admin access and supports staging and activation', async ({ browser, request }) => {
   const anonymous = await request.post('/api/admin/club-season-teams', {
     data: {

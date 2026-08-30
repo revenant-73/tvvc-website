@@ -3,7 +3,6 @@ import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import { db } from './src/db/db';
 import * as schema from './src/db/schema';
 import Resend from '@auth/core/providers/resend';
-import Credentials from '@auth/core/providers/credentials';
 
 export default defineConfig({
   secret: import.meta.env.AUTH_SECRET || process.env.AUTH_SECRET,

@@ -112,6 +112,8 @@ The protected `/admin/club-season` workspace supports:
 
 Database-backed administrator authorization is checked on each protected request so a stale browser session cannot preserve access after an administrator is demoted.
 
+Optional administrator password login is available for `/portal/login?callbackUrl=/admin...` destinations when Netlify has both `ADMIN_PASSWORD_LOGIN_EMAILS` and `ADMIN_PASSWORD_LOGIN_HASH` configured. Generate the hash with `npm run admin:hash-password -- "long password here"`. The endpoint still requires the matching database user to currently have `role = 'admin'`; customer and parent accounts continue to use the Resend magic-link workflow. If the password-login variables are absent, `/api/admin/password-login` returns `404` and the existing magic-link flow remains the only login path. This does not alter registration locks, offers, invitations, payments, Stripe behavior, Resend delivery, or club-season data.
+
 ### 3.4 Offer management
 
 The protected `/admin/club-season/offers` workspace supports:

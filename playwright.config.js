@@ -51,6 +51,8 @@ module.exports = defineConfig({
         APPDATA: path.join(os.tmpdir(), 'tvvc-netlify-test-config'),
         ASTRO_DEV_BACKGROUND: '0',
         ASTRO_TELEMETRY_DISABLED: '1',
+        ADMIN_PASSWORD_LOGIN_EMAILS: portalFixtures.admin.email,
+        ADMIN_PASSWORD_LOGIN_HASH: 'scrypt:16384:8:1:LQB7zv1A34cNQoYsmvzggA:vXM5oBQWtrStLCvK_ONgh5oeP-9X62ZFsI15Rc0L_hoPzNXd380mzTDUf3jVcgNot2e7jjaq_wp0nuqhOdYcWg',
         AUTH_SECRET: 'playwright-only-auth-secret-not-for-production-use',
         CLUB_SEASON_REGISTRATION_ENABLED: 'false',
         CLUB_SEASON_PILOT_MODE: 'true',
