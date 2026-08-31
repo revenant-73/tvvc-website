@@ -7,7 +7,6 @@ import { Image } from 'astro:assets';
 import heroImage from '../assets/images/hero-volleyball-action.jpg';
 import teamTealImage from '../assets/images/14 Teal.jpg';
 import teamWhiteImage from '../assets/images/14 White.jpeg';
-import playersActionImage from '../assets/images/16 teeal 2.jpeg';
 
 const valueGroups = [
   {
@@ -240,13 +239,16 @@ const valueGroups = [
 
     <!-- Section Break Image -->
     <section class="relative h-64 md:h-[400px] overflow-hidden my-12 group bg-brand-charcoal depth-scene">
-      <Image 
-        src={playersActionImage} 
-        alt="TVVC players in action" 
-        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms] opacity-60 grayscale"
+      <Image
+        src={teamTealImage}
+        alt="TVVC athletes together at a tournament"
+        class="w-full h-full object-cover object-[50%_44%] group-hover:scale-[1.03] transition-transform duration-[2000ms] opacity-55 grayscale"
         loading="lazy"
-        width={1200}
-        height={400}
+        width={1800}
+        height={520}
+        format="avif"
+        widths={[768, 1200, 1600, 2200]}
+        sizes="100vw"
       />
       <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal via-transparent to-brand-charcoal"></div>
       <div class="section-depth-rule absolute bottom-8 left-1/2 h-24 w-[min(60rem,100vw)] -translate-x-1/2 border-y border-brand-teal/30 bg-brand-teal/5 pointer-events-none"></div>
