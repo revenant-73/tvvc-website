@@ -47,7 +47,7 @@ const valueGroups = [
 <BaseLayout title="Home">
   <main class="relative overflow-hidden pt-32">
     <!-- Hero Section -->
-    <section class="min-h-[90vh] flex items-center justify-center px-6 py-20 relative overflow-hidden">
+    <section class="min-h-[90vh] flex items-center justify-center px-6 py-20 relative overflow-hidden depth-scene">
       <!-- Hero Image with Filter & Overlay -->
       <div class="absolute inset-0 z-0">
         <Image 
@@ -64,13 +64,15 @@ const valueGroups = [
         />
         <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal/90 via-brand-charcoal/40 to-brand-charcoal"></div>
         <div class="absolute inset-0 bg-brand-teal/20 mix-blend-overlay"></div>
+        <div class="hero-court-lines absolute -bottom-24 left-1/2 h-72 w-[min(72rem,120vw)] -translate-x-1/2 opacity-45 pointer-events-none"></div>
+        <div class="volleyball-depth absolute right-[10%] top-[28%] hidden h-24 w-24 rounded-full opacity-55 md:block pointer-events-none"></div>
         
         <!-- Animated Blobs - Intensified -->
         <div class="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-brand-teal/40 rounded-full blur-[140px] animate-pulse"></div>
         <div class="absolute -bottom-20 -right-20 w-[600px] h-[600px] bg-brand-coral/30 rounded-full blur-[140px] animate-pulse" style="animation-delay: 2s;"></div>
       </div>
 
-      <div class="max-w-6xl mx-auto text-center relative z-10">
+      <div class="max-w-6xl mx-auto text-center relative z-10 depth-foreground">
         <ScrollReveal>
           <span class="inline-block px-4 py-1.5 rounded-full border border-brand-teal/30 bg-brand-teal/10 text-[10px] font-bold uppercase tracking-[0.2em] mb-8 text-brand-teal shadow-[0_0_20px_rgba(0,130,129,0.2)]">
             Tualatin Valley Volleyball Club
@@ -112,9 +114,9 @@ const valueGroups = [
         </div>
       </ScrollReveal>
 
-      <div class="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 h-full">
+      <div class="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 h-full depth-scene">
         <!-- Club Teams -->
-        <div class="md:col-span-2 md:row-span-2 glass-card flex flex-col justify-between group overflow-hidden border-brand-teal/20 p-0">
+        <div class="md:col-span-2 md:row-span-2 glass-card depth-panel flex flex-col justify-between group overflow-hidden border-brand-teal/20 p-0">
           <ScrollReveal direction="left" className="h-full flex flex-col">
             <div class="relative h-48 md:h-64 overflow-hidden">
               <Image 
@@ -141,7 +143,7 @@ const valueGroups = [
         </div>
 
         <!-- Ignition -->
-        <div class="md:col-span-1 glass-card flex flex-col justify-between border-brand-coral/20">
+        <div class="md:col-span-1 glass-card depth-panel flex flex-col justify-between border-brand-coral/20">
           <ScrollReveal delay={0.2}>
             <div>
               <span class="text-[10px] font-bold bg-brand-coral/10 text-brand-coral px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Ages 9-12</span>
@@ -153,7 +155,7 @@ const valueGroups = [
         </div>
 
         <!-- PlayWorks -->
-        <div class="md:col-span-1 glass-card flex flex-col justify-between">
+        <div class="md:col-span-1 glass-card depth-panel flex flex-col justify-between">
           <ScrollReveal delay={0.4}>
             <div>
               <span class="text-[10px] font-bold bg-white/5 text-white/50 px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Ages 11-16</span>
@@ -165,7 +167,7 @@ const valueGroups = [
         </div>
 
         <!-- Summer Camps -->
-        <div class="md:col-span-1 glass-card flex flex-col justify-between border-brand-teal/20">
+        <div class="md:col-span-1 glass-card depth-panel flex flex-col justify-between border-brand-teal/20">
           <ScrollReveal delay={0.5}>
             <div>
               <span class="text-[10px] font-bold bg-brand-teal/10 text-brand-teal px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Summer 2026</span>
@@ -177,7 +179,7 @@ const valueGroups = [
         </div>
 
         <!-- Club Tryouts -->
-        <div class="md:col-span-1 glass-card flex flex-col justify-between relative overflow-hidden bg-brand-teal/20 border-brand-teal/40">
+        <div class="md:col-span-1 glass-card depth-panel flex flex-col justify-between relative overflow-hidden bg-brand-teal/20 border-brand-teal/40">
           <ScrollReveal delay={0.3}>
             <div class="absolute -top-10 -right-10 w-48 h-48 bg-brand-teal/40 rounded-full blur-3xl"></div>
             <div>
@@ -209,7 +211,7 @@ const valueGroups = [
           </ScrollReveal>
           
           <ScrollReveal direction="right">
-            <div class="relative group p-4 bg-white/5 border border-white/10 rounded-sm rotate-2 hover:rotate-0 transition-transform duration-500">
+            <div class="relative group p-4 bg-white/5 border border-white/10 rounded-sm rotate-2 hover:rotate-0 transition-transform duration-500 photo-depth-frame">
               {/* Tape Effect */}
               <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-8 bg-white/10 backdrop-blur-sm -rotate-2 z-20 pointer-events-none"></div>
               
@@ -237,7 +239,7 @@ const valueGroups = [
     </section>
 
     <!-- Section Break Image -->
-    <section class="relative h-64 md:h-[400px] overflow-hidden my-12 group bg-brand-charcoal">
+    <section class="relative h-64 md:h-[400px] overflow-hidden my-12 group bg-brand-charcoal depth-scene">
       <Image 
         src={playersActionImage} 
         alt="TVVC players in action" 
@@ -247,6 +249,7 @@ const valueGroups = [
         height={400}
       />
       <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal via-transparent to-brand-charcoal"></div>
+      <div class="section-depth-rule absolute bottom-8 left-1/2 h-24 w-[min(60rem,100vw)] -translate-x-1/2 border-y border-brand-teal/30 bg-brand-teal/5 pointer-events-none"></div>
       <div class="absolute inset-0 flex items-center justify-center">
          <div class="text-center px-6">
             <ScrollReveal>
@@ -282,9 +285,9 @@ const valueGroups = [
                 </div>
               </ScrollReveal>
 
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 depth-scene">
                 {group.values.map((v, i) => (
-                  <ScrollReveal delay={i * 0.1} direction="up" className={`glass-card relative overflow-hidden group border-white/5 hover:border-${group.accent}/40 transition-all ${v.size === 'large' ? 'md:col-span-2' : v.size === 'medium' ? 'md:col-span-1.5' : 'md:col-span-1'}`}>
+                  <ScrollReveal delay={i * 0.1} direction="up" className={`glass-card depth-panel relative overflow-hidden group border-white/5 hover:border-${group.accent}/40 transition-all ${v.size === 'large' ? 'md:col-span-2' : v.size === 'medium' ? 'md:col-span-1.5' : 'md:col-span-1'}`}>
                     {/* Paper Texture Overlay */}
                     <div class="absolute inset-0 opacity-[0.03] pointer-events-none noise-bg mix-blend-overlay"></div>
                     

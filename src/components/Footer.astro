@@ -3,10 +3,10 @@ const currentYear = new Date().getFullYear();
 ---
 
 <footer class="bg-black/50 border-t border-white/10 py-16 mt-20">
-  <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+  <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
     <div class="col-span-1 md:col-span-2 text-center md:text-left">
       <h2 class="text-2xl font-heading font-extrabold mb-4">TVVC</h2>
-      <p class="text-white/60 max-w-md mb-6">
+      <p class="text-white/60 max-w-md mx-auto md:mx-0 mb-6">
         Tualatin Valley Volleyball Club — Volleyball with Purpose. Coaching with Heart. We keep volleyball accessible and joyful.
       </p>
     </div>
@@ -51,7 +51,7 @@ const currentYear = new Date().getFullYear();
 
     <div class="md:col-span-1">
       <h3 class="font-bold mb-4 uppercase text-xs tracking-widest text-brand-teal">Find Us</h3>
-      <div class="rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50 h-32 w-full">
+      <div class="rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50 h-32 w-full max-w-sm mx-auto md:max-w-none">
         <iframe 
           title="Tualatin Valley Volleyball Club Location Map"
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3164.3335793665105!2d-122.9224053!3d45.498861299999994!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x54950ff866da519f%3A0x391c11667eeade27!2sTualatin%20Valley%20Volleyball%20Club!5e1!3m2!1sen!2sus!4v1776808277481!5m2!1sen!2sus" 
@@ -66,9 +66,9 @@ const currentYear = new Date().getFullYear();
     </div>
   </div>
   
-  <div class="max-w-6xl mx-auto px-6 mt-16 pt-8 border-t border-white/5 text-[10px] text-white/50 flex flex-col gap-4 uppercase tracking-widest sm:flex-row sm:items-center sm:justify-between">
+  <div class="max-w-6xl mx-auto px-6 mt-16 pt-8 border-t border-white/5 text-[10px] text-white/50 flex flex-col items-center gap-4 text-center uppercase tracking-widest sm:flex-row sm:justify-between sm:text-left">
     <p>© {currentYear} Tualatin Valley Volleyball Club</p>
-    <div class="flex items-center gap-4">
+    <div class="flex items-center justify-center gap-4">
       <p>Hillsboro, Oregon</p>
       <a
         href="/portal/login?callbackUrl=/admin"
