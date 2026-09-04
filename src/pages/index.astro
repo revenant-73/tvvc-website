@@ -46,7 +46,7 @@ const valueGroups = [
 <BaseLayout title="Home">
   <main class="relative overflow-hidden pt-32">
     <!-- Hero Section -->
-    <section class="min-h-[90vh] flex items-center justify-center px-6 py-20 relative overflow-hidden depth-scene">
+    <section class="min-h-[82vh] flex items-center justify-center px-6 py-20 relative overflow-hidden">
       <!-- Hero Image with Filter & Overlay -->
       <div class="absolute inset-0 z-0">
         <Image 
@@ -61,31 +61,20 @@ const valueGroups = [
           widths={[640, 960, 1280, 1920]}
           sizes="100vw"
         />
-        <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal/90 via-brand-charcoal/40 to-brand-charcoal"></div>
-        <div class="absolute inset-0 bg-brand-teal/20 mix-blend-overlay"></div>
-        <div class="hero-court-lines absolute -bottom-24 left-1/2 h-72 w-[min(72rem,120vw)] -translate-x-1/2 opacity-45 pointer-events-none"></div>
-        <div class="volleyball-depth absolute right-[10%] top-[28%] hidden h-24 w-24 rounded-full opacity-55 md:block pointer-events-none"></div>
-        
-        <!-- Animated Blobs - Intensified -->
-        <div class="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-brand-teal/40 rounded-full blur-[140px] animate-pulse"></div>
-        <div class="absolute -bottom-20 -right-20 w-[600px] h-[600px] bg-brand-coral/30 rounded-full blur-[140px] animate-pulse" style="animation-delay: 2s;"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal/95 via-brand-charcoal/65 to-brand-charcoal"></div>
+        <div class="absolute inset-x-0 bottom-0 h-px bg-brand-teal/30"></div>
       </div>
 
-      <div class="max-w-6xl mx-auto text-center relative z-10 depth-foreground">
+      <div class="max-w-5xl mx-auto text-center relative z-10">
         <ScrollReveal>
-          <span class="inline-block px-4 py-1.5 rounded-full border border-brand-teal/30 bg-brand-teal/10 text-[10px] font-bold uppercase tracking-[0.2em] mb-8 text-brand-teal shadow-[0_0_20px_rgba(0,130,129,0.2)]">
+          <span class="inline-block px-4 py-1.5 rounded-full border border-brand-teal/30 bg-brand-teal/10 text-[10px] font-bold uppercase tracking-[0.2em] mb-8 text-brand-teal">
             Tualatin Valley Volleyball Club
           </span>
         </ScrollReveal>
         
         <ScrollReveal delay={0.2}>
-          <h1 class="text-[clamp(2.5rem,10vw,9.5rem)] font-syne font-extrabold mb-8 leading-[0.85] tracking-tighter text-white uppercase break-words drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative mx-auto max-w-[100vw] px-4">
-            Play with <br class="hidden md:block" /> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal via-brand-teal to-[#00f2ff] italic relative inline-block">
-              Purpose
-              <svg class="absolute -bottom-2 md:-bottom-8 left-0 w-full h-4 md:h-12 text-brand-teal/40 -z-10 overflow-visible" viewBox="0 0 400 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 30C50 15 150 5 395 25" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
-              </svg>
-            </span>
+          <h1 class="text-4xl sm:text-5xl md:text-7xl font-syne font-extrabold mb-8 leading-tight tracking-tight text-white uppercase break-words relative mx-auto max-w-4xl px-4">
+            Play with <span class="block text-brand-teal italic">Purpose</span>
           </h1>
         </ScrollReveal>
 
@@ -113,15 +102,15 @@ const valueGroups = [
         </div>
       </ScrollReveal>
 
-      <div class="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 h-full depth-scene">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-full">
         <!-- Club Teams -->
-        <div class="md:col-span-2 md:row-span-2 glass-card depth-panel flex flex-col justify-between group overflow-hidden border-brand-teal/20 p-0">
+        <div class="md:col-span-2 glass-card flex flex-col justify-between group overflow-hidden border-brand-teal/20 p-0">
           <ScrollReveal direction="left" className="h-full flex flex-col">
             <div class="relative h-48 md:h-64 overflow-hidden">
               <Image 
                 src={teamTealImage} 
                 alt="14 Teal team in action" 
-                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 mix-blend-luminosity hover:mix-blend-normal hover:opacity-100 transition-all"
+                class="w-full h-full object-cover opacity-70 grayscale"
                 loading="lazy"
                 width={800}
                 height={600}
@@ -134,7 +123,7 @@ const valueGroups = [
                 <h3 class="text-3xl font-heading mb-4 text-white uppercase tracking-tighter">Club Teams</h3>
                 <p class="text-white/60 mb-8 max-w-sm">Competitive age-group teams with full season training, regional tournaments, and a focus on intentional development.</p>
               </div>
-              <a href="/teams" class="flex items-center gap-2 text-sm font-bold text-brand-teal group-hover:gap-4 transition-all uppercase tracking-widest">
+              <a href="/teams" class="flex items-center gap-2 text-sm font-bold text-brand-teal hover:text-white transition-colors uppercase tracking-widest">
                 Explore Teams <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
               </a>
             </div>
@@ -142,7 +131,7 @@ const valueGroups = [
         </div>
 
         <!-- Ignition -->
-        <div class="md:col-span-1 glass-card depth-panel flex flex-col justify-between border-brand-coral/20">
+        <div class="glass-card flex flex-col justify-between border-brand-coral/20">
           <ScrollReveal delay={0.2}>
             <div>
               <span class="text-[10px] font-bold bg-brand-coral/10 text-brand-coral px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Ages 9-12</span>
@@ -154,7 +143,7 @@ const valueGroups = [
         </div>
 
         <!-- PlayWorks -->
-        <div class="md:col-span-1 glass-card depth-panel flex flex-col justify-between">
+        <div class="glass-card flex flex-col justify-between">
           <ScrollReveal delay={0.4}>
             <div>
               <span class="text-[10px] font-bold bg-white/5 text-white/50 px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Ages 11-16</span>
@@ -166,7 +155,7 @@ const valueGroups = [
         </div>
 
         <!-- Summer Camps -->
-        <div class="md:col-span-1 glass-card depth-panel flex flex-col justify-between border-brand-teal/20">
+        <div class="glass-card flex flex-col justify-between border-brand-teal/20">
           <ScrollReveal delay={0.5}>
             <div>
               <span class="text-[10px] font-bold bg-brand-teal/10 text-brand-teal px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Summer 2026</span>
@@ -178,15 +167,14 @@ const valueGroups = [
         </div>
 
         <!-- Club Tryouts -->
-        <div class="md:col-span-1 glass-card depth-panel flex flex-col justify-between relative overflow-hidden bg-brand-teal/20 border-brand-teal/40">
+        <div class="glass-card flex flex-col justify-between relative overflow-hidden bg-brand-teal/10 border-brand-teal/40">
           <ScrollReveal delay={0.3}>
-            <div class="absolute -top-10 -right-10 w-48 h-48 bg-brand-teal/40 rounded-full blur-3xl"></div>
             <div>
-              <span class="text-[10px] font-bold bg-white text-brand-teal px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block shadow-[0_0_20px_rgba(255,255,255,0.4)]">Registration Open</span>
+              <span class="text-[10px] font-bold bg-white text-brand-teal px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Registration Open</span>
               <h3 class="text-xl font-heading mb-2 text-white uppercase italic">2026-2027 Tryouts</h3>
               <p class="text-sm text-white/70 max-w-xs mb-6">Club tryouts and prep clinics are now open for registration. Join us for the 2026-2027 Season.</p>
             </div>
-            <a href="/tryouts" class="text-sm font-extrabold text-white bg-brand-teal px-4 py-2 rounded-lg text-center hover:bg-brand-teal-dark transition-colors shadow-lg shadow-brand-teal/20 uppercase tracking-widest">Register Now</a>
+            <a href="/tryouts" class="text-sm font-extrabold text-white bg-brand-teal px-4 py-2 rounded-lg text-center hover:bg-brand-teal-dark transition-colors uppercase tracking-widest">Register Now</a>
           </ScrollReveal>
         </div>
       </div>
@@ -210,15 +198,12 @@ const valueGroups = [
           </ScrollReveal>
           
           <ScrollReveal direction="right">
-            <div class="relative group p-4 bg-white/5 border border-white/10 rounded-sm rotate-2 hover:rotate-0 transition-transform duration-500 photo-depth-frame">
-              {/* Tape Effect */}
-              <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-8 bg-white/10 backdrop-blur-sm -rotate-2 z-20 pointer-events-none"></div>
-              
-              <div class="p-2 bg-white shadow-2xl relative transition-all duration-500">
+            <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+              <div class="relative">
                 <Image 
                   src={teamWhiteImage} 
                   alt="TVVC athletes huddle" 
-                  class="w-full h-auto object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+                  class="w-full h-auto object-cover grayscale opacity-90"
                   loading="lazy"
                   width={600}
                   height={400}
@@ -231,18 +216,17 @@ const valueGroups = [
                    <span class="text-[10px] font-bold text-brand-teal uppercase tracking-[0.2em] bg-black/40 px-2 py-1 inline-block">Our Culture in Action</span>
                 </div>
               </div>
-              <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-brand-teal/20 rounded-full blur-3xl -z-10 group-hover:bg-brand-teal/40 transition-all"></div>
             </div>
           </ScrollReveal>
        </div>
     </section>
 
     <!-- Section Break Image -->
-    <section class="relative h-64 md:h-[400px] overflow-hidden my-12 group bg-brand-charcoal depth-scene">
+    <section class="relative h-64 md:h-[400px] overflow-hidden my-12 bg-brand-charcoal">
       <Image
         src={teamTealImage}
         alt="TVVC athletes together at a tournament"
-        class="w-full h-full object-cover object-[50%_44%] group-hover:scale-[1.03] transition-transform duration-[2000ms] opacity-55 grayscale"
+        class="w-full h-full object-cover object-[50%_44%] opacity-55 grayscale"
         loading="lazy"
         width={1800}
         height={520}
@@ -251,7 +235,6 @@ const valueGroups = [
         sizes="100vw"
       />
       <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal via-transparent to-brand-charcoal"></div>
-      <div class="section-depth-rule absolute bottom-8 left-1/2 h-24 w-[min(60rem,100vw)] -translate-x-1/2 border-y border-brand-teal/30 bg-brand-teal/5 pointer-events-none"></div>
       <div class="absolute inset-0 flex items-center justify-center">
          <div class="text-center px-6">
             <ScrollReveal>
@@ -270,7 +253,7 @@ const valueGroups = [
       <div class="max-w-6xl mx-auto px-6">
         <ScrollReveal>
           <div class="mb-20 text-center md:text-left">
-            <h2 class="text-4xl md:text-8xl font-syne font-extrabold mb-4 text-white uppercase tracking-tighter drop-shadow-[0_10px_30px_rgba(0,150,149,0.3)]">Our Core <br class="hidden md:block" /> <span class="text-brand-teal italic">Principles</span></h2>
+            <h2 class="text-4xl md:text-7xl font-syne font-extrabold mb-4 text-white uppercase tracking-tight">Our Core <br class="hidden md:block" /> <span class="text-brand-teal italic">Principles</span></h2>
             <p class="text-white/60 max-w-xl uppercase tracking-[0.2em] text-[10px] font-bold">A deeper look at the philosophy that drives every practice and match at TVVC.</p>
           </div>
         </ScrollReveal>
@@ -280,21 +263,20 @@ const valueGroups = [
             <div>
               <ScrollReveal>
                 <div class="flex items-baseline gap-4 mb-8">
-                  <h3 class={`text-3xl font-syne font-bold uppercase tracking-tighter ${group.accent === 'brand-teal' ? 'text-brand-teal drop-shadow-[0_0_15px_rgba(0,150,149,0.5)]' : group.accent === 'brand-coral' ? 'text-brand-coral drop-shadow-[0_0_15px_rgba(232,93,78,0.5)]' : 'text-white'}`}>
+                  <h3 class={`text-3xl font-syne font-bold uppercase tracking-tight ${group.accent === 'brand-teal' ? 'text-brand-teal' : group.accent === 'brand-coral' ? 'text-brand-coral' : 'text-white'}`}>
                     {group.category}
                   </h3>
                   <span class="text-white/20 text-xs uppercase tracking-[0.3em] font-bold">/ {group.tagline}</span>
                 </div>
               </ScrollReveal>
 
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 depth-scene">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {group.values.map((v, i) => (
-                  <ScrollReveal delay={i * 0.1} direction="up" className={`glass-card depth-panel relative overflow-hidden group border-white/5 hover:border-${group.accent}/40 transition-all ${v.size === 'large' ? 'md:col-span-2' : v.size === 'medium' ? 'md:col-span-1.5' : 'md:col-span-1'}`}>
+                  <ScrollReveal delay={i * 0.1} direction="up" className={`glass-card relative overflow-hidden group border-white/5 hover:border-${group.accent}/40 transition-colors ${v.size === 'large' ? 'md:col-span-2' : v.size === 'medium' ? 'md:col-span-1.5' : 'md:col-span-1'}`}>
                     {/* Paper Texture Overlay */}
                     <div class="absolute inset-0 opacity-[0.03] pointer-events-none noise-bg mix-blend-overlay"></div>
                     
-                    <div class={`absolute -top-10 -right-10 w-32 h-32 opacity-20 blur-3xl transition-opacity group-hover:opacity-40 ${group.accent === 'brand-teal' ? 'bg-brand-teal' : group.accent === 'brand-coral' ? 'bg-brand-coral' : 'bg-white'}`}></div>
-                    <span class="text-3xl mb-6 block drop-shadow-lg">{v.icon}</span>
+                    <span class="text-3xl mb-6 block">{v.icon}</span>
                     <h4 class="text-xl font-heading font-bold mb-3 text-white group-hover:text-white transition-colors">{v.title}</h4>
                     <p class="text-sm text-white/50 leading-relaxed max-w-sm group-hover:text-white/70 transition-colors">{v.description}</p>
                   </ScrollReveal>
