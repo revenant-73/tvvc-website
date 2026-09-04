@@ -57,18 +57,27 @@ try {
 }
 
 const requestedTab = Astro.url.searchParams.get('tab') || 'tryout-prep';
+const registrationIntro = requestedTab === 'ignition' || requestedTab === 'playworks'
+  ? {
+      eyebrow: 'In-House Training',
+      description: 'Complete the form below to register your athlete(s) for available TVVC in-house training sessions.',
+    }
+  : {
+      eyebrow: '2026-2027 Season',
+      description: 'Complete the form below to register your athlete(s) for our upcoming tryout prep clinics.',
+    };
 ---
 
 <BaseLayout title="Event Registration" description="Register for TVVC camps, clinics, and tryout prep in Hillsboro, OR.">
   <main class="pt-32 pb-24 px-4 md:px-6">
     <div class="max-w-4xl mx-auto">
       <div class="text-center mb-16">
-        <span class="text-brand-teal font-bold uppercase tracking-[0.2em] text-[10px] mb-4 block">2026-2027 Season</span>
+        <span class="text-brand-teal font-bold uppercase tracking-[0.2em] text-[10px] mb-4 block">{registrationIntro.eyebrow}</span>
         <h1 class="text-4xl md:text-7xl font-heading font-extrabold text-white uppercase mb-6 leading-tight">
           Secure Your <span class="text-brand-teal italic text-5xl md:text-8xl">Spot</span>
         </h1>
         <p class="text-white/60 text-lg leading-relaxed max-w-2xl mx-auto">
-          Complete the form below to register your athlete(s) for our upcoming tryout prep clinics.
+          {registrationIntro.description}
         </p>
       </div>
 

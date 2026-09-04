@@ -117,6 +117,23 @@ test.describe('Registration Flow', () => {
     )).not.toBeVisible();
   });
 
+  test('shows eligible in-house program sessions from the requested tab', async ({ page }) => {
+    await page.goto('/register?tab=playworks');
+    await expect(page.locator('form[data-hydrated="true"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('In-House Training').first()).toBeVisible();
+
+    await fillStep1(page);
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'PlayWorks' })).toBeVisible();
+    await expect(page.getByText(portalFixtures.inHouse.playworksEventName, { exact: true })).toBeVisible();
+    await expect(page.getByText('$200').first()).toBeVisible();
+
+    await page.getByRole('button', { name: 'Ignition' }).click();
+    await expect(page.getByText(portalFixtures.inHouse.ignitionEventName, { exact: true })).toBeVisible();
+  });
+
   test('rejects inactive, expired, and unknown event IDs at the API boundary', async ({ request }) => {
     const unavailableEventIds = [
       'event-parent-a-inactive',

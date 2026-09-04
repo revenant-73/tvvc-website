@@ -606,6 +606,28 @@ export default async function globalSetup() {
       args: [fixtures.clubSeason.tryoutEventId, fixtures.clubSeason.tryoutEventName],
     },
     {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active, metadata)
+        VALUES (?, 'ignition', ?, 'Jan 11 - March 12, 2027', '1 hour, 2x per week',
+                '2027-01-11', '2027-03-12', 20000, 20, true, ?)`,
+      args: [
+        fixtures.inHouse.ignitionEventId,
+        fixtures.inHouse.ignitionEventName,
+        JSON.stringify({ registrationOpensOn: '2026-01-01' }),
+      ],
+    },
+    {
+      sql: `INSERT INTO events
+        (id, type, name, date_info, time_info, start_date, end_date, price, capacity, active, metadata)
+        VALUES (?, 'playworks', ?, 'Jan 11 - March 12, 2027', '1 hour, 2x per week',
+                '2027-01-11', '2027-03-12', 20000, 24, true, ?)`,
+      args: [
+        fixtures.inHouse.playworksEventId,
+        fixtures.inHouse.playworksEventName,
+        JSON.stringify({ registrationOpensOn: '2026-01-01' }),
+      ],
+    },
+    {
       sql: `INSERT INTO registration_items (registration_id, athlete_id, event_id)
             VALUES (?, ?, 'event-parent-a')`,
       args: [fixtures.parentA.registrationId, fixtures.parentA.athleteId],

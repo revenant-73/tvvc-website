@@ -8,6 +8,8 @@ import { EventSelectionSection } from './EventSelectionSection';
 import { WaiverSection } from './WaiverSection';
 import { ReviewSection } from './ReviewSection';
 
+const REGISTRATION_TAB_IDS = ['camps', 'clinics', 'tryout-prep', 'ignition', 'playworks'] as const;
+
 interface Event {
   id: string;
   name: string;
@@ -63,7 +65,7 @@ export default function RegistrationForm({
   ]);
 
   const [athleteTabStates, setAthleteTabStates] = useState<string[]>(
-    ['tryout-prep'].map(() => ['camps', 'clinics', 'tryout-prep'].includes(initialTab) ? initialTab : 'tryout-prep')
+    ['tryout-prep'].map(() => REGISTRATION_TAB_IDS.includes(initialTab as any) ? initialTab : 'tryout-prep')
   );
   const [expandedWaivers, setExpandedWaivers] = useState<boolean[]>([false]);
   const [waitlistSelections, setWaitlistSelections] = useState<string[][]>([[]]);
@@ -78,7 +80,7 @@ export default function RegistrationForm({
 
   // Sync tab states and expanded waivers when athletes count changes
   useEffect(() => {
-    const tabToUse = ['camps', 'clinics', 'tryout-prep'].includes(initialTab) ? initialTab : 'tryout-prep';
+    const tabToUse = REGISTRATION_TAB_IDS.includes(initialTab as any) ? initialTab : 'tryout-prep';
     
     setAthleteTabStates(prev => {
       if (prev.length === athletes.length) return prev;
@@ -213,9 +215,13 @@ export default function RegistrationForm({
       if (tabId === 'camps') return event.type === 'camp';
       if (tabId === 'tryout-prep') return event.type === 'clinic' && event.id.includes('clinic-tryout-prep');
       if (tabId === 'clinics') return event.type === 'clinic' && !event.id.includes('clinic-tryout-prep');
+      if (tabId === 'ignition') return event.type === 'ignition';
+      if (tabId === 'playworks') return event.type === 'playworks';
       return false;
     }).length;
   };
+
+  const isInHouseInitialTab = initialTab === 'ignition' || initialTab === 'playworks';
 
   const nextStep = () => {
     if (currentStep === 1) {
@@ -356,6 +362,14 @@ export default function RegistrationForm({
             </div>
           )}
 
+          {isInHouseInitialTab && (
+            <div className="glass-card border-brand-coral/20 bg-brand-coral/5 p-6 text-center">
+              <p className="text-brand-coral font-bold uppercase tracking-widest text-[10px] mb-2">Registration Started</p>
+              <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">In-House Training</h3>
+              <p className="text-white/40 text-xs mt-2 italic">Fill out your contact info below to select your program session in the next step.</p>
+            </div>
+          )}
+
           <ParentInfoSection parentInfo={parentInfo} setParentInfo={setParentInfo} />
 
           {athletes.map((athlete, index) => (
@@ -386,7 +400,7 @@ export default function RegistrationForm({
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-heading font-bold text-white uppercase tracking-tight">Select Events</h2>
-            <p className="text-white/40 text-sm font-medium">Choose an available tryout prep clinic for each athlete.</p>
+            <p className="text-white/40 text-sm font-medium">Choose an available clinic, camp, or program session for each athlete.</p>
           </div>
           {athletes.map((athlete, index) => (
             <EventSelectionSection 

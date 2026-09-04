@@ -1,7 +1,11 @@
 ---
-export const prerender = true;
+export const prerender = false;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getClubDate } from '../lib/event-eligibility';
+
+const IN_HOUSE_REGISTRATION_OPENS_ON = '2026-10-01';
+const inHouseRegistrationOpen = getClubDate() >= IN_HOUSE_REGISTRATION_OPENS_ON;
 ---
 
 <BaseLayout title="In-House Training Programs" description="Explore TVVC's in-house volleyball programs: Ignition for 4th-6th graders and PlayWorks for 6th-10th graders.">
@@ -71,7 +75,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
 
         <div class="mt-12 text-center">
-          <button disabled class="btn btn-primary !bg-brand-coral !shadow-glow-coral opacity-50 cursor-not-allowed">Winter Registrations will open on Oct 1, 2026</button>
+          {inHouseRegistrationOpen ? (
+            <a href="/register?tab=ignition" class="btn btn-primary !bg-brand-coral !shadow-glow-coral">
+              Register for Winter Ignition
+            </a>
+          ) : (
+            <button disabled class="btn btn-primary !bg-brand-coral !shadow-glow-coral opacity-50 cursor-not-allowed">
+              Winter Registrations open Oct 1, 2026
+            </button>
+          )}
         </div>
       </div>
     </section>
@@ -120,7 +132,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                  <div class="text-4xl font-heading font-bold">$200 <span class="text-sm font-normal text-white/40">/ session</span></div>
                  <div class="text-[10px] text-brand-teal font-bold uppercase mt-2">1 hour, 2x per week</div>
                </div>
-               <button disabled class="btn btn-primary opacity-50 cursor-not-allowed mb-4">Winter Registrations will open on Oct 1, 2026</button>
+               {inHouseRegistrationOpen ? (
+                 <a href="/register?tab=playworks" class="btn btn-primary mb-4">Register for Winter PlayWorks</a>
+               ) : (
+                 <button disabled class="btn btn-primary opacity-50 cursor-not-allowed mb-4">
+                   Winter Registrations open Oct 1, 2026
+                 </button>
+               )}
             </div>
           </div>
        </div>

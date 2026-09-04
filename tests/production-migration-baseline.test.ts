@@ -104,7 +104,7 @@ test('production baseline records exact repository migrations and is rerunnable'
         sum(type = 'index' AND name LIKE 'club_%') AS indexes
       FROM sqlite_master
     `);
-    assert.deepEqual(currentShape.rows[0], { tables: 22, triggers: 33, indexes: 88 });
+    assert.deepEqual(currentShape.rows[0], { tables: 23, triggers: 35, indexes: 94 });
   } finally {
     await client.close();
   }

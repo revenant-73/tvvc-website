@@ -47,3 +47,31 @@ test('keeps undated active events under explicit admin control', () => {
     endDate: null,
   }, '2026-07-31'), true);
 });
+
+test('respects event metadata registration open dates', () => {
+  const dateLockedEvent = {
+    active: true,
+    startDate: '2027-01-11',
+    endDate: '2027-03-12',
+    metadata: JSON.stringify({ registrationOpensOn: '2026-10-01' }),
+  };
+
+  assert.equal(isRegistrationEventEligible(dateLockedEvent, '2026-09-30'), false);
+  assert.equal(isRegistrationEventEligible(dateLockedEvent, '2026-10-01'), true);
+});
+
+test('rejects events with malformed registration open dates', () => {
+  assert.equal(isRegistrationEventEligible({
+    active: true,
+    startDate: '2027-01-11',
+    endDate: '2027-03-12',
+    metadata: JSON.stringify({ registrationOpensOn: 'October 1, 2026' }),
+  }, '2026-10-01'), false);
+
+  assert.equal(isRegistrationEventEligible({
+    active: true,
+    startDate: '2027-01-11',
+    endDate: '2027-03-12',
+    metadata: '{registrationOpensOn:2026-10-01}',
+  }, '2026-10-01'), false);
+});

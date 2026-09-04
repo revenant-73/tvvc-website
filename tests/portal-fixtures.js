@@ -123,6 +123,12 @@ module.exports = {
     eventName: 'Atomic Final Spot Clinic',
     price: 3600,
   },
+  inHouse: {
+    ignitionEventId: 'event-ignition-open',
+    ignitionEventName: 'Ignition Winter Test Session',
+    playworksEventId: 'event-playworks-open',
+    playworksEventName: 'PlayWorks Winter Test Session',
+  },
   expirationCleanup: {
     registrationId: 'cleanup-expired-2026',
     athleteId: 601,

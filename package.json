@@ -16,6 +16,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
     "db:seed:club-pilot": "tsx src/db/seed-club-season-pilot.ts",
+    "db:stage-in-house": "tsx scripts/stage-in-house-registration-events.ts",
     "admin:hash-password": "node scripts/hash-admin-password.mjs",
     "test": "playwright test",
     "test:unit": "node --experimental-strip-types --test tests/*.test.ts",
