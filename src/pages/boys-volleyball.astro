@@ -1,0 +1,315 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import heroImage from '../assets/images/hero-volleyball-action.jpg';
+
+const learningGoals = [
+  {
+    label: 'Age Groups',
+    title: 'Who is interested?',
+    text: 'TVVC is trying to understand middle school and high school interest before making any program decisions.',
+  },
+  {
+    label: 'Experience',
+    title: 'What level fits?',
+    text: 'Beginners, multi-sport athletes, and experienced volleyball players are all useful data points.',
+  },
+  {
+    label: 'Availability',
+    title: 'What could families manage?',
+    text: 'Likely conflicts, school sports, travel limits, and preferred opportunities help shape realistic next steps.',
+  },
+  {
+    label: 'Demand',
+    title: 'Is there enough momentum?',
+    text: 'If interest supports it, TVVC may follow up with open gyms, clinics, tryout details, or team formation updates.',
+  },
+];
+
+const fitCards = [
+  'Middle school boys curious about volleyball',
+  'High school boys looking for more court time',
+  'Beginners who want a low-pressure first step',
+  'Experienced players interested in team options',
+  'Families who want updates before committing',
+  'Multi-sport athletes balancing other seasons',
+];
+
+const faqs = [
+  {
+    question: 'Is a boys team guaranteed?',
+    answer: 'No. TVVC is collecting interest so we can understand demand, age groups, and feasibility before deciding what to offer.',
+  },
+  {
+    question: 'Is this registration?',
+    answer: 'No. This is only an interest form. Submitting does not reserve a roster spot, confirm team placement, or lock in pricing.',
+  },
+  {
+    question: 'What happens after I submit?',
+    answer: 'TVVC may contact families with updates, questions, open gym or clinic opportunities, tryout information, or team formation details if demand supports it.',
+  },
+  {
+    question: 'Do beginners belong here?',
+    answer: 'Yes. Beginners are welcome to express interest. Knowing how many newer players are curious helps TVVC decide what kind of programming would actually help.',
+  },
+];
+---
+
+<BaseLayout
+  title="Boys Volleyball Interest"
+  description="TVVC is gathering family interest for a potential boys volleyball program for the 2026-2027 season in Hillsboro, OR."
+  og={{
+    title: "Boys Volleyball at TVVC",
+    description: "Express interest in potential boys volleyball opportunities for the 2026-2027 season.",
+    badge: "Interest Form"
+  }}
+>
+  <main class="relative overflow-hidden pt-32">
+    <section class="relative min-h-[78vh] overflow-hidden px-6 py-20 flex items-center">
+      <div class="absolute inset-0 z-0">
+        <Image
+          src={heroImage}
+          alt="Volleyball court action at the net"
+          class="h-full w-full object-cover opacity-35 grayscale contrast-125"
+          loading="eager"
+          fetchpriority="high"
+          width={1920}
+          height={1080}
+          format="avif"
+          widths={[640, 960, 1280, 1920]}
+          sizes="100vw"
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal/95 via-brand-charcoal/75 to-brand-charcoal"></div>
+        <div class="absolute inset-x-0 bottom-0 h-px bg-brand-teal/30"></div>
+      </div>
+
+      <div class="relative z-10 max-w-6xl mx-auto w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-12 items-center">
+          <div class="max-w-3xl text-center md:text-left">
+            <span class="inline-block px-4 py-1.5 rounded-full border border-brand-teal/30 bg-brand-teal/10 text-[10px] font-bold uppercase tracking-[0.2em] mb-8 text-brand-teal">
+              2026-2027 Season Interest
+            </span>
+            <h1 class="font-syne font-extrabold mb-8 leading-tight tracking-normal text-white uppercase">
+              <span class="block text-[2.35rem] sm:text-5xl md:text-7xl">Boys</span>
+              <span class="block text-[2rem] sm:text-5xl md:text-7xl">Volleyball</span>
+              <span class="block text-[2.35rem] sm:text-5xl md:text-7xl text-brand-teal italic">at TVVC</span>
+            </h1>
+            <p class="text-lg md:text-xl text-white/65 leading-relaxed mb-10 max-w-2xl mx-auto md:mx-0">
+              TVVC is gathering interest from families for a potential boys volleyball program this season.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <a href="#interest-form" class="btn btn-primary px-8">Express Interest</a>
+              <a href="mailto:info@tualatinvalleyvb.com?subject=Boys%20Volleyball%20Interest" class="btn btn-secondary px-8">Email TVVC</a>
+            </div>
+          </div>
+
+          <div class="glass-card border-brand-teal/20 bg-black/30 p-8">
+            <img src="/assets/images/tvvc-logo.png" alt="TVVC logo" class="w-20 h-20 object-contain mb-8 opacity-90" />
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-coral mb-3">Status Check</p>
+            <h2 class="text-2xl font-heading font-extrabold text-white uppercase mb-4">Interest list only.</h2>
+            <p class="text-sm text-white/60 leading-relaxed">
+              This is not tryout registration, club-season registration, or a payment workflow. Submitting the form does not guarantee a roster spot, team placement, or pricing.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-6 py-24">
+      <div class="mb-12 text-center md:text-left">
+        <span class="text-brand-coral font-bold uppercase tracking-[0.2em] text-[10px] mb-4 block">What TVVC is learning</span>
+        <h2 class="text-3xl md:text-4xl font-syne font-extrabold text-white uppercase tracking-tight mb-6 max-w-4xl">
+          Build the right thing <span class="text-brand-coral italic">only if it fits.</span>
+        </h2>
+        <p class="text-white/55 leading-relaxed max-w-2xl">
+          The goal is simple: understand whether boys volleyball interest is real enough, specific enough, and workable enough to plan next steps responsibly.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {learningGoals.map((item, index) => (
+          <article class="glass-card h-full border-white/10 hover:border-brand-teal/30">
+            <span class:list={[
+              'text-[10px] font-bold uppercase tracking-widest mb-5 inline-block px-3 py-1 rounded-full',
+              index % 2 === 0 ? 'bg-brand-teal/10 text-brand-teal' : 'bg-brand-coral/10 text-brand-coral'
+            ]}>{item.label}</span>
+            <h3 class="text-xl font-heading font-bold text-white mb-4">{item.title}</h3>
+            <p class="text-sm text-white/55 leading-relaxed">{item.text}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="bg-white/[0.03] border-y border-white/5 py-24">
+      <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-12 items-start">
+        <div>
+          <span class="text-brand-teal font-bold uppercase tracking-[0.2em] text-[10px] mb-4 block">Good fit</span>
+          <h2 class="text-3xl md:text-5xl font-heading font-extrabold text-white uppercase leading-tight mb-6">
+            Who should fill this out?
+          </h2>
+          <p class="text-white/60 leading-relaxed">
+            If your family is even loosely curious about boys volleyball at TVVC, the form is useful. Nobody needs to be ready to commit today.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {fitCards.map((fit, index) => (
+            <div class="glass rounded-2xl border-white/10 p-5 flex items-start gap-4">
+              <span class:list={[
+                'mt-1 h-2.5 w-2.5 rounded-full shrink-0',
+                index % 2 === 0 ? 'bg-brand-teal' : 'bg-brand-coral'
+              ]}></span>
+              <p class="text-sm font-semibold text-white/75 leading-relaxed">{fit}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section id="interest-form" class="max-w-6xl mx-auto px-6 py-24 scroll-mt-28">
+      <div class="grid grid-cols-1 lg:grid-cols-[0.72fr_1.28fr] gap-12 items-start">
+        <div class="lg:sticky lg:top-32">
+          <span class="text-brand-coral font-bold uppercase tracking-[0.2em] text-[10px] mb-4 block">Interest form</span>
+          <h2 class="text-3xl md:text-5xl font-heading font-extrabold text-white uppercase leading-tight mb-6">
+            Tell us who might want the next ball.
+          </h2>
+          <div class="space-y-5 text-white/60 leading-relaxed">
+            <p>
+              Required fields are kept intentionally light so families can raise a hand without getting dragged into a full commitment process.
+            </p>
+            <p>
+              TVVC will use responses to evaluate demand and contact families about boys volleyball opportunities only.
+            </p>
+          </div>
+        </div>
+
+        <form
+          id="boys-volleyball-interest-form"
+          name="boys-volleyball-interest"
+          method="POST"
+          action="/boys-volleyball/thanks"
+          data-netlify="true"
+          netlify-honeypot="bot-field"
+          class="glass-card border-brand-teal/20 bg-white/[0.04] p-6 md:p-10 space-y-8"
+        >
+          <input type="hidden" name="form-name" value="boys-volleyball-interest" />
+          <input type="hidden" name="subject" value="New TVVC Boys Volleyball Interest Form" />
+          <p class="hidden">
+            <label>Do not fill this out: <input name="bot-field" /></label>
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <label class="space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-white/45">Parent/Guardian Name *</span>
+              <input required type="text" name="parent_name" autocomplete="name" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-white/25 focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30" />
+            </label>
+
+            <label class="space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-white/45">Email *</span>
+              <input required type="email" name="email" autocomplete="email" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-white/25 focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30" />
+            </label>
+
+            <label class="space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-white/45">Phone</span>
+              <input type="tel" name="phone" autocomplete="tel" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-white/25 focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30" />
+            </label>
+
+            <label class="space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-white/45">Player Name *</span>
+              <input required type="text" name="player_name" autocomplete="off" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-white/25 focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30" />
+            </label>
+
+            <label class="space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-white/45">Player Grade *</span>
+              <select required name="player_grade" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30">
+                <option value="">Select grade</option>
+                <option>5th</option>
+                <option>6th</option>
+                <option>7th</option>
+                <option>8th</option>
+                <option>9th</option>
+                <option>10th</option>
+                <option>11th</option>
+                <option>12th</option>
+                <option>Other</option>
+              </select>
+            </label>
+
+            <label class="space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-white/45">Player School</span>
+              <input type="text" name="player_school" autocomplete="organization" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-white/25 focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30" />
+            </label>
+          </div>
+
+          <fieldset class="space-y-3">
+            <legend class="text-[10px] font-bold uppercase tracking-widest text-white/45 mb-3">Player Volleyball Experience *</legend>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {['Beginner / new to volleyball', 'Some school or recreational experience', 'Club or competitive experience', 'Unsure'].map((option) => (
+                <label class="flex items-start gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/70">
+                  <input required type="radio" name="player_experience" value={option} class="mt-1 accent-brand-teal" />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset class="space-y-3">
+            <legend class="text-[10px] font-bold uppercase tracking-widest text-white/45 mb-3">Interest Type</legend>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {['Updates', 'Open gym or clinic', 'Tryout/team info', 'Unsure'].map((option) => (
+                <label class="flex items-start gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/70">
+                  <input type="checkbox" name="interest_type" value={option} class="mt-1 accent-brand-coral" />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <label class="block space-y-2">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-white/45">Likely Availability / Conflicts</span>
+            <textarea name="availability_conflicts" rows="4" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-white/25 focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30" placeholder="School sports, travel limits, preferred days, or anything else that matters."></textarea>
+          </label>
+
+          <label class="block space-y-2">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-white/45">Notes</span>
+            <textarea name="notes" rows="4" class="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-white/25 focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30" placeholder="Anything you want TVVC to know."></textarea>
+          </label>
+
+          <label class="flex items-start gap-3 rounded-2xl border border-brand-teal/20 bg-brand-teal/10 p-4 text-sm text-white/75 leading-relaxed">
+            <input required type="checkbox" name="contact_consent" value="yes" class="mt-1 accent-brand-teal" />
+            <span>I consent to TVVC contacting our family about boys volleyball opportunities.</span>
+          </label>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4 border-t border-white/10 pt-8">
+            <button type="submit" class="btn btn-primary px-8">Submit Interest Form</button>
+            <p class="text-xs text-white/40 leading-relaxed">
+              This form is for planning communication only.
+            </p>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="max-w-4xl mx-auto px-6 pb-24">
+      <div class="text-center mb-12">
+        <span class="text-brand-teal font-bold uppercase tracking-[0.2em] text-[10px] mb-4 block">FAQ</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-extrabold text-white uppercase">Quick answers</h2>
+      </div>
+
+      <div class="space-y-4">
+        {faqs.map((item) => (
+          <details class="glass rounded-2xl border border-white/10 p-6 group">
+            <summary class="cursor-pointer list-none font-heading font-bold text-white flex items-center justify-between gap-6">
+              <span>{item.question}</span>
+              <span class="text-brand-teal group-open:rotate-45 transition-transform text-2xl leading-none" aria-hidden="true">+</span>
+            </summary>
+            <p class="text-sm text-white/55 leading-relaxed mt-4 pr-8">{item.answer}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  </main>
+
+</BaseLayout>

@@ -1,0 +1,84 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import heroImage from '../../assets/images/hero-volleyball-action.jpg';
+---
+
+<BaseLayout
+  title="Boys Volleyball Interest Received"
+  description="Thanks for sharing your family's boys volleyball interest with TVVC. This interest form is not registration and does not guarantee team placement, pricing, or a roster spot."
+  og={{
+    title: "Boys Volleyball Interest Received",
+    description: "TVVC received your boys volleyball interest form.",
+    badge: "Interest Received"
+  }}
+>
+  <main class="relative overflow-hidden pt-32">
+    <section class="relative min-h-[72vh] px-6 py-20 flex items-center">
+      <div class="absolute inset-0 -z-10">
+        <Image
+          src={heroImage}
+          alt=""
+          class="h-full w-full object-cover opacity-20 grayscale contrast-125"
+          loading="eager"
+          fetchpriority="high"
+          width={1920}
+          height={1080}
+          format="avif"
+          widths={[640, 960, 1280, 1920]}
+          sizes="100vw"
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-brand-charcoal/95 via-brand-charcoal/82 to-brand-charcoal"></div>
+        <div class="absolute inset-x-0 top-0 h-px bg-brand-teal/30"></div>
+        <div class="absolute inset-x-0 bottom-0 h-px bg-white/10"></div>
+      </div>
+
+      <div class="max-w-4xl mx-auto w-full">
+        <div class="glass-card border-brand-teal/20 bg-black/30 p-6 sm:p-8 md:p-12">
+          <div class="flex flex-col gap-8 md:flex-row md:items-start">
+            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-brand-teal/30 bg-brand-teal/15 text-brand-teal">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5"></path>
+              </svg>
+            </div>
+
+            <div class="min-w-0">
+              <span class="text-brand-coral font-bold uppercase tracking-[0.2em] text-[10px] mb-4 block">Interest received</span>
+              <h1 class="font-syne text-4xl md:text-6xl font-extrabold text-white uppercase leading-tight tracking-normal mb-6">
+                Thanks for raising a hand.
+              </h1>
+              <p class="text-lg text-white/65 leading-relaxed max-w-2xl">
+                TVVC received your boys volleyball interest form. We will use responses to understand demand, age groups, experience levels, and what next steps might actually make sense.
+              </p>
+
+              <div class="mt-8 grid gap-4 sm:grid-cols-3">
+                <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-brand-teal mb-2">Not registration</p>
+                  <p class="text-sm text-white/60 leading-relaxed">This does not register your player for a program or tryout.</p>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-brand-coral mb-2">No guarantee</p>
+                  <p class="text-sm text-white/60 leading-relaxed">No team, roster spot, pricing, placement, or schedule is promised.</p>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-brand-teal mb-2">Possible follow-up</p>
+                  <p class="text-sm text-white/60 leading-relaxed">TVVC may email updates about open gyms, clinics, tryouts, or team formation.</p>
+                </div>
+              </div>
+
+              <div class="mt-10 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+                <a href="/boys-volleyball" class="btn btn-primary px-8">Back to Boys Volleyball</a>
+                <a href="mailto:info@tualatinvalleyvb.com?subject=Boys%20Volleyball%20Interest" class="btn btn-secondary px-8">Email TVVC</a>
+                <a href="/faq" class="inline-flex items-center justify-center px-6 py-3 text-sm font-bold text-white/60 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-charcoal">
+                  View FAQ
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
