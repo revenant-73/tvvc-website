@@ -10,8 +10,44 @@
   force = true
 
 [[redirects]]
-  from = "/*.html"
-  to = "/:splat"
+  from = "/teams.html"
+  to = "/teams"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/faq.html"
+  to = "/faq"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/boys-volleyball.html"
+  to = "/boys-volleyball"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/boys-volleyball/thanks.html"
+  to = "/boys-volleyball/thanks"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/events.html"
+  to = "/events"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/privacy-policy.html"
+  to = "/privacy-policy"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/privacy-security.html"
+  to = "/privacy-security"
   status = 301
   force = true
 

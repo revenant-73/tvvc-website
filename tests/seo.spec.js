@@ -7,6 +7,44 @@ async function getStructuredData(page) {
 }
 
 test.describe('SEO metadata', () => {
+  const publicPageMetadata = [
+    {
+      path: '/teams',
+      title: 'Girls Volleyball Teams & Tryouts in Hillsboro — TVVC',
+      description: 'TVVC offers 12U-18U girls club volleyball teams in Hillsboro, OR with local practices, CEVA tournaments, clear costs, and development-first coaching.',
+    },
+    {
+      path: '/tryouts',
+      title: 'Club Volleyball Tryouts & Prep Clinics — TVVC',
+      description: 'TVVC 2026-2027 club volleyball tryouts and tryout prep clinics in Hillsboro, OR for 12U-18U athletes preparing for the CEVA season.',
+    },
+    {
+      path: '/programs',
+      title: 'In-House Youth Volleyball Programs — TVVC',
+      description: 'TVVC in-house volleyball programs in Hillsboro, OR: Ignition for 4th-6th graders and PlayWorks for middle school athletes building skills through play.',
+    },
+    {
+      path: '/summer-camps-clinics',
+      title: 'Volleyball Camps & Clinics in Hillsboro — TVVC',
+      description: 'TVVC volleyball camps and clinics in Hillsboro, OR, including Girls Club Prep, tryout prep, skill clinics, and game-based youth volleyball training.',
+    },
+    {
+      path: '/boys-volleyball',
+      title: 'Boys Volleyball Interest in Hillsboro — TVVC',
+      description: 'TVVC is gathering family interest for potential boys volleyball opportunities in Hillsboro, OR for the 2026-2027 season.',
+    },
+    {
+      path: '/register',
+      title: 'Volleyball Event Registration — TVVC',
+      description: 'Register for open TVVC volleyball clinics, camps, and tryout prep events in Hillsboro, OR.',
+    },
+    {
+      path: '/events',
+      title: 'May ShinDig Volleyball Tournament — TVVC',
+      description: 'TVVC May ShinDig is an end-of-season volleyball tournament in Hillsboro, OR for 14U and 16U teams looking for a competitive season wrap-up.',
+    },
+  ];
+
   test('homepage uses a local search title, clean canonical URL, and organization structured data', async ({ page }) => {
     await page.goto('/');
 
@@ -29,6 +67,19 @@ test.describe('SEO metadata', () => {
     expect(organization.address.addressLocality).toBe('Hillsboro');
     expect(organization.sport).toBe('Volleyball');
   });
+
+  for (const pageMetadata of publicPageMetadata) {
+    test(`${pageMetadata.path} uses targeted title, description, and clean canonical URL`, async ({ page }) => {
+      await page.goto(pageMetadata.path);
+
+      await expect(page).toHaveTitle(pageMetadata.title);
+      await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', pageMetadata.description);
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        'href',
+        `https://tualatinvalleyvb.com${pageMetadata.path}`
+      );
+    });
+  }
 
   test('FAQ page exposes FAQPage structured data', async ({ page }) => {
     await page.goto('/faq');

@@ -44,7 +44,7 @@ Status: started
 - [x] Replace the homepage title from generic `Home` to `Tualatin Valley Volleyball Club`.
 - [x] Replace the homepage description with a stronger local youth-volleyball snippet.
 - [x] Improve FAQ title/description around parent search intent.
-- [ ] Review and sharpen titles/descriptions for `/teams`, `/tryouts`, `/programs`, `/summer-camps-clinics`, `/boys-volleyball`, and `/events`.
+- [x] Review and sharpen titles/descriptions for `/teams`, `/tryouts`, `/programs`, `/summer-camps-clinics`, `/boys-volleyball`, `/register`, and `/events`.
 - [ ] Keep each page title unique, direct, and tied to one primary search intent.
 - [ ] Avoid overstuffing keyword phrases. Write for parents first; Google is not impressed by word salad in a tracksuit.
 
