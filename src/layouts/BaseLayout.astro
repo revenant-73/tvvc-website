@@ -20,6 +20,7 @@ interface Props {
   description?: string;
   image?: string;
   noindex?: boolean;
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
   og?: {
     title: string;
     description: string;
@@ -27,25 +28,78 @@ interface Props {
   };
 }
 
+const defaultDescription = "Tualatin Valley Volleyball Club. High-quality, affordable volleyball club in Hillsboro, OR. Smarter training, not just more reps.";
+
 const { 
   title, 
-  description = "Tualatin Valley Volleyball Club. High-quality, affordable volleyball club in Hillsboro, OR. Smarter training, not just more reps.",
+  description = defaultDescription,
   image: propImage,
   noindex = false,
+  structuredData,
   og
 } = Astro.props;
+
+const siteURL = Astro.site || 'https://tualatinvalleyvb.com';
 
 // Generate OG image URL
 let image = propImage || "/assets/images/og-image.jpg";
 if (og) {
-  const ogUrl = new URL('/api/og.png', 'https://tualatinvalleyvb.com');
+  const ogUrl = new URL('/api/og.png', siteURL);
   ogUrl.searchParams.set('title', og.title);
   ogUrl.searchParams.set('description', og.description);
   if (og.badge) ogUrl.searchParams.set('badge', og.badge);
   image = ogUrl.toString();
 }
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://tualatinvalleyvb.com');
+function cleanCanonicalPath(pathname: string) {
+  const withoutIndex = pathname.replace(/\/index\.html$/, '/');
+  const withoutExtension = withoutIndex.replace(/\.html$/, '');
+  return withoutExtension || '/';
+}
+
+const canonicalURL = new URL(cleanCanonicalPath(Astro.url.pathname), siteURL);
+const absoluteImageURL = new URL(image, canonicalURL);
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': ['LocalBusiness', 'SportsOrganization'],
+  '@id': new URL('/#organization', siteURL).toString(),
+  name: 'Tualatin Valley Volleyball Club',
+  alternateName: 'TVVC',
+  url: new URL('/', siteURL).toString(),
+  logo: new URL('/assets/images/tvvc-logo.png', siteURL).toString(),
+  image: new URL('/assets/images/og-image.jpg', siteURL).toString(),
+  description: defaultDescription,
+  telephone: '+1-503-389-0760',
+  email: 'info@tualatinvalleyvb.com',
+  sport: 'Volleyball',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '2820 SE 58th Court',
+    addressLocality: 'Hillsboro',
+    addressRegion: 'OR',
+    postalCode: '97123',
+    addressCountry: 'US',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: 45.4988613,
+    longitude: -122.9224053,
+  },
+  areaServed: [
+    { '@type': 'City', name: 'Hillsboro' },
+    { '@type': 'City', name: 'Beaverton' },
+    { '@type': 'AdministrativeArea', name: 'Washington County, Oregon' },
+    { '@type': 'Place', name: 'Tualatin Valley' },
+  ],
+};
+const providedStructuredData = structuredData
+  ? Array.isArray(structuredData)
+    ? structuredData
+    : [structuredData]
+  : [];
+const pageStructuredData = noindex
+  ? providedStructuredData
+  : [organizationSchema, ...providedStructuredData];
 ---
 
 <!DOCTYPE html>
@@ -69,17 +123,21 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://tualatin
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={Astro.url} />
+    <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={`${title} — TVVC`} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={new URL(image, Astro.url)} />
+    <meta property="og:image" content={absoluteImageURL} />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={Astro.url} />
+    <meta property="twitter:url" content={canonicalURL} />
     <meta property="twitter:title" content={`${title} — TVVC`} />
     <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={new URL(image, Astro.url)} />
+    <meta property="twitter:image" content={absoluteImageURL} />
+
+    {pageStructuredData.map((entry) => (
+      <script type="application/ld+json" set:html={JSON.stringify(entry)} />
+    ))}
 
     <slot name="head" />
   </head>

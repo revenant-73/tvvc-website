@@ -6,6 +6,24 @@ import netlify from '@astrojs/netlify';
 import auth from 'auth-astro';
 
 const isPlaywright = process.env.PLAYWRIGHT_TEST === '1';
+const nonIndexableSitemapPaths = [
+  /^\/admin(?:\/|$)/,
+  /^\/api(?:\/|$)/,
+  /^\/portal(?:\/|$)/,
+  /^\/boys-volleyball\/thanks\/?$/,
+  /^\/offline\/?$/,
+  /^\/outdoor-events\/?$/,
+  /^\/season-feedback\/?$/,
+  /^\/season-registration\/?$/,
+  /^\/success\/?$/,
+  /^\/training\/?$/,
+  /^\/training\/book\/?$/,
+];
+
+function shouldIncludeInSitemap(page) {
+  const { pathname } = new URL(page);
+  return !nonIndexableSitemapPaths.some((pattern) => pattern.test(pathname));
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -20,13 +38,7 @@ export default defineConfig({
     react(), 
     auth(),
     sitemap({
-      filter: (page) => ![
-        'https://tualatinvalleyvb.com/outdoor-events',
-        'https://tualatinvalleyvb.com/season-feedback',
-        'https://tualatinvalleyvb.com/season-registration',
-        'https://tualatinvalleyvb.com/training',
-        'https://tualatinvalleyvb.com/training/book',
-      ].includes(page)
+      filter: shouldIncludeInSitemap
     })
   ],
   vite: {

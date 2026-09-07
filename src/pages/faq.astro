@@ -162,9 +162,29 @@ const faqCategories = [
     ]
   }
 ];
+
+const stripHtml = (value: string) => value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const faqStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqCategories.flatMap((category) =>
+    category.questions.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: stripHtml(item.a),
+      },
+    }))
+  ),
+};
 ---
 
-<BaseLayout title="FAQ" description="Frequently asked questions about TVVC costs, tryouts, practices, and philosophy.">
+<BaseLayout
+  title="TVVC Volleyball FAQ"
+  description="Answers for Hillsboro volleyball families about TVVC tryouts, teams, costs, practices, travel, playing time, and club culture."
+  structuredData={faqStructuredData}
+>
   <main class="pt-32">
     <!-- Hero -->
     <section class="px-6 py-20">

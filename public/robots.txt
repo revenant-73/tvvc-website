@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /portal/
+Disallow: /season-registration
+Disallow: /season-feedback
+Disallow: /success
+Disallow: /offline
+Disallow: /boys-volleyball/thanks
+
+Sitemap: https://tualatinvalleyvb.com/sitemap-index.xml
