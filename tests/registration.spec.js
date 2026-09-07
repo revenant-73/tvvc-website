@@ -105,7 +105,7 @@ test.describe('Registration Flow', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
 
     await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible();
-    await page.getByRole('button', { name: 'Summer Camps' }).click();
+    await page.getByRole('button', { name: 'Camps' }).click();
     await expect(page.getByText(portalFixtures.parentB.eventName, { exact: true })).toBeVisible();
     await expect(page.getByText(
       portalFixtures.scheduleHistory.historicalCurrentEventName,
@@ -132,6 +132,21 @@ test.describe('Registration Flow', () => {
 
     await page.getByRole('button', { name: 'Ignition' }).click();
     await expect(page.getByText(portalFixtures.inHouse.ignitionEventName, { exact: true })).toBeVisible();
+  });
+
+  test('shows girls club prep clinics from the requested tab', async ({ page }) => {
+    await page.goto('/register?tab=girls-club-prep');
+    await expect(page.locator('form[data-hydrated="true"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Girls Club Prep Clinics').first()).toBeVisible();
+
+    await fillStep1(page);
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Girls Club Prep' })).toBeVisible();
+    await expect(page.getByText(portalFixtures.girlsClubPrep.eventName, { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('September 13, 2026 • 3:00-5:00pm')).toBeVisible();
+    await expect(page.getByText('$30').first()).toBeVisible();
   });
 
   test('rejects inactive, expired, and unknown event IDs at the API boundary', async ({ request }) => {
@@ -182,7 +197,7 @@ test.describe('Registration Flow', () => {
 
     // Step 2: Events
     await expect(page.getByRole('heading', { name: 'Select Events' })).toBeVisible({ timeout: 10000 });
-    await page.getByRole('button', { name: 'Summer Camps' }).click();
+    await page.getByRole('button', { name: 'Camps' }).click();
 
     // Select an event
     const firstEvent = page.locator('label').filter({ hasText: /Clinic|Camp/ }).first();

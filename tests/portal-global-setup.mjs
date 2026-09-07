@@ -43,6 +43,14 @@ export default async function globalSetup() {
       unitAmount: amount,
     }],
   });
+  const girlsClubPrepClinics = [
+    ['clinic-girls-club-prep-sep-13', 'September 13, 2026', '2026-09-13'],
+    ['clinic-girls-club-prep-sep-20', 'September 20, 2026', '2026-09-20'],
+    ['clinic-girls-club-prep-sep-27', 'September 27, 2026', '2026-09-27'],
+    ['clinic-girls-club-prep-oct-04', 'October 4, 2026', '2026-10-04'],
+    ['clinic-girls-club-prep-oct-11', 'October 11, 2026', '2026-10-11'],
+    ['clinic-girls-club-prep-oct-18', 'October 18, 2026', '2026-10-18'],
+  ];
 
   await client.batch([
     {
@@ -525,6 +533,27 @@ export default async function globalSetup() {
         fixtures.webhook.totalAmount,
       ],
     },
+    ...girlsClubPrepClinics.map(([eventId, dateInfo, eventDate]) => ({
+      sql: `INSERT INTO events
+        (id, parent_id, type, name, description, date_info, time_info, start_date, end_date,
+         price, capacity, waitlist_enabled, active, email_details, metadata)
+        VALUES (?, 'girls-club-prep-fall-2026', 'clinic', ?, ?,
+                ?, '3:00-5:00pm', ?, ?, 3000, 14, true, true, ?, ?)`,
+      args: [
+        eventId,
+        fixtures.girlsClubPrep.eventName,
+        '90-minute general volleyball clinic for girls in 6th-8th grade preparing for club volleyball.',
+        dateInfo,
+        eventDate,
+        eventDate,
+        `${fixtures.girlsClubPrep.eventName} is ${dateInfo}, 3:00-5:00pm, at TVVC. Clinics are 90 minutes.`,
+        JSON.stringify({
+          registrationStream: 'camps-clinics',
+          program: 'girls-club-prep',
+          session: 'fall-2026',
+        }),
+      ],
+    })),
     {
       sql: `INSERT INTO events
         (id, type, name, date_info, time_info, start_date, end_date, price,

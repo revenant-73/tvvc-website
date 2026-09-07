@@ -39,14 +39,18 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
 }) => {
   const categoryHasEvents = {
     camps: initialEvents.some(e => e.type === 'camp'),
-    clinics: initialEvents.some(e => e.type === 'clinic' && !e.id.includes('clinic-tryout-prep')),
+    'girls-club-prep': initialEvents.some(e => e.type === 'clinic' && e.id.includes('clinic-girls-club-prep')),
+    clinics: initialEvents.some(e => e.type === 'clinic'
+      && !e.id.includes('clinic-tryout-prep')
+      && !e.id.includes('clinic-girls-club-prep')),
     'tryout-prep': initialEvents.some(e => e.type === 'clinic' && e.id.includes('clinic-tryout-prep')),
     ignition: initialEvents.some(e => e.type === 'ignition'),
     playworks: initialEvents.some(e => e.type === 'playworks')
   };
 
   const tabs = [
-    { id: 'camps', label: 'Summer Camps', count: getSelectedCount(index, 'camps') },
+    { id: 'camps', label: 'Camps', count: getSelectedCount(index, 'camps') },
+    { id: 'girls-club-prep', label: 'Girls Club Prep', count: getSelectedCount(index, 'girls-club-prep') },
     { id: 'clinics', label: 'Skills Clinics', count: getSelectedCount(index, 'clinics') },
     { id: 'tryout-prep', label: 'Tryout Prep', count: getSelectedCount(index, 'tryout-prep') },
     { id: 'ignition', label: 'Ignition', count: getSelectedCount(index, 'ignition') },
@@ -62,9 +66,9 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
   ];
 
   const sortByDate = (a: Event, b: Event) => {
-    const months = { 'January': 1, 'March': 3, 'May': 5, 'June': 6, 'July': 7, 'August': 8, 'October': 10, 'November': 11 };
+    const months = { 'January': 1, 'March': 3, 'May': 5, 'June': 6, 'July': 7, 'August': 8, 'September': 9, 'October': 10, 'November': 11 };
     const getMonthDay = (info: string) => {
-      const match = info.match(/(January|March|May|June|July|August|October|November)\s+(\d+)/);
+      const match = info.match(/(January|March|May|June|July|August|September|October|November)\s+(\d+)/);
       if (!match) return 0;
       return months[match[1] as keyof typeof months] * 100 + parseInt(match[2]);
     };
@@ -213,6 +217,67 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
                       >
                         <div className="flex items-center gap-4">
                           <input 
+                            type="checkbox"
+                            disabled={isFull}
+                            checked={isSelected}
+                            onChange={() => toggleEvent(index, event.id)}
+                            className="accent-brand-teal w-4 h-4"
+                          />
+                          <div>
+                            <span className="block font-bold text-white text-sm">{event.name}</span>
+                            <span className="block text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                              {event.dateInfo} • {event.timeInfo}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="block font-bold text-brand-teal">${(event.price / 100).toFixed(0)}</span>
+                          {waitlistAvailable ? (
+                            <button
+                              type="button"
+                              onClick={(clickEvent) => {
+                                clickEvent.preventDefault();
+                                toggleWaitlistEvent(index, event.id);
+                              }}
+                              className={`mt-1 rounded-md border px-2 py-1 text-[8px] font-bold uppercase tracking-widest ${isWaitlisted ? 'border-amber-300 bg-amber-300 text-brand-charcoal' : 'border-amber-300/40 text-amber-300 hover:bg-amber-300/10'}`}
+                            >
+                              {isWaitlisted ? 'Waitlisted' : 'Join Waitlist'}
+                            </button>
+                          ) : isFull && <span className="block text-[8px] font-bold text-brand-coral uppercase tracking-widest">Full</span>}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+             </div>
+          )}
+
+          {currentTab === 'girls-club-prep' && (
+             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="rounded-xl border border-brand-teal/20 bg-brand-teal/5 p-5">
+                  <h5 className="text-brand-teal text-[9px] font-bold uppercase tracking-widest">Girls Club Prep Clinics</h5>
+                  <p className="mt-2 text-xs leading-5 text-white/60">
+                    90-minute general volleyball clinics for girls in 6th-8th grade preparing for club volleyball. Capped at 14 players per Sunday session.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {initialEvents.filter(e => e.type === 'clinic' && e.id.includes('clinic-girls-club-prep')).sort(sortByDate).map(event => {
+                    const isFull = (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity;
+                    const isSelected = athlete.selectedEvents.includes(event.id);
+                    const waitlistAvailable = isFull && Boolean(event.waitlistEnabled);
+                    const isWaitlisted = waitlistedEventIds.includes(event.id);
+                    return (
+                      <label
+                        key={event.id}
+                        className={`
+                          flex items-center justify-between p-4 rounded-xl border transition-all
+                          ${isFull && !waitlistAvailable ? 'opacity-40 grayscale cursor-not-allowed bg-white/5 border-white/5' : 'cursor-pointer'}
+                          ${isWaitlisted ? 'bg-amber-300/10 border-amber-300/50 shadow-[0_0_20px_rgba(252,211,77,0.08)]' : ''}
+                          ${isSelected ? 'bg-brand-teal/10 border-brand-teal shadow-glow-teal' : 'bg-white/5 border-white/10 hover:border-white/30'}
+                        `}
+                      >
+                        <div className="flex items-center gap-4">
+                          <input
                             type="checkbox"
                             disabled={isFull}
                             checked={isSelected}

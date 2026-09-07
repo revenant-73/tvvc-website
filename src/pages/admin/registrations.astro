@@ -80,7 +80,8 @@ const streamInfo = {
     title: 'Camps & Clinics',
     sections: [
       { title: 'Summer Camps', filter: (e: any) => e.type === 'camp', display: 'grid', color: 'brand-teal' },
-      { title: 'Summer Clinics', filter: (e: any) => e.type === 'clinic' && !e.id.includes('clinic-tryout-prep'), display: 'grouped', color: 'brand-coral' }
+      { title: 'Girls Club Prep Clinics', filter: (e: any) => e.type === 'clinic' && e.id.includes('clinic-girls-club-prep'), display: 'grid', color: 'brand-teal' },
+      { title: 'Skills Clinics', filter: (e: any) => e.type === 'clinic' && !e.id.includes('clinic-tryout-prep') && !e.id.includes('clinic-girls-club-prep'), display: 'grouped', color: 'brand-coral' }
     ]
   },
   'in-house': {

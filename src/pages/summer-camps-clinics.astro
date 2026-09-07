@@ -24,6 +24,26 @@ const getAvailability = (name: string, date: string) => {
   };
 };
 
+const getAvailabilityById = (id: string) => {
+  const event = allEvents.find(e => e.id === id);
+  if (!event) return null;
+  return {
+    spotsFilled: event.spotsFilled || 0,
+    pendingSpots: event.pendingSpots || 0,
+    capacity: event.capacity,
+    isFull: (event.spotsFilled || 0) + (event.pendingSpots || 0) >= event.capacity
+  };
+};
+
+const girlsClubPrepClinics = [
+  { id: 'clinic-girls-club-prep-sep-13', date: 'September 13', time: '3:00-5:00pm', name: 'Girls Club Prep Clinic' },
+  { id: 'clinic-girls-club-prep-sep-20', date: 'September 20', time: '3:00-5:00pm', name: 'Girls Club Prep Clinic' },
+  { id: 'clinic-girls-club-prep-sep-27', date: 'September 27', time: '3:00-5:00pm', name: 'Girls Club Prep Clinic' },
+  { id: 'clinic-girls-club-prep-oct-04', date: 'October 4', time: '3:00-5:00pm', name: 'Girls Club Prep Clinic' },
+  { id: 'clinic-girls-club-prep-oct-11', date: 'October 11', time: '3:00-5:00pm', name: 'Girls Club Prep Clinic' },
+  { id: 'clinic-girls-club-prep-oct-18', date: 'October 18', time: '3:00-5:00pm', name: 'Girls Club Prep Clinic' }
+];
+
 const camps = [
   {
     date: 'July 6–8',
@@ -91,28 +111,28 @@ const clinicGroups = [
 ---
 
 <BaseLayout 
-  title="Summer Camps & Clinics" 
-  description="TVVC Summer 2026 Camps and Clinics in Hillsboro, OR. High-quality training for all ages and skill levels."
+  title="Camps & Clinics"
+  description="TVVC camps and clinics in Hillsboro, OR. Year-round volleyball training for youth athletes."
   og={{
-    title: "Summer 2026 Camps & Clinics",
-    description: "Game-based training for athletes entering 4th–12th grade.",
-    badge: "Tryout Prep Registration Open"
+    title: "TVVC Camps & Clinics",
+    description: "Game-based training, Sunday clinics, camps, and tryout prep for youth volleyball athletes.",
+    badge: "Girls Club Prep Registration Open"
   }}
 >
   <main class="pt-32">
     <!-- Hero Section -->
     <section class="px-6 py-20 relative text-center md:text-left">
       <div class="max-w-6xl mx-auto">
-        <span class="text-brand-teal font-bold uppercase tracking-widest text-xs mb-4 block">Summer 2026</span>
+        <span class="text-brand-teal font-bold uppercase tracking-widest text-xs mb-4 block">Year-Round Training</span>
         <h1 class="text-4xl md:text-7xl font-heading font-extrabold mb-6 leading-tight text-white">
-          Summer Volleyball <span class="text-brand-teal">Camps & Clinics</span> in Hillsboro
+          Volleyball <span class="text-brand-teal">Camps & Clinics</span> in Hillsboro
         </h1>
         <p class="text-lg text-white/60 max-w-2xl leading-relaxed mb-10">
-          Game-based volleyball training for athletes entering 4th–12th grade. Summer camps and skills clinics are closed; upcoming tryout prep clinics remain open.
+          Game-based volleyball training for youth athletes throughout the year. Sunday Girls Club Prep clinics are open for 6th-8th grade girls preparing for club volleyball.
         </p>
         <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-10">
-          <a href="/register?tab=tryout-prep" class="btn btn-primary !px-12 !py-3">Register for Tryout Prep</a>
-          <a href="#camps" class="btn btn-secondary !px-8 !py-3">View Camps</a>
+          <a href="/register?tab=girls-club-prep" class="btn btn-primary !px-12 !py-3">Register for Girls Club Prep</a>
+          <a href="#girls-club-prep" class="btn btn-secondary !px-8 !py-3">View Girls Clinics</a>
           <a href="#clinics" class="btn btn-secondary !px-8 !py-3">View Clinics</a>
         </div>
         <p class="text-sm text-white/60">
@@ -128,14 +148,14 @@ const clinicGroups = [
         <div>
           <h2 class="text-2xl font-heading font-bold mb-4 text-white">Not sure what to register for?</h2>
           <p class="text-white/60 leading-relaxed mb-6">
-            Choose a <strong>camp</strong> if your athlete wants a multi-day training experience with more play, coaching, and repetition.
+            Choose a <strong>camp</strong> when your athlete wants a multi-day training experience with more play, coaching, and repetition.
           </p>
           <p class="text-white/60 leading-relaxed">
-            Choose a <strong>clinic</strong> if your athlete wants focused work on one skill area like hitting, serving, or defense.
+            Choose a <strong>clinic</strong> when your athlete wants a shorter training session, focused skill work, or extra club-prep reps before tryouts.
           </p>
         </div>
         <div class="bg-brand-teal/5 p-8 rounded-2xl border border-brand-teal/20">
-          <h3 class="text-xl font-heading font-bold mb-6 text-white text-center md:text-left">Why TVVC Summer Training?</h3>
+          <h3 class="text-xl font-heading font-bold mb-6 text-white text-center md:text-left">Why TVVC Training?</h3>
           <ul class="space-y-3">
             {[
               "No long drill lines",
@@ -152,6 +172,86 @@ const clinicGroups = [
               </li>
             ))}
           </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Girls Club Prep Section -->
+    <section id="girls-club-prep" class="max-w-6xl mx-auto px-6 py-24 scroll-mt-32">
+      <div class="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-12 items-start">
+        <div class="lg:sticky lg:top-32">
+          <span class="text-brand-teal font-bold uppercase tracking-widest text-xs mb-4 block">Registration Open</span>
+          <h2 class="text-3xl md:text-6xl font-heading mb-8 text-white">Girls <span class="text-brand-teal italic">Club Prep</span> Clinics</h2>
+          <p class="text-white/60 leading-relaxed mb-8">
+            Sunday 90-minute general volleyball clinics for girls in 6th-8th grade who want to build cleaner skills, better game instincts, and more confidence before club season ramps up.
+          </p>
+          <div class="space-y-4 mb-8">
+            <div class="flex items-center gap-4 text-white/70">
+              <span class="text-brand-teal font-bold w-24 shrink-0">Dates:</span>
+              <span>Sundays, Sept 13 - Oct 18</span>
+            </div>
+            <div class="flex items-center gap-4 text-white/70">
+              <span class="text-brand-teal font-bold w-24 shrink-0">Time:</span>
+              <span>3:00-5:00pm clinic block</span>
+            </div>
+            <div class="flex items-center gap-4 text-white/70">
+              <span class="text-brand-teal font-bold w-24 shrink-0">Cost:</span>
+              <span>$30 per player, per clinic</span>
+            </div>
+            <div class="flex items-center gap-4 text-white/70">
+              <span class="text-brand-teal font-bold w-24 shrink-0">Cap:</span>
+              <span>14 players per clinic</span>
+            </div>
+            <div class="flex items-start gap-4 text-white/70">
+              <span class="text-brand-teal font-bold w-24 shrink-0">Format:</span>
+              <span>90 minutes of individual skill development taught in representative game-like situations whenever numbers allow.</span>
+            </div>
+          </div>
+          <a href="/register?tab=girls-club-prep" class="btn btn-primary !px-12 !py-4">Register for Girls Club Prep</a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {girlsClubPrepClinics.map((clinic, i) => {
+            const availability = getAvailabilityById(clinic.id);
+            const spotsLeft = availability ? availability.capacity - (availability.spotsFilled + availability.pendingSpots) : null;
+
+            return (
+              <ScrollReveal delay={i * 0.06}>
+                <div class={`glass-card h-full flex flex-col justify-between border-brand-teal/20 ${availability?.isFull ? 'opacity-70 grayscale-[0.5]' : 'hover:border-brand-teal/40'}`}>
+                  <div>
+                    <div class="flex items-center justify-between mb-5">
+                      <span class="bg-brand-teal text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block">{clinic.date}</span>
+                      {availability ? (
+                        availability.isFull ? (
+                          <span class="text-brand-coral font-black text-[10px] uppercase tracking-widest italic">Full</span>
+                        ) : spotsLeft !== null && spotsLeft <= 5 ? (
+                          <span class="text-brand-teal font-black text-[10px] uppercase tracking-widest animate-pulse italic">Only {spotsLeft} Left</span>
+                        ) : (
+                          <span class="text-white/30 font-black text-[10px] uppercase tracking-widest">{spotsLeft} Open</span>
+                        )
+                      ) : (
+                        <span class="text-white/30 font-black text-[10px] uppercase tracking-widest">Opening Soon</span>
+                      )}
+                    </div>
+                    <h3 class="text-xl font-heading font-bold mb-4 text-white leading-tight">{clinic.name}</h3>
+                    <div class="space-y-2 text-sm text-white/60">
+                      <p><strong class="text-brand-teal">Who:</strong> Girls in 6th-8th grade</p>
+                      <p><strong class="text-brand-teal">Time:</strong> {clinic.time}</p>
+                      <p><strong class="text-brand-teal">Cost:</strong> $30</p>
+                    </div>
+                  </div>
+
+                  {availability?.isFull ? (
+                    <div class="mt-8 bg-brand-coral/10 border border-brand-coral/20 rounded-xl p-3 text-center">
+                      <span class="text-[10px] font-bold uppercase tracking-widest text-brand-coral">Join Waitlist During Registration</span>
+                    </div>
+                  ) : (
+                    <a href="/register?tab=girls-club-prep" class="btn btn-primary !w-full mt-8 !py-3">Select Session</a>
+                  )}
+                </div>
+              </ScrollReveal>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -189,9 +289,9 @@ const clinicGroups = [
           <div class="glass-card bg-brand-teal/5 border-brand-teal/20 p-8 md:p-10 flex flex-col justify-center">
             <h3 class="text-xl font-heading font-bold mb-4 text-white">Summer Camp Registration Closed</h3>
             <p class="text-white/60 mb-8 leading-relaxed">
-              Summer camp registration is currently closed. Upcoming tryout prep clinics are still available for athletes preparing for club tryouts.
+              Summer camp registration is currently closed. Sunday Girls Club Prep clinics are open for 6th-8th grade girls preparing for club volleyball.
             </p>
-            <a href="/register?tab=tryout-prep" class="btn btn-primary !w-full md:!w-max">Register for Tryout Prep</a>
+            <a href="/register?tab=girls-club-prep" class="btn btn-primary !w-full md:!w-max">Register for Girls Club Prep</a>
           </div>
         </div>
       </div>
@@ -241,8 +341,8 @@ const clinicGroups = [
     <section id="clinics" class="bg-brand-coral/5 py-32 scroll-mt-32">
       <div class="max-w-6xl mx-auto px-6">
         <div class="text-center mb-16">
-           <h2 class="text-3xl md:text-6xl font-heading mb-6 text-white">Summer <span class="text-brand-coral italic">Clinics</span></h2>
-           <p class="text-white/60 max-w-2xl mx-auto mb-4">Focused. High-Quality. Small-Group Training. One court, capped enrollment, and direct feedback.</p>
+           <h2 class="text-3xl md:text-6xl font-heading mb-6 text-white">More <span class="text-brand-coral italic">Clinics</span></h2>
+           <p class="text-white/60 max-w-2xl mx-auto mb-4">Focused, high-quality small-group training with capped enrollment and direct feedback.</p>
            <p class="text-brand-coral font-bold italic">Athletes may register for individual clinic sessions based on skill focus and availability.</p>
         </div>
 
@@ -289,14 +389,14 @@ const clinicGroups = [
         </div>
 
         <div class="mt-16 text-center text-white/40 text-sm mb-24">
-           <p>Location: TVVC Facility (2820 SE 58th Court) | Cost: $30 per clinic | Format: 90-minute sessions</p>
+           <p>Location: TVVC Facility (2820 SE 58th Court) | Clinic pricing varies by session | Enrollment is capped by event</p>
         </div>
 
         <!-- Final CTA -->
         <div class="max-w-3xl mx-auto text-center glass-card border-brand-teal/20 p-12">
-           <h2 class="text-3xl font-heading font-bold mb-6 text-white">Getting ready for tryouts?</h2>
-           <p class="text-white/60 mb-10 text-lg">Summer camps and skills clinics are closed. Tryout prep clinic registration remains open.</p>
-           <a href="/register?tab=tryout-prep" class="btn btn-primary !px-12 !py-4 mb-8">Register for Tryout Prep</a>
+           <h2 class="text-3xl font-heading font-bold mb-6 text-white">Getting ready for club?</h2>
+           <p class="text-white/60 mb-10 text-lg">Girls Club Prep clinics are open for 6th-8th grade athletes, with tryout prep clinics still available closer to club tryouts.</p>
+           <a href="/register?tab=girls-club-prep" class="btn btn-primary !px-12 !py-4 mb-8">Register for Girls Club Prep</a>
            <p class="text-sm text-white/40">
               Questions about which camp or clinic fits your athlete? <br class="md:hidden" />
               Text or call Loren at <a href="tel:503-389-0760" class="text-brand-teal hover:underline">503-389-0760</a>

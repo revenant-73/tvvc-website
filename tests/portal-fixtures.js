@@ -129,6 +129,10 @@ module.exports = {
     playworksEventId: 'event-playworks-open',
     playworksEventName: 'PlayWorks Winter Test Session',
   },
+  girlsClubPrep: {
+    eventId: 'clinic-girls-club-prep-sep-13',
+    eventName: 'Girls Club Prep Clinic',
+  },
   expirationCleanup: {
     registrationId: 'cleanup-expired-2026',
     athleteId: 601,

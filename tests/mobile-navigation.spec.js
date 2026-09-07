@@ -37,7 +37,7 @@ test.describe('Mobile Navigation Menu', () => {
         await expect(navLinks.nth(1)).toContainText('Tryouts');
         await expect(navLinks.nth(2)).toContainText('Boys Volleyball');
         await expect(navLinks.nth(3)).toContainText('In-House Programs');
-        await expect(navLinks.nth(4)).toContainText('Summer Camps & Clinics');
+        await expect(navLinks.nth(4)).toContainText('Camps & Clinics');
         await expect(navLinks.nth(5)).toContainText('FAQ');
         await expect(navLinks.nth(6)).toContainText('My Portal');
       });
@@ -96,7 +96,7 @@ test.describe('Mobile Navigation Menu', () => {
         const navLinks = mobileMenu.locator('a');
         await expect(navLinks).toHaveCount(7);
 
-        const expectedItems = ['Club Teams', 'Tryouts', 'Boys Volleyball', 'In-House Programs', 'Summer Camps & Clinics', 'FAQ', 'My Portal'];
+        const expectedItems = ['Club Teams', 'Tryouts', 'Boys Volleyball', 'In-House Programs', 'Camps & Clinics', 'FAQ', 'My Portal'];
         for (let i = 0; i < expectedItems.length; i++) {
           await expect(navLinks.nth(i)).toBeVisible();
           await expect(navLinks.nth(i)).toContainText(expectedItems[i]);

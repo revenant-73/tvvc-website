@@ -8,7 +8,7 @@ import { EventSelectionSection } from './EventSelectionSection';
 import { WaiverSection } from './WaiverSection';
 import { ReviewSection } from './ReviewSection';
 
-const REGISTRATION_TAB_IDS = ['camps', 'clinics', 'tryout-prep', 'ignition', 'playworks'] as const;
+const REGISTRATION_TAB_IDS = ['camps', 'girls-club-prep', 'clinics', 'tryout-prep', 'ignition', 'playworks'] as const;
 
 interface Event {
   id: string;
@@ -213,8 +213,11 @@ export default function RegistrationForm({
       const event = initialEvents.find(e => e.id === id);
       if (!event) return false;
       if (tabId === 'camps') return event.type === 'camp';
+      if (tabId === 'girls-club-prep') return event.type === 'clinic' && event.id.includes('clinic-girls-club-prep');
       if (tabId === 'tryout-prep') return event.type === 'clinic' && event.id.includes('clinic-tryout-prep');
-      if (tabId === 'clinics') return event.type === 'clinic' && !event.id.includes('clinic-tryout-prep');
+      if (tabId === 'clinics') return event.type === 'clinic'
+        && !event.id.includes('clinic-tryout-prep')
+        && !event.id.includes('clinic-girls-club-prep');
       if (tabId === 'ignition') return event.type === 'ignition';
       if (tabId === 'playworks') return event.type === 'playworks';
       return false;
@@ -222,6 +225,7 @@ export default function RegistrationForm({
   };
 
   const isInHouseInitialTab = initialTab === 'ignition' || initialTab === 'playworks';
+  const isGirlsClubPrepInitialTab = initialTab === 'girls-club-prep';
 
   const nextStep = () => {
     if (currentStep === 1) {
@@ -343,7 +347,7 @@ export default function RegistrationForm({
         <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-white/60">
           TVVC has your waitlist request. You have not been charged, and your spot is not confirmed unless TVVC opens a place and you complete registration.
         </p>
-        <a href="/tryouts" className="btn btn-primary mt-8 inline-flex">Back to Tryouts</a>
+        <a href="/summer-camps-clinics" className="btn btn-primary mt-8 inline-flex">Back to Camps & Clinics</a>
       </section>
     );
   }
@@ -359,6 +363,14 @@ export default function RegistrationForm({
               <p className="text-brand-teal font-bold uppercase tracking-widest text-[10px] mb-2">Registration Started</p>
               <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">Tryout Prep Clinics</h3>
               <p className="text-white/40 text-xs mt-2 italic">Fill out your contact info below to select your clinic sessions in the next step.</p>
+            </div>
+          )}
+
+          {isGirlsClubPrepInitialTab && (
+            <div className="glass-card border-brand-teal/20 bg-brand-teal/5 p-6 text-center">
+              <p className="text-brand-teal font-bold uppercase tracking-widest text-[10px] mb-2">Registration Started</p>
+              <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">Girls Club Prep Clinics</h3>
+              <p className="text-white/40 text-xs mt-2 italic">Fill out your contact info below to select Sunday clinic sessions in the next step.</p>
             </div>
           )}
 

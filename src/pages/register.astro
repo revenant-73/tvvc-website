@@ -62,10 +62,20 @@ const registrationIntro = requestedTab === 'ignition' || requestedTab === 'playw
       eyebrow: 'In-House Training',
       description: 'Complete the form below to register your athlete(s) for available TVVC in-house training sessions.',
     }
-  : {
-      eyebrow: '2026-2027 Season',
-      description: 'Complete the form below to register your athlete(s) for our upcoming tryout prep clinics.',
-    };
+  : requestedTab === 'girls-club-prep'
+    ? {
+        eyebrow: 'Camps & Clinics',
+        description: 'Complete the form below to register your athlete(s) for Sunday Girls Club Prep clinics.',
+      }
+    : requestedTab === 'camps' || requestedTab === 'clinics'
+      ? {
+          eyebrow: 'Camps & Clinics',
+          description: 'Complete the form below to register your athlete(s) for available TVVC camps and clinics.',
+        }
+      : {
+          eyebrow: '2026-2027 Season',
+          description: 'Complete the form below to register your athlete(s) for our upcoming tryout prep clinics.',
+        };
 ---
 
 <BaseLayout title="Event Registration" description="Register for TVVC camps, clinics, and tryout prep in Hillsboro, OR.">

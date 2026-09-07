@@ -115,6 +115,15 @@ const clinicTypes = [
   { name: 'Serve Receive/Defense', times: { 'May Saturdays': '12:00–1:30pm', 'Summer Thursdays': '11:00am–12:30pm' } }
 ];
 
+const girlsClubPrepClinics = [
+  { id: 'clinic-girls-club-prep-sep-13', dateInfo: 'September 13, 2026', startDate: '2026-09-13' },
+  { id: 'clinic-girls-club-prep-sep-20', dateInfo: 'September 20, 2026', startDate: '2026-09-20' },
+  { id: 'clinic-girls-club-prep-sep-27', dateInfo: 'September 27, 2026', startDate: '2026-09-27' },
+  { id: 'clinic-girls-club-prep-oct-04', dateInfo: 'October 4, 2026', startDate: '2026-10-04' },
+  { id: 'clinic-girls-club-prep-oct-11', dateInfo: 'October 11, 2026', startDate: '2026-10-11' },
+  { id: 'clinic-girls-club-prep-oct-18', dateInfo: 'October 18, 2026', startDate: '2026-10-18' },
+];
+
 async function seed() {
   console.log('Seeding camps...');
   for (const camp of camps) {
@@ -125,6 +134,37 @@ async function seed() {
   }
 
   console.log('Seeding clinics...');
+  for (const girlsClinic of girlsClubPrepClinics) {
+    const clinic = {
+      id: girlsClinic.id,
+      parentId: 'girls-club-prep-fall-2026',
+      type: 'clinic',
+      name: 'Girls Club Prep Clinic',
+      description: '90-minute general volleyball clinic for girls in 6th-8th grade preparing for club volleyball.',
+      dateInfo: girlsClinic.dateInfo,
+      timeInfo: '3:00-5:00pm',
+      startDate: girlsClinic.startDate,
+      endDate: girlsClinic.startDate,
+      price: 3000,
+      capacity: 14,
+      waitlistEnabled: true,
+      active: true,
+      emailDetails: `Girls Club Prep Clinic is ${girlsClinic.dateInfo}, 3:00-5:00pm, at TVVC. Clinics are 90 minutes and capped at 14 players.`,
+      metadata: JSON.stringify({
+        registrationStream: 'camps-clinics',
+        program: 'girls-club-prep',
+        session: 'fall-2026',
+        audience: 'Girls in 6th-8th grade',
+        trainingFormat: '90-minute general volleyball clinic with individual skill development in representative game-like situations when numbers allow.',
+      }),
+    };
+
+    await db.insert(events).values(clinic).onConflictDoUpdate({
+      target: events.id,
+      set: clinic
+    });
+  }
+
   for (const group of clinicDates) {
     for (const date of group.dates) {
       for (const type of clinicTypes) {
