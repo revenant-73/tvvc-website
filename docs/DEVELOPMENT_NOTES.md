@@ -78,3 +78,34 @@ Performed a deep sync of the LibSQL (Turso) database schema to match the Drizzle
 - **Customer Portal**: Verified all routes (`/portal/dashboard`, `/portal/login`, `/portal/settings`) are functional and correctly integrated with magic-link authentication.
 - **Zero-Alert Policy**: Confirmed that all legacy `alert()` calls have been removed or replaced with the unified toast system.
 - **Test Results**: Final execution of the full test suite (57 tests) resulted in **100% success rate**.
+
+# Development Notes - September 9, 2026
+
+## 1. Netlify Deployment Tooling
+Configured this checkout so future production deploy verification can use Netlify directly instead of relying only on public HTTP smoke checks.
+
+- **Netlify CLI**: Installed globally in the user npm prefix as `netlify-cli/27.5.1`.
+- **CLI path**: The shims are under `C:\Users\loren\AppData\Roaming\npm\`; if plain `netlify` is not visible in a restricted shell, run `C:\Users\loren\AppData\Roaming\npm\netlify.cmd` explicitly.
+- **Authenticated account**: `netlify status` showed the machine is logged in as Loren Anderson / `loren.anderson.73@gmail.com`.
+- **Linked project**: This repo is linked to the existing Netlify project `tvvc-website`.
+- **Netlify project ID**: `bac10ac5-63f9-4c37-8c4a-da33dd82622b`.
+- **Production URL**: `https://tualatinvalleyvb.com`.
+- **Netlify admin URL**: `https://app.netlify.com/projects/tvvc-website`.
+- **Local link state**: `.netlify/state.json` is intentionally ignored by Git via `.gitignore`, so linking the folder should not create commit noise.
+
+Useful commands:
+
+```powershell
+netlify status
+netlify logs --source deploy --since 1h
+netlify logs --source functions --since 1h
+netlify api getSite --data '{\"site_id\":\"bac10ac5-63f9-4c37-8c4a-da33dd82622b\"}'
+netlify api listSiteDeploys --data '{\"site_id\":\"bac10ac5-63f9-4c37-8c4a-da33dd82622b\"}'
+```
+
+PowerShell quoting note: Netlify's `--data` flag expects valid JSON. Use escaped double quotes as shown above, or PowerShell will helpfully remove them and then act surprised when Netlify rejects the argument.
+
+## 2. GitHub Tooling
+The `gh` CLI is still not installed on this machine. A direct `gh.exe` install attempt was blocked by Windows/app permissions.
+
+For future Codex work, use the connected GitHub plugin for read-only repo, commit, status, pull request, and check data when available. If terminal `gh` is still desired, install it manually from GitHub's official Windows installer/MSI, then restart the terminal session so PATH changes are visible.
