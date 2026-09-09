@@ -126,6 +126,20 @@ test('admin password login creates a current admin session only for configured a
   }
 });
 
+test('admin login page still shows password form for an existing non-admin session', async ({ browser }) => {
+  const parentContext = await contextWithSession(browser, fixtures.parentA.sessionToken);
+  const page = await parentContext.newPage();
+
+  try {
+    await page.goto('/portal/login?callbackUrl=/admin');
+    await expect(page).toHaveURL(/\/portal\/login\?callbackUrl=\/admin$/);
+    await expect(page.getByRole('heading', { name: 'Admin password' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign In as Admin' })).toBeVisible();
+  } finally {
+    await parentContext.close();
+  }
+});
+
 test('normal portal login keeps customers on magic links', async ({ page }) => {
   await page.goto('/portal/login');
   await expect(page.getByRole('button', { name: 'Send Login Link' })).toBeVisible();

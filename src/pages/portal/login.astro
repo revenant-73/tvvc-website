@@ -2,14 +2,16 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
 import { getSafeCallbackUrl } from '../../lib/redirects';
+import { getCurrentAdminUser } from '../../lib/admin-auth';
 
 const session = await getSession(Astro.request);
 const url = new URL(Astro.request.url);
 const requestedCallbackUrl = url.searchParams.get('callbackUrl');
 const callbackUrl = getSafeCallbackUrl(requestedCallbackUrl);
 const isAdminCallback = callbackUrl.startsWith('/admin');
+const currentAdmin = session && isAdminCallback ? await getCurrentAdminUser(Astro.request) : null;
 
-if (session) {
+if (session && (!isAdminCallback || currentAdmin)) {
   return Astro.redirect(callbackUrl);
 }
 ---
