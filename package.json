@@ -92,5 +92,8 @@
     "tailwindcss": "^3.4.19",
     "uuid": "^14.0.0",
     "zod": "^4.4.3"
+  },
+  "optionalDependencies": {
+    "@libsql/linux-x64-gnu": "^0.5.29"
   }
 }
