@@ -32,6 +32,12 @@ const ownedOffers = (featureEnabled || pilotAccess) && verifiedUser
       canAccessClubSeasonRegistration(verifiedUser.email, item.season.publicRegistrationEnabled)
     ))
   : [];
+const requestedOfferId = Astro.url.searchParams.get('offer') || '';
+const displayOffers = requestedOfferId
+  ? [...ownedOffers].sort((a, b) => Number(b.offer.id === requestedOfferId) - Number(a.offer.id === requestedOfferId))
+  : ownedOffers;
+const signInCallbackPath = `/season-registration${requestedOfferId ? `?offer=${encodeURIComponent(requestedOfferId)}` : ''}`;
+const signInHref = `/portal/login?callbackUrl=${encodeURIComponent(signInCallbackPath)}`;
 const clubDate = getClubDate();
 const paymentRedirectState = Astro.url.searchParams.get('payment');
 const seasonIdsWithDrafts = [...new Set(ownedOffers.filter(({ draft }) => Boolean(draft)).map(({ season }) => season.id))];
@@ -142,7 +148,7 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
             <p class="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-brand-teal">Private club season link</p>
             <h1 id="invitation-title" class="mt-2 font-heading text-3xl font-extrabold uppercase leading-tight tracking-[-0.035em] text-white md:text-5xl">Open your invitation</h1>
             <p class="mx-auto mt-4 max-w-md text-sm leading-6 text-white/55">Sign in with the email used for tryout registration. We’ll show only invitations connected to your family’s verified account.</p>
-            <a href="/portal/login?callbackUrl=%2Fseason-registration" class="mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-teal px-6 text-sm font-extrabold uppercase tracking-[0.11em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d]">
+            <a href={signInHref} class="mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-teal px-6 text-sm font-extrabold uppercase tracking-[0.11em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-[#11151d]">
               Sign in securely
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
             </a>
@@ -189,7 +195,7 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
               </div>
             </aside>
           )}
-          {ownedOffers.length === 0 ? (
+          {displayOffers.length === 0 ? (
             <section class="mx-auto max-w-xl rounded-3xl border border-white/10 bg-[#11151d] p-7 text-center shadow-2xl md:p-11" aria-labelledby="no-offer-title">
           <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/45">
             <svg aria-hidden="true" width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 17h.01"></path></svg>
@@ -202,7 +208,7 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
           ) : (
             <div class="space-y-10">
               <h1 class="sr-only">Your TVVC club season invitations</h1>
-          {ownedOffers.map((item, index) => {
+          {displayOffers.map((item, index) => {
             const state = offerState(item.offer.status, item.offer.acceptanceDeadline);
             const playerName = `${item.athlete.firstName} ${item.athlete.lastName}`;
             const started = state === 'registration_started' || (state === 'offered' && Boolean(item.draft));
@@ -950,7 +956,7 @@ const labelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12
     </div>
   </main>
 
-  {ownedOffers.length > 0 && (
+  {displayOffers.length > 0 && (
     <script>
       type ToastWindow = Window & { toast?: { success?: (message: string) => void; error?: (message: string) => void } };
       const endpoint = '/api/club-season/respond';

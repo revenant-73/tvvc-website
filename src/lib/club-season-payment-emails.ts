@@ -159,6 +159,39 @@ export function adminPaymentAlertEmail(context: PaymentEmailContext, failureMess
   };
 }
 
+export function adminRegistrationPaidEmail(context: PaymentEmailContext & {
+  parentEmail: string;
+  paymentOption: 'pay_in_full' | 'standard_plan' | 'custom_plan';
+  futureCharges: FutureCharge[];
+  adminUrl: string;
+}) {
+  const planLabel = context.paymentOption === 'pay_in_full'
+    ? 'Pay in full'
+    : context.paymentOption === 'custom_plan'
+      ? 'Custom payment plan'
+      : 'Standard payment plan';
+  const schedule = context.futureCharges.length
+    ? `<p style="margin:12px 0 0"><strong>Next payment:</strong> ${money(context.futureCharges[0].amount)} on ${date(context.futureCharges[0].dueDate)}</p>`
+    : '<p style="margin:12px 0 0"><strong>Future payments:</strong> None scheduled.</p>';
+  return {
+    subject: `TVVC accepted and paid: ${context.playerName} — ${context.teamName}`,
+    html: shell('Accepted and paid', 'Admin registration notice', `
+      <p>A club-season offer was accepted after Stripe confirmed the initial payment.</p>
+      <div style="margin:24px 0;padding:20px;border-radius:12px;background:#f8fafc;border-left:4px solid #009695">
+        <p style="margin:0 0 7px"><strong>Player:</strong> ${escapeHtml(context.playerName)}</p>
+        <p style="margin:0 0 7px"><strong>Team:</strong> ${escapeHtml(context.teamName)}</p>
+        <p style="margin:0 0 7px"><strong>Parent:</strong> ${escapeHtml(context.parentName)} (${escapeHtml(context.parentEmail)})</p>
+        <p style="margin:0 0 7px"><strong>Plan:</strong> ${planLabel}</p>
+        <p style="margin:0 0 7px"><strong>Paid now:</strong> ${money(context.amount)}</p>
+        <p style="margin:0"><strong>Remaining balance:</strong> ${money(context.remainingBalance)}</p>
+        ${schedule}
+      </div>
+      ${context.receiptUrl ? button('View Stripe receipt', context.receiptUrl) : ''}
+      ${button('Open admin finances', context.adminUrl)}
+    `),
+  };
+}
+
 export function paymentPlanRevisionProposedEmail(context: PaymentEmailContext & { reason: string }) {
   return {
     subject: `Review your revised TVVC payment schedule for ${context.playerName}`,

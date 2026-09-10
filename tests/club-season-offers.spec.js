@@ -122,6 +122,48 @@ test.describe.serial('Club season offer authorization', () => {
     }
   });
 
+  test('admin can paste Sheet rows, preview matches, and create draft offers', async ({ browser }) => {
+    const admin = await contextWithSession(browser, fixtures.admin.sessionToken);
+    const client = createClient({ url: fixtures.databaseUrl });
+    const eventId = 'test-import-nov8';
+    let offerId = null;
+    try {
+      await client.batch([
+        { sql: `INSERT INTO events (id, type, name, date_info, start_date, end_date, price, capacity, active) VALUES (?, 'tryout', 'Import Test Tryout', 'November 8, 2026', '2026-11-08', '2026-11-08', 0, 100, 1)`, args: [eventId] },
+        { sql: 'INSERT INTO registration_items (registration_id, athlete_id, event_id) VALUES (?, ?, ?)', args: [fixtures.parentB.registrationId, fixtures.parentB.athleteId, eventId] },
+      ]);
+
+      const page = await admin.newPage();
+      await page.goto('/admin/club-season/offers');
+      await expect(page.getByRole('heading', { name: /import team assignments/i })).toBeVisible();
+      await page.locator('[data-import-text]').fill([
+        'player_first_name,player_last_name,parent_email,offered_team,offer_deadline,custom_plan_note',
+        `Bailey,Beta,${fixtures.parentB.email},${fixtures.clubSeason.teamName},11/12/2099,Needs a quick custom-plan conversation`,
+      ].join('\n'));
+      await page.getByRole('button', { name: /preview matches/i }).click();
+      await expect(page.locator('[data-import-summary]')).toContainText('1 ready to create');
+      await expect(page.locator('[data-import-results]')).toContainText('Ready');
+
+      page.once('dialog', (dialog) => dialog.accept());
+      await page.getByRole('button', { name: /create draft offers/i }).click();
+      await expect(page.locator('[data-import-summary]')).toContainText('No imported rows previewed.');
+
+      const offer = await client.execute({
+        sql: 'SELECT id, status, acceptance_deadline FROM club_season_offers WHERE season_id = ? AND source_athlete_id = ?',
+        args: [fixtures.clubSeason.id, fixtures.parentB.athleteId],
+      });
+      expect(offer.rows).toHaveLength(1);
+      offerId = offer.rows[0].id;
+      expect(offer.rows[0]).toMatchObject({ status: 'draft', acceptance_deadline: '2099-11-12' });
+    } finally {
+      if (offerId) await client.execute({ sql: 'DELETE FROM club_season_offers WHERE id = ?', args: [offerId] }).catch(() => {});
+      await client.execute({ sql: 'DELETE FROM registration_items WHERE event_id = ?', args: [eventId] }).catch(() => {});
+      await client.execute({ sql: 'DELETE FROM events WHERE id = ?', args: [eventId] }).catch(() => {});
+      client.close();
+      await admin.close();
+    }
+  });
+
   test('bulk creation makes private drafts, is idempotent, and writes immutable audit evidence', async ({ browser }) => {
     const adminContext = await contextWithSession(browser, fixtures.admin.sessionToken);
     const client = createClient({ url: fixtures.databaseUrl });

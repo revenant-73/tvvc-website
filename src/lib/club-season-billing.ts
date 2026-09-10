@@ -16,6 +16,7 @@ import {
 } from '../db/schema.ts';
 import { sendEmail } from './email.ts';
 import {
+  adminRegistrationPaidEmail,
   adminPaymentAlertEmail,
   initialPaymentSucceededEmail,
   paymentFailedEmail,
@@ -127,15 +128,16 @@ export async function deliverClubSeasonCheckoutSuccess(db: Db, stripe: Stripe, i
     // A confirmation without a receipt link is still better than no email.
   }
 
+  const paymentOption = context.version.paymentOption as 'pay_in_full' | 'standard_plan' | 'custom_plan';
   const message = initialPaymentSucceededEmail({
     ...context.email,
     amount: context.installment.amount,
     remainingBalance: context.ledger.remainingBalance,
     receiptUrl,
-    paymentOption: context.version.paymentOption as 'pay_in_full' | 'standard_plan' | 'custom_plan',
+    paymentOption,
     futureCharges,
   });
-  return deliverClubSeasonEmail(db, {
+  const delivered = await deliverClubSeasonEmail(db, {
     registrationId: context.registration.id,
     installmentId: input.installmentId,
     type: 'payment_succeeded',
@@ -143,6 +145,28 @@ export async function deliverClubSeasonCheckoutSuccess(db: Db, stripe: Stripe, i
     key: `club-season-success:${input.paymentIntentId}`,
     ...message,
   });
+  try {
+    await deliverClubSeasonEmail(db, {
+      registrationId: context.registration.id,
+      installmentId: input.installmentId,
+      type: 'admin_registration_paid',
+      recipient: ADMIN_BILLING_EMAIL,
+      key: `club-season-admin-registration-paid:${input.paymentIntentId}`,
+      ...adminRegistrationPaidEmail({
+        ...context.email,
+        parentEmail: context.parentEmail,
+        amount: context.installment.amount,
+        remainingBalance: context.ledger.remainingBalance,
+        receiptUrl,
+        paymentOption,
+        futureCharges,
+        adminUrl: `${input.siteUrl.replace(/\/$/, '')}/admin/club-season/finances`,
+      }),
+    });
+  } catch (error) {
+    console.error('Failed to send club season admin paid notice:', error);
+  }
+  return delivered;
 }
 
 export async function recordInstallmentSuccess(db: Db, stripe: Stripe, eventId: string, intent: Stripe.PaymentIntent, siteUrl: string) {

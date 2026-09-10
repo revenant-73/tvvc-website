@@ -5,6 +5,7 @@ import { getDb } from '../../../db';
 import {
   athletes,
   clubAgeGroups,
+  clubPricingTiers,
   clubSeasonAdminAuditLog,
   clubSeasonAgreementAcceptances,
   clubSeasonOffers,
@@ -149,8 +150,21 @@ export const GET: APIRoute = async ({ request, url }) => {
     const [season] = await db.select().from(clubSeasons).where(eq(clubSeasons.id, seasonId)).limit(1);
     if (!season) return json({ error: 'Club season not found.' }, 404);
     const [allTeams, candidateRows, offers, seasonRegistrations, mediaAcceptances] = await Promise.all([
-      db.select({ id: clubTeams.id, name: clubTeams.name, active: clubTeams.active, ageGroupId: clubTeams.ageGroupId, ageGroupLabel: clubAgeGroups.label, acceptanceDeadlineOverride: clubTeams.acceptanceDeadlineOverride })
-        .from(clubTeams).innerJoin(clubAgeGroups, eq(clubTeams.ageGroupId, clubAgeGroups.id))
+      db.select({
+        id: clubTeams.id,
+        name: clubTeams.name,
+        active: clubTeams.active,
+        ageGroupId: clubTeams.ageGroupId,
+        ageGroupLabel: clubAgeGroups.label,
+        acceptanceDeadlineOverride: clubTeams.acceptanceDeadlineOverride,
+        pricingTierName: clubPricingTiers.name,
+        totalAmount: clubPricingTiers.totalAmount,
+        depositAmount: clubPricingTiers.depositAmount,
+        installmentAmount: clubPricingTiers.installmentAmount,
+      })
+        .from(clubTeams)
+        .innerJoin(clubAgeGroups, eq(clubTeams.ageGroupId, clubAgeGroups.id))
+        .innerJoin(clubPricingTiers, eq(clubAgeGroups.pricingTierId, clubPricingTiers.id))
         .where(and(eq(clubTeams.seasonId, seasonId), eq(clubAgeGroups.active, true)))
         .orderBy(asc(clubAgeGroups.sortOrder), asc(clubTeams.name)),
       findTryoutCandidateRows(db),
@@ -185,7 +199,16 @@ export const GET: APIRoute = async ({ request, url }) => {
         ...candidate, parentEmail, ownerEmail: ownerEmail || null,
         eligible: Boolean(parentEmail) && !ownershipConflict,
         issue: issues[0] || null, issues, offer,
-        existingTeam: offerTeam ? { id: offerTeam.id, name: offerTeam.name, ageGroupLabel: offerTeam.ageGroupLabel, active: offerTeam.active } : null,
+        existingTeam: offerTeam ? {
+          id: offerTeam.id,
+          name: offerTeam.name,
+          ageGroupLabel: offerTeam.ageGroupLabel,
+          active: offerTeam.active,
+          pricingTierName: offerTeam.pricingTierName,
+          totalAmount: offerTeam.totalAmount,
+          depositAmount: offerTeam.depositAmount,
+          installmentAmount: offerTeam.installmentAmount,
+        } : null,
         registrationStatus: registration?.status || null,
         mediaReleaseStatus: registration ? mediaByRegistration.get(registration.id) || null : null,
       };

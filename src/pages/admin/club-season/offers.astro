@@ -136,6 +136,46 @@ const isAdmin = Boolean(admin);
             </button>
           </section>
 
+          <section class="overflow-hidden rounded-2xl border border-white/10 bg-[#0e1219]" aria-labelledby="sheet-import-heading" data-sheet-import>
+            <div class="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,.75fr)]">
+              <div>
+                <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-brand-teal">Google Sheet mode</p>
+                <h2 id="sheet-import-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Import team assignments</h2>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-white/55">Paste rows from your final team Sheet, review matches, then create private draft offers. Required columns: player first, player last, parent email, offered team.</p>
+              </div>
+              <div class="grid gap-2 text-xs font-semibold leading-5 text-white/55">
+                <p class="border-l-2 border-brand-teal pl-3">Dates can be blank, YYYY-MM-DD, or M/D/YYYY.</p>
+                <p class="border-l-2 border-amber-300 pl-3">Custom-plan notes stay in your review export; plan setup still happens on the player account.</p>
+              </div>
+            </div>
+            <div class="border-t border-white/10 p-4">
+              <label for="assignment-import" class="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-white/60">Paste Sheet rows or CSV</label>
+              <textarea id="assignment-import" data-import-text rows="7" spellcheck="false" class="w-full rounded-xl border border-white/15 bg-[#090d13] px-3.5 py-3 font-mono text-xs leading-5 text-white outline-none placeholder:text-white/25 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20" placeholder="player_first_name,player_last_name,parent_email,offered_team,offer_deadline,custom_plan_note&#10;Ava,Anderson,parent@example.com,14U Teal,2026-11-12,"></textarea>
+              <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <button type="button" data-preview-import class="min-h-11 rounded-xl bg-brand-teal px-4 text-xs font-extrabold uppercase tracking-[0.1em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal">Preview matches</button>
+                <button type="button" data-create-import-drafts disabled class="min-h-11 rounded-xl border border-amber-300/45 px-4 text-xs font-extrabold uppercase tracking-[0.1em] text-amber-200 transition hover:bg-amber-300/10 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-35">Create draft offers</button>
+                <button type="button" data-clear-import class="min-h-11 rounded-xl px-4 text-xs font-extrabold uppercase tracking-[0.1em] text-white/55 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">Clear import</button>
+              </div>
+              <p data-import-summary class="mt-3 text-xs font-bold uppercase tracking-[0.1em] text-white/50">No imported rows previewed.</p>
+              <div data-import-results class="mt-4 hidden overflow-x-auto rounded-xl border border-white/10"></div>
+            </div>
+          </section>
+
+          <section class="overflow-hidden rounded-2xl border border-white/10 bg-[#0e1219]" aria-labelledby="mail-merge-heading">
+            <div class="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-brand-teal">External email mode</p>
+                <h2 id="mail-merge-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Mail merge export</h2>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-white/55">Export reviewed rows for Google Sheets/Gmail. Released rows are family-visible; ready rows are for review before release.</p>
+              </div>
+              <div class="flex flex-col gap-2 sm:flex-row">
+                <button type="button" data-export-mail-merge data-export-scope="ready" class="min-h-11 rounded-xl border border-white/15 px-4 text-xs font-extrabold uppercase tracking-[0.1em] text-white/70 transition hover:border-brand-teal/45 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:cursor-not-allowed disabled:opacity-35">Export ready review</button>
+                <button type="button" data-export-mail-merge data-export-scope="released" class="min-h-11 rounded-xl bg-brand-teal px-4 text-xs font-extrabold uppercase tracking-[0.1em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:cursor-not-allowed disabled:opacity-35">Export released mail merge</button>
+              </div>
+            </div>
+            <p data-export-summary class="border-t border-white/10 px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] text-white/50">Loading export counts...</p>
+          </section>
+
           <section class="overflow-hidden rounded-2xl border border-white/10 bg-[#0e1219]" aria-labelledby="player-list-heading">
             <div class="flex flex-col gap-3 border-b border-white/10 bg-[#11151d] p-4 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-3">
@@ -279,6 +319,10 @@ const isAdmin = Boolean(admin);
         ageGroupId: string;
         ageGroupLabel: string;
         acceptanceDeadlineOverride: string | null;
+        pricingTierName: string;
+        totalAmount: number;
+        depositAmount: number;
+        installmentAmount: number;
       };
       type Offer = { id: string; status: string; teamId: string; acceptanceDeadline: string | null };
       type TryoutSession = { id: string; name: string; date: string | null };
@@ -295,7 +339,16 @@ const isAdmin = Boolean(admin);
         issue: string | null;
         issues: string[];
         offer: Offer | null;
-        existingTeam: { id: string; name: string; ageGroupLabel: string; active: boolean } | null;
+        existingTeam: {
+          id: string;
+          name: string;
+          ageGroupLabel: string;
+          active: boolean;
+          pricingTierName: string;
+          totalAmount: number;
+          depositAmount: number;
+          installmentAmount: number;
+        } | null;
         registrationStatus: string | null;
         mediaReleaseStatus: 'granted' | 'declined' | null;
       };
@@ -315,6 +368,10 @@ const isAdmin = Boolean(admin);
         const loadingState = root.querySelector<HTMLElement>('[data-loading-state]');
         const errorState = root.querySelector<HTMLElement>('[data-error-state]');
         const emptyState = root.querySelector<HTMLElement>('[data-empty-state]');
+        const importText = root.querySelector<HTMLTextAreaElement>('[data-import-text]');
+        const importSummary = root.querySelector<HTMLElement>('[data-import-summary]');
+        const importResults = root.querySelector<HTMLElement>('[data-import-results]');
+        const createImportDrafts = root.querySelector<HTMLButtonElement>('[data-create-import-drafts]');
         const retryButton = root.querySelector<HTMLButtonElement>('[data-retry-button]');
         const selectVisible = root.querySelector<HTMLInputElement>('[data-select-visible]');
         const batchTray = root.querySelector<HTMLElement>('[data-batch-tray]');
@@ -339,6 +396,7 @@ const isAdmin = Boolean(admin);
         let candidates: Candidate[] = [];
         let activeWave = 'nov8';
         let issueFilter = '';
+        let importPreviewRows: ImportPreviewRow[] = [];
         const selected = new Set<number>();
 
         const setText = (selector: string, value: string | number) => {
@@ -351,6 +409,292 @@ const isAdmin = Boolean(admin);
         const notify = (type: 'success' | 'error', message: string) => {
           const toast = (window as Window & { toast?: Record<string, (text: string) => void> }).toast;
           toast?.[type]?.(message);
+        };
+        type ImportSourceRow = {
+          rowNumber: number;
+          firstName: string;
+          lastName: string;
+          parentEmail: string;
+          teamName: string;
+          deadline: string | null;
+          customPlanNote: string;
+        };
+        type ImportPreviewRow = ImportSourceRow & {
+          candidate: Candidate | null;
+          team: Team | null;
+          errors: string[];
+        };
+        const normalizeToken = (value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+        const normalizeHeader = (value: string) => normalizeToken(value).replace(/\s+/g, '_');
+        const normalizeEmail = (value: string) => value.trim().toLowerCase();
+        const parseDateInput = (value: string) => {
+          const text = value.trim();
+          if (!text) return null;
+          if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+          const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+          if (!match) return '';
+          const year = match[3].length === 2 ? `20${match[3]}` : match[3];
+          return `${year}-${match[1].padStart(2, '0')}-${match[2].padStart(2, '0')}`;
+        };
+        const parseDelimitedRows = (text: string) => {
+          const rows: string[][] = [];
+          let field = '';
+          let row: string[] = [];
+          let quoted = false;
+          for (let index = 0; index < text.length; index += 1) {
+            const char = text[index];
+            const next = text[index + 1];
+            if (quoted) {
+              if (char === '"' && next === '"') { field += '"'; index += 1; }
+              else if (char === '"') quoted = false;
+              else field += char;
+            } else if (char === '"') quoted = true;
+            else if (char === ',' || char === '\t') { row.push(field.trim()); field = ''; }
+            else if (char === '\n') { row.push(field.trim()); rows.push(row); field = ''; row = []; }
+            else if (char !== '\r') field += char;
+          }
+          if (field || row.length) { row.push(field.trim()); rows.push(row); }
+          return rows.filter((item) => item.some((cell) => cell.trim()));
+        };
+        const headerValue = (row: Record<string, string>, aliases: string[]) => aliases.map((key) => row[key] || '').find(Boolean) || '';
+        const splitPlayerName = (value: string) => {
+          const text = value.trim();
+          if (!text) return { firstName: '', lastName: '' };
+          if (text.includes(',')) {
+            const [lastName, firstName] = text.split(',').map((part) => part.trim());
+            return { firstName: firstName || '', lastName: lastName || '' };
+          }
+          const parts = text.split(/\s+/);
+          return { firstName: parts.slice(0, -1).join(' '), lastName: parts.at(-1) || '' };
+        };
+        const parseAssignmentRows = (text: string): ImportSourceRow[] => {
+          const parsed = parseDelimitedRows(text);
+          if (parsed.length < 2) throw new Error('Paste a header row and at least one assignment row.');
+          const headers = parsed[0].map(normalizeHeader);
+          return parsed.slice(1).map((cells, index) => {
+            const record = Object.fromEntries(headers.map((header, cellIndex) => [header, cells[cellIndex]?.trim() || ''])) as Record<string, string>;
+            const playerName = splitPlayerName(headerValue(record, ['player_name', 'player', 'athlete_name', 'athlete']));
+            const firstName = headerValue(record, ['player_first_name', 'first_name', 'firstname', 'athlete_first_name']) || playerName.firstName;
+            const lastName = headerValue(record, ['player_last_name', 'last_name', 'lastname', 'athlete_last_name']) || playerName.lastName;
+            const date = parseDateInput(headerValue(record, ['offer_deadline', 'deadline', 'acceptance_deadline', 'reply_by', 'reply_date']));
+            if (date === '') throw new Error(`Row ${index + 2} has an unsupported date. Use YYYY-MM-DD or M/D/YYYY.`);
+            return {
+              rowNumber: index + 2,
+              firstName,
+              lastName,
+              parentEmail: headerValue(record, ['parent_email', 'email', 'guardian_email', 'primary_email']),
+              teamName: headerValue(record, ['offered_team', 'team', 'team_name', 'offer_team']),
+              deadline: date,
+              customPlanNote: headerValue(record, ['custom_plan_note', 'custom_plan', 'payment_note', 'notes']),
+            };
+          });
+        };
+        const teamAliases = (team: Team) => [
+          team.name,
+          `${team.ageGroupLabel} ${team.name}`,
+          `${team.ageGroupLabel} - ${team.name}`,
+          `${team.ageGroupLabel} · ${team.name}`,
+        ].map(normalizeToken);
+        const findImportTeam = (name: string) => {
+          const normalized = normalizeToken(name);
+          if (!normalized) return null;
+          const activeTeams = teams.filter((team) => team.active);
+          const exact = activeTeams.filter((team) => teamAliases(team).includes(normalized));
+          if (exact.length === 1) return exact[0];
+          const byIncludes = activeTeams.filter((team) => normalizeToken(team.name).includes(normalized) || normalized.includes(normalizeToken(team.name)));
+          return byIncludes.length === 1 ? byIncludes[0] : null;
+        };
+        const findImportCandidate = (row: ImportSourceRow) => {
+          const email = normalizeEmail(row.parentEmail);
+          const first = normalizeToken(row.firstName);
+          const last = normalizeToken(row.lastName);
+          const matches = candidates.filter((candidate) => (
+            normalizeEmail(candidate.parentEmail) === email
+            && normalizeToken(candidate.firstName) === first
+            && normalizeToken(candidate.lastName) === last
+          ));
+          return matches.length === 1 ? matches[0] : null;
+        };
+        const previewImport = () => {
+          try {
+            const rows = parseAssignmentRows(importText?.value || '');
+            const seen = new Set<string>();
+            importPreviewRows = rows.map((row) => {
+              const candidate = findImportCandidate(row);
+              const team = findImportTeam(row.teamName);
+              const dedupeKey = `${normalizeEmail(row.parentEmail)}:${normalizeToken(row.firstName)}:${normalizeToken(row.lastName)}`;
+              const errors = [
+                !row.firstName || !row.lastName ? 'Missing player name' : null,
+                !row.parentEmail ? 'Missing parent email' : null,
+                !row.teamName ? 'Missing team' : null,
+                seen.has(dedupeKey) ? 'Duplicate row in import' : null,
+                !candidate ? 'No exact paid tryout match in this wave' : null,
+                candidate && !candidate.eligible ? candidate.issue || 'Candidate is not eligible' : null,
+                candidate?.offer ? `Already has ${offerLabel(candidate.offer.status).toLowerCase()}` : null,
+                !team ? 'No exact active team match' : null,
+              ].filter(Boolean) as string[];
+              seen.add(dedupeKey);
+              return { ...row, candidate, team, errors };
+            });
+            renderImportPreview();
+          } catch (error) {
+            importPreviewRows = [];
+            renderImportPreview(error instanceof Error ? error.message : 'Import could not be parsed.');
+          }
+        };
+        const renderImportPreview = (errorMessage = '') => {
+          const valid = importPreviewRows.filter((row) => row.errors.length === 0);
+          const blocked = importPreviewRows.length - valid.length;
+          if (importSummary) {
+            importSummary.textContent = errorMessage
+              ? errorMessage
+              : importPreviewRows.length
+                ? `${valid.length} ready to create · ${blocked} need review`
+                : 'No imported rows previewed.';
+            importSummary.className = `mt-3 text-xs font-bold uppercase tracking-[0.1em] ${errorMessage || blocked ? 'text-brand-coral' : 'text-brand-teal'}`;
+          }
+          if (createImportDrafts) createImportDrafts.disabled = valid.length === 0;
+          importResults?.replaceChildren();
+          importResults?.classList.toggle('hidden', importPreviewRows.length === 0);
+          if (!importResults || importPreviewRows.length === 0) return;
+          const table = document.createElement('table');
+          table.className = 'w-full min-w-[48rem] border-collapse text-left text-xs';
+          const head = document.createElement('thead');
+          head.className = 'bg-[#111720] text-white/45';
+          const headerRow = document.createElement('tr');
+          ['Row', 'Player', 'Parent email', 'Team', 'Deadline', 'Status'].forEach((label) => headerRow.append(makeText('th', 'border-b border-white/10 px-3 py-2 font-extrabold uppercase tracking-[.08em]', label)));
+          head.append(headerRow);
+          const body = document.createElement('tbody');
+          importPreviewRows.forEach((row) => {
+            const item = document.createElement('tr');
+            item.className = 'border-b border-white/[.06] bg-[#0b0f15] align-top';
+            item.append(
+              makeText('td', 'px-3 py-2 tabular-nums text-white/55', String(row.rowNumber)),
+              makeText('td', 'px-3 py-2 font-bold text-white/75', `${row.firstName} ${row.lastName}`.trim() || 'Missing'),
+              makeText('td', 'px-3 py-2 text-white/60', row.parentEmail || 'Missing'),
+              makeText('td', 'px-3 py-2 text-white/60', row.team ? row.team.name : row.teamName || 'Missing'),
+              makeText('td', 'px-3 py-2 text-white/60', row.deadline || 'Team default'),
+              makeText('td', row.errors.length ? 'px-3 py-2 font-semibold text-brand-coral' : 'px-3 py-2 font-semibold text-brand-teal', row.errors.length ? row.errors.join(' · ') : 'Ready')
+            );
+            body.append(item);
+          });
+          table.append(head, body);
+          importResults.append(table);
+        };
+        const createImportedDrafts = async () => {
+          const valid = importPreviewRows.filter((row) => row.errors.length === 0 && row.candidate && row.team);
+          if (!valid.length || !createImportDrafts) return;
+          if (!window.confirm(`Create ${valid.length} private draft offer${valid.length === 1 ? '' : 's'} from the imported rows? Nothing will be sent.`)) return;
+          createImportDrafts.disabled = true;
+          createImportDrafts.textContent = 'Creating...';
+          const groups = new Map<string, { team: Team; deadline: string | null; athleteIds: number[] }>();
+          valid.forEach((row) => {
+            const key = `${row.team!.id}|${row.deadline || ''}`;
+            const group = groups.get(key) || { team: row.team!, deadline: row.deadline, athleteIds: [] };
+            group.athleteIds.push(row.candidate!.athleteId);
+            groups.set(key, group);
+          });
+          try {
+            const results: any[] = [];
+            for (const group of groups.values()) {
+              const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  seasonId,
+                  teamId: group.team.id,
+                  athleteIds: group.athleteIds,
+                  acceptanceDeadline: group.deadline,
+                  wave: activeWave,
+                }),
+              });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok && response.status !== 207) throw new Error(data.error || 'Imported drafts could not be created.');
+              results.push(...(Array.isArray(data.results) ? data.results : []));
+            }
+            const created = results.filter((item) => item.status === 'created').length;
+            const existing = results.filter((item) => item.status === 'already_assigned').length;
+            const invalid = results.filter((item) => ['invalid', 'locked', 'not_found'].includes(item.status || '')).length;
+            notify(invalid ? 'error' : 'success', `${created} draft${created === 1 ? '' : 's'} created${existing ? `, ${existing} already assigned` : ''}${invalid ? `, ${invalid} need attention` : ''}.`);
+            importPreviewRows = [];
+            renderImportPreview();
+            await loadWorkspace(false);
+          } catch (error) {
+            notify('error', error instanceof Error ? error.message : 'Imported drafts could not be created.');
+          } finally {
+            createImportDrafts.textContent = 'Create draft offers';
+            createImportDrafts.disabled = importPreviewRows.filter((row) => row.errors.length === 0).length === 0;
+          }
+        };
+        type MailMergeScope = 'ready' | 'released';
+        const formatMoney = (cents: number) => new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: 0,
+        }).format(cents / 100);
+        const csvEscape = (value: unknown) => {
+          const text = String(value ?? '');
+          return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+        };
+        const mailMergeCandidates = (scope: MailMergeScope) => candidates.filter((candidate) => {
+          if (!candidate.offer || !candidate.existingTeam) return false;
+          return scope === 'ready'
+            ? candidate.offer.status === 'ready'
+            : ['offered', 'registration_started'].includes(candidate.offer.status);
+        });
+        const updateExportSummary = () => {
+          const ready = mailMergeCandidates('ready').length;
+          const released = mailMergeCandidates('released').length;
+          setText('[data-export-summary]', `${ready} ready for review · ${released} released for mail merge`);
+          root.querySelectorAll<HTMLButtonElement>('[data-export-mail-merge]').forEach((button) => {
+            const scope = button.dataset.exportScope === 'ready' ? 'ready' : 'released';
+            button.disabled = mailMergeCandidates(scope).length === 0;
+          });
+        };
+        const exportMailMerge = (scope: MailMergeScope) => {
+          const rows = mailMergeCandidates(scope).map((candidate) => {
+            const team = candidate.existingTeam!;
+            const playerName = `${candidate.firstName} ${candidate.lastName}`.trim();
+            const registrationLink = `${window.location.origin}/season-registration?offer=${encodeURIComponent(candidate.offer!.id)}`;
+            return {
+              player_first_name: candidate.firstName,
+              player_last_name: candidate.lastName,
+              player_name: playerName,
+              parent_name: candidate.parentName,
+              parent_email: candidate.parentEmail,
+              offered_team: team.name,
+              age_group: team.ageGroupLabel,
+              offer_deadline: candidate.offer!.acceptanceDeadline || '',
+              pricing_tier: team.pricingTierName,
+              total_dues: formatMoney(team.totalAmount),
+              pay_in_full_amount: formatMoney(team.totalAmount),
+              standard_due_today: formatMoney(team.depositAmount),
+              future_installments: `5 x ${formatMoney(team.installmentAmount)} from Jan-May`,
+              registration_link: registrationLink,
+              offer_status: candidate.offer!.status,
+              family_visible: scope === 'released' ? 'yes' : 'no',
+              custom_plan_note: 'Admin can prepare a custom plan on this account before checkout.',
+            };
+          });
+          if (!rows.length) {
+            notify('error', scope === 'ready' ? 'No ready offers to export.' : 'No released offers to export.');
+            return;
+          }
+          const headers = Object.keys(rows[0]);
+          const csv = [
+            headers.join(','),
+            ...rows.map((row) => headers.map((header) => csvEscape(row[header as keyof typeof row])).join(',')),
+          ].join('\r\n');
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          link.href = url;
+          link.download = `tvvc-${activeWave}-${scope}-mail-merge.csv`;
+          document.body.append(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          announce(`${rows.length} ${scope} mail merge row${rows.length === 1 ? '' : 's'} exported.`);
         };
         const invitationCandidates = () => candidates.filter((candidate) => candidate.offer && candidate.offer.teamId === releaseTeam?.value);
         const latestAttempt = (item: any) => [...(item.attempts || [])].sort((a: any, b: any) => b.attemptNumber - a.attemptNumber)[0] || null;
@@ -724,6 +1068,7 @@ const isAdmin = Boolean(admin);
             setText('[data-summary-released]', payload.summary?.released || 0);
             setText('[data-summary-blocking]', payload.summary?.blocking || 0);
             setText('[data-wave-note]', `${payload.summary?.unassigned || 0} unassigned player${payload.summary?.unassigned === 1 ? '' : 's'} in this wave.`);
+            updateExportSummary();
             const blockerChips = root.querySelector<HTMLElement>('[data-blocker-chips]');
             const blockerDefinitions = [
               { key: 'missingEmail', label: 'Missing email', match: 'missing parent email' },
@@ -770,6 +1115,8 @@ const isAdmin = Boolean(admin);
         waveButtons.forEach((button) => button.addEventListener('click', () => {
           activeWave = button.dataset.wave || 'nov8';
           selected.clear();
+          importPreviewRows = [];
+          renderImportPreview();
           waveButtons.forEach((item) => {
             const active = item === button;
             item.setAttribute('aria-pressed', String(active));
@@ -782,6 +1129,17 @@ const isAdmin = Boolean(admin);
         releaseTeam?.addEventListener('change', () => { releaseRequestKey = ''; releaseRequestFingerprint = ''; updateInvitationScope(); renderHistory(); });
         batchSelect?.addEventListener('change', renderHistory);
         root.querySelector('[data-refresh-history]')?.addEventListener('click', loadHistory);
+        root.querySelector('[data-preview-import]')?.addEventListener('click', previewImport);
+        createImportDrafts?.addEventListener('click', createImportedDrafts);
+        root.querySelector('[data-clear-import]')?.addEventListener('click', () => {
+          if (importText) importText.value = '';
+          importPreviewRows = [];
+          renderImportPreview();
+          announce('Imported assignment rows cleared.');
+        });
+        root.querySelectorAll<HTMLButtonElement>('[data-export-mail-merge]').forEach((button) => button.addEventListener('click', () => {
+          exportMailMerge(button.dataset.exportScope === 'ready' ? 'ready' : 'released');
+        }));
         root.querySelector('[data-close-preview]')?.addEventListener('click', () => root.querySelector('[data-preview-panel]')?.classList.add('hidden'));
         root.querySelector('[data-preview-invitation]')?.addEventListener('click', async () => {
           const representative = invitationCandidates().find((candidate) => candidate.offer && ['ready', 'offered'].includes(candidate.offer.status));

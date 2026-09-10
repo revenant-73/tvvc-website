@@ -29,6 +29,22 @@ TVVC needs one private season-registration link that is sent only to families re
 
 The route is private and unlisted, but security comes from authenticated ownership and offer checks—not secrecy of the URL.
 
+### Simplified operating model
+
+For the November launch, prefer a simpler administrator workflow over the full invitation console whenever it reduces friction:
+
+1. Build teams after tryouts in a Google Sheet.
+2. Use the site to create secure offer records for the assigned players and teams.
+3. Export mail-merge rows from the admin offer workspace.
+4. Send invitation emails externally from Google Sheets/Gmail if that is easier operationally.
+5. Families follow the exported registration link, sign in, confirm the offered player/team, complete the season form, choose pay-in-full, the standard plan, or an administrator-prepared custom plan, then pay through Stripe.
+6. The site marks the offer accepted only after Stripe confirms the payment.
+7. Loren receives an administrator notification for each successful accepted-and-paid club-season registration.
+
+The invitation release/send console remains available for controlled in-site sending, delivery retries, and provider-event history, but it should not be required for the normal admin workflow if external mail merge is the clearer path.
+
+Keep the secure offer boundary. A mail-merge link may include an offer hint so the correct card appears first, but it must never authorize registration by itself. The signed-in parent must still own the paid tryout registration and the matching released offer.
+
 ## 3. Confirmed Pricing and Payment Rules
 
 | Division | Total dues | Deposit at registration | Remaining schedule |
@@ -185,6 +201,15 @@ Secrets are not stored in GitHub. A fresh home-computer clone can still be devel
 ## 10. Remaining Work Before November Launch
 
 Immediate next step after this snapshot: continue the final prelaunch rehearsal in an isolated/test environment. The 13U-18U standard-plan and 10U-12U pay-in-full happy paths passed on Deploy Preview #39; the remaining cases are custom initial plan, later plan revision, duplicate-event idempotency, failure recovery, administrator ledger review, guardian restrictions, and mobile layouts. Do not open registration, activate real teams, release offers, send invitations, or create live Stripe activity as part of that rehearsal unless Loren explicitly approves that specific production action.
+
+Simplification work now in progress:
+
+- document the Sheet-first/mail-merge operating model;
+- add mail-merge export support to the admin offer workspace;
+- add a paste-from-Sheet import assistant that previews player/team matches before creating private draft offers;
+- send a concise administrator email whenever an offered player accepts and the initial club-season payment succeeds;
+- keep custom payment plans as an administrator-only exception path, visible to the family only after Loren prepares the exact plan;
+- keep launch-day production writes limited to deliberate admin actions in the authenticated workspace, not SQL or code edits.
 
 ### Before November 8
 

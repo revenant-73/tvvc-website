@@ -60,16 +60,35 @@ August 23, 2026 verification checkpoint:
 | Entry point | One shared `/season-registration` link is sent only to families receiving an offer. No unique link is required for each player. |
 | Eligibility | Players must already have a paid tryout registration and an administrator-created team offer. |
 | Team selection | TVVC assigns the offered team. Parents review that assignment rather than selecting any team themselves. |
+| Admin roster source | The practical launch source should be the post-tryout Google Sheet. The website should import or mirror those final team assignments rather than becoming the place where teams are invented. |
+| Invitation sending | External Google Sheets/Gmail mail merge is an approved simple path. The site still owns the secure offer record, registration form, payment, and acceptance state. |
 | 10U–12U dues | $1,200 total: $300 due at registration, then five $180 automatic payments. |
 | 13U–18U dues | $1,500 total: $400 due at registration, then five $220 automatic payments. |
 | Standard dates | Deposit in November; no December charge; installments on January 5, February 5, March 5, April 5, and May 5. |
 | Payment choices | Pay in full or authorize the standard plan. A parent may also select an exact custom arrangement prepared by TVVC. |
 | Billing exceptions | Administrators may prepare an initial custom plan or propose a revision to future unpaid installments. Parents must authorize the exact replacement schedule. |
+| Admin paid notice | Loren should receive a concise administrator email when a club-season offer is accepted and the initial Stripe payment succeeds. |
 | Card handling | Stripe stores complete card data. TVVC stores only Stripe references and authorization evidence. |
 | Failed payments | Failures change the financial status and trigger retries/communications; they do not automatically remove the player from the roster. |
 | Refunds | Refund and cancellation decisions are recorded through immutable financial adjustments. Voluntary withdrawal after the first practice is reviewed case by case. |
 | Billing day | The standard billing day is the fifth; custom future dates may be set per family. |
 | Time zone | Business dates are evaluated in `America/Los_Angeles`. |
+
+## 2.1 Simplified Administrator and Parent Workflow
+
+The preferred operating model is now:
+
+1. Build teams after tryouts in Google Sheets.
+2. Create secure offer records in the TVVC admin workspace from those assignments.
+3. Export mail-merge rows containing player, parent, team, deadline, dues, deposit, payment schedule summary, and the private registration link.
+4. Send invitation emails from Google Sheets/Gmail when that is simpler than using the in-site invitation sender.
+5. Parent follows the link, signs in, lands on the relevant offer first, confirms or updates required details, accepts agreements, chooses pay-in-full, the standard automatic plan, or an admin-prepared custom plan, then pays.
+6. Stripe webhook confirmation marks the offer accepted and finalizes the registration/payment records.
+7. The family receives confirmation, and Loren receives an admin notice.
+
+The current controlled invitation console remains valuable for in-site sending, test sends, retries, deliberate resends, and provider-event history. It should be treated as an available tool, not the only acceptable way to invite families.
+
+Important boundary: external email does not replace release/offer authorization. A link can carry an offer hint for convenience, but a family must still be signed in with the owning tryout-registration account and must have a released offer before registration is available.
 
 ## 3. Work Completed
 
@@ -477,6 +496,15 @@ Complete these items in order. Items marked **Launch blocker** must be finished 
 
 The next work item from the August 23, 2026 state is to continue Step 6, the final prelaunch rehearsal in an isolated/test environment. The 13U-18U standard-plan and 10U-12U pay-in-full happy paths have passed on Deploy Preview #39; the remaining Step 6 cases are still launch blockers. Production should remain closed while that rehearsal continues unless Loren explicitly approves a specific production action.
 
+Current simplification implementation direction:
+
+- keep the secure `/season-registration` and Stripe/payment-plan core;
+- simplify the admin launch path around a Google Sheet roster source;
+- add mail-merge export first so invitations can be sent outside the site;
+- add Sheet/CSV import next so final team assignments can create draft offers without manual player-by-player selection;
+- keep custom initial plans and later revisions as administrator exception tools;
+- make successful accepted-and-paid registrations notify Loren directly.
+
 ### Step 1 — Reconcile the repository and production migration record
 
 **Completed August 15, 2026.**
@@ -562,6 +590,8 @@ Run payment rehearsals with Stripe test keys. Do not manufacture live charges or
 - Bulk-create offers in manageable batches and review counts by team.
 - Spot-check ownership, player name, team, price, and deadline before emailing families.
 - Prepare the offer email containing the shared registration link, deadline, pricing summary, December pause, payment choices, and custom-plan contact instructions.
+- Preferred simplified path: build the final roster in Google Sheets, create/review the corresponding website offer records, export mail-merge rows, release the offers, then send through Sheets/Gmail.
+- Do not send families links for unreleased `ready` offers; those links remain secure but will not expose the offer until release.
 
 The operational release is scheduled in two waves: 14-and-under tryouts on November 8, 2026 with invitation emails on November 9, followed by 15U-18U tryouts on November 15 with invitation emails on November 16. The complete preparation, assignment, controlled release, and first-payment procedure is documented in `docs/CLUB_SEASON_TRYOUT_LAUNCH_RUNBOOK.md`.
 

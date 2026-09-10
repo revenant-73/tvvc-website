@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { initialPaymentSucceededEmail } from '../src/lib/club-season-payment-emails.ts';
+import {
+  adminRegistrationPaidEmail,
+  initialPaymentSucceededEmail,
+} from '../src/lib/club-season-payment-emails.ts';
 
 const base = {
   parentName: 'Pilot Parent',
@@ -49,4 +52,25 @@ test('pay-in-full confirmation states that no future automatic charges remain', 
 
   assert.match(email.html, /dues are paid in full/i);
   assert.match(email.html, /No future automatic club-season charges/i);
+});
+
+test('admin paid notice summarizes the accepted player, plan, and balance', () => {
+  const email = adminRegistrationPaidEmail({
+    ...base,
+    parentEmail: 'pilot.parent@example.test',
+    paymentOption: 'custom_plan',
+    futureCharges: [
+      { dueDate: '2027-01-15', amount: 35_000 },
+    ],
+    adminUrl: 'https://example.test/admin/club-season/finances',
+  });
+
+  assert.match(email.subject, /accepted and paid/i);
+  assert.match(email.html, /Pilot Player/);
+  assert.match(email.html, /14U Pilot/);
+  assert.match(email.html, /pilot\.parent@example\.test/);
+  assert.match(email.html, /Custom payment plan/);
+  assert.match(email.html, /Paid now:<\/strong> \$400\.00/);
+  assert.match(email.html, /Next payment:<\/strong> \$350\.00 on January 15, 2027/);
+  assert.match(email.html, /Open admin finances/);
 });

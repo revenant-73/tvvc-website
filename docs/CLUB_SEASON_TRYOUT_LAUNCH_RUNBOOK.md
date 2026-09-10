@@ -20,6 +20,16 @@ The November 8-9 and November 15-16 launch waves must be administrator workflows
 
 No code changes, commits, manual production SQL, or launch-day Netlify editing should be required during either tryout and invitation wave.
 
+The simplified preferred workflow is Sheet-first:
+
+1. Build final teams in Google Sheets immediately after tryouts.
+2. Use the TVVC admin workspace to create secure offer records from those assignments.
+3. Export mail-merge rows from the offer workspace.
+4. Send invitation emails externally from Google Sheets/Gmail if that is simpler than using the in-site invitation sender.
+5. Let the website handle the secure parent sign-in, offer validation, registration form, agreement acceptance, payment selection, Stripe Checkout, confirmation email, and administrator paid notice.
+
+The in-site invitation console remains available, but it is not required if external mail merge is the calmer launch-day tool.
+
 ## 2. Launch Waves
 
 The launch will occur in two separate waves:
@@ -149,6 +159,17 @@ Use this procedure on November 8 for 10U-14U and again on November 15 for 15U-18
 9. Leave unused possible teams inactive.
 10. End tryout day with that wave's invitation emails still unsent. On November 8, keep family registration closed until the controlled November 9 opening. On November 15, registration may already be open for the younger wave, but no 15U-18U invitations should be released until their review is complete.
 
+When using the simplified mail-merge path, the Google Sheet should include at minimum:
+
+- player first name;
+- player last name;
+- parent email used for tryout registration;
+- offered team;
+- offer deadline;
+- any note that a custom payment plan is needed.
+
+The website remains the authority for whether the parent email and player match a paid tryout registration. Spreadsheet text alone is not enough to authorize a family.
+
 A ready summary should make exceptions obvious, for example:
 
 ```text
@@ -171,12 +192,13 @@ Use this procedure on November 9 for 10U-14U and again on November 16 for 15U-18
 6. Test the same link with an unrelated account and confirm that no offer is exposed.
 7. In **Invitation release**, select one team, preview the authoritative email, and send a test copy to the signed-in administrator.
 8. With both registration locks open, type `RELEASE INVITATIONS` and record the reason. Confirm the offers become family-visible and that no email was sent by the release action.
-9. Select the released batch, type `SEND INVITATIONS`, and send a small initial team-sized batch.
-10. Confirm successful Resend processing and verify that the invitations contain the correct player, team, deadline, price, and link.
-11. Send the remaining invitations in manageable team-by-team batches. Use **Retry failed** only for failed attempts; use the coral deliberate-resend panel only when a previously accepted message truly must be sent again.
+9. If using external mail merge, export the released team rows and send the approved message from Google Sheets/Gmail.
+10. If using the in-site sender, select the released batch, type `SEND INVITATIONS`, and send a small initial team-sized batch.
+11. Confirm the invitations contain the correct player, team, deadline, price, and link. For in-site sends, also confirm successful Resend processing.
+12. Send the remaining invitations in manageable team-by-team batches. Use **Retry failed** only for failed attempts; use the coral deliberate-resend panel only when a previously accepted message truly must be sent again.
 
 The workspace derives delivery status from each recipient's latest immutable attempt. A successful retry clears that recipient's current failed state while preserving the failed attempt in history. Closing either registration-access lock pauses initial sends, retries, and deliberate resends immediately.
-11. Monitor sent, failed, registration-started, accepted, declined, and expired counts.
+13. Monitor sent, failed, registration-started, accepted, declined, and expired counts. External sends will not have provider delivery events inside TVVC unless they are also sent through the in-site Resend workflow.
 
 The invitation email must include:
 
