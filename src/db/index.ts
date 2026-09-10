@@ -12,17 +12,27 @@ function isLocalDatabaseUrl(url: string) {
   return url === ':memory:' || url.startsWith('file:') || url.startsWith('sqlite:');
 }
 
+export function normalizeDatabaseUrl(url: string) {
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl || isLocalDatabaseUrl(trimmedUrl) || /^[a-z][a-z0-9+.-]*:/i.test(trimmedUrl)) {
+    return trimmedUrl;
+  }
+
+  return `libsql://${trimmedUrl}`;
+}
+
 function createLocalClient(config: LibSqlClientConfig) {
   const { createClient } = require(localClientModuleName) as { createClient: typeof createWebClient };
   return createClient(config);
 }
 
 export function getDb(url: string, authToken?: string) {
+  const normalizedUrl = normalizeDatabaseUrl(url);
   const config = { 
-    url, 
+    url: normalizedUrl,
     authToken: authToken || undefined 
   };
-  const client = isLocalDatabaseUrl(url) ? createLocalClient(config) : createWebClient(config);
+  const client = isLocalDatabaseUrl(normalizedUrl) ? createLocalClient(config) : createWebClient(config);
 
   return drizzle(client);
 }
