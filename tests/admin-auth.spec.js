@@ -183,6 +183,11 @@ test('season team management requires admin access and supports staging and acti
   try {
     const adminPage = await adminContext.newPage();
     await adminPage.goto('/admin/club-season');
+    const teamSetupDrawer = adminPage.locator('details').filter({
+      has: adminPage.getByText('Team setup', { exact: true }),
+    });
+    await expect(teamSetupDrawer).not.toHaveAttribute('open', '');
+    await teamSetupDrawer.locator('summary').click();
     await expect(adminPage.getByRole('radio', { name: /Inactive Stage now/i })).toBeChecked();
     await expect(adminPage.getByRole('radio', { name: /Active Offer-ready/i })).not.toBeChecked();
     await expect(adminPage.getByText(/Inactive teams are saved but cannot be selected for new offers/i)).toBeVisible();

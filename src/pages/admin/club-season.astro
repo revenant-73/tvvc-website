@@ -138,6 +138,14 @@ const registrationOpenBlockers = launchReadiness?.gates.filter((gate) => (
 const registrationAccessConfirmation = registrationAccessEnabled
   ? 'CLOSE REGISTRATION'
   : 'OPEN REGISTRATION';
+const pendingEvidenceCount = launchEvidence.filter((evidence) => !evidence.completed).length;
+const readinessTone = parentRegistrationEnabled
+  ? 'Registration is open'
+  : registrationAccessEnabled
+    ? 'Database lock is open'
+    : launchReadiness?.readyToOpenRegistration
+      ? 'Ready to open'
+      : 'Closed';
 
 const scheduleMonths = [
   { month: 'November', label: 'Deposit', tone: 'deposit' },
@@ -169,6 +177,9 @@ const agreementFamilies = [
   workingDraft: CLUB_SEASON_AGREEMENT_WORKING_DRAFTS[family.key as keyof typeof CLUB_SEASON_AGREEMENT_WORKING_DRAFTS],
   versions: agreementVersions.filter((agreement) => agreement.key === family.key),
 }));
+const publishedAgreementCount = agreementFamilies.filter((family) => (
+  family.versions.some((version) => version.status === 'published')
+)).length;
 
 const agreementDate = (value?: string | null) => value
   ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' }).format(new Date(value))
@@ -235,7 +246,7 @@ const pilotChecks = [
             </a>
           </nav>
 
-          <header class="flex flex-col gap-5 border-b border-white/10 pb-7 lg:flex-row lg:items-end lg:justify-between">
+          <header class="flex flex-col gap-5 border-b border-white/10 pb-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div class="mb-3 flex flex-wrap items-center gap-2">
                 <span class="rounded-md border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/70">{statusLabel}</span>
@@ -251,23 +262,16 @@ const pilotChecks = [
               <h1 class="font-heading text-4xl font-extrabold uppercase leading-none tracking-[-0.04em] text-white md:text-6xl">
                 Club Season <span class="text-brand-teal">Control</span>
               </h1>
-              <p class="mt-3 max-w-2xl text-sm leading-6 text-white/50">Configure the season once. Add teams after tryouts without touching the payment math.</p>
+              <p class="mt-3 max-w-2xl text-sm leading-6 text-white/50">The short version: build offers, handle money exceptions, and keep the registration gate under control.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-4">
-              <a href="/admin/club-season/finances" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-teal px-4 text-xs font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-brand-teal-dark focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-charcoal">
-                Manage finances
-                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19V9M10 19V5M16 19v-7M22 19V2"></path></svg>
-              </a>
-              <a href="/admin/club-season/offers" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-brand-teal/35 bg-brand-teal/10 px-4 text-xs font-extrabold uppercase tracking-[0.12em] text-brand-teal transition hover:border-brand-teal hover:bg-brand-teal hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-charcoal">
-                Manage offers
-                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
-              </a>
-              <div class="flex items-center gap-3 text-left lg:text-right">
-                <span class="block h-2.5 w-2.5 rounded-full bg-brand-teal shadow-glow-teal" aria-hidden="true"></span>
-                <div>
-                  <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Pricing foundation</p>
-                  <p class="text-sm font-bold text-white">Ready for team setup</p>
-                </div>
+            <div class="flex items-center gap-3 text-left lg:text-right">
+              <span class:list={[
+                'block h-2.5 w-2.5 rounded-full',
+                parentRegistrationEnabled ? 'bg-brand-teal shadow-glow-teal' : 'bg-brand-coral',
+              ]} aria-hidden="true"></span>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Parent registration</p>
+                <p class="text-sm font-bold text-white">{readinessTone}</p>
               </div>
             </div>
           </header>
@@ -288,6 +292,64 @@ const pilotChecks = [
 
           {season && (
             <>
+              <section aria-labelledby="admin-workflow-heading" class="rounded-2xl border border-white/10 bg-[#11151d] p-4 md:p-5">
+                <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Today</p>
+                    <h2 id="admin-workflow-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Admin workflow</h2>
+                  </div>
+                  <p class="max-w-xl text-xs leading-5 text-white/45">The daily work lives in Offers and Finances. Everything else below is setup or launch control.</p>
+                </div>
+
+                <div class="grid gap-3 lg:grid-cols-3">
+                  <a href="/admin/club-season/offers" class="group flex min-h-36 flex-col justify-between rounded-xl border border-brand-teal/30 bg-brand-teal/[0.06] p-4 transition hover:border-brand-teal hover:bg-brand-teal/[0.1] focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                    <span class="flex items-start justify-between gap-4">
+                      <span>
+                        <span class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-brand-teal">Step 1</span>
+                        <strong class="mt-1 block font-heading text-xl font-extrabold uppercase text-white">Build offers</strong>
+                      </span>
+                      <svg class="text-brand-teal transition group-hover:translate-x-0.5" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+                    </span>
+                    <span class="mt-4 text-sm leading-5 text-white/60">Paste Sheet rows, create draft offers, and export mail-merge links.</span>
+                  </a>
+
+                  <a href="/admin/club-season/finances" class="group flex min-h-36 flex-col justify-between rounded-xl border border-white/10 bg-black/20 p-4 transition hover:border-brand-teal/45 hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                    <span class="flex items-start justify-between gap-4">
+                      <span>
+                        <span class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/40">Step 2</span>
+                        <strong class="mt-1 block font-heading text-xl font-extrabold uppercase text-white">Manage finances</strong>
+                      </span>
+                      <svg class="text-white/45 transition group-hover:text-brand-teal" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19V9M10 19V5M16 19v-7M22 19V2"></path></svg>
+                    </span>
+                    <span class="mt-4 text-sm leading-5 text-white/60">Review balances, custom plans, payment exceptions, and reconciliation.</span>
+                  </a>
+
+                  <a href="#launch-readiness-heading" class:list={[
+                    'group flex min-h-36 flex-col justify-between rounded-xl border p-4 transition focus:outline-none focus:ring-2',
+                    parentRegistrationEnabled
+                      ? 'border-brand-teal/35 bg-brand-teal/[0.06] focus:ring-brand-teal'
+                      : launchReadiness?.readyToOpenRegistration
+                        ? 'border-amber-300/35 bg-amber-300/[0.05] focus:ring-amber-300'
+                        : 'border-brand-coral/30 bg-brand-coral/[0.05] focus:ring-brand-coral',
+                  ]}>
+                    <span class="flex items-start justify-between gap-4">
+                      <span>
+                        <span class:list={[
+                          'text-[9px] font-extrabold uppercase tracking-[0.18em]',
+                          parentRegistrationEnabled ? 'text-brand-teal' : launchReadiness?.readyToOpenRegistration ? 'text-amber-300' : 'text-brand-coral',
+                        ]}>Step 3</span>
+                        <strong class="mt-1 block font-heading text-xl font-extrabold uppercase text-white">Open/close registration</strong>
+                      </span>
+                      <span class:list={[
+                        'rounded px-2 py-1 text-[9px] font-black uppercase tracking-[0.13em]',
+                        parentRegistrationEnabled ? 'bg-brand-teal/15 text-brand-teal' : 'bg-brand-coral/10 text-brand-coral',
+                      ]}>{parentRegistrationEnabled ? 'Open' : 'Closed'}</span>
+                    </span>
+                    <span class="mt-4 text-sm leading-5 text-white/60">{launchReadiness ? `${launchReadiness.summary.passed}/${launchReadiness.summary.total} readiness checks passed.` : 'Readiness status unavailable.'}</span>
+                  </a>
+                </div>
+              </section>
+
               <section aria-label="Season configuration" class="grid overflow-hidden rounded-2xl border border-white/10 bg-[#11151d] sm:grid-cols-2 xl:grid-cols-4">
                 <div class="border-b border-white/10 p-4 sm:border-r xl:border-b-0">
                   <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Season</p>
@@ -344,12 +406,19 @@ const pilotChecks = [
                 </header>
 
                 {launchReadiness ? (
-                  <div class="grid xl:grid-cols-[minmax(0,1.35fr)_minmax(24rem,0.65fr)]">
-                    <div class="border-b border-white/10 xl:border-b-0 xl:border-r">
-                      <div class="flex items-center justify-between border-b border-white/10 px-5 py-3 md:px-7">
-                        <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Preflight checklist</p>
-                        <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-white/30">Auto + manual gates</p>
-                      </div>
+                  <div class="grid">
+                    <div class="border-b border-white/10">
+                      <details class="group">
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 border-b border-white/10 px-5 py-4 outline-none transition hover:bg-white/[0.02] focus:ring-2 focus:ring-brand-teal md:px-7">
+                          <span>
+                            <span class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Preflight checklist</span>
+                            <span class="mt-1 block text-xs font-semibold text-white/55">
+                              {registrationOpenBlockers.length ? `${registrationOpenBlockers.length} opening ${registrationOpenBlockers.length === 1 ? 'item' : 'items'} need attention` : 'Every readiness item is clear'}
+                            </span>
+                          </span>
+                          <span class="shrink-0 text-[10px] font-extrabold uppercase tracking-[0.14em] text-brand-teal group-open:hidden">Show gates</span>
+                          <span class="hidden shrink-0 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/35 group-open:inline">Hide gates</span>
+                        </summary>
                       <ol class="divide-y divide-white/10">
                         {launchReadiness.gates.map((gate) => (
                           <li class="grid gap-3 px-5 py-4 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-4 md:px-7">
@@ -379,13 +448,14 @@ const pilotChecks = [
                           </li>
                         ))}
                       </ol>
+                      </details>
                     </div>
 
                     <aside class="px-5 py-5 md:px-7 md:py-6" aria-labelledby="launch-locks-heading">
                       <p class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/35">Route access logic</p>
                       <h3 id="launch-locks-heading" class="mt-1 font-heading text-lg font-extrabold uppercase tracking-tight text-white">Two independent locks</h3>
 
-                      <div class="mt-5 grid items-stretch gap-2 sm:grid-cols-[1fr_auto_1fr] xl:grid-cols-1">
+                      <div class="mt-5 grid items-stretch gap-2 sm:grid-cols-[1fr_auto_1fr]">
                         <div class:list={[
                           'border-l-2 bg-black/20 p-4',
                           launchReadiness.seasonRegistrationEnabled ? 'border-brand-teal' : 'border-brand-coral',
@@ -550,15 +620,15 @@ const pilotChecks = [
                 </footer>
               </section>
 
-              <section aria-labelledby="verification-evidence-heading" class="overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
-                <header class="flex flex-col gap-3 border-b border-white/10 px-5 py-5 md:flex-row md:items-end md:justify-between md:px-7 md:py-6">
+              <details class="group overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
+                <summary class="flex cursor-pointer list-none flex-col gap-3 px-5 py-5 outline-none transition hover:bg-white/[0.02] focus:ring-2 focus:ring-brand-teal md:flex-row md:items-end md:justify-between md:px-7 md:py-6">
                   <div>
                     <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-amber-300">Flight recorder</p>
                     <h2 id="verification-evidence-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Verification evidence</h2>
-                    <p class="mt-2 max-w-3xl text-sm leading-6 text-white/50">Record the human verification behind each launch gate. These entries are permanent operational history, not automated proof.</p>
+                    <p class="mt-2 max-w-3xl text-sm leading-6 text-white/50">{pendingEvidenceCount ? `${pendingEvidenceCount} manual ${pendingEvidenceCount === 1 ? 'record' : 'records'} still needed before live launch.` : 'Manual launch evidence is recorded.'}</p>
                   </div>
-                  <p class="border-l-2 border-amber-300 pl-3 text-[10px] font-extrabold uppercase leading-5 tracking-[0.14em] text-amber-300">Append-only log<br /><span class="text-white/45">No edit or delete</span></p>
-                </header>
+                  <p class="border-l-2 border-amber-300 pl-3 text-[10px] font-extrabold uppercase leading-5 tracking-[0.14em] text-amber-300"><span class="group-open:hidden">Open details</span><span class="hidden group-open:inline">Hide details</span><br /><span class="text-white/45">Append-only log</span></p>
+                </summary>
 
                 {launchEvidence.length ? (
                   <ol class="divide-y divide-white/10">
@@ -648,19 +718,19 @@ const pilotChecks = [
                     <p class="text-sm leading-6 text-white/50">Verification records could not be loaded. No evidence or launch setting has changed.</p>
                   </div>
                 )}
-              </section>
+              </details>
 
-              <section aria-labelledby="registration-setup-heading" class="overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
-                <header class="border-b border-white/10 px-5 py-5 md:px-7 md:py-6">
-                  <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-brand-teal">Change control</p>
+              <details class="group overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]" open={publishedAgreementCount < agreementFamilies.length}>
+                <summary class="cursor-pointer list-none border-b border-white/10 px-5 py-5 outline-none transition hover:bg-white/[0.02] focus:ring-2 focus:ring-brand-teal md:px-7 md:py-6">
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-brand-teal">Setup drawer</p>
                   <div class="mt-1 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                       <h2 id="registration-setup-heading" class="font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Registration setup</h2>
-                      <p class="mt-2 max-w-3xl text-sm leading-6 text-white/50">Schedule the invitation window and prepare the exact policy versions families will accept. Publishing creates permanent evidence; drafts stay editable.</p>
+                      <p class="mt-2 max-w-3xl text-sm leading-6 text-white/50">Window settings and parent agreement publishing. {publishedAgreementCount}/{agreementFamilies.length} agreement families are published.</p>
                     </div>
-                    <span class="border-l-2 border-amber-300 pl-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-amber-300">Review before release</span>
+                    <span class="border-l-2 border-amber-300 pl-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-amber-300"><span class="group-open:hidden">Open setup</span><span class="hidden group-open:inline">Hide setup</span></span>
                   </div>
-                </header>
+                </summary>
 
                 <div class="grid border-b border-white/10 xl:grid-cols-[minmax(0,0.75fr)_minmax(28rem,1.25fr)]">
                   <div class="border-b border-white/10 px-5 py-6 md:px-7 xl:border-b-0 xl:border-r">
@@ -851,9 +921,19 @@ const pilotChecks = [
                     })}
                   </div>
                 </div>
-              </section>
+              </details>
 
-              <section aria-labelledby="pricing-heading">
+              <details class="group overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]">
+                <summary class="flex cursor-pointer list-none flex-col gap-2 px-5 py-5 outline-none transition hover:bg-white/[0.02] focus:ring-2 focus:ring-brand-teal sm:flex-row sm:items-end sm:justify-between md:px-7">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Reference drawer</p>
+                    <h2 class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Pricing & schedule</h2>
+                    <p class="mt-2 text-sm leading-6 text-white/50">Locked dues, deposits, and the standard January-May cadence.</p>
+                  </div>
+                  <span class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-brand-teal"><span class="group-open:hidden">Open reference</span><span class="hidden group-open:inline">Hide reference</span></span>
+                </summary>
+
+              <section aria-labelledby="pricing-heading" class="border-t border-white/10 px-5 py-5 md:px-7">
                 <div class="mb-4 flex items-end justify-between gap-4">
                   <div>
                     <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Locked-in math</p>
@@ -898,7 +978,7 @@ const pilotChecks = [
                 </div>
               </section>
 
-              <section aria-labelledby="schedule-heading" class="overflow-hidden rounded-3xl border border-white/10 bg-[#11151d]">
+              <section aria-labelledby="schedule-heading" class="overflow-hidden border-t border-white/10">
                 <div class="flex flex-col gap-2 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-end sm:justify-between md:px-7">
                   <div>
                     <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Standard cadence</p>
@@ -937,8 +1017,19 @@ const pilotChecks = [
                   ))}
                 </div>
               </section>
+              </details>
 
-              <section aria-labelledby="teams-heading" class="grid gap-5 xl:grid-cols-[22rem_minmax(0,1fr)]">
+              <details class="group overflow-hidden rounded-2xl border border-white/10 bg-[#11151d]" open={teams.length === 0}>
+                <summary class="flex cursor-pointer list-none flex-col gap-2 px-5 py-5 outline-none transition hover:bg-white/[0.02] focus:ring-2 focus:ring-brand-teal sm:flex-row sm:items-end sm:justify-between md:px-7">
+                  <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Team drawer</p>
+                    <h2 class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Team setup</h2>
+                    <p class="mt-2 text-sm leading-6 text-white/50">{activeTeams.length} active of {teams.length} configured teams. Activate only the teams TVVC will field.</p>
+                  </div>
+                  <span class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-brand-teal"><span class="group-open:hidden">Open teams</span><span class="hidden group-open:inline">Hide teams</span></span>
+                </summary>
+
+              <section aria-labelledby="teams-heading" class="grid gap-5 border-t border-white/10 p-5 xl:grid-cols-[22rem_minmax(0,1fr)] md:p-7">
                 <aside class="self-start rounded-3xl border border-white/10 bg-[#11151d] p-5 md:p-6 xl:sticky xl:top-24">
                   <p class="text-[10px] font-extrabold uppercase tracking-[0.22em] text-brand-teal">Plan before tryouts</p>
                   <h2 id="teams-heading" class="mt-1 font-heading text-2xl font-extrabold uppercase tracking-tight text-white">Add a team</h2>
@@ -1089,6 +1180,7 @@ const pilotChecks = [
                   )}
                 </div>
               </section>
+              </details>
 
               <aside class="flex flex-col gap-4 rounded-2xl border border-brand-teal/25 bg-brand-teal/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between" aria-label="Launch readiness">
                 <div class="flex items-start gap-3">
