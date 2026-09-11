@@ -9,13 +9,21 @@ import { events } from '../db/schema';
 import { eq, and, like } from 'drizzle-orm';
 
 // Fetch all prep clinics to show real-time availability
-const allPrepClinics = await db.select().from(events).where(
-  and(
-    eq(events.type, 'clinic'),
-    like(events.id, 'clinic-tryout-prep%'),
-    eq(events.active, true)
-  )
-);
+let allPrepClinics = [];
+
+try {
+  if (db) {
+    allPrepClinics = await db.select().from(events).where(
+      and(
+        eq(events.type, 'clinic'),
+        like(events.id, 'clinic-tryout-prep%'),
+        eq(events.active, true)
+      )
+    );
+  }
+} catch (e) {
+  console.error('Failed to load tryout prep clinic availability:', e);
+}
 
 const getAvailability = (id: string) => {
   const event = allPrepClinics.find(e => e.id === id);
