@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import LiabilityWaiver from './LiabilityWaiver';
+import { registrationSchema } from '../../lib/schemas';
 
 interface Event {
   id: string;
@@ -28,6 +29,7 @@ interface Athlete {
   positions: string[];
   medicalInfo: string;
   selectedEvents: string[];
+  photoReleaseAgreed?: boolean;
   waiverAgreed?: boolean;
 }
 
@@ -85,6 +87,7 @@ export default function TryoutRegistrationForm({
       positions: [],
       medicalInfo: '',
       selectedEvents: [],
+      photoReleaseAgreed: false,
       waiverAgreed: false,
     }
   ]);
@@ -144,6 +147,7 @@ export default function TryoutRegistrationForm({
       positions: [],
       medicalInfo: '',
       selectedEvents: [],
+      photoReleaseAgreed: false,
       waiverAgreed: false,
     }]);
   };
@@ -237,20 +241,28 @@ export default function TryoutRegistrationForm({
       const formattedAthletes = athletes.map(a => ({
         ...a,
         positions: a.positions.join(', '),
+        photoReleaseAgreed: a.photoReleaseAgreed ?? false,
       }));
+      const validation = registrationSchema.safeParse({
+        parentInfo: {
+          ...parentInfo,
+          secondaryParentName: parentInfo.secondaryName,
+          secondaryParentEmail: parentInfo.secondaryEmail,
+          secondaryParentPhone: parentInfo.secondaryPhone,
+        },
+        athletes: formattedAthletes,
+      });
+
+      if (!validation.success) {
+        const errors = validation.error.flatten().fieldErrors;
+        const firstError = Object.values(errors).flat()[0];
+        throw new Error(firstError || 'Registration data is invalid. Please review your entries.');
+      }
 
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          parentInfo: {
-            ...parentInfo,
-            secondaryParentName: parentInfo.secondaryName,
-            secondaryParentEmail: parentInfo.secondaryEmail,
-            secondaryParentPhone: parentInfo.secondaryPhone,
-          }, 
-          athletes: formattedAthletes 
-        }),
+        body: JSON.stringify(validation.data),
       });
 
       const data = await response.json();
@@ -266,7 +278,7 @@ export default function TryoutRegistrationForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12" data-hydrated={isHydrated}>
+    <form onSubmit={handleSubmit} className="space-y-12" noValidate data-hydrated={isHydrated}>
       {/* Step Indicator */}
       <div className="max-w-4xl mx-auto mb-12">
         <div className="flex items-center justify-between relative">
