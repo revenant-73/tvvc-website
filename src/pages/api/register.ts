@@ -6,7 +6,7 @@ import Stripe from 'stripe';
 import { getSession } from 'auth-astro/server';
 import { createStripeClient } from '../../lib/stripe-client';
 import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
-import { getClubDate, isRegistrationEventEligible } from '../../lib/event-eligibility';
+import { isRegistrationEventEligible } from '../../lib/event-eligibility';
 
 import { registrationSchema } from '../../lib/schemas';
 import { rejectCrossOriginRequest } from '../../lib/request-security';
@@ -96,10 +96,9 @@ export const POST: APIRoute = async ({ request }) => {
         .from(events)
         .where(inArray(events.id, requestedEventIds));
       const selectedEventsById = new Map(selectedEvents.map((event) => [event.id, event]));
-      const clubDate = getClubDate();
       const unavailableEventIds = requestedEventIds.filter((eventId) => {
         const event = selectedEventsById.get(eventId);
-        return !event || !isRegistrationEventEligible(event, clubDate);
+        return !event || !isRegistrationEventEligible(event);
       });
 
       if (unavailableEventIds.length > 0) {

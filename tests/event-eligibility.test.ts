@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getClubDate, isRegistrationEventEligible } from '../src/lib/event-eligibility.ts';
+import {
+  getClubDate,
+  getDefaultRegistrationClosesAtLocal,
+  isRegistrationEventEligible,
+} from '../src/lib/event-eligibility.ts';
 
 test('calculates registration dates in the club timezone', () => {
   assert.equal(getClubDate(new Date('2026-07-31T07:30:00Z')), '2026-07-31');
@@ -60,6 +64,29 @@ test('respects event metadata registration open dates', () => {
   assert.equal(isRegistrationEventEligible(dateLockedEvent, '2026-10-01'), true);
 });
 
+test('respects event metadata registration close times', () => {
+  const closingEvent = {
+    active: true,
+    startDate: '2026-09-13',
+    endDate: '2026-09-13',
+    metadata: JSON.stringify({ registrationClosesAtLocal: '2026-09-12T21:00' }),
+  };
+
+  assert.equal(
+    isRegistrationEventEligible(closingEvent, { clubDateTime: '2026-09-12T20:59' }),
+    true
+  );
+  assert.equal(
+    isRegistrationEventEligible(closingEvent, { clubDateTime: '2026-09-12T21:00' }),
+    false
+  );
+});
+
+test('calculates the default 9pm night-before close time', () => {
+  assert.equal(getDefaultRegistrationClosesAtLocal('2026-09-13'), '2026-09-12T21:00');
+  assert.equal(getDefaultRegistrationClosesAtLocal('not-a-date'), null);
+});
+
 test('rejects events with malformed registration open dates', () => {
   assert.equal(isRegistrationEventEligible({
     active: true,
@@ -74,4 +101,13 @@ test('rejects events with malformed registration open dates', () => {
     endDate: '2027-03-12',
     metadata: '{registrationOpensOn:2026-10-01}',
   }, '2026-10-01'), false);
+});
+
+test('rejects events with malformed registration close times', () => {
+  assert.equal(isRegistrationEventEligible({
+    active: true,
+    startDate: '2026-09-13',
+    endDate: '2026-09-13',
+    metadata: JSON.stringify({ registrationClosesAtLocal: 'September 12, 2026 9pm' }),
+  }, { clubDateTime: '2026-09-12T20:30' }), false);
 });

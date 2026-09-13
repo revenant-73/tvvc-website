@@ -13,6 +13,7 @@ test.describe('Camps & Clinics page', () => {
     await expect(clubPrep.getByText('3:00-5:00pm').first()).toBeVisible();
     await expect(clubPrep.getByText('$30 per player, per clinic')).toBeVisible();
     await expect(clubPrep.getByText('14 players per clinic')).toBeVisible();
+    await expect(clubPrep.getByText('Registration closes at 9pm Pacific the night before each clinic.')).toBeVisible();
 
     for (const date of ['September 13', 'September 20', 'September 27', 'October 4', 'October 11', 'October 18']) {
       await expect(clubPrep.getByText(date, { exact: true })).toBeVisible();

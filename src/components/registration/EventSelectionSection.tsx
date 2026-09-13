@@ -259,6 +259,9 @@ export const EventSelectionSection: React.FC<EventSelectionSectionProps> = ({
                   <p className="mt-2 text-xs leading-5 text-white/60">
                     90-minute general volleyball clinics for girls in 6th-8th grade preparing for club volleyball. Capped at 14 players per Sunday session.
                   </p>
+                  <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
+                    Registration closes at 9pm Pacific the night before each clinic.
+                  </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {initialEvents.filter(e => e.type === 'clinic' && e.id.includes('clinic-girls-club-prep')).sort(sortByDate).map(event => {

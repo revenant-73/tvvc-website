@@ -3,7 +3,7 @@ import { getSession } from 'auth-astro/server';
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { getDb } from '../../db';
 import { events, eventWaitlistEntries, playerProfiles } from '../../db/schema';
-import { getClubDate, isRegistrationEventEligible } from '../../lib/event-eligibility';
+import { isRegistrationEventEligible } from '../../lib/event-eligibility';
 import { ensureCanonicalPortalUser } from '../../lib/portal-ownership';
 import { rejectCrossOriginRequest } from '../../lib/request-security';
 import { registrationSchema } from '../../lib/schemas';
@@ -47,7 +47,6 @@ export const POST: APIRoute = async ({ request }) => {
 
     const db = getDb(databaseUrl, import.meta.env.TURSO_AUTH_TOKEN || '');
     const parentEmail = normalizedEmail(parentInfo.email);
-    const clubDate = getClubDate();
     const now = new Date().toISOString();
 
     const entries = await db.transaction(async (tx) => {
@@ -59,7 +58,7 @@ export const POST: APIRoute = async ({ request }) => {
         const reserved = (event?.spotsFilled || 0) + (event?.pendingSpots || 0);
         if (
           !event ||
-          !isRegistrationEventEligible(event, clubDate) ||
+          !isRegistrationEventEligible(event) ||
           !event.waitlistEnabled ||
           reserved < event.capacity
         ) {

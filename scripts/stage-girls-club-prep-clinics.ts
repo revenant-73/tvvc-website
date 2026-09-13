@@ -75,6 +75,16 @@ const clinics: GirlsClubPrepClinicConfig[] = [
 
 const client = createClient({ url: databaseUrl, authToken: authToken || undefined });
 
+function registrationClosesAtLocal(startDate: string) {
+  const [year, month, day] = startDate.split('-').map(Number);
+  const previousDay = new Date(Date.UTC(year, month - 1, day - 1));
+  const closeYear = previousDay.getUTCFullYear();
+  const closeMonth = String(previousDay.getUTCMonth() + 1).padStart(2, '0');
+  const closeDay = String(previousDay.getUTCDate()).padStart(2, '0');
+
+  return `${closeYear}-${closeMonth}-${closeDay}T21:00`;
+}
+
 async function stageGirlsClubPrepClinics() {
   await client.batch(
     clinics.map((clinic) => ({
@@ -113,6 +123,7 @@ async function stageGirlsClubPrepClinics() {
           registrationStream: 'camps-clinics',
           program: 'girls-club-prep',
           session: 'fall-2026',
+          registrationClosesAtLocal: registrationClosesAtLocal(clinic.startDate),
           audience: 'Girls in 6th-8th grade',
           trainingFormat: '90-minute general volleyball clinic with individual skill development in representative game-like situations when numbers allow.',
         }),

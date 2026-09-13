@@ -6,6 +6,12 @@ import { getDb } from '../../../db';
 import { events } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
+import {
+  getDefaultRegistrationClosesAtLocal,
+  getRegistrationCloseDateTime,
+  isRegistrationEventEligible,
+  parseEventMetadata,
+} from '../../../lib/event-eligibility';
 
 const { id } = Astro.params;
 
@@ -16,6 +22,14 @@ const isAdmin = user?.role === 'admin';
 let eventData = null;
 let error = null;
 let success = null;
+
+function getMetadataForUpdate(metadata: string | null | undefined) {
+  const parsed = parseEventMetadata(metadata);
+  if (parsed === 'invalid') {
+    throw new Error('Event metadata is malformed.');
+  }
+  return parsed || {};
+}
 
 const db = getDb(
   import.meta.env.TURSO_DATABASE_URL || '',
@@ -29,20 +43,42 @@ if (isAdmin && Astro.request.method === 'POST') {
     const newSpotsFilled = parseInt(data.get('spotsFilled') as string);
     const emailDetails = data.get('emailDetails') as string;
     const waitlistEnabled = data.get('waitlistEnabled') === 'on';
+    const active = data.get('active') === 'on';
+    const closeValue = String(data.get('registrationClosesAtLocal') || '').trim();
+    const useDefaultClose = data.get('useDefaultRegistrationClose') === 'on';
     
     if (!isNaN(newCapacity) && !isNaN(newSpotsFilled)) {
+      const [currentEvent] = await db.select().from(events).where(eq(events.id, id as string));
+      const metadata = getMetadataForUpdate(currentEvent?.metadata);
+      const defaultClose = getDefaultRegistrationClosesAtLocal(currentEvent?.startDate);
+      const registrationClosesAtLocal = useDefaultClose ? defaultClose : closeValue;
+
+      if (registrationClosesAtLocal && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(registrationClosesAtLocal)) {
+        throw new Error('Registration close time must be a valid date and time.');
+      }
+
+      if (registrationClosesAtLocal) {
+        metadata.registrationClosesAtLocal = registrationClosesAtLocal;
+      } else {
+        delete metadata.registrationClosesAtLocal;
+        delete metadata.registration_closes_at_local;
+      }
+
       await db.update(events)
         .set({ 
           capacity: newCapacity,
           spotsFilled: newSpotsFilled,
+          active,
           waitlistEnabled,
-          emailDetails: emailDetails
+          emailDetails: emailDetails,
+          metadata: JSON.stringify(metadata)
         })
         .where(eq(events.id, id as string));
       success = "Event updated successfully.";
     }
   } catch (e) {
-    error = "Error processing update.";
+    console.error(e);
+    error = e instanceof Error ? e.message : "Error processing update.";
   }
 }
 
@@ -59,6 +95,11 @@ if (eventData && !isAdmin) {
 } else if (!eventData) {
     return Astro.redirect('/admin/registrations');
 }
+
+const registrationClose = eventData ? getRegistrationCloseDateTime(eventData.metadata) : { status: 'missing', value: null };
+const registrationClosesAtLocal = registrationClose.status === 'valid' ? registrationClose.value : '';
+const defaultRegistrationClose = eventData ? getDefaultRegistrationClosesAtLocal(eventData.startDate) : null;
+const isAcceptingRegistration = eventData ? isRegistrationEventEligible(eventData) : false;
 ---
 
 <BaseLayout title={`Edit ${eventData?.name || 'Event'}`} noindex={true}>
@@ -88,7 +129,12 @@ if (eventData && !isAdmin) {
         <div class="glass-card p-8 md:p-12 border-white/10">
           <span class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-4 block">Manage Event</span>
           <h1 class="text-3xl font-heading font-bold text-white mb-2 leading-tight">{eventData.name}</h1>
-          <p class="text-xs text-white/40 uppercase tracking-widest font-bold mb-8">{eventData.dateInfo} • {eventData.timeInfo}</p>
+          <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-xs text-white/40 uppercase tracking-widest font-bold">{eventData.dateInfo} • {eventData.timeInfo}</p>
+            <span class={`inline-flex w-fit rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${isAcceptingRegistration ? 'border-brand-teal/40 bg-brand-teal/10 text-brand-teal' : 'border-brand-coral/40 bg-brand-coral/10 text-brand-coral'}`}>
+              {isAcceptingRegistration ? 'Registration open' : 'Registration closed'}
+            </span>
+          </div>
 
           <form method="POST" class="space-y-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -114,6 +160,67 @@ if (eventData && !isAdmin) {
                 class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-2xl font-heading font-bold text-brand-teal focus:border-brand-teal outline-none" 
                 required 
               />
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-brand-teal/20 bg-brand-teal/[0.04] p-5 space-y-5">
+            <label class="flex cursor-pointer items-start gap-4">
+              <input
+                type="checkbox"
+                name="active"
+                checked={eventData.active}
+                class="mt-1 h-5 w-5 rounded border-white/20 bg-brand-charcoal text-brand-teal focus:ring-brand-teal"
+              />
+              <span>
+                <span class="block text-[10px] font-bold uppercase tracking-widest text-brand-teal">Accept public registration</span>
+                <span class="mt-1 block text-sm leading-6 text-white/55">
+                  Turn this off to immediately hide the event from the registration form and block new checkout attempts.
+                </span>
+              </span>
+            </label>
+
+            <div class="space-y-3">
+              <label for="registrationClosesAtLocal" class="text-[10px] font-bold uppercase tracking-widest text-white/50">Registration closes at</label>
+              <input
+                id="registrationClosesAtLocal"
+                type="datetime-local"
+                name="registrationClosesAtLocal"
+                value={registrationClosesAtLocal}
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm font-bold text-white focus:border-brand-teal outline-none [color-scheme:dark]"
+              />
+              <div class="flex flex-wrap gap-2">
+                {defaultRegistrationClose && (
+                  <button
+                    type="button"
+                    data-default-registration-close={defaultRegistrationClose}
+                    class="rounded-lg border border-brand-teal/30 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-brand-teal hover:bg-brand-teal/10"
+                  >
+                    Use 9pm night before
+                  </button>
+                )}
+                <button
+                  type="button"
+                  data-clear-registration-close
+                  class="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white/45 hover:text-white"
+                >
+                  Clear close time
+                </button>
+              </div>
+              {defaultRegistrationClose && (
+                <p class="text-xs leading-5 text-white/45">
+                  Default for this event: <span class="font-mono text-white/70">{defaultRegistrationClose.replace('T', ' ')}</span> Pacific.
+                </p>
+              )}
+              {defaultRegistrationClose && (
+                <label class="flex items-center gap-3 text-xs font-bold text-white/55">
+                  <input
+                    type="checkbox"
+                    name="useDefaultRegistrationClose"
+                    class="h-4 w-4 rounded border-white/20 bg-brand-charcoal text-brand-teal focus:ring-brand-teal"
+                  />
+                  Save with the 9pm-night-before default
+                </label>
+              )}
             </div>
           </div>
 
@@ -152,3 +259,23 @@ if (eventData && !isAdmin) {
     </div>
   </main>
 </BaseLayout>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    const closeInput = document.getElementById('registrationClosesAtLocal');
+    const defaultButton = document.querySelector('[data-default-registration-close]');
+    const clearButton = document.querySelector('[data-clear-registration-close]');
+
+    defaultButton?.addEventListener('click', () => {
+      if (closeInput instanceof HTMLInputElement) {
+        closeInput.value = defaultButton.getAttribute('data-default-registration-close') || '';
+      }
+    });
+
+    clearButton?.addEventListener('click', () => {
+      if (closeInput instanceof HTMLInputElement) {
+        closeInput.value = '';
+      }
+    });
+  });
+</script>
