@@ -1,41 +1,9 @@
 ---
-export const prerender = false;
+export const prerender = true;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ScrollReveal from '../components/ScrollReveal.astro';
 import FundraisingButton from '../components/FundraisingButton';
-import { db } from '../db/db';
-import { events } from '../db/schema';
-import { eq, and, like } from 'drizzle-orm';
-
-// Fetch all prep clinics to show real-time availability
-let allPrepClinics = [];
-
-try {
-  if (db) {
-    allPrepClinics = await db.select().from(events).where(
-      and(
-        eq(events.type, 'clinic'),
-        like(events.id, 'clinic-tryout-prep%'),
-        eq(events.active, true)
-      )
-    );
-  }
-} catch (e) {
-  console.error('Failed to load tryout prep clinic availability:', e);
-}
-
-const getAvailability = (id: string) => {
-  const event = allPrepClinics.find(e => e.id === id);
-  if (!event) return null;
-  const filled = (event.spotsFilled || 0) + (event.pendingSpots || 0);
-  return {
-    filled,
-    capacity: event.capacity,
-    isFull: filled >= event.capacity,
-    spotsLeft: Math.max(0, event.capacity - filled)
-  };
-};
 
 const clinicGroups = [
   {
@@ -168,34 +136,20 @@ const tryouts = [
                   </div>
                   
                   <div class="grid grid-cols-2 gap-3 pt-2">
-                    {group.sessions.map(session => {
-                      const availability = getAvailability(session.id);
-                      return (
-                        <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+                    {group.sessions.map(session => (
+                        <div class="bg-white/5 rounded-xl p-3 border border-white/5" data-availability-card={session.id}>
                           <div class="flex items-center justify-between mb-1">
                             <span class="text-[10px] font-bold text-white/60 uppercase">{session.date}</span>
-                            {availability && (
-                              availability.isFull ? (
-                                <span class="text-[8px] font-black text-brand-coral uppercase tracking-tighter">Sold Out</span>
-                              ) : availability.spotsLeft <= 5 ? (
-                                <span class="text-[8px] font-black text-brand-teal uppercase tracking-tighter animate-pulse">{availability.spotsLeft} Left!</span>
-                              ) : null
-                            )}
+                            <span class="text-[8px] font-black uppercase tracking-tighter" data-availability-label></span>
                           </div>
-                          {availability && (
-                            <div class="flex items-center gap-2">
-                              <div class="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
-                                <div 
-                                  class={`h-full rounded-full ${availability.isFull ? 'bg-brand-coral' : 'bg-brand-teal'}`}
-                                  style={`width: ${Math.min((availability.filled / availability.capacity) * 100, 100)}%`}
-                                ></div>
-                              </div>
-                              <span class="text-[8px] font-bold text-white/30 tabular-nums">{availability.filled}/{availability.capacity}</span>
+                          <div class="hidden items-center gap-2" data-availability-meter>
+                            <div class="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                              <div class="h-full rounded-full bg-brand-teal" style="width: 0%" data-availability-bar></div>
                             </div>
-                          )}
+                            <span class="text-[8px] font-bold text-white/30 tabular-nums" data-availability-count></span>
+                          </div>
                         </div>
-                      );
-                    })}
+                    ))}
                   </div>
                 </div>
               ))}
@@ -297,7 +251,7 @@ const tryouts = [
             "We want to ensure that club volleyball is accessible. If you are concerned about season costs, we offer family-led fundraising options and flexible payment plans."
           </p>
           <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <FundraisingButton client:load variant="primary" />
+            <FundraisingButton client:visible variant="primary" />
             <a href="mailto:loren@tualatinvalleyvb.com" class="text-[10px] font-bold text-white/40 uppercase tracking-widest hover:text-brand-teal transition-all flex items-center gap-2">
               Contact Loren Directly
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
@@ -319,4 +273,52 @@ const tryouts = [
       </div>
     </section>
   </main>
+  <script>
+    async function hydrateTryoutPrepAvailability() {
+      const cards = Array.from(document.querySelectorAll('[data-availability-card]'));
+      if (!cards.length) return;
+
+      try {
+        const response = await fetch('/api/tryout-prep-availability');
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const availabilityById = new Map((payload?.events || []).map((event) => [event.id, event]));
+
+        cards.forEach((card) => {
+          const id = card.getAttribute('data-availability-card');
+          const availability = id ? availabilityById.get(id) : null;
+          if (!availability) return;
+
+          const label = card.querySelector('[data-availability-label]');
+          const meter = card.querySelector('[data-availability-meter]');
+          const bar = card.querySelector('[data-availability-bar]');
+          const count = card.querySelector('[data-availability-count]');
+
+          if (availability.isFull) {
+            label.textContent = 'Sold Out';
+            label.className = 'text-[8px] font-black text-brand-coral uppercase tracking-tighter';
+          } else if (availability.spotsLeft <= 5) {
+            label.textContent = `${availability.spotsLeft} Left!`;
+            label.className = 'text-[8px] font-black text-brand-teal uppercase tracking-tighter animate-pulse';
+          }
+
+          const percentFilled = availability.capacity > 0
+            ? Math.min((availability.filled / availability.capacity) * 100, 100)
+            : 0;
+          bar?.setAttribute('style', `width: ${percentFilled}%`);
+          bar?.classList.toggle('bg-brand-coral', availability.isFull);
+          bar?.classList.toggle('bg-brand-teal', !availability.isFull);
+          if (count) count.textContent = `${availability.filled}/${availability.capacity}`;
+          meter?.classList.remove('hidden');
+          meter?.classList.add('flex');
+        });
+      } catch {
+        // Availability is helpful context, not a reason to slow or block the page.
+      }
+    }
+
+    hydrateTryoutPrepAvailability();
+    document.addEventListener('astro:page-load', hydrateTryoutPrepAvailability);
+  </script>
 </BaseLayout>
